@@ -1,0 +1,101 @@
+//@version=6
+// Indicator version of the "Sweep" strategy.
+// Long when EMA crosses above VWAP, short when it crosses below.
+// Positions exit on an ATR-based trailing stop (activation distance = trail offset),
+// emulating strategy.exit(trail_points, trail_offset) on bar highs/lows.
+indicator("Sweep Indicator", overlay=true)
+
+atrLen    = input.int(14, "ATR Length", minval=1)
+emaLen    = input.int(4, "EMA Length", minval=1)
+trailMult = input.float(0.005, "Trail ATR Multiplier", minval=0.0, step=0.001)
+showBg    = input.bool(true, "Shade Background While In Position")
+
+atr  = ta.atr(atrLen)
+ema  = ta.ema(close, emaLen)
+vwap = ta.vwap(close)
+
+longSig  = ta.crossover(ema, vwap)
+shortSig = ta.crossunder(ema, vwap)
+
+// Trail distance in price. The strategy places its exit at bar close,
+// so the stop active on this bar uses the previous bar's ATR.
+trailDist     = atr * trailMult
+trailDistPrev = nz(trailDist[1], trailDist)
+
+var int   pos        = 0      // 1 = long, -1 = short, 0 = flat
+var float entryPrice = na
+var float extreme    = na     // highest high (long) / lowest low (short) since entry
+var bool  trailOn    = false
+var float stopPrice  = na
+
+bool exitLong  = false
+bool exitShort = false
+
+// --- Manage trailing stop for an open position (bars after entry) ---
+if pos == 1
+    extreme := math.max(extreme, high)
+    if not trailOn and extreme >= entryPrice + trailDistPrev
+        trailOn := true
+    if trailOn
+        stopPrice := extreme - trailDistPrev
+        if low <= stopPrice
+            exitLong  := true
+            pos       := 0
+else if pos == -1
+    extreme := math.min(extreme, low)
+    if not trailOn and extreme <= entryPrice - trailDistPrev
+        trailOn := true
+    if trailOn
+        stopPrice := extreme + trailDistPrev
+        if high >= stopPrice
+            exitShort := true
+            pos       := 0
+
+// --- Entries (filled at bar close, like process_orders_on_close=true) ---
+bool enterLong  = false
+bool enterShort = false
+
+if longSig and pos != 1
+    if pos == -1
+        exitShort := true
+    enterLong  := true
+    pos        := 1
+    entryPrice := close
+    extreme    := close
+    trailOn    := false
+    stopPrice  := na
+else if shortSig and pos != -1
+    if pos == 1
+        exitLong  := true
+    enterShort := true
+    pos        := -1
+    entryPrice := close
+    extreme    := close
+    trailOn    := false
+    stopPrice  := na
+
+if pos == 0
+    entryPrice := na
+    extreme    := na
+    trailOn    := false
+    stopPrice  := na
+
+// --- Plots ---
+plot(ema,  "EMA",  color=color.orange, linewidth=2)
+plot(vwap, "VWAP", color=color.blue,   linewidth=2)
+plot(pos != 0 ? entryPrice : na, "Entry Price", color=color.gray, style=plot.style_linebr)
+plot(pos == 1 and trailOn ? stopPrice : na,  "Long Trail Stop",  color=color.red,   style=plot.style_linebr, linewidth=2)
+plot(pos == -1 and trailOn ? stopPrice : na, "Short Trail Stop", color=color.green, style=plot.style_linebr, linewidth=2)
+
+plotshape(enterLong,  "Long Entry",  shape.triangleup,   location.belowbar, color.green, text="Long",  textcolor=color.green, size=size.small)
+plotshape(enterShort, "Short Entry", shape.triangledown, location.abovebar, color.red,   text="Short", textcolor=color.red,   size=size.small)
+plotshape(exitLong  and not enterShort, "Long Exit",  shape.xcross, location.abovebar, color.orange, text="LX", textcolor=color.orange, size=size.tiny)
+plotshape(exitShort and not enterLong,  "Short Exit", shape.xcross, location.belowbar, color.orange, text="SX", textcolor=color.orange, size=size.tiny)
+
+bgcolor(showBg and pos == 1 ? color.new(color.green, 92) : showBg and pos == -1 ? color.new(color.red, 92) : na)
+
+// --- Alerts ---
+alertcondition(enterLong,  "Long Entry",  "Sweep: Long entry on {{ticker}} at {{close}}")
+alertcondition(enterShort, "Short Entry", "Sweep: Short entry on {{ticker}} at {{close}}")
+alertcondition(exitLong,   "Long Exit",   "Sweep: Long exit on {{ticker}}")
+alertcondition(exitShort,  "Short Exit",  "Sweep: Short exit on {{ticker}}")
