@@ -1,0 +1,285 @@
+//@version=6
+// Multi-symbol crypto scanner for the "SOL Donchian" strategy.
+// Runs the full strategy logic (Donchian breakout + trend SMA + ATR volatility filter,
+// ATR trailing stop and ATR hard stop, risk-based sizing) on up to 20 symbols and shows
+// each symbol's live state and backtest stats in a table. Also plots the signals for
+// the chart's own symbol and fires alert() calls for every scanned symbol.
+indicator("Crypto Donchian Scanner", overlay=true)
+
+// --- Strategy inputs ---
+grpStrat       = "Strategy"
+atrLen         = input.int(14, "ATR Length", group=grpStrat)
+atrMult        = input.float(0.02, "ATR Trail Mult", step=0.01, group=grpStrat)
+stopMult       = input.float(1.5, "Hard SL ATR Mult", step=0.1, group=grpStrat)
+smaLen         = input.int(200, "Trend SMA", group=grpStrat)
+breakoutLen    = input.int(20, "Donchian Breakout Lookback", group=grpStrat)
+volLen         = input.int(20, "Volatility Average Length", group=grpStrat)
+riskPct        = input.float(0.25, "Risk %", minval=0.05, maxval=1.0, step=0.05, group=grpStrat)
+maxNotionalPct = input.float(50.0, "Max Notional %", minval=10.0, maxval=100.0, step=5.0, group=grpStrat)
+commPct        = input.float(0.05, "Commission % (per side)", minval=0.0, step=0.01, group=grpStrat)
+
+// --- Scanner inputs ---
+grpScan  = "Scanner"
+scanTf   = input.timeframe("", "Scanner Timeframe (empty = chart)", group=grpScan)
+showScan = input.bool(true, "Show Scanner Table", group=grpScan)
+maxRows  = input.int(20, "Symbols to Show", minval=1, maxval=20, group=grpScan)
+tblPosIn = input.string("Top Right", "Table Position", options=["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group=grpScan)
+txtSizeIn = input.string("Small", "Text Size", options=["Tiny", "Small", "Normal"], group=grpScan)
+alertEntries = input.bool(true, "Alert on Entries", group=grpScan)
+alertExits   = input.bool(true, "Alert on Exits", group=grpScan)
+
+grpSym = "Symbols"
+s1  = input.symbol("BINANCE:BTCUSDT",  "Symbol 1",  group=grpSym)
+s2  = input.symbol("BINANCE:ETHUSDT",  "Symbol 2",  group=grpSym)
+s3  = input.symbol("BINANCE:SOLUSDT",  "Symbol 3",  group=grpSym)
+s4  = input.symbol("BINANCE:BNBUSDT",  "Symbol 4",  group=grpSym)
+s5  = input.symbol("BINANCE:XRPUSDT",  "Symbol 5",  group=grpSym)
+s6  = input.symbol("BINANCE:DOGEUSDT", "Symbol 6",  group=grpSym)
+s7  = input.symbol("BINANCE:ADAUSDT",  "Symbol 7",  group=grpSym)
+s8  = input.symbol("BINANCE:AVAXUSDT", "Symbol 8",  group=grpSym)
+s9  = input.symbol("BINANCE:LINKUSDT", "Symbol 9",  group=grpSym)
+s10 = input.symbol("BINANCE:DOTUSDT",  "Symbol 10", group=grpSym)
+s11 = input.symbol("BINANCE:TRXUSDT",  "Symbol 11", group=grpSym)
+s12 = input.symbol("BINANCE:LTCUSDT",  "Symbol 12", group=grpSym)
+s13 = input.symbol("BINANCE:BCHUSDT",  "Symbol 13", group=grpSym)
+s14 = input.symbol("BINANCE:NEARUSDT", "Symbol 14", group=grpSym)
+s15 = input.symbol("BINANCE:SUIUSDT",  "Symbol 15", group=grpSym)
+s16 = input.symbol("BINANCE:APTUSDT",  "Symbol 16", group=grpSym)
+s17 = input.symbol("BINANCE:ARBUSDT",  "Symbol 17", group=grpSym)
+s18 = input.symbol("BINANCE:OPUSDT",   "Symbol 18", group=grpSym)
+s19 = input.symbol("BINANCE:INJUSDT",  "Symbol 19", group=grpSym)
+s20 = input.symbol("BINANCE:PEPEUSDT", "Symbol 20", group=grpSym)
+
+// Result of running the strategy on one symbol, as of the current bar.
+type Res
+    int   pos          // 1 = long, -1 = short, 0 = flat
+    float price
+    float entry
+    float hardStop
+    float trailStop    // na until the trail activates
+    int   trend        // 1 = above SMA, -1 = below
+    bool  enterLong
+    bool  enterShort
+    bool  exitLong
+    bool  exitShort
+    int   trades
+    int   wins
+    float netPct       // compounded net return on closed trades, %
+    float maxDD        // max drawdown of closed-trade equity, %
+    float openPct      // unrealised return on the open trade, %
+
+// Full strategy emulation. Each call site (chart or request.security) keeps its own state.
+sim() =>
+    sma    = ta.sma(close, smaLen)
+    atr    = ta.atr(atrLen)
+    atrAvg = ta.sma(atr, volLen)
+    hi     = ta.highest(high, breakoutLen)[1]
+    lo     = ta.lowest(low, breakoutLen)[1]
+    longC  = close > hi and close > sma and atr > atrAvg
+    shortC = close < lo and close < sma and atr > atrAvg
+
+    // The strategy re-places its exit at every bar close, so this bar's stops use last bar's ATR.
+    trailDist     = atr * atrMult
+    stopDist      = atr * stopMult
+    trailDistPrev = nz(trailDist[1], trailDist)
+    stopDistPrev  = nz(stopDist[1], stopDist)
+
+    var float equity     = 100.0
+    var float peakEquity = 100.0
+    var float maxDD      = 0.0
+    var int   trades     = 0
+    var int   wins       = 0
+    var int   pos        = 0
+    var float posQty     = na
+    var float entryPrice = na
+    var float extreme    = na
+    var bool  trailOn    = false
+    var float trailStop  = na
+    var float hardStop   = na
+
+    bool  exitLong  = false
+    bool  exitShort = false
+    float closedPnl = na
+
+    if pos == 1
+        hardStop := entryPrice - stopDistPrev
+        extreme  := math.max(extreme, high)
+        if not trailOn and extreme >= entryPrice + trailDistPrev
+            trailOn := true
+        trailStop := trailOn ? extreme - trailDistPrev : na
+        float stopLvl = trailOn ? math.max(trailStop, hardStop) : hardStop
+        if low <= stopLvl
+            float fill = math.min(open, stopLvl)
+            exitLong  := true
+            closedPnl := posQty * (fill - entryPrice) - posQty * (entryPrice + fill) * commPct / 100
+            pos       := 0
+    else if pos == -1
+        hardStop := entryPrice + stopDistPrev
+        extreme  := math.min(extreme, low)
+        if not trailOn and extreme <= entryPrice - trailDistPrev
+            trailOn := true
+        trailStop := trailOn ? extreme + trailDistPrev : na
+        float stopLvl = trailOn ? math.min(trailStop, hardStop) : hardStop
+        if high >= stopLvl
+            float fill = math.max(open, stopLvl)
+            exitShort := true
+            closedPnl := posQty * (entryPrice - fill) - posQty * (entryPrice + fill) * commPct / 100
+            pos       := 0
+
+    if not na(closedPnl)
+        equity     := equity + closedPnl
+        trades     += 1
+        wins       += closedPnl > 0 ? 1 : 0
+        peakEquity := math.max(peakEquity, equity)
+        maxDD      := math.max(maxDD, (peakEquity - equity) / peakEquity * 100)
+
+    float qty = math.min(equity * riskPct / 100.0 / stopDist, equity * maxNotionalPct / 100.0 / close)
+    bool enterLong  = false
+    bool enterShort = false
+    if pos == 0 and qty > 0
+        if longC
+            enterLong := true
+            pos       := 1
+        else if shortC
+            enterShort := true
+            pos        := -1
+        if enterLong or enterShort
+            posQty     := qty
+            entryPrice := close
+            extreme    := close
+            trailOn    := false
+            trailStop  := na
+            hardStop   := enterLong ? close - stopDist : close + stopDist
+
+    if pos == 0
+        posQty     := na
+        entryPrice := na
+        extreme    := na
+        trailOn    := false
+        trailStop  := na
+        hardStop   := na
+
+    float openPct = pos != 0 ? pos * (close - entryPrice) / entryPrice * 100 : na
+    Res.new(pos, close, entryPrice, hardStop, trailOn ? trailStop : na, close > sma ? 1 : -1,
+         enterLong, enterShort, exitLong, exitShort, trades, wins, equity - 100.0, maxDD, openPct)
+
+// --- Chart symbol: plot signals and stops ---
+Res c = sim()
+
+plot(c.entry,     "Entry Price", color=color.gray,   style=plot.style_linebr)
+plot(c.hardStop,  "Hard Stop",   color=color.red,    style=plot.style_linebr, linewidth=2)
+plot(c.trailStop, "Trail Stop",  color=color.orange, style=plot.style_linebr, linewidth=2)
+plotshape(c.enterLong,  "Long Entry",  shape.triangleup,   location.belowbar, color.green,  text="Long",  textcolor=color.green,  size=size.small)
+plotshape(c.enterShort, "Short Entry", shape.triangledown, location.abovebar, color.red,    text="Short", textcolor=color.red,    size=size.small)
+plotshape(c.exitLong,   "Long Exit",   shape.xcross,       location.abovebar, color.orange, text="LX",    textcolor=color.orange, size=size.tiny)
+plotshape(c.exitShort,  "Short Exit",  shape.xcross,       location.belowbar, color.orange, text="SX",    textcolor=color.orange, size=size.tiny)
+bgcolor(c.pos == 1 ? color.new(color.green, 92) : c.pos == -1 ? color.new(color.red, 92) : na)
+
+alertcondition(c.enterLong,  "Chart Symbol Long Entry",  "Donchian: Long entry on {{ticker}} at {{close}}")
+alertcondition(c.enterShort, "Chart Symbol Short Entry", "Donchian: Short entry on {{ticker}} at {{close}}")
+alertcondition(c.exitLong,   "Chart Symbol Long Exit",   "Donchian: Long exit on {{ticker}}")
+alertcondition(c.exitShort,  "Chart Symbol Short Exit",  "Donchian: Short exit on {{ticker}}")
+
+// --- Scanned symbols ---
+scan(string sym) => request.security(sym, scanTf, sim(), ignore_invalid_symbol=true)
+
+Res r1  = scan(s1)
+Res r2  = scan(s2)
+Res r3  = scan(s3)
+Res r4  = scan(s4)
+Res r5  = scan(s5)
+Res r6  = scan(s6)
+Res r7  = scan(s7)
+Res r8  = scan(s8)
+Res r9  = scan(s9)
+Res r10 = scan(s10)
+Res r11 = scan(s11)
+Res r12 = scan(s12)
+Res r13 = scan(s13)
+Res r14 = scan(s14)
+Res r15 = scan(s15)
+Res r16 = scan(s16)
+Res r17 = scan(s17)
+Res r18 = scan(s18)
+Res r19 = scan(s19)
+Res r20 = scan(s20)
+
+syms    = array.from(s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20)
+results = array.from(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17, r18, r19, r20)
+
+// --- Helpers ---
+shortName(string sym) =>
+    parts = str.split(sym, ":")
+    array.get(parts, array.size(parts) - 1)
+
+fmtPrice(float x) =>
+    na(x) ? "-" : str.tostring(x, math.abs(x) >= 100 ? "#,##0.00" : math.abs(x) >= 1 ? "0.0000" : "0.00000000")
+
+pct(float x) => na(x) ? "-" : (x > 0 ? "+" : "") + str.tostring(x, "0.00") + "%"
+pnlColor(float x) => na(x) ? color.gray : x >= 0 ? color.green : color.red
+
+// --- Alerts for every scanned symbol ---
+for i = 0 to array.size(results) - 1
+    Res r = array.get(results, i)
+    if not na(r)
+        string name = shortName(array.get(syms, i))
+        if alertEntries and r.enterLong
+            alert("Donchian: NEW LONG " + name + " at " + fmtPrice(r.price) + ", stop " + fmtPrice(r.hardStop), alert.freq_once_per_bar_close)
+        if alertEntries and r.enterShort
+            alert("Donchian: NEW SHORT " + name + " at " + fmtPrice(r.price) + ", stop " + fmtPrice(r.hardStop), alert.freq_once_per_bar_close)
+        if alertExits and r.exitLong
+            alert("Donchian: LONG EXIT " + name, alert.freq_once_per_bar_close)
+        if alertExits and r.exitShort
+            alert("Donchian: SHORT EXIT " + name, alert.freq_once_per_bar_close)
+
+// --- Scanner table ---
+tblPos = switch tblPosIn
+    "Top Left"     => position.top_left
+    "Bottom Right" => position.bottom_right
+    "Bottom Left"  => position.bottom_left
+    => position.top_right
+txtSize = switch txtSizeIn
+    "Tiny"   => size.tiny
+    "Normal" => size.normal
+    => size.small
+
+var table tbl = table.new(tblPos, 10, 21, bgcolor=color.new(color.black, 20), border_color=color.new(color.gray, 60), border_width=1)
+
+cell(int col, int row, string txt, color txtCol, color bg = na) =>
+    table.cell(tbl, col, row, txt, text_color=txtCol, text_size=txtSize, bgcolor=bg)
+
+if showScan and barstate.islast
+    headers = array.from("Symbol", "Signal", "Trend", "Price", "Entry", "Stop", "Open P&L", "Trades", "Win %", "Net %")
+    for col = 0 to 9
+        cell(col, 0, array.get(headers, col), color.white, color.new(color.blue, 40))
+
+    for i = 0 to maxRows - 1
+        Res r    = array.get(results, i)
+        int row  = i + 1
+        cell(0, row, shortName(array.get(syms, i)), color.white)
+        if na(r)
+            cell(1, row, "invalid", color.gray)
+            for col = 2 to 9
+                cell(col, row, "", color.gray)
+        else
+            string sig = r.enterLong ? "NEW LONG" : r.enterShort ? "NEW SHORT" : r.exitLong or r.exitShort ? "EXIT" : r.pos == 1 ? "LONG" : r.pos == -1 ? "SHORT" : "FLAT"
+            color sigBg = r.enterLong ? color.new(color.green, 30) : r.enterShort ? color.new(color.red, 30) : r.exitLong or r.exitShort ? color.new(color.orange, 40) : na
+            color sigCol = r.pos == 1 or r.enterLong ? color.green : r.pos == -1 or r.enterShort ? color.red : color.gray
+            float activeStop = na(r.trailStop) ? r.hardStop : r.pos == 1 ? math.max(r.trailStop, r.hardStop) : math.min(r.trailStop, r.hardStop)
+            float winRate    = r.trades > 0 ? float(r.wins) / r.trades * 100 : na
+
+            cell(1, row, sig, na(sigBg) ? sigCol : color.white, sigBg)
+            cell(2, row, r.trend == 1 ? "▲" : "▼", r.trend == 1 ? color.green : color.red)
+            cell(3, row, fmtPrice(r.price), color.white)
+            cell(4, row, fmtPrice(r.entry), color.silver)
+            cell(5, row, fmtPrice(activeStop), color.silver)
+            cell(6, row, pct(r.openPct), pnlColor(r.openPct))
+            cell(7, row, str.tostring(r.trades), color.white)
+            cell(8, row, na(winRate) ? "-" : str.tostring(winRate, "0.0") + "%", na(winRate) ? color.gray : winRate >= 50 ? color.green : color.red)
+            cell(9, row, pct(r.netPct), pnlColor(r.netPct))
+
+    // Clear rows hidden by "Symbols to Show"
+    if maxRows < 20
+        for row = maxRows + 1 to 20
+            for col = 0 to 9
+                table.cell(tbl, col, row, "")
