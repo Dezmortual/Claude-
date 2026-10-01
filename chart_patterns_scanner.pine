@@ -79,21 +79,24 @@ initCap  = input.float(10000, "Account Size",                  minval=1,        
 riskPct  = input.float(1.0,  "Risk per Trade %",               minval=0.1, maxval=10, step=0.1, group=grpRisk)
 
 // --- Visuals ---
-grpVis    = "Visuals"
-showForm  = input.bool(true, "Show Forming Patterns",        group=grpVis)
-showSig   = input.bool(true, "Show Breakout Signals",        group=grpVis)
-showTrade = input.bool(true, "Show Entry / Stop / Target",   group=grpVis)
-colBull   = input.color(#26a69a, "Bullish Color",            group=grpVis)
-colBear   = input.color(#ef5350, "Bearish Color",            group=grpVis)
-showDash  = input.bool(true, "Show Stats Dashboard",         group=grpVis)
-dashPos   = input.string("Top Right", "Dashboard Position", options=["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group=grpVis)
-txtSizeIn = input.string("Small", "Text Size", options=["Tiny", "Small", "Normal"], group=grpVis)
+grpVis     = "Visuals"
+layout     = input.string("Compact", "Layout", options=["Compact", "Full"], group=grpVis, tooltip="Compact suits phones: small tables and short labels. Tap a label to see entry, stop, target and size.")
+showForm   = input.bool(true, "Show Forming Pattern",          group=grpVis)
+showSig    = input.bool(true, "Show Breakout Signals",         group=grpVis)
+maxShown   = input.int(5, "Patterns Kept on Chart", minval=1, maxval=50, group=grpVis, tooltip="Older pattern drawings are removed to keep the chart clean.")
+showTrade  = input.bool(true, "Show Entry / Stop / Target",    group=grpVis)
+keepTrades = input.bool(false, "Keep Old Trade Zones",         group=grpVis)
+colBull    = input.color(#26a69a, "Bullish Color",             group=grpVis)
+colBear    = input.color(#ef5350, "Bearish Color",             group=grpVis)
+showDash   = input.bool(true, "Show Stats Table",              group=grpVis)
+dashPos    = input.string("Bottom Left", "Stats Table Position", options=["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group=grpVis)
+txtSizeIn  = input.string("Tiny", "Text Size", options=["Tiny", "Small", "Normal"], group=grpVis)
 
 // --- Scanner ---
 grpScan   = "Scanner"
 showScan  = input.bool(true, "Show Scanner Table",     group=grpScan)
 scanTf    = input.timeframe("", "Scanner Timeframe (empty = chart)", group=grpScan)
-scanPos   = input.string("Bottom Right", "Scanner Position", options=["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group=grpScan)
+scanPos   = input.string("Top Right", "Scanner Position", options=["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group=grpScan)
 alertScan = input.bool(true, "Alert on Scanned Symbol Signals", group=grpScan)
 s1  = input.symbol("BINANCE:BTCUSDT",  "Symbol 1",  group=grpScan)
 s2  = input.symbol("BINANCE:ETHUSDT",  "Symbol 2",  group=grpScan)
@@ -607,10 +610,13 @@ engine() =>
     o.lastAgo   := na(lastBar) ? na : bar_index - lastBar
     o
 
+
 // ============================================================================
 // Chart symbol
 // ============================================================================
 Out me = engine()
+
+bool compact = layout == "Compact"
 
 posOf(string p) =>
     switch p
@@ -623,6 +629,21 @@ txtSize = switch txtSizeIn
     "Tiny"   => size.tiny
     "Normal" => size.normal
     => size.small
+
+// Short pattern names for compact labels and tables.
+pAbbr(int pid, int dir) =>
+    switch pid
+        1  => "DBot"
+        2  => "DTop"
+        3  => "H&S"
+        4  => "iH&S"
+        5  => "AscTri"
+        6  => "DescTri"
+        7  => "BullPen"
+        8  => "BearPen"
+        9  => "Cup"
+        10 => dir == 1 ? "FWedge" : dir == -1 ? "RWedge" : "Wedge"
+        => ""
 
 parsePts(string s) =>
     array<chart.point> cp = array.new<chart.point>()
@@ -652,49 +673,89 @@ var array<int>   pTrades = array.new<int>(11, 0)
 var array<int>   pWins   = array.new<int>(11, 0)
 var array<float> pNetR   = array.new<float>(11, 0.0)
 
+// Drawings are kept in arrays so old ones can be removed.
+var array<polyline> sigPl  = array.new<polyline>()
+var array<line>     sigLn  = array.new<line>()
+var array<label>    sigLb  = array.new<label>()
+var array<label>    exitLb = array.new<label>()
+var polyline formPl = na
+var line     formLn = na
+var label    formLb = na
+
 if me.exitPid != 0
     pTrades.set(me.exitPid, pTrades.get(me.exitPid) + 1)
     pWins.set(me.exitPid, pWins.get(me.exitPid) + (me.exitR > 0 ? 1 : 0))
     pNetR.set(me.exitPid, pNetR.get(me.exitPid) + me.exitR)
     equity += equity * riskPct / 100 * me.exitR
     if showTrade
-        string why = me.exitWhy == 1 ? "TP" : me.exitWhy == 2 ? "SL" : "REV"
-        label.new(bar_index, me.exitR > 0 ? high : low, why + " " + fmtS(me.exitR, "#.##") + "R", style=me.exitR > 0 ? label.style_label_down : label.style_label_up, color=color.new(color.gray, 20), textcolor=color.white, size=size.tiny)
+        string why  = me.exitWhy == 1 ? "TP" : me.exitWhy == 2 ? "SL" : "REV"
+        string eTxt = why + " " + fmtS(me.exitR, "#.##") + "R"
+        color  eCol = me.exitR > 0 ? colBull : colBear
+        float  eY   = me.exitR > 0 ? high : low
+        if compact
+            exitLb.push(label.new(bar_index, eY, "", style=label.style_circle, color=eCol, size=size.tiny, tooltip=eTxt))
+        else
+            exitLb.push(label.new(bar_index, eY, eTxt, style=me.exitR > 0 ? label.style_label_down : label.style_label_up, color=color.new(color.gray, 20), textcolor=color.white, size=size.tiny, tooltip=eTxt))
+        while exitLb.size() > maxShown * 2
+            exitLb.shift().delete()
 
-// Forming patterns: dashed outline and the breakout line it is waiting for.
+// Forming pattern: only the newest one is shown, as a faint dashed outline.
 if showForm and me.fPid != 0
-    color c = color.new(me.fDir == 1 ? colBull : colBear, 30)
+    polyline.delete(formPl)
+    line.delete(formLn)
+    label.delete(formLb)
+    color c = color.new(me.fDir == 1 ? colBull : colBear, 40)
     array<chart.point> cp = parsePts(me.fPts)
     if cp.size() >= 2
-        polyline.new(cp, line_color=c, line_style=line.style_dashed, line_width=1)
+        formPl := polyline.new(cp, line_color=c, line_style=line.style_dashed, line_width=1)
         chart.point lastPt = cp.last()
-        label.new(lastPt.index, lastPt.price, "Forming: " + pName(me.fPid, me.fDir), style=me.fDir == 1 ? label.style_label_up : label.style_label_down, color=color.new(c, 70), textcolor=c, size=size.tiny)
-    int xEnd = bar_index + 15
-    line.new(me.fX0, me.fY0, xEnd, me.fY0 + me.fSlope * (xEnd - me.fX0), color=c, style=line.style_dotted)
+        string fTxt = "Forming: " + pName(me.fPid, me.fDir)
+        formLb := label.new(lastPt.index, lastPt.price, compact ? "?" : fTxt, style=me.fDir == 1 ? label.style_label_up : label.style_label_down, color=color.new(c, 75), textcolor=c, size=size.tiny, tooltip=fTxt)
+    int xEnd = bar_index + 10
+    formLn := line.new(me.fX0, me.fY0, xEnd, me.fY0 + me.fSlope * (xEnd - me.fX0), color=c, style=line.style_dotted)
 
-// Confirmed breakouts.
+// Confirmed breakouts. Compact labels are two short words; tap for the details.
 if showSig and me.sig != 0
+    polyline.delete(formPl)
+    line.delete(formLn)
+    label.delete(formLb)
     color c = me.sig == 1 ? colBull : colBear
     array<chart.point> cp = parsePts(me.pts)
     cp.push(chart.point.from_index(bar_index, close))
-    polyline.new(cp, line_color=c, line_width=2)
-    line.new(me.x0, me.y0, bar_index, me.y0 + me.slope * (bar_index - me.x0), color=c, style=line.style_dashed, width=2)
-    float qty = equity * riskPct / 100 / math.abs(me.entry - me.stop)
-    string txt = pName(me.pid, me.sig) + "\n" + (me.sig == 1 ? "BUY" : "SELL") + "  conf " + str.tostring(me.conf) + "/5"
-    txt += me.opened ? "\nEntry " + fmtP(me.entry) + "\nSL " + fmtP(me.stop) + "  TP " + fmtP(me.target) + "\nSize " + str.tostring(qty, "#.####") : "\n(not taken: in position)"
-    label.new(bar_index, me.sig == 1 ? low : high, txt, style=me.sig == 1 ? label.style_label_up : label.style_label_down, color=c, textcolor=color.white, size=txtSize)
+    sigPl.push(polyline.new(cp, line_color=color.new(c, 20), line_width=2))
+    sigLn.push(line.new(me.x0, me.y0, bar_index, me.y0 + me.slope * (bar_index - me.x0), color=c, style=line.style_dashed, width=1))
+    float  qty  = equity * riskPct / 100 / math.abs(me.entry - me.stop)
+    string side = me.sig == 1 ? "BUY" : "SELL"
+    string full = pName(me.pid, me.sig) + "\n" + side + "  conf " + str.tostring(me.conf) + "/5"
+    full += me.opened ? "\nEntry " + fmtP(me.entry) + "\nSL " + fmtP(me.stop) + "  TP " + fmtP(me.target) + "\nSize " + str.tostring(qty, "#.####") : "\n(not taken: already in position)"
+    string shortTxt = side + "\n" + pAbbr(me.pid, me.sig)
+    sigLb.push(label.new(bar_index, me.sig == 1 ? low : high, compact ? shortTxt : full, style=me.sig == 1 ? label.style_label_up : label.style_label_down, color=me.opened ? c : color.new(c, 60), textcolor=color.white, size=txtSize, tooltip=full))
+    while sigPl.size() > maxShown
+        sigPl.shift().delete()
+    while sigLn.size() > maxShown
+        sigLn.shift().delete()
+    while sigLb.size() > maxShown
+        sigLb.shift().delete()
 
-// Entry / stop / target zones of the open position.
-var line enL = na
-var line slL = na
-var line tpL = na
+// Entry / stop / target zones. By default only the latest trade is kept.
+var line     enL = na
+var line     slL = na
+var line     tpL = na
+var linefill slF = na
+var linefill tpF = na
 if showTrade
     if me.opened
+        if not keepTrades
+            linefill.delete(slF)
+            linefill.delete(tpF)
+            line.delete(enL)
+            line.delete(slL)
+            line.delete(tpL)
         enL := line.new(bar_index, me.posEntry,  bar_index, me.posEntry,  color=color.gray, width=1)
         slL := line.new(bar_index, me.posStop,   bar_index, me.posStop,   color=colBear,    width=1)
         tpL := line.new(bar_index, me.posTarget, bar_index, me.posTarget, color=colBull,    width=1)
-        linefill.new(enL, slL, color.new(colBear, 88))
-        linefill.new(enL, tpL, color.new(colBull, 88))
+        slF := linefill.new(enL, slL, color.new(colBear, 88))
+        tpF := linefill.new(enL, tpL, color.new(colBull, 88))
     else if me.pos != 0 and not na(enL)
         enL.set_x2(bar_index)
         slL.set_x2(bar_index)
@@ -708,44 +769,61 @@ alertcondition(me.exitPid != 0, "Trade Closed",  "Chart pattern trade closed on 
 if me.sig != 0
     alert(syminfo.ticker + ": " + pName(me.pid, me.sig) + " " + (me.sig == 1 ? "BUY" : "SELL") + " at " + fmtP(me.entry) + " | SL " + fmtP(me.stop) + " | TP " + fmtP(me.target) + " | conf " + str.tostring(me.conf) + "/5", alert.freq_once_per_bar_close)
 
-// --- Stats dashboard ---
-var table dash = table.new(posOf(dashPos), 5, 15, bgcolor=color.new(color.black, 20), border_color=color.new(color.gray, 60), border_width=1)
+// --- Stats table ---
+var table dash = table.new(posOf(dashPos), 5, 15, bgcolor=color.new(color.black, 35), border_color=color.new(color.gray, 70), border_width=1)
 
 dCell(int col, int row, string txt, color tc) =>
     table.cell(dash, col, row, txt, text_color=tc, text_size=txtSize, text_halign=col == 0 ? text.align_left : text.align_right)
 
 if showDash and barstate.islast
-    table.cell(dash, 0, 0, "10 Chart Patterns - Live Stats", text_color=color.white, text_size=txtSize, bgcolor=color.new(color.blue, 40))
-    table.merge_cells(dash, 0, 0, 4, 0)
-    dCell(0, 1, "Pattern", color.silver)
-    dCell(1, 1, "Trades",  color.silver)
-    dCell(2, 1, "Win %",   color.silver)
-    dCell(3, 1, "Net R",   color.silver)
-    dCell(4, 1, "Rating",  color.silver)
-    for pid = 1 to 10
-        int   t  = pTrades.get(pid)
-        float wr = t > 0 ? float(pWins.get(pid)) / t * 100 : na
-        float nr = pNetR.get(pid)
-        color nameCol = pid == 10 ? color.aqua : pid == 1 or pid == 4 or pid == 5 or pid == 7 or pid == 9 ? colBull : colBear
-        dCell(0, pid + 1, str.tostring(pid) + ". " + pName(pid, 0), nameCol)
-        dCell(1, pid + 1, str.tostring(t), color.white)
-        dCell(2, pid + 1, t > 0 ? str.tostring(wr, "#.0") : "-", color.white)
-        dCell(3, pid + 1, fmtS(nr, "#.##"), nr > 0 ? colBull : nr < 0 ? colBear : color.white)
-        dCell(4, pid + 1, t > 0 ? stars(wr) : "-", color.yellow)
     float totWr = me.trades > 0 ? float(me.wins) / me.trades * 100 : na
-    dCell(0, 12, "Total", color.white)
-    dCell(1, 12, str.tostring(me.trades), color.white)
-    dCell(2, 12, me.trades > 0 ? str.tostring(totWr, "#.0") : "-", color.white)
-    dCell(3, 12, fmtS(me.netR, "#.##"), me.netR > 0 ? colBull : me.netR < 0 ? colBear : color.white)
-    dCell(4, 12, me.trades > 0 ? stars(totWr) : "-", color.yellow)
-    dCell(0, 13, "Equity", color.silver)
-    table.cell(dash, 1, 13, str.tostring(equity, "#,###.##") + " (" + fmtS((equity / initCap - 1) * 100, "#.##") + "%)", text_color=equity >= initCap ? colBull : colBear, text_size=txtSize, text_halign=text.align_right)
-    table.merge_cells(dash, 1, 13, 4, 13)
-    string posTxt = me.pos == 0 ? "Flat" : (me.pos == 1 ? "LONG " : "SHORT ") + pName(me.posPid, me.pos) + " | SL " + fmtP(me.posStop) + " TP " + fmtP(me.posTarget)
-    string watchTxt = me.wPid != 0 ? "  | watching " + pName(me.wPid, me.wDir) : ""
-    dCell(0, 14, "Position", color.silver)
-    table.cell(dash, 1, 14, posTxt + watchTxt, text_color=me.pos == 1 ? colBull : me.pos == -1 ? colBear : color.white, text_size=txtSize, text_halign=text.align_right)
-    table.merge_cells(dash, 1, 14, 4, 14)
+    color netCol = me.netR > 0 ? colBull : me.netR < 0 ? colBear : color.white
+    string posTxt = me.pos == 0 ? "Flat" : (me.pos == 1 ? "LONG " : "SHORT ") + (compact ? pAbbr(me.posPid, me.pos) : pName(me.posPid, me.pos))
+    color posCol = me.pos == 1 ? colBull : me.pos == -1 ? colBear : color.white
+    if compact
+        dCell(0, 0, "Trades", color.silver)
+        dCell(1, 0, str.tostring(me.trades) + (me.trades > 0 ? "  " + str.tostring(totWr, "#") + "%" : ""), color.white)
+        dCell(0, 1, "Net", color.silver)
+        dCell(1, 1, fmtS(me.netR, "#.#") + "R  " + fmtS((equity / initCap - 1) * 100, "#.#") + "%", netCol)
+        dCell(0, 2, "Pos", color.silver)
+        dCell(1, 2, posTxt, posCol)
+        if me.pos != 0
+            dCell(0, 3, "SL/TP", color.silver)
+            dCell(1, 3, fmtP(me.posStop) + " / " + fmtP(me.posTarget), color.white)
+        if me.wPid != 0
+            dCell(0, me.pos != 0 ? 4 : 3, "Watch", color.silver)
+            dCell(1, me.pos != 0 ? 4 : 3, pAbbr(me.wPid, me.wDir), me.wDir == 1 ? colBull : colBear)
+    else
+        table.cell(dash, 0, 0, "10 Chart Patterns - Live Stats", text_color=color.white, text_size=txtSize, bgcolor=color.new(color.blue, 40))
+        table.merge_cells(dash, 0, 0, 4, 0)
+        dCell(0, 1, "Pattern", color.silver)
+        dCell(1, 1, "Trades",  color.silver)
+        dCell(2, 1, "Win %",   color.silver)
+        dCell(3, 1, "Net R",   color.silver)
+        dCell(4, 1, "Rating",  color.silver)
+        for pid = 1 to 10
+            int   t  = pTrades.get(pid)
+            float wr = t > 0 ? float(pWins.get(pid)) / t * 100 : na
+            float nr = pNetR.get(pid)
+            color nameCol = pid == 10 ? color.aqua : pid == 1 or pid == 4 or pid == 5 or pid == 7 or pid == 9 ? colBull : colBear
+            dCell(0, pid + 1, str.tostring(pid) + ". " + pName(pid, 0), nameCol)
+            dCell(1, pid + 1, str.tostring(t), color.white)
+            dCell(2, pid + 1, t > 0 ? str.tostring(wr, "#.0") : "-", color.white)
+            dCell(3, pid + 1, fmtS(nr, "#.##"), nr > 0 ? colBull : nr < 0 ? colBear : color.white)
+            dCell(4, pid + 1, t > 0 ? stars(wr) : "-", color.yellow)
+        dCell(0, 12, "Total", color.white)
+        dCell(1, 12, str.tostring(me.trades), color.white)
+        dCell(2, 12, me.trades > 0 ? str.tostring(totWr, "#.0") : "-", color.white)
+        dCell(3, 12, fmtS(me.netR, "#.##"), netCol)
+        dCell(4, 12, me.trades > 0 ? stars(totWr) : "-", color.yellow)
+        dCell(0, 13, "Equity", color.silver)
+        table.cell(dash, 1, 13, str.tostring(equity, "#,###.##") + " (" + fmtS((equity / initCap - 1) * 100, "#.##") + "%)", text_color=equity >= initCap ? colBull : colBear, text_size=txtSize, text_halign=text.align_right)
+        table.merge_cells(dash, 1, 13, 4, 13)
+        string watchTxt = me.wPid != 0 ? "  | watching " + pName(me.wPid, me.wDir) : ""
+        string slTp = me.pos != 0 ? " | SL " + fmtP(me.posStop) + " TP " + fmtP(me.posTarget) : ""
+        dCell(0, 14, "Position", color.silver)
+        table.cell(dash, 1, 14, posTxt + slTp + watchTxt, text_color=posCol, text_size=txtSize, text_halign=text.align_right)
+        table.merge_cells(dash, 1, 14, 4, 14)
 
 // ============================================================================
 // Multi-symbol scanner
@@ -765,7 +843,8 @@ Out r10 = scan(s10)
 
 shortSym(string sym) =>
     array<string> parts = str.split(sym, ":")
-    parts.size() > 0 ? parts.last() : sym
+    string t = parts.size() > 0 ? parts.last() : sym
+    compact ? str.replace_all(t, "USDT", "") : t
 
 scanAlert(string sym, Out r) =>
     if alertScan and not na(r) and r.sig != 0
@@ -782,7 +861,7 @@ scanAlert(s8, r8)
 scanAlert(s9, r9)
 scanAlert(s10, r10)
 
-var table scanT = table.new(posOf(scanPos), 7, 12, bgcolor=color.new(color.black, 20), border_color=color.new(color.gray, 60), border_width=1)
+var table scanT = table.new(posOf(scanPos), 7, 12, bgcolor=color.new(color.black, 35), border_color=color.new(color.gray, 70), border_width=1)
 
 sCell(int col, int row, string txt, color tc) =>
     table.cell(scanT, col, row, txt, text_color=tc, text_size=txtSize, text_halign=col == 0 ? text.align_left : text.align_center)
@@ -791,35 +870,42 @@ scanRow(int row, string sym, Out r) =>
     sCell(0, row, shortSym(sym), color.white)
     if na(r)
         sCell(1, row, "n/a", color.gray)
-        for c = 2 to 6
-            sCell(c, row, "", color.gray)
     else
         color sc = r.lastDir == 1 ? colBull : r.lastDir == -1 ? colBear : color.gray
+        color pc = r.pos == 1 ? colBull : r.pos == -1 ? colBear : color.gray
         bool fresh = not na(r.lastAgo) and r.lastAgo <= 3
-        sCell(1, row, r.lastDir == 0 ? "-" : (r.lastDir == 1 ? "BUY" : "SELL") + (fresh ? " NEW" : ""), sc)
-        sCell(2, row, r.lastDir == 0 ? "-" : pName(r.lastPid, r.lastDir) + " (" + str.tostring(r.lastAgo) + " bars)", sc)
-        sCell(3, row, r.wPid != 0 ? pName(r.wPid, r.wDir) : "-", r.wDir == 1 ? colBull : r.wDir == -1 ? colBear : color.gray)
-        sCell(4, row, r.pos == 1 ? "LONG" : r.pos == -1 ? "SHORT" : "Flat", r.pos == 1 ? colBull : r.pos == -1 ? colBear : color.white)
-        sCell(5, row, r.trades > 0 ? str.tostring(float(r.wins) / r.trades * 100, "#") + "% / " + str.tostring(r.trades) : "-", color.white)
-        sCell(6, row, fmtS(r.netR, "#.#") + "R", r.netR > 0 ? colBull : r.netR < 0 ? colBear : color.white)
+        string side = r.lastDir == 1 ? "BUY" : "SELL"
+        if compact
+            // Symbol | last signal with pattern and age | open position
+            sCell(1, row, r.lastDir == 0 ? "-" : (fresh ? "● " : "") + side + " " + pAbbr(r.lastPid, r.lastDir) + " " + str.tostring(r.lastAgo) + "b", sc)
+            sCell(2, row, r.pos == 1 ? "L" : r.pos == -1 ? "S" : "-", pc)
+        else
+            sCell(1, row, r.lastDir == 0 ? "-" : side + (fresh ? " NEW" : ""), sc)
+            sCell(2, row, r.lastDir == 0 ? "-" : pName(r.lastPid, r.lastDir) + " (" + str.tostring(r.lastAgo) + " bars)", sc)
+            sCell(3, row, r.wPid != 0 ? pName(r.wPid, r.wDir) : "-", r.wDir == 1 ? colBull : r.wDir == -1 ? colBear : color.gray)
+            sCell(4, row, r.pos == 1 ? "LONG" : r.pos == -1 ? "SHORT" : "Flat", pc)
+            sCell(5, row, r.trades > 0 ? str.tostring(float(r.wins) / r.trades * 100, "#") + "% / " + str.tostring(r.trades) : "-", color.white)
+            sCell(6, row, fmtS(r.netR, "#.#") + "R", r.netR > 0 ? colBull : r.netR < 0 ? colBear : color.white)
 
 if showScan and barstate.islast
-    table.cell(scanT, 0, 0, "Pattern Scanner" + (scanTf == "" ? "" : " (" + scanTf + ")"), text_color=color.white, text_size=txtSize, bgcolor=color.new(color.purple, 40))
-    table.merge_cells(scanT, 0, 0, 6, 0)
-    sCell(0, 1, "Symbol",     color.silver)
-    sCell(1, 1, "Last Signal", color.silver)
-    sCell(2, 1, "Pattern",    color.silver)
-    sCell(3, 1, "Watching",   color.silver)
-    sCell(4, 1, "Position",   color.silver)
-    sCell(5, 1, "Win% / N",   color.silver)
-    sCell(6, 1, "Net",        color.silver)
-    scanRow(2,  s1,  r1)
-    scanRow(3,  s2,  r2)
-    scanRow(4,  s3,  r3)
-    scanRow(5,  s4,  r4)
-    scanRow(6,  s5,  r5)
-    scanRow(7,  s6,  r6)
-    scanRow(8,  s7,  r7)
-    scanRow(9,  s8,  r8)
-    scanRow(10, s9,  r9)
-    scanRow(11, s10, r10)
+    if not compact
+        table.cell(scanT, 0, 0, "Pattern Scanner" + (scanTf == "" ? "" : " (" + scanTf + ")"), text_color=color.white, text_size=txtSize, bgcolor=color.new(color.purple, 40))
+        table.merge_cells(scanT, 0, 0, 6, 0)
+        sCell(0, 1, "Symbol",      color.silver)
+        sCell(1, 1, "Last Signal", color.silver)
+        sCell(2, 1, "Pattern",     color.silver)
+        sCell(3, 1, "Watching",    color.silver)
+        sCell(4, 1, "Position",    color.silver)
+        sCell(5, 1, "Win% / N",    color.silver)
+        sCell(6, 1, "Net",         color.silver)
+    int o = compact ? 0 : 2
+    scanRow(o + 0, s1,  r1)
+    scanRow(o + 1, s2,  r2)
+    scanRow(o + 2, s3,  r3)
+    scanRow(o + 3, s4,  r4)
+    scanRow(o + 4, s5,  r5)
+    scanRow(o + 5, s6,  r6)
+    scanRow(o + 6, s7,  r7)
+    scanRow(o + 7, s8,  r8)
+    scanRow(o + 8, s9,  r9)
+    scanRow(o + 9, s10, r10)
