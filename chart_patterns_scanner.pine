@@ -640,6 +640,10 @@ stars(float winPct) =>
 fmtP(float v) =>
     str.tostring(v, format.mintick)
 
+// Signed number such as "+1.5" / "-0.75" / "0".
+fmtS(float v, string f) =>
+    (v > 0 ? "+" : "") + str.tostring(v, f)
+
 plot(showEma ? ta.ema(close, emaLen) : na, "Trend EMA", color=color.new(color.gray, 30), linewidth=2)
 
 // Account equity, compounded at `riskPct` per 1R.
@@ -655,7 +659,7 @@ if me.exitPid != 0
     equity += equity * riskPct / 100 * me.exitR
     if showTrade
         string why = me.exitWhy == 1 ? "TP" : me.exitWhy == 2 ? "SL" : "REV"
-        label.new(bar_index, me.exitR > 0 ? high : low, why + " " + str.tostring(me.exitR, "+#.##;-#.##") + "R", style=me.exitR > 0 ? label.style_label_down : label.style_label_up, color=color.new(color.gray, 20), textcolor=color.white, size=size.tiny)
+        label.new(bar_index, me.exitR > 0 ? high : low, why + " " + fmtS(me.exitR, "#.##") + "R", style=me.exitR > 0 ? label.style_label_down : label.style_label_up, color=color.new(color.gray, 20), textcolor=color.white, size=size.tiny)
 
 // Forming patterns: dashed outline and the breakout line it is waiting for.
 if showForm and me.fPid != 0
@@ -726,16 +730,16 @@ if showDash and barstate.islast
         dCell(0, pid + 1, str.tostring(pid) + ". " + pName(pid, 0), nameCol)
         dCell(1, pid + 1, str.tostring(t), color.white)
         dCell(2, pid + 1, t > 0 ? str.tostring(wr, "#.0") : "-", color.white)
-        dCell(3, pid + 1, str.tostring(nr, "+#.##;-#.##;0"), nr > 0 ? colBull : nr < 0 ? colBear : color.white)
+        dCell(3, pid + 1, fmtS(nr, "#.##"), nr > 0 ? colBull : nr < 0 ? colBear : color.white)
         dCell(4, pid + 1, t > 0 ? stars(wr) : "-", color.yellow)
     float totWr = me.trades > 0 ? float(me.wins) / me.trades * 100 : na
     dCell(0, 12, "Total", color.white)
     dCell(1, 12, str.tostring(me.trades), color.white)
     dCell(2, 12, me.trades > 0 ? str.tostring(totWr, "#.0") : "-", color.white)
-    dCell(3, 12, str.tostring(me.netR, "+#.##;-#.##;0"), me.netR > 0 ? colBull : me.netR < 0 ? colBear : color.white)
+    dCell(3, 12, fmtS(me.netR, "#.##"), me.netR > 0 ? colBull : me.netR < 0 ? colBear : color.white)
     dCell(4, 12, me.trades > 0 ? stars(totWr) : "-", color.yellow)
     dCell(0, 13, "Equity", color.silver)
-    table.cell(dash, 1, 13, str.tostring(equity, "#,###.##") + " (" + str.tostring((equity / initCap - 1) * 100, "+#.##;-#.##") + "%)", text_color=equity >= initCap ? colBull : colBear, text_size=txtSize, text_halign=text.align_right)
+    table.cell(dash, 1, 13, str.tostring(equity, "#,###.##") + " (" + fmtS((equity / initCap - 1) * 100, "#.##") + "%)", text_color=equity >= initCap ? colBull : colBear, text_size=txtSize, text_halign=text.align_right)
     table.merge_cells(dash, 1, 13, 4, 13)
     string posTxt = me.pos == 0 ? "Flat" : (me.pos == 1 ? "LONG " : "SHORT ") + pName(me.posPid, me.pos) + " | SL " + fmtP(me.posStop) + " TP " + fmtP(me.posTarget)
     string watchTxt = me.wPid != 0 ? "  | watching " + pName(me.wPid, me.wDir) : ""
@@ -797,7 +801,7 @@ scanRow(int row, string sym, Out r) =>
         sCell(3, row, r.wPid != 0 ? pName(r.wPid, r.wDir) : "-", r.wDir == 1 ? colBull : r.wDir == -1 ? colBear : color.gray)
         sCell(4, row, r.pos == 1 ? "LONG" : r.pos == -1 ? "SHORT" : "Flat", r.pos == 1 ? colBull : r.pos == -1 ? colBear : color.white)
         sCell(5, row, r.trades > 0 ? str.tostring(float(r.wins) / r.trades * 100, "#") + "% / " + str.tostring(r.trades) : "-", color.white)
-        sCell(6, row, str.tostring(r.netR, "+#.#;-#.#;0") + "R", r.netR > 0 ? colBull : r.netR < 0 ? colBear : color.white)
+        sCell(6, row, fmtS(r.netR, "#.#") + "R", r.netR > 0 ? colBull : r.netR < 0 ? colBear : color.white)
 
 if showScan and barstate.islast
     table.cell(scanT, 0, 0, "Pattern Scanner" + (scanTf == "" ? "" : " (" + scanTf + ")"), text_color=color.white, text_size=txtSize, bgcolor=color.new(color.purple, 40))
