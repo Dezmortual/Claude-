@@ -1,0 +1,25 @@
+//@version=6
+indicator("VWAP + RSI Strategy", overlay = true)
+
+emaLen = input.int(20, "EMA Length")
+rsiLen = input.int(14, "RSI Length")
+rsiMid = input.float(50, "RSI Level")
+
+vwap = ta.vwap(hlc3)
+ema  = ta.ema(close, emaLen)
+rsi  = ta.rsi(close, rsiLen)
+
+longOK  = close > vwap and close > ema and rsi > rsiMid
+shortOK = close < vwap and close < ema and rsi < rsiMid
+
+longSig  = barstate.isconfirmed and longOK and not longOK[1]
+shortSig = barstate.isconfirmed and shortOK and not shortOK[1]
+
+plot(vwap, "VWAP", color.white, 2)
+plot(ema, "EMA", color.red, 2)
+
+plotshape(longSig, "Long", shape.labelup, location.belowbar, color.green, text = "LONG", textcolor = color.white, size = size.small)
+plotshape(shortSig, "Short", shape.labeldown, location.abovebar, color.red, text = "SHORT", textcolor = color.white, size = size.small)
+
+alertcondition(longSig, "Long Entry", "VWAP+RSI LONG on {{ticker}} at {{close}}")
+alertcondition(shortSig, "Short Entry", "VWAP+RSI SHORT on {{ticker}} at {{close}}")
