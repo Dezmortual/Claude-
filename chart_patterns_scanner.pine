@@ -716,9 +716,11 @@ if showForm and me.fPid != 0
 
 // Confirmed breakouts. Compact labels are two short words; tap for the details.
 if showSig and me.sig != 0
-    polyline.delete(formPl)
-    line.delete(formLn)
-    label.delete(formLb)
+    // Clear the forming outline, unless a different pattern started forming on this same bar.
+    if me.fPid == 0
+        polyline.delete(formPl)
+        line.delete(formLn)
+        label.delete(formLb)
     color c = me.sig == 1 ? colBull : colBear
     array<chart.point> cp = parsePts(me.pts)
     cp.push(chart.point.from_index(bar_index, close))
@@ -781,6 +783,7 @@ if showDash and barstate.islast
     string posTxt = me.pos == 0 ? "Flat" : (me.pos == 1 ? "LONG " : "SHORT ") + (compact ? pAbbr(me.posPid, me.pos) : pName(me.posPid, me.pos))
     color posCol = me.pos == 1 ? colBull : me.pos == -1 ? colBear : color.white
     if compact
+        dash.clear(0, 0, 4, 14)
         dCell(0, 0, "Trades", color.silver)
         dCell(1, 0, str.tostring(me.trades) + (me.trades > 0 ? "  " + str.tostring(totWr, "#") + "%" : ""), color.white)
         dCell(0, 1, "Net", color.silver)
@@ -828,7 +831,16 @@ if showDash and barstate.islast
 // ============================================================================
 // Multi-symbol scanner
 // ============================================================================
-scan(string sym) => request.security(sym, scanTf, engine(), ignore_invalid_symbol=true)
+// On a higher scanner timeframe, read the last CLOSED bar (offset 1 + lookahead) so the scanner
+// never reports a signal from a bar that is still forming, and alert once per scanner bar.
+bool scanHtf = scanTf != "" and timeframe.in_seconds(scanTf) > timeframe.in_seconds()
+bool scanBarNew = timeframe.change(scanTf == "" ? timeframe.period : scanTf)
+
+engScan(bool prev) =>
+    Out e = engine()
+    prev ? e[1] : e
+
+scan(string sym) => request.security(sym, scanTf, engScan(scanHtf), lookahead=scanHtf ? barmerge.lookahead_on : barmerge.lookahead_off, ignore_invalid_symbol=true)
 
 Out r1  = scan(s1)
 Out r2  = scan(s2)
@@ -847,7 +859,7 @@ shortSym(string sym) =>
     compact ? str.replace_all(t, "USDT", "") : t
 
 scanAlert(string sym, Out r) =>
-    if alertScan and not na(r) and r.sig != 0
+    if alertScan and (not scanHtf or scanBarNew) and not na(r) and r.sig != 0
         alert(shortSym(sym) + ": " + pName(r.pid, r.sig) + " " + (r.sig == 1 ? "BUY" : "SELL") + " at " + str.tostring(r.entry) + " | SL " + str.tostring(r.stop) + " | TP " + str.tostring(r.target) + " | conf " + str.tostring(r.conf) + "/5", alert.freq_once_per_bar_close)
 
 scanAlert(s1, r1)
