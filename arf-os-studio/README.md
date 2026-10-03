@@ -5,6 +5,12 @@ A single-page web platform for working with the ten ARF-OS specialist agents
 a skill set, and its full role prompt from `SPECIALIST_AGENT_PROMPTS.md`.
 
 ## Features
+- **Ask all (the floor)**: one chat box for the whole team. A quick routing
+  step reads each question and picks the 1–3 agents whose roles fit (you set
+  the maximum). They answer automatically, one after another, and each sees
+  what the colleagues before it said. Type `@name` (for example `@rook` or
+  `@quill`) to pick an agent yourself. If routing fails, a keyword match is
+  used as a fallback.
 - **Team view**: character cards with bio, skills, and trait meters.
 - **Workspace**: chat with any agent. The agent runs with the shared ARF-OS
   policy plus its own role prompt.
