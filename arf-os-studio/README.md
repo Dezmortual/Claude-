@@ -25,3 +25,8 @@ Quick = Haiku 4.5, Balanced = Sonnet 5.5, Deep = Opus 5.5.
 Agents live in the `AGENTS` array near the top of the `<script>`. Edit names,
 bios, skills, starter tasks, or prompts there. `SHARED_POLICY` stands in for
 the Leader Agent System Prompt; replace it with your real one.
+
+## GitHub Pages
+`.github/workflows/pages.yml` deploys this folder to GitHub Pages on every push
+to the default branch that touches `arf-os-studio/`. The site is served at
+https://dezmortual.github.io/Claude-/
