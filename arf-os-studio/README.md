@@ -6,6 +6,13 @@ a skill set, and its full role prompt from `SPECIALIST_AGENT_PROMPTS.md`.
 The full product and engineering spec is in
 [`AI_RESEARCH_HEDGE_FUND_SPEC.md`](../AI_RESEARCH_HEDGE_FUND_SPEC.md).
 
+## Research platform
+`platform/` holds the full ARF-OS research platform: campaigns run by the agents
+end to end, an in-browser backtest runner, robustness validation, TradingView
+parity, a committee, paper forward tests, a practice arena and an audit log. See
+[`platform/README.md`](platform/README.md). On Pages it is served at
+https://dezmortual.github.io/Claude-/platform/
+
 ## Features
 - **Ask all (the floor)**: one chat box for the whole team. A quick routing
   step reads each question and picks the 1–3 agents whose roles fit (you set
