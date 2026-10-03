@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ARF-OS Research Platform</title>
+<meta name="description" content="Multi-agent research operating system for discovering, testing, rejecting and forward-testing systematic trading strategies.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/app.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f5f8b'/%3E%3Cpath d='M6 22l6-7 5 4 9-11' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+</head>
+<body>
+<div class="app">
+  <nav class="rail" aria-label="Primary">
+    <div class="brand">
+      <a href="#/" class="brand-link"><span class="logo" aria-hidden="true"></span><span><b>ARF-OS</b><small>Research platform</small></span></a>
+    </div>
+    <div class="navlist" id="nav"></div>
+    <div class="rail-foot">
+      <a href="../" class="muted-link">← Agent Desk (chat)</a>
+      <a href="https://github.com/Dezmortual/Claude-/blob/HEAD/AI_RESEARCH_HEDGE_FUND_SPEC.md" class="muted-link" target="_blank" rel="noopener">Specification</a>
+    </div>
+  </nav>
+  <div class="main-col">
+    <header class="topbar">
+      <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open navigation">☰</button>
+      <div class="env-badge" id="envBadge">Research · paper only</div>
+      <div class="top-stats" id="topStats"></div>
+      <div class="top-right">
+        <span class="conn" id="conn"><i></i><span>Connecting…</span></span>
+        <button class="btn small" id="pauseBtn" title="Pause or resume the job queue">Pause queue</button>
+        <button class="btn small" id="themeBtn" title="Toggle light/dark theme">Theme</button>
+      </div>
+    </header>
+    <main id="view" tabindex="-1"></main>
+  </div>
+</div>
+<div class="modal-back" id="modalBack" hidden><div class="modal" role="dialog" aria-modal="true" id="modal"></div></div>
+<div class="toast" id="toast" hidden></div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

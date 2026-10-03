@@ -1,0 +1,10 @@
+{
+  "name": "arf-os-platform",
+  "private": true,
+  "type": "module",
+  "description": "ARF-OS research platform: static, no build step. Open index.html via any static server.",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "e2e": "node test/e2e.mjs"
+  }
+}
