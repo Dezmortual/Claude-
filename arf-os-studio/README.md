@@ -3,6 +3,8 @@
 A single-page web platform for working with the ten ARF-OS specialist agents
 (Idea Scout through Portfolio Researcher). Each agent has a character, a name,
 a skill set, and its full role prompt from `SPECIALIST_AGENT_PROMPTS.md`.
+The full product and engineering spec is in
+[`AI_RESEARCH_HEDGE_FUND_SPEC.md`](../AI_RESEARCH_HEDGE_FUND_SPEC.md).
 
 ## Features
 - **Ask all (the floor)**: one chat box for the whole team. A quick routing
