@@ -474,13 +474,14 @@ async function viewLab() {
   const draft = (await db.setting("labDraft")) || JSON.stringify(SDL_TEMPLATE, null, 2);
   const left = `<div class="card"><h2>Strategy Definition (SDL)</h2><p class="small muted">Write or paste an SDL document. It is validated against the same grammar agents use, then registered as an immutable version and run through the full backtest plan. Every run is recorded; nothing is a throwaway.</p>
     <textarea class="code" id="labSdl" spellcheck="false">${esc(draft)}</textarea>
-    <div class="row section"><button class="btn" data-act="labValidate">Validate</button><button class="btn" data-act="labTemplate">Reset to template</button><span style="flex:1"></span>
-    <select id="labDataset">${datasets.map(d => `<option value="${d.id}">${esc(d.symbol)} ${esc(d.timeframe)} · ${d.bars} bars · ${isoDate(d.from)}→${isoDate(d.to)}</option>`).join("")}</select>
-    <button class="btn primary" data-act="labRun" ${datasets.length ? "" : "disabled"}>Register &amp; run backtest plan</button></div>
-    ${datasets.length ? "" : `<p class="note warn small section">Load a dataset in <a href="#/data">Data Health</a> first.</p>`}<div id="labOut" class="section"></div></div>`;
+    <div class="row section"><button class="btn" data-act="labValidate">Validate</button><button class="btn" data-act="labTemplate">Reset to template</button></div>
+    <div class="lab-run section">
+      <label class="field">Price data${datasets.length ? `<select id="labDataset">${datasets.map(d => `<option value="${d.id}">${esc(d.symbol)} ${esc(d.timeframe)} · ${d.bars} bars · ${isoDate(d.from)}→${isoDate(d.to)}</option>`).join("")}</select>` : `<span class="note warn small">No price data yet. Upload a CSV exported from TradingView to run a backtest.</span>`}</label>
+      <div class="row"><button class="btn" data-act="loadDataset" data-return="lab">Upload price CSV…</button><button class="btn primary" data-act="labRun" ${datasets.length ? "" : "disabled"}>Register &amp; run backtest plan</button></div>
+    </div><div id="labOut" class="section"></div></div>`;
   const { SDL_GRAMMAR_DOC } = await import("./agents.js");
-  const right = `<div class="card"><h2>Grammar</h2><pre style="white-space:pre-wrap;max-height:none">${esc(SDL_GRAMMAR_DOC)}</pre></div>`;
-  return page(header("Backtest Lab", "Hand-write a strategy definition and run it through the same predeclared plan as the agents: smoke → baseline → in-sample search → validation → walk-forward."), `<div class="grid" style="grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)">${left}${right}</div>`);
+  const right = `<details class="card lab-grammar"><summary><h2 style="display:inline">Grammar reference</h2></summary><pre style="white-space:pre-wrap;max-height:none;margin-top:10px">${esc(SDL_GRAMMAR_DOC)}</pre></details>`;
+  return page(header("Backtest Lab", "Hand-write a strategy definition and run it through the same predeclared plan as the agents: smoke → baseline → in-sample search → validation → walk-forward."), `<div class="grid lab-grid">${left}${right}</div>`);
 }
 
 /* ======================= Validation Lab ======================= */
@@ -840,7 +841,10 @@ export const actions = {
           else bars = await fetchBars({ source: src, symbol: sym, timeframe: tf, from: Date.now() - (+m.querySelector("#ldDays").value || 1460) * 86_400_000, onProgress: n => (out.textContent = `${n} bars…`) });
           if (!bars.t.length) throw new Error("No bars returned");
           const ds = await L.saveDataset({ source: src, symbol: sym, timeframe: tf, bars, tickSize: tick, note: src === "csv" ? "CSV upload" : "" });
-          ui.closeModal(); location.hash = `#/data/${ds.id}`; toast(`Loaded ${ds.bars} bars — ${ds.status}`);
+          ui.closeModal();
+          if (d.return === "lab") { const draft = $("#labSdl"); if (draft) await db.setting("labDraft", draft.value); const { render } = await import("./app.js"); await render(); const sel = $("#labDataset"); if (sel) sel.value = ds.id; }
+          else location.hash = `#/data/${ds.id}`;
+          toast(`Loaded ${ds.bars} bars — ${ds.status}`);
         } catch (e) { out.innerHTML = `<span class="fail">${esc(e.message)}</span>`; }
       });
     });

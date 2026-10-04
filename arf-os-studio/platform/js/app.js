@@ -42,7 +42,7 @@ async function renderTop() {
   const conn = $("#conn"), key = await db.setting("apikey");
   const t = transport();
   conn.className = "conn " + (t === "claude" || key ? "ok" : "off");
-  conn.lastChild.textContent = t === "claude" ? "Claude connected" : key ? "API key set" : "No API key";
+  conn.lastChild.textContent = t === "claude" ? "Claude connected" : IN_ARTIFACT ? "Claude access off" : key ? "API key set" : "No API key";
   conn.title = t === "claude" ? "Running inside Claude: agents use your Claude session" : key ? "Agents call the Anthropic API with your key" : "Add an API key in Policies & Admin";
 }
 

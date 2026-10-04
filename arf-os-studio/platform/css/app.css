@@ -264,6 +264,11 @@ table.heat td span { color: var(--fg); mix-blend-mode: normal; text-shadow: 0 0 
 .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 9px 14px; border-radius: 8px; font-size: 13px; z-index: 60; max-width: min(640px, calc(100vw - 32px)); }
 .toast.bad { background: var(--bad); color: #fff; }
 
+.lab-grid { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); align-items: start; }
+.lab-grammar summary { cursor: pointer; list-style-position: inside; }
+.lab-run { display: grid; gap: 10px; }
+.lab-run select { width: 100%; }
+@media (max-width: 900px) { .lab-grid { grid-template-columns: minmax(0, 1fr); } textarea.code { min-height: 260px; } }
 @media (max-width: 1100px) { .g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .g3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 800px) {
   .app { grid-template-columns: 1fr; }
