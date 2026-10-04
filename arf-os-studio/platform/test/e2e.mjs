@@ -200,6 +200,7 @@ const pr = await page.evaluate(async u => (await (await import(u)).all("practice
 console.log("practice score:", pr && pr.score);
 // Backtest Lab: hand-written SDL, no campaign
 await page.goto(base + "#/lab");
+await page.click(".sdl-box summary");
 await page.click("[data-act=labValidate]");
 await page.waitForSelector("#labOut .note");
 await page.click("[data-act=labRun]");
@@ -207,7 +208,7 @@ const t0 = Date.now(); let labState = null;
 while (Date.now() - t0 < 120000) {
   labState = await page.evaluate(async u => { const db = await import(u); const vs = (await db.all("versions")).filter(v => !v.campaignId); const ts = await db.all("tasks", t => !t.campaignId && t.status === "FAILED_TERMINAL"); return { s: vs.map(v => v.status), f: ts.map(t => t.kind + ": " + t.error?.message) }; }, dbmod);
   if (labState.f.length) throw new Error("Lab task failed: " + labState.f.join(" | "));
-  if (labState.s.some(x => ["REJECTED", "RESEARCH_APPROVED", "PAPER_PENDING_HUMAN"].includes(x))) break;
+  if (labState.s.some(x => ["VALIDATED", "REJECTED", "RESEARCH_APPROVED", "PAPER_PENDING_HUMAN"].includes(x))) break;
   await page.waitForTimeout(500);
 }
 console.log("lab version:", labState.s);

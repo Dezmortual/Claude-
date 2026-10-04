@@ -15,7 +15,7 @@ export const VERSION_STATES = {
   BACKTESTING: "Research runner executing plan",
   BACKTESTED: "Backtest evidence ready",
   VALIDATING: "Robustness suite and holdout running",
-  VALIDATED: "Validator report ready",
+  VALIDATED: "Robustness tests complete",
   IN_COMMITTEE: "Awaiting Strategy Judge",
   RESEARCH_APPROVED: "Historical evidence sufficient for continued research",
   PAPER_PENDING_HUMAN: "Judge recommends paper test — human approval required",
@@ -239,11 +239,11 @@ async function execute(task) {
     const cur = await db.get("tasks", task.id);
     const aborted = e.name === "AbortError" || ctl.signal.aborted;
     const budget = e.code === "budget";
-    const retryable = !aborted && !budget && cur.attempts < cur.maxAttempts && !["schema_failure", "no_key", "bad_key", "refused"].includes(e.code);
+    const retryable = !aborted && !budget && cur.attempts < cur.maxAttempts && !["schema_failure", "no_key", "bad_key", "refused", "no_credit"].includes(e.code);
     const status = aborted ? "CANCELLED" : budget ? "WAITING_HUMAN" : retryable ? "QUEUED" : "FAILED_TERMINAL";
     await db.update("tasks", task.id, { status, finishedAt: nowIso(), error: { code: e.code || "error", message: e.message || String(e) } });
     if (budget && task.campaignId) { await db.update("campaigns", task.campaignId, { status: "PAUSED", pauseReason: e.message }); await db.audit("campaign.budget_exhausted", { campaignId: task.campaignId, message: e.message }); }
-    if (e.code === "no_key" || e.code === "bad_key") await db.update("tasks", task.id, { status: "WAITING_HUMAN" });
+    if (["no_key", "bad_key", "no_credit"].includes(e.code)) await db.update("tasks", task.id, { status: "WAITING_HUMAN" });
   } finally {
     running.delete(task.id);
     ping({ type: "done", taskId: task.id });

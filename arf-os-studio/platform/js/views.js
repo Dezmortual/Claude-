@@ -7,6 +7,8 @@ import * as L from "./lanes.js";
 import { POLICIES, evaluateEvidence, buildSegments } from "./research.js";
 import { validateSDL, gridSize, SDL_TEMPLATE, paramAxis } from "./sdl.js";
 import { SOURCES as DATA_SOURCES, fetchBars, parseOhlcCsv, QUICK_DATA, encodeDataset, parseDataText } from "./data.js";
+import { convertPineToSDL } from "./pine-convert.js";
+import { EXAMPLES } from "./examples.js";
 import { SUITES, runPractice, createChallenger, promotionCheck, promote, rollback } from "./practice.js";
 import { lineChart, barChart, heatmap, fanChart } from "./charts.js";
 import { drawdownSeries, monthlyReturns } from "./metrics.js";
@@ -270,6 +272,7 @@ async function viewVersion([id, tab = "evidence"], q) {
   const st = v.status;
   const acts = [];
   if (st === "BACKTESTED") acts.push(`<button class="btn primary" data-act="sendToValidation" data-id="${id}">Send to validation</button>`);
+  if (st === "VALIDATED" && v.validationId && !(await db.get("validations", v.validationId))?.report) acts.push(`<button class="btn" data-act="askAgentReview" data-id="${id}">Ask AI to review (optional)</button>`);
   if (st === "DEFINED" && !v.backtestId) acts.push(`<button class="btn primary" data-act="backtestNow" data-id="${id}">Run backtest plan</button>`);
   if (["RESEARCH_APPROVED", "PAPER_PENDING_HUMAN"].includes(st)) acts.push(`<button class="btn primary" data-act="approvePaper" data-id="${id}">Approve paper test…</button>`);
   if (st === "PAPER_APPROVED") acts.push(`<button class="btn primary" data-act="startForward" data-id="${id}">Start forward test</button>`);
@@ -488,11 +491,14 @@ async function viewLab() {
   const { SDL_GRAMMAR_DOC } = await import("./agents.js");
   return page(header("Backtest Lab", "Test a strategy in three steps. Every run is recorded."), `<div class="lab-steps">
     <section class="card step"><h2><span class="step-n">1</span> Strategy</h2>
-      <details class="pine-box" ${pineDraft || !draft.includes('"Example EMA trend') ? "" : "open"}><summary><b>Paste a Pine script</b> and let Claude write the definition</summary>
+      <p class="small muted">Tap an example, or paste your own Pine script.</p>
+      <div class="chipset examples">${EXAMPLES.map(e => `<button class="btn small" data-act="loadExample" data-id="${e.id}">${esc(e.label)}</button>`).join("")}</div>
+      <details class="pine-box" open><summary><b>Paste a Pine script</b></summary>
         <textarea class="code pine" id="labPine" spellcheck="false" placeholder="//@version=6&#10;strategy(&quot;My strategy&quot;, ...)">${esc(pineDraft)}</textarea>
-        <div class="row"><button class="btn primary" data-act="convertPine" ${canAsk ? "" : "disabled"}>Convert with Claude</button>${canAsk ? "" : `<span class="small muted">${IN_ARTIFACT ? "Allow Claude access for this page first." : `Add an API key in <a href="#/admin">Policies &amp; Admin</a> first.`}</span>`}</div>
+        <div class="row"><button class="btn primary" data-act="convertPineFree">Convert (free)</button>${canAsk ? `<button class="btn" data-act="convertPine">Ask Claude instead</button>` : ""}</div>
+        <p class="small muted">The free converter runs on your phone. It reads inputs, ta.* indicators, crossovers, entries, closes, stops, targets and trailing stops.</p>
         <div id="pineOut"></div></details>
-      <details class="sdl-box" ${pineDraft ? "" : "open"}><summary><b>Strategy definition</b> (edit or paste JSON)</summary>
+      <details class="sdl-box"><summary><b>Strategy definition</b> <span class="muted">(what will be tested — view or edit)</span></summary>
         <textarea class="code" id="labSdl" spellcheck="false">${esc(draft)}</textarea>
         <div class="row"><button class="btn" data-act="labValidate">Check definition</button><button class="btn" data-act="labTemplate">Reset to example</button></div></details>
       <div id="labOut"></div></section>
@@ -923,6 +929,33 @@ export const actions = {
       });
     });
   },
+  loadExample: async (el, d) => {
+    const ex = EXAMPLES.find(x => x.id === d.id);
+    $("#labSdl").value = JSON.stringify(ex.sdl, null, 2);
+    await db.setting("labDraft", $("#labSdl").value);
+    $("#pineOut").innerHTML = `<div class="note good small"><b>✓ Loaded “${esc(ex.label)}”.</b> Pick price data in step 2 and tap Run backtest.</div>`;
+    toast("Loaded " + ex.label);
+  },
+  convertPineFree: async () => {
+    const src = $("#labPine").value.trim();
+    if (!/strategy\s*\(/.test(src)) return toast("Paste a Pine script that contains strategy(…)", "bad");
+    await db.setting("labPine", src);
+    const out = $("#pineOut");
+    const ds = $("#labDataset") ? await db.get("datasets", $("#labDataset").value) : null;
+    try {
+      const r = convertPineToSDL(src, { timeframe: ds?.timeframe || "240", symbol: ds ? `${ds.source.toUpperCase()}:${ds.symbol}` : "BINANCE:BTCUSDT", tickSize: ds?.tickSize || 0.01 });
+      const v = validateSDL(r.sdl);
+      if (!v.ok) throw Object.assign(new Error("The converted definition breaks a backtester rule: " + v.errors.slice(0, 3).join("; ")), { skipped: r.skipped });
+      $("#labSdl").value = JSON.stringify(r.sdl, null, 2);
+      await db.setting("labDraft", $("#labSdl").value);
+      const list = (title, items, cls) => (items.length ? `<div class="note ${cls} small section"><b>${title}</b><ul style="margin:4px 0 0;padding-left:18px">${items.map(n => `<li>${esc(n)}</li>`).join("")}</ul></div>` : "");
+      out.innerHTML = `<div class="note good small"><b>✓ Converted ${esc(r.sdl.strategy.name)}.</b> ${r.sdl.strategy.directions.join(" + ")} · ${r.sdl.indicators.length} indicators · ${r.sdl.parameters.length} inputs. Now pick price data and tap Run backtest.</div>${list("Please check:", [...r.notes, ...v.warnings], "warn")}${list("Lines the converter skipped:", r.skipped, "bad")}`;
+    } catch (e) {
+      const isR08 = /R08|PROFIT-TRIGGER/i.test(src);
+      out.innerHTML = `<div class="note bad small"><b>Couldn't convert this script.</b> ${esc(e.message)}${isR08 ? `<div class="section"><button class="btn small primary" data-act="loadExample" data-id="r08">Load the ready-made R08 definition</button></div>` : ""}${(e.skipped || []).length ? `<details class="section"><summary>Lines it couldn't read (${e.skipped.length})</summary><ul style="margin:4px 0 0;padding-left:18px">${e.skipped.map(n => `<li>${esc(n)}</li>`).join("")}</ul></details>` : ""}<p class="small" style="margin-top:8px">For custom logic like this, paste the script to Claude in the chat and ask for a strategy definition, then paste it into “Strategy definition”.</p></div>`;
+    }
+  },
+  askAgentReview: async (el, d) => { await L.askAgentReview(d.id); toast("Validator and Judge queued (uses AI)"); },
   convertPine: async el => {
     const src = $("#labPine").value.trim();
     if (!/strategy\s*\(/.test(src)) return toast("Paste a Pine script that contains strategy(…)", "bad");
