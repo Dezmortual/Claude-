@@ -21,7 +21,9 @@ const server = http.createServer((q, r) => {
 const base = `http://localhost:${server.address().port}/`;
 const TF = 4 * 3600_000, N = 4400, end = Math.floor(Date.now() / TF) * TF - TF;
 const bars = syntheticBars({ n: N, seed: 12, start: end - (N - 1) * TF, tfMs: TF });
-const sdlOut = { status: "COMPLETE", summary: "Translated MACD cross strategy.", assumptions: [], unknowns: [], confidence: 0.7, sdl: SDL_TEMPLATE, ambiguityNotes: ["Script has no stop-loss; added a 2×ATR stop."], expectedFailureModes: [], backtestExpectations: { tradesPerYear: 30, expectedWinRatePct: 40, notes: "" }, changeCategory: "initial", changedFields: [] };
+// Mirrors a real reply that left out strategy.family, thesis and directions (the app must cope).
+const partialSdl = structuredClone(SDL_TEMPLATE); partialSdl.strategy = { name: "MACD test" };
+const sdlOut = { status: "COMPLETE", summary: "Translated MACD cross strategy.", assumptions: [], unknowns: [], confidence: 0.7, sdl: partialSdl, ambiguityNotes: ["Script has no stop-loss; added a 2×ATR stop."], expectedFailureModes: [], backtestExpectations: { tradesPerYear: 30, expectedWinRatePct: 40, notes: "" }, changeCategory: "initial", changedFields: [] };
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ ...devices["Pixel 7"] });
 const page = await ctx.newPage();

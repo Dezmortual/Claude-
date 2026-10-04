@@ -935,7 +935,10 @@ export const actions = {
       await db.setting("labDraft", $("#labSdl").value);
       const box = document.querySelector(".sdl-box"); if (box) box.open = true;
       out.innerHTML = `<div class="note good small"><b>✓ Converted.</b> ${esc(r.summary || "")}</div>${r.notes.length ? `<div class="note warn small section"><b>Differences from your script:</b><ul style="margin:4px 0 0;padding-left:18px">${r.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul></div>` : ""}`;
-    } catch (e) { out.innerHTML = `<div class="note bad small">Conversion failed: ${esc(e.message)}</div>`; }
+    } catch (e) {
+      const why = e.code === "schema_failure" ? "Claude's answer was incomplete or didn't fit the strategy format, even after a retry." : e.message;
+      out.innerHTML = `<div class="note bad small"><b>Conversion didn't work.</b> ${esc(why)} Tap Convert again; if it keeps failing, the script may use something the backtester can't express yet.<details><summary>Details</summary>${esc(e.message)}</details></div>`;
+    }
     finally { el.textContent = label; }
   },
   portfolioReview: async () => { await L.runPortfolioReview(); toast("Portfolio Researcher queued"); },
