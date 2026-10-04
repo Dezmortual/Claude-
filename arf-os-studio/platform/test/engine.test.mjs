@@ -142,3 +142,76 @@ test("tradingview csv parse and parity", () => {
   const res = parity(r.trades, p.trades, { tfMs: 4 * 3600000, tickSize: 0.01, slippageTicks: 2 });
   assert.equal(res.status, "PASS", JSON.stringify(res.checks));
 });
+
+// ---- Trailing stop, fill-on-close, daily VWAP ----
+import { vwapDaily } from "../js/indicators.js";
+function flatBars(n, start = Date.UTC(2024, 0, 1), tf = 4 * 3600000) {
+  const b = { t: [], o: [], h: [], l: [], c: [], v: [] };
+  for (let i = 0; i < n; i++) { b.t.push(start + i * tf); b.o.push(100); b.h.push(100.1); b.l.push(99.9); b.c.push(100); b.v.push(10); }
+  return b;
+}
+function trailSDL(extra = {}) {
+  const s = structuredClone(SDL_TEMPLATE);
+  s.strategy.directions = ["long"];
+  s.indicators = [{ id: "atr14", type: "atr", length: 14 }];
+  s.signals = { longEntry: "bar_index == 300", shortEntry: "", longExit: "", shortExit: "" };
+  s.parameters = [];
+  s.costs = { commissionType: "percent", commissionValue: 0, slippageTicks: 0, tickSize: 0.01 };
+  s.risk = { sizingModel: "percent_of_equity", sizePercent: 100, leverage: 1, stopLoss: { type: "percent", value: 3 }, takeProfit: { type: "none" }, oneStopOneTarget: true,
+    trailingStop: { activation: { type: "percent", value: 0.5 }, offset: { type: "percent", value: 0.2 } } };
+  s.segments = { warmupBars: 50, selectionMode: "fixed", embargoBars: 0 };
+  return Object.assign(s, extra);
+}
+
+test("trailing stop arms, ratchets and exits on the close leg or next bar", () => {
+  const b = flatBars(400);
+  // bar 301: entry at open 100; low first (99.9) then high 101 arms the trail (peak 101, stop 100.8); close 100.9 stays above
+  Object.assign(b, {}); b.o[301] = 100; b.h[301] = 101; b.l[301] = 99.9; b.c[301] = 100.9;
+  // bar 302: high first (101) then low 100.5 crosses the 100.8 trail
+  b.o[302] = 100.9; b.h[302] = 101; b.l[302] = 100.5; b.c[302] = 100.6;
+  const sdl = trailSDL();
+  assert.equal(validateSDL(sdl).ok, true, validateSDL(sdl).errors.join("; "));
+  const r = runBacktest(sdl, b, {}, {});
+  assert.equal(r.trades.length, 1);
+  const t = r.trades[0];
+  assert.equal(t.entryPrice, 100);
+  assert.equal(t.exitIdx, 302);
+  assert.equal(t.reason, "trail");
+  assert.ok(Math.abs(t.exitPrice - 100.8) < 1e-9, "exit at peak - offset, got " + t.exitPrice);
+});
+
+test("trail hit on the same bar's close leg", () => {
+  const b = flatBars(400);
+  b.o[301] = 100; b.h[301] = 101; b.l[301] = 99.9; b.c[301] = 100.6; // h → c falls through 100.8
+  const r = runBacktest(trailSDL(), b, {}, {});
+  assert.equal(r.trades[0].exitIdx, 301);
+  assert.equal(r.trades[0].reason, "trail");
+});
+
+test("adverse path mode removes favourable intrabar ordering", () => {
+  const b = flatBars(400);
+  b.o[301] = 100; b.h[301] = 101; b.l[301] = 96.5; b.c[301] = 100; // stop 97 and arming both inside the bar
+  const tv = runBacktest(trailSDL(), b, {}, {}).trades[0];
+  const adv = runBacktest(trailSDL(), b, {}, { pathMode: "adverse" }).trades[0];
+  assert.equal(adv.reason, "stop");
+  assert.ok(adv.net < tv.net || tv.reason === "stop");
+});
+
+test("processOnClose fills at the signal bar's close", () => {
+  const b = flatBars(400);
+  b.c[300] = 100.05;
+  const sdl = trailSDL({ execution: { entryOrder: "market_next_bar", pyramiding: 0, allowReversal: true, processOnClose: true, calcOnEveryTick: false } });
+  const v = validateSDL(sdl);
+  assert.equal(v.ok, true);
+  assert.ok(v.warnings.some(w => w.includes("processOnClose")));
+  const r = runBacktest(sdl, b, {}, {});
+  assert.equal(r.trades[0].entryIdx, 300);
+  assert.equal(r.trades[0].entryPrice, 100.05);
+});
+
+test("daily VWAP resets at the UTC day boundary", () => {
+  const day = 86400000, t0 = Date.UTC(2024, 0, 1);
+  const bars = { t: [t0, t0 + 3600e3, t0 + day, t0 + day + 3600e3], v: [1, 3, 2, 2] };
+  const out = vwapDaily(bars, [10, 20, 30, 40]);
+  assert.deepEqual([...out], [10, 17.5, 30, 35]);
+});

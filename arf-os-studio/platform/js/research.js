@@ -176,10 +176,11 @@ export function robustnessSuite(sdl, bars, params, policy, progress = () => {}) 
   const bm = computeMetrics(base);
 
   progress("Cost and execution sensitivity");
-  const c2 = net({ costMult: 2 }), s2 = net({ slipMult: 2 }), d1 = net({ entryDelay: 1 });
+  const c2 = net({ costMult: 2 }), s2 = net({ slipMult: 2 }), d1 = net({ entryDelay: 1 }), adv = net({ pathMode: "adverse" });
   add("Commission ×2", c2 > 0, c2, "net profit on dev+validation");
   add("Slippage ×2", s2 > 0, s2, "net profit on dev+validation");
   add("Entry delayed 1 bar", d1 > 0, d1, "net profit on dev+validation");
+  add("Adverse intrabar path", adv > 0, adv, "net profit when every bar moves against the position first and trailing stops cannot lock in intrabar extremes");
   const missed = [];
   for (let s = 1; s <= 40; s++) missed.push(net({ skipProb: 0.1, seed: s }));
   add("10% missed trades (40 sims)", quantile(missed, 0.1) > 0, quantile(missed, 0.1), `p10 net; median ${quantile(missed, 0.5).toFixed(0)}`);
@@ -244,7 +245,7 @@ export function robustnessSuite(sdl, bars, params, policy, progress = () => {}) 
     neighbourSurvival: survival, segments: segRes, positiveSegmentsPct: posPct, startShifts: shifts,
     longOnly: longOnly && slim(longOnly), shortOnly: shortOnly && slim(shortOnly),
     monteCarlo: { ddP50: quantile(mcDD, 0.5), ddP95: quantile(mcDD, 0.05), retP10: quantile(mcFinal, 0.1), retP50: quantile(mcFinal, 0.5), retP90: quantile(mcFinal, 0.9), fan },
-    missedTrades: { p10: quantile(missed, 0.1), p50: quantile(missed, 0.5) }, sensitivity: { commission2x: c2, slippage2x: s2, delay1: d1 },
+    missedTrades: { p10: quantile(missed, 0.1), p50: quantile(missed, 0.5) }, sensitivity: { commission2x: c2, slippage2x: s2, delay1: d1, adversePath: adv },
     benchmark: bench
   };
 }
@@ -306,6 +307,8 @@ export function evaluateEvidence(ev, policyId = "discovery") {
   if (contaminated) soft.push("Final holdout contaminated by an earlier version; forward evidence required");
   if (!parity) soft.push("No TradingView parity check yet");
   if (backtest && backtest.selectionFellBack) soft.push("No parameter set met the selection rule; defaults were used");
+  if (sdl && sdl.execution && sdl.execution.processOnClose) soft.push("Orders fill at the signal bar's close (process_orders_on_close): optimistic versus live execution");
+  if (robustness && robustness.sensitivity.adversePath !== undefined && robustness.sensitivity.adversePath <= 0 && robustness.baseMetrics.netProfit > 0) soft.push("Profit disappears under an adverse intrabar path: the edge depends on the backtester's guess of price order inside bars");
 
   // Composite score (§12.7)
   const parts = {};
@@ -319,7 +322,7 @@ export function evaluateEvidence(ev, policyId = "discovery") {
   parts.outOfSample = oosParts.length ? 15 * mean(oosParts) : 0;
   parts.segmentStability = robustness ? 15 * clamp((robustness.positiveSegmentsPct - 40) / 40, 0, 1) : 0;
   parts.parameterStability = robustness ? 10 * robustness.neighbourSurvival / 100 : 0;
-  parts.costExecution = robustness ? (robustness.sensitivity.commission2x > 0 ? 4 : 0) + (robustness.sensitivity.slippage2x > 0 ? 3 : 0) + (robustness.sensitivity.delay1 > 0 ? 3 : 0) : 0;
+  parts.costExecution = robustness ? (robustness.sensitivity.commission2x > 0 ? 3 : 0) + (robustness.sensitivity.slippage2x > 0 ? 2 : 0) + (robustness.sensitivity.delay1 > 0 ? 2 : 0) + (robustness.sensitivity.adversePath === undefined || robustness.sensitivity.adversePath > 0 ? 3 : 0) : 0;
   parts.concentration = robustness ? (robustness.baseMetrics.topTradeShare <= policy.maxTopTradeShare ? 3 : 0) + (robustness.tests.find(t => t.name.startsWith("Net after removing top 5%")).pass ? 2 : 0) : 0;
   parts.crossMarket = ev.transfer ? (ev.transfer.profitFactor > 1 ? 5 : 0) : robustness ? (robustness.longOnly && robustness.shortOnly ? ((robustness.longOnly.netProfit > 0) + (robustness.shortOnly.netProfit > 0)) * 1.25 : 1.5) : 0;
   parts.forward = forward ? 5 * clamp(forward.trades / policy.forwardMinTrades, 0, 1) * (forward.drift && forward.drift.flag ? 0.3 : 1) : 0;
