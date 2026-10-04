@@ -280,7 +280,8 @@ table.heat td span { color: var(--fg); mix-blend-mode: normal; text-shadow: 0 0 
   .top-stats { display: none; }
   .page { padding: 16px 16px 48px; }
   .g2, .g3, .g4 { grid-template-columns: minmax(0, 1fr); }
-  .funnel-row { grid-template-columns: 120px minmax(0, 1fr) 32px; }
+  .funnel-row { grid-template-columns: max-content minmax(40px, 1fr) 28px; gap: 8px; }
+  .funnel-row .badge { font-size: 10.5px; }
   .env-badge { display: none; }
 }
 </style>
