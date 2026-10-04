@@ -73,13 +73,15 @@ and is capped by each campaign's budget.
 
 `artifact.html` is the entry page for publishing the platform as a Claude
 artifact. Regenerate it with `node build-artifact.mjs` after changing
-`index.html` or `css/app.css`. Publish it with the `js/` files and the `sample`
+`index.html` or `css/app.css`. Publish it with the `js/` and `data/` files and the `sample`
 and `downloads` capabilities. In that mode:
 
 - agents run on the viewer's Claude plan, so no API key is needed
-- the sandbox blocks other websites, so price history comes from CSV uploads
-  (TradingView → Export chart data), including fresh bars for forward-test
-  checks
+- the sandbox blocks other websites, so price history comes from the built-in
+  library in `data/` (gold, silver, forex, indices, oil and major crypto at 1h,
+  4h and daily), which `.github/workflows/prices.yml` refreshes every day with
+  `tools/fetch-prices.mjs`; pasted text and CSV uploads (TradingView → Export
+  chart data) still work, including fresh bars for forward-test checks
 - exports go through the viewer's save dialog, and confirmations are shown on
   the page
 - data lives in the artifact's own browser storage, so export the workspace

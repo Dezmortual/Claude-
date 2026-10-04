@@ -86,10 +86,10 @@ export async function checkCampaignIdle(campaignId) {
 }
 
 /* ---------------- Datasets ---------------- */
-export async function saveDataset({ campaignId = null, source, symbol, timeframe, bars, tickSize, note = "" }) {
-  const integrity = integrityReport(bars, timeframe);
+export async function saveDataset({ campaignId = null, source, symbol, timeframe, bars, tickSize, note = "", market = "24x7" }) {
+  const integrity = integrityReport(bars, timeframe, { market });
   const checksum = await datasetChecksum(bars);
-  const ds = { id: uuidv7(), campaignId, source, symbol, timeframe, bars: bars.t.length, from: bars.t[0], to: bars.t[bars.t.length - 1], checksum, integrity, status: integrity.status, tickSize: tickSize || inferTickSize(bars), note, createdAt: nowIso(), version: 1 };
+  const ds = { id: uuidv7(), campaignId, source, symbol, timeframe, bars: bars.t.length, from: bars.t[0], to: bars.t[bars.t.length - 1], checksum, integrity, status: integrity.status, tickSize: tickSize || inferTickSize(bars), note, market, createdAt: nowIso(), version: 1 };
   await db.put("datasets", ds);
   await db.put("bars", { id: ds.id, ...bars });
   await db.audit("dataset.created", { datasetId: ds.id, symbol, timeframe, bars: ds.bars, checksum, status: ds.status });

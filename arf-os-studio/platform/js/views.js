@@ -6,7 +6,7 @@ import { VERSION_STATES, activeTasks, cancelTask, retryTask, championPrompt, pum
 import * as L from "./lanes.js";
 import { POLICIES, evaluateEvidence, buildSegments } from "./research.js";
 import { validateSDL, gridSize, SDL_TEMPLATE, paramAxis } from "./sdl.js";
-import { SOURCES as DATA_SOURCES, fetchBars, parseOhlcCsv, QUICK_DATA, BINANCE_SYMBOLS, symbolLabel, suggestSymbol, encodeDataset, parseDataText } from "./data.js";
+import { SOURCES as DATA_SOURCES, fetchBars, parseOhlcCsv, QUICK_DATA, BINANCE_SYMBOLS, symbolLabel, suggestSymbol, encodeDataset, parseDataText, builtinPrices, loadBuiltin, matchBuiltin } from "./data.js";
 import { convertPineToSDL } from "./pine-convert.js";
 import { EXAMPLES } from "./examples.js";
 import { SUITES, runPractice, createChallenger, promotionCheck, promote, rollback } from "./practice.js";
@@ -474,18 +474,36 @@ function runsTable(runs) {
 
 /* ======================= Backtest Lab ======================= */
 // Phone-first flow: 1) strategy (paste Pine for Claude to convert, or edit the SDL), 2) price data (one tap), 3) run.
-function dataPicker(datasets, selectId = "labDataset") {
-  const tfName = tf => (tf === "1D" ? "daily" : tf === "60" ? "1h" : tf === "15" ? "15m" : "4h");
+const tfName = tf => (tf === "1D" ? "daily" : tf === "60" ? "1h" : tf === "15" ? "15m" : "4h");
+// Built-in prices: files published with the page, so they load inside the Claude app too.
+function builtinPicker(datasets, lib, want) {
+  const sets = lib.sets, find = (sym, tf) => sets.find(s => s.symbol === sym && s.timeframe === tf);
+  const have = s => datasets.some(d => d.source.startsWith("builtin") && d.symbol === s.symbol && d.timeframe === s.timeframe && d.to >= s.to);
+  const btn = (s, cls = "", extra = "") => `<button class="btn ${have(s) ? "" : "primary"} ${cls}" data-act="loadBuiltinSet" data-file="${esc(s.file)}">${have(s) ? "✓ " : ""}${esc(s.label)} ${tfName(s.timeframe)}${extra}</button>`;
+  const quickList = (IN_ARTIFACT ? [["XAUUSD", "240"], ["XAUUSD", "60"], ["BTCUSDT", "240"], ["ETHUSDT", "240"], ["EURUSD", "240"], ["NAS100", "60"]] : [["XAUUSD", "240"], ["XAUUSD", "60"], ["EURUSD", "240"], ["NAS100", "60"]]).map(([a, b]) => find(a, b)).filter(Boolean);
+  const wantSet = want && (find(want.symbol, want.timeframe) || find(want.symbol, "240"));
+  const groups = [...new Set(sets.map(s => s.group))], syms = [...new Map(sets.map(s => [s.symbol, s])).values()];
+  const tfs = ["60", "240", "1D"];
+  return `${wantSet ? `<div class="row">${btn(wantSet, "want", " · matches your strategy")}</div>` : ""}
+    <div class="quick-data">${quickList.filter(s => s !== wantSet).map(s => btn(s)).join("")}</div>
+    <div class="sym-pick"><label class="field">Market<select id="biPick">${groups.map(g => `<optgroup label="${esc(g)}">${syms.filter(s => s.group === g).map(s => `<option value="${esc(s.symbol)}" ${want && want.symbol === s.symbol ? "selected" : ""}>${esc(s.label)} (${esc(s.symbol)})</option>`).join("")}</optgroup>`).join("")}</select></label>
+      <label class="field">Timeframe<select id="biTf">${tfs.map(t => `<option value="${t}" ${(want && sets.some(s => s.timeframe === want.timeframe) ? want.timeframe : "240") === t ? "selected" : ""}>${tfName(t)}</option>`).join("")}</select></label>
+      <button class="btn primary" data-act="loadBuiltinPick">Load</button></div>
+    <p class="small muted">Built-in prices, updated ${esc(isoDate(Date.parse(lib.updatedAt)))}. Gold is COMEX gold futures, which move with XAUUSD but sit a few dollars above it. Forex and indices are from Yahoo Finance, crypto from Binance.</p>`;
+}
+function dataPicker(datasets, selectId = "labDataset", lib = null, want = null) {
+  const builtin = lib && lib.sets && lib.sets.length ? builtinPicker(datasets, lib, want) : "";
   const quick = IN_ARTIFACT ? "" : `<div class="quick-data">${QUICK_DATA.map(([sym, tf]) => { const have = datasets.find(d => d.source === "binance" && d.symbol === sym && d.timeframe === tf); return `<button class="btn ${have ? "" : "primary"}" data-act="quickData" data-symbol="${sym}" data-tf="${tf}">${have ? "✓ " : ""}${symbolLabel(sym)} ${tfName(tf)}</button>`; }).join("")}</div>
     <div class="sym-pick"><label class="field">Any Binance pair<input type="text" id="symPick" list="symList" placeholder="e.g. XRPUSDT or PAXGUSDT for gold" autocapitalize="characters" autocomplete="off"></label><datalist id="symList">${BINANCE_SYMBOLS.map(([s, n]) => `<option value="${s}">${esc(n)}</option>`).join("")}</datalist>
       <label class="field">Timeframe<select id="tfPick"><option value="15">15m</option><option value="60">1h</option><option value="240" selected>4h</option><option value="1D">daily</option></select></label>
       <button class="btn primary" data-act="quickDataPick">Load</button></div>
-    <p class="small muted">Loads ~2 years of Binance candles. No file needed. Gold is the PAXG token (backed by physical gold, trades 24/7); forex pairs and stocks aren't available from a free source here.</p>`;
+    <p class="small muted">Live crypto: loads ~2 years of Binance candles up to the latest bar.</p>`;
   const select = datasets.length ? `<label class="field">Use this data<select id="${selectId}">${datasets.map(d => `<option value="${d.id}">${esc(d.symbol)} ${esc(d.timeframe)} · ${fmt(d.bars, 0)} bars · to ${isoDate(d.to)}</option>`).join("")}</select></label>` : "";
   const other = IN_ARTIFACT
-    ? `<div class="row"><button class="btn primary" data-act="pasteDataset" data-return="lab">Paste price data</button><button class="btn" data-act="loadDataset" data-return="lab">Upload a CSV file</button></div><p class="small muted">This Claude view can't download prices. Get them in one tap on the <a href="https://dezmortual.github.io/Claude-/platform/#/lab" target="_blank" rel="noopener">website version</a>, press <b>Copy for Claude</b> there, then come back and paste.</p>`
+    ? (builtin ? `<details class="own-data"><summary class="small">Use your own data instead</summary><div class="row"><button class="btn" data-act="pasteDataset" data-return="lab">Paste price data</button><button class="btn" data-act="loadDataset" data-return="lab">Upload a CSV file</button></div></details>`
+      : `<div class="row"><button class="btn primary" data-act="pasteDataset" data-return="lab">Paste price data</button><button class="btn" data-act="loadDataset" data-return="lab">Upload a CSV file</button></div><p class="small muted">Built-in prices could not be loaded. Paste text from <b>Copy for Claude</b> on the <a href="https://dezmortual.github.io/Claude-/platform/#/lab" target="_blank" rel="noopener">website version</a>, or upload a CSV.</p>`)
     : `<div class="row"><button class="btn" data-act="loadDataset" data-return="lab">Other symbol or CSV…</button>${datasets.length ? `<button class="btn" data-act="copyForClaude" data-select="${selectId}">Copy for Claude</button>` : ""}</div>`;
-  return quick + select + other;
+  return (IN_ARTIFACT ? builtin + select + other : (builtin ? `<h3 class="sub">Gold, forex, indices</h3>${builtin}<h3 class="sub">Crypto (live)</h3>` : "") + quick + select + other);
 }
 async function viewLab() {
   const datasets = sortDesc(await db.all("datasets", d => d.status !== "QUARANTINED"));
@@ -493,6 +511,7 @@ async function viewLab() {
   const pineDraft = (await db.setting("labPine")) || "";
   const { transport } = await import("./model.js");
   const canAsk = transport() === "claude" || !!(await db.setting("apikey"));
+  const lib = await builtinPrices(), want = wantedMarket(draft, lib);
   const { SDL_GRAMMAR_DOC } = await import("./agents.js");
   return page(header("Backtest Lab", "Test a strategy in three steps. Every run is recorded."), `<div class="lab-steps">
     <section class="card step"><h2><span class="step-n">1</span> Strategy</h2>
@@ -507,7 +526,7 @@ async function viewLab() {
         <textarea class="code" id="labSdl" spellcheck="false">${esc(draft)}</textarea>
         <div class="row"><button class="btn" data-act="labValidate">Check definition</button><button class="btn" data-act="labTemplate">Reset to example</button></div></details>
       <div id="labOut"></div></section>
-    <section class="card step"><h2><span class="step-n">2</span> Price data</h2>${dataPicker(datasets)}</section>
+    <section class="card step" id="dataStep"><h2><span class="step-n">2</span> Price data</h2>${dataPicker(datasets, "labDataset", lib, want)}</section>
     <section class="card step"><h2><span class="step-n">3</span> Run</h2><p class="small muted">Runs the full plan: smoke test, baseline, parameter search on the first 60%, validation on the next 20%, and walk-forward. The last 20% stays untouched until validation.</p>
       <button class="btn primary big" data-act="labRun" ${datasets.length ? "" : "disabled"}>Run backtest</button>${datasets.length ? "" : `<p class="small muted">Load price data in step 2 first.</p>`}</section>
     <details class="card lab-grammar"><summary><b>Grammar reference</b></summary><pre style="white-space:pre-wrap;max-height:none;margin-top:10px">${esc(SDL_GRAMMAR_DOC)}</pre></details>
@@ -708,6 +727,24 @@ document.addEventListener("change", e => {
 document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches("input[data-nav]")) e.target.dispatchEvent(new Event("change", { bubbles: true })); });
 
 /* ======================= Actions ======================= */
+// The built-in market that matches the strategy in step 1 (BINANCE:BTCUSDT is only the converter's default).
+function wantedMarket(draft, lib) {
+  try {
+    const sd = typeof draft === "string" ? JSON.parse(draft) : draft, sym = sd.market?.symbols?.[0];
+    if (!sym || sym === "BINANCE:BTCUSDT") return null;
+    const m = matchBuiltin(sym, lib?.sets);
+    return m ? { symbol: m.symbol, timeframe: String(sd.market?.timeframe || "240") } : null;
+  } catch (_) { return null; }
+}
+async function refreshDataStep() {
+  const card = $("#dataStep"); if (!card) return;
+  const sel = $("#labDataset")?.value, lib = await builtinPrices();
+  const datasets = sortDesc(await db.all("datasets", d => d.status !== "QUARANTINED"));
+  card.innerHTML = `<h2><span class="step-n">2</span> Price data</h2>${dataPicker(datasets, "labDataset", lib, wantedMarket($("#labSdl").value, lib))}`;
+  if (sel && $("#labDataset")) $("#labDataset").value = sel;
+}
+// Guess the market from a Pine script's title or comments (e.g. "XAUUSD 4H scalper").
+const PINE_SYMBOL = /\b(XAUUSD|GOLD|XAGUSD|SILVER|EURUSD|GBPUSD|USDJPY|AUDUSD|GBPJPY|NAS100|US100|NDX|SPX500|US500|US30|USOIL|WTI|BTCUSDT?|ETHUSDT?|SOLUSDT?|XRPUSDT?)\b/i;
 async function saveLabDrafts() {
   const sdl = $("#labSdl"), pine = $("#labPine");
   if (sdl) await db.setting("labDraft", sdl.value);
@@ -894,6 +931,20 @@ export const actions = {
       });
     });
   },
+  loadBuiltinPick: async el => {
+    const lib = await builtinPrices(), sym = $("#biPick").value, tf = $("#biTf").value;
+    const set = lib?.sets.find(s => s.symbol === sym && s.timeframe === tf);
+    if (!set) return toast(`No built-in ${sym} ${tfName(tf)} prices`, "bad");
+    return actions.loadBuiltinSet(el, { file: set.file });
+  },
+  loadBuiltinSet: async (el, d) => {
+    const label = el.textContent; el.textContent = "Loading…";
+    try {
+      const { meta, bars } = await loadBuiltin(d.file);
+      const ds = await L.saveDataset({ source: "builtin:" + (meta.source || "file"), symbol: meta.symbol, timeframe: meta.timeframe, bars, tickSize: +meta.tick || null, market: meta.market || "24x7", note: "built-in prices" });
+      await afterDataset(ds, "lab");
+    } catch (e) { el.textContent = label; toast("Could not load built-in prices: " + e.message, "bad"); }
+  },
   quickDataPick: async el => {
     const sym = ($("#symPick").value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
     if (!sym) return toast("Type a Binance pair, e.g. XRPUSDT", "bad");
@@ -927,8 +978,10 @@ export const actions = {
             if (location.hash.split("?")[0] !== "#/lab") { location.hash = "#/lab"; await new Promise(r => setTimeout(r, 400)); }
             const box = $("#labSdl"); if (box) { box.value = JSON.stringify(sdl, null, 2); const det = document.querySelector(".sdl-box"); if (det) det.open = true; }
             await db.setting("labDraft", JSON.stringify(sdl, null, 2));
-            const hint = suggestSymbol(sdl.market && sdl.market.symbols && sdl.market.symbols[0]);
-            toast(`That was a strategy, not price data — loaded “${sdl.strategy?.name || "strategy"}” into step 1.${hint ? ` Now load ${symbolLabel(hint)} prices.` : ""}`);
+            const sym0 = sdl.market && sdl.market.symbols && sdl.market.symbols[0];
+            const m = matchBuiltin(sym0, (await builtinPrices())?.sets), hint = m ? m.label : suggestSymbol(sym0) && symbolLabel(suggestSymbol(sym0));
+            toast(`That was a strategy, not price data — loaded “${sdl.strategy?.name || "strategy"}” into step 1.${hint ? ` Now load ${hint} prices in step 2.` : ""}`);
+            const { render } = await import("./app.js"); await render();
             return;
           }
           const { meta, bars } = parseDataText(ta.value);
@@ -959,6 +1012,7 @@ export const actions = {
     await db.setting("labDraft", $("#labSdl").value);
     $("#pineOut").innerHTML = `<div class="note good small"><b>✓ Loaded “${esc(ex.label)}”.</b> Pick price data in step 2 (any coin or gold works) and tap Run backtest.</div>`;
     toast("Loaded " + ex.label);
+    await refreshDataStep();
   },
   convertPineFree: async () => {
     const src = $("#labPine").value.trim();
@@ -967,13 +1021,15 @@ export const actions = {
     const out = $("#pineOut");
     const ds = $("#labDataset") ? await db.get("datasets", $("#labDataset").value) : null;
     try {
-      const r = convertPineToSDL(src, { timeframe: ds?.timeframe || "240", symbol: ds ? `${ds.source.toUpperCase()}:${ds.symbol}` : "BINANCE:BTCUSDT", tickSize: ds?.tickSize || 0.01 });
+      const guess = (src.match(PINE_SYMBOL) || [])[1];
+      const r = convertPineToSDL(src, { timeframe: ds?.timeframe || "240", symbol: guess ? guess.toUpperCase() : ds ? `${ds.source.split(":")[0].toUpperCase()}:${ds.symbol}` : "BINANCE:BTCUSDT", tickSize: ds?.tickSize || 0.01 });
       const v = validateSDL(r.sdl);
       if (!v.ok) throw Object.assign(new Error("The converted definition breaks a backtester rule: " + v.errors.slice(0, 3).join("; ")), { skipped: r.skipped });
       $("#labSdl").value = JSON.stringify(r.sdl, null, 2);
       await db.setting("labDraft", $("#labSdl").value);
       const list = (title, items, cls) => (items.length ? `<div class="note ${cls} small section"><b>${title}</b><ul style="margin:4px 0 0;padding-left:18px">${items.map(n => `<li>${esc(n)}</li>`).join("")}</ul></div>` : "");
       out.innerHTML = `<div class="note good small"><b>✓ Converted ${esc(r.sdl.strategy.name)}.</b> ${r.sdl.strategy.directions.join(" + ")} · ${r.sdl.indicators.length} indicators · ${r.sdl.parameters.length} inputs. Now pick price data and tap Run backtest.</div>${list("Please check:", [...r.notes, ...v.warnings], "warn")}${list("Lines the converter skipped:", r.skipped, "bad")}`;
+      await refreshDataStep();
     } catch (e) {
       const isR08 = /R08|PROFIT-TRIGGER/i.test(src);
       out.innerHTML = `<div class="note bad small"><b>Couldn't convert this script.</b> ${esc(e.message)}${isR08 ? `<div class="section"><button class="btn small primary" data-act="loadExample" data-id="r08">Load the ready-made R08 definition</button></div>` : ""}${(e.skipped || []).length ? `<details class="section"><summary>Lines it couldn't read (${e.skipped.length})</summary><ul style="margin:4px 0 0;padding-left:18px">${e.skipped.map(n => `<li>${esc(n)}</li>`).join("")}</ul></details>` : ""}<p class="small" style="margin-top:8px">For custom logic like this, paste the script to Claude in the chat and ask for a strategy definition, then paste it into “Strategy definition”.</p></div>`;

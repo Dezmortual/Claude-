@@ -84,6 +84,25 @@ export function suggestSymbol(name) {
   if (/XAU|GOLD|PAXG/.test(n)) return "PAXGUSDT";
   const m = n.match(/([A-Z]{2,10})USDT?/); return m ? m[1] + "USDT" : null;
 }
+// Built-in price library (data/index.json, refreshed daily by .github/workflows/prices.yml).
+let builtinCache = null;
+export async function builtinPrices() {
+  if (!builtinCache) builtinCache = fetch("data/index.json", { cache: "no-cache" }).then(r => (r.ok ? r.json() : null)).catch(() => null);
+  const m = await builtinCache; if (!m) builtinCache = null;
+  return m;
+}
+export async function loadBuiltin(file) {
+  const res = await fetch("data/" + file);
+  if (!res.ok) throw new Error(`${res.status} loading ${file}`);
+  return parseDataText(await res.text());
+}
+// Which built-in market matches a strategy's symbol (XAUUSD, OANDA:XAUUSD, GOLD, BTCUSDT.P …).
+export function matchBuiltin(name, sets) {
+  const n = String(name || "").toUpperCase().replace(/^[A-Z]+:/, "").replace(/\.P$|PERP$/, "");
+  if (!n || !sets) return null;
+  const alias = /XAU|GOLD/.test(n) ? "XAUUSD" : /XAG|SILVER/.test(n) ? "XAGUSD" : /NAS|NDX|US100|NQ/.test(n) ? "NAS100" : /SPX|US500|SP500|ES1/.test(n) ? "SPX500" : /US30|DJI|DOW/.test(n) ? "US30" : /WTI|USOIL|CL1/.test(n) ? "USOIL" : n;
+  return sets.find(s => s.symbol === alias) || sets.find(s => s.symbol === alias + "T") || sets.find(s => s.symbol === n.replace(/USDT?$/, "") + "USDT") || null;
+}
 export function encodeDataset(ds, bars) {
   const head = `#ARF-DATA v1 source=${ds.source} symbol=${ds.symbol} timeframe=${ds.timeframe} tick=${ds.tickSize}`;
   const rows = [];
@@ -106,7 +125,10 @@ export function parseTime(s) {
   return d;
 }
 
-export function integrityReport(bars, timeframe) {
+// A gap counts as "market closed" (not missing data) on session markets (forex, metals, indices)
+// when it spans a weekend, or is a short daily break / holiday of at most a day.
+const closedGap = (a, b) => b - a <= 86_400_000 * 1.5 || [...Array(Math.ceil((b - a) / 86_400_000) + 1).keys()].some(k => [0, 6].includes(new Date(a + k * 86_400_000).getUTCDay()));
+export function integrityReport(bars, timeframe, { market = "24x7" } = {}) {
   const errors = [], warnings = [], n = bars.t.length;
   const tfMs = timeframeMs(timeframe);
   let dup = 0, outOfOrder = 0, gaps = 0, missing = 0, biggest = 0, bad = 0, zeroVol = 0, firstGap = null;
@@ -118,7 +140,7 @@ export function integrityReport(bars, timeframe) {
     const d = bars.t[i] - bars.t[i - 1];
     if (d === 0) dup++;
     else if (d < 0) outOfOrder++;
-    else if (d > tfMs * 1.5 && tfMs < 86_400_000 * 7) {
+    else if (d > tfMs * 1.5 && tfMs < 86_400_000 * 7 && !(market === "sessions" && closedGap(bars.t[i - 1], bars.t[i]))) {
       // Daily+ bars on 24/7 crypto have no weekend gaps; intraday gaps are counted as missing bars.
       gaps++; const m = Math.round(d / tfMs) - 1; missing += m; if (m > biggest) { biggest = m; firstGap = bars.t[i - 1]; }
     }
