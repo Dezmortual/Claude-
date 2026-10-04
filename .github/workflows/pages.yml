@@ -24,6 +24,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      # Cache-busting: stamp every platform script/stylesheet URL with this commit so a phone never
+      # mixes a new page with cached old modules (Pages serves files with a 10-minute cache).
+      - name: Version platform assets
+        run: |
+          V="${GITHUB_SHA::12}"
+          cd arf-os-studio/platform
+          sed -i -E "s#(href=\"css/app\.css)\"#\1?v=$V\"#; s#(src=\"js/app\.js)\"#\1?v=$V\"#" index.html
+          sed -i -E "s#(\"\./[a-z0-9-]+\.js)\"#\1?v=$V\"#g" js/*.js
+          grep -c "?v=$V" index.html js/app.js
       - uses: actions/upload-pages-artifact@v3
         with:
           path: arf-os-studio
