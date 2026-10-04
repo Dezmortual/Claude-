@@ -35,9 +35,17 @@ await page.route("https://data-api.binance.vision/**", async route => {
   const rows = []; for (let i = 0; i < N && rows.length < lim; i++) if (bars.t[i] >= st) rows.push([bars.t[i], String(bars.o[i]), String(bars.h[i]), String(bars.l[i]), String(bars.c[i]), String(bars.v[i]), bars.t[i] + TF - 1]);
   await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(rows) });
 });
+// First architect reply breaks a runner rule (unknown name "cci") and uses a flat trailing-stop shape;
+// the app must send the validator's errors back and accept the corrected second reply.
+let architectCalls = 0;
 await page.route("https://api.anthropic.com/**", async route => {
   const ev = o => `event: ${o.type}\ndata: ${JSON.stringify(o)}\n\n`;
-  await route.fulfill({ status: 200, headers: { "content-type": "text/event-stream" }, body: ev({ type: "message_start", message: { usage: { input_tokens: 900 } } }) + ev({ type: "content_block_delta", delta: { type: "text_delta", text: JSON.stringify(sdlOut) } }) + ev({ type: "message_delta", delta: { stop_reason: "end_turn" }, usage: { output_tokens: 700 } }) });
+  architectCalls++;
+  const out = structuredClone(sdlOut);
+  out.sdl.indicators = [...out.sdl.indicators];
+  out.sdl.risk = { ...out.sdl.risk, trailingStop: { type: "atr_multiple", value: 0.015, atrIndicator: "atr14" } };
+  if (architectCalls === 1) out.sdl.signals = { ...out.sdl.signals, longEntry: "crosses_above(fast, slow) AND cci > 0" };
+  await route.fulfill({ status: 200, headers: { "content-type": "text/event-stream" }, body: ev({ type: "message_start", message: { usage: { input_tokens: 900 } } }) + ev({ type: "content_block_delta", delta: { type: "text_delta", text: JSON.stringify(out) } }) + ev({ type: "message_delta", delta: { stop_reason: "end_turn" }, usage: { output_tokens: 700 } }) });
 });
 await page.route(/fonts\.g/, r => r.abort());
 const shot = async n => { if (shots) await page.screenshot({ path: path.join(shots, n + ".png") }); };
@@ -58,6 +66,8 @@ await page.fill("#labPine", '//@version=6\nstrategy("MACD test")\nif ta.crossove
 await page.click("[data-act=convertPine]");
 await page.waitForSelector("#pineOut .note", { timeout: 20000 });
 result.converted = (await page.textContent("#pineOut")).slice(0, 80);
+result.architectCalls = architectCalls;
+result.trailInDefinition = (await page.inputValue("#labSdl")).includes('"activation"');
 await shot("m2-converted");
 await page.click("[data-act=labRun]");
 await page.waitForTimeout(4000);

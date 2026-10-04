@@ -120,7 +120,7 @@ export async function runAgent(agentId, input, { campaignId = null, taskId = nul
       let obj = null;
       try { obj = extractJSON(r.text); } catch (e) { lastErrors = ["Reply was not valid JSON: " + e.message]; }
       if (obj && agent.coerce) obj = agent.coerce(obj);
-      if (obj) { const v = validate(agent.schema, obj); if (v.ok) parsed = obj; else lastErrors = v.errors.slice(0, 30); }
+      if (obj) { const v = validate(agent.clientSchema || agent.schema, obj); if (v.ok) parsed = obj; else lastErrors = v.errors.slice(0, 30); }
       run.rawOutput = r.text.slice(0, 60000);
       if (!parsed) {
         run.validationErrors.push(...lastErrors);

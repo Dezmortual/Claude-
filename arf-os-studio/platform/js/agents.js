@@ -57,6 +57,25 @@ export const SDL_GRAMMAR_DOC = `SDL GRAMMAR (the research runner executes exactl
 // Fill descriptive or defaulted SDL fields a model sometimes leaves out, so a usable definition is not
 // rejected for omissions that carry no trading logic. Logic fields (indicators, signals, risk) are never invented;
 // the SDL validator still checks them.
+// Accept the shapes models commonly use for a trailing stop and map them to {activation, offset}.
+function normaliseTrail(ts, s) {
+  if (!ts || typeof ts !== "object") return ts === null ? undefined : ts;
+  if (ts.activation && ts.offset) return ts;
+  const atrId = (s.indicators || []).find(i => i && i.type === "atr")?.id;
+  const part = (type, v, atrIndicator) => {
+    if (v && typeof v === "object" && v.type) return v;
+    const p = { type: type || (atrIndicator ? "atr_multiple" : "percent") };
+    if (typeof v === "string") p.valueParameter = v; else p.value = v;
+    if (p.type === "atr_multiple") p.atrIndicator = atrIndicator || atrId;
+    return p;
+  };
+  const type = ts.type === "atr" ? "atr_multiple" : ts.type;
+  const act = ts.activation ?? ts.activationValue ?? ts.trigger ?? ts.trail_points ?? ts.trailPoints ?? ts.points ?? ts.value ?? ts.valueParameter;
+  const off = ts.offset ?? ts.offsetValue ?? ts.trail_offset ?? ts.trailOffset ?? ts.value ?? ts.valueParameter ?? act;
+  if (act === undefined || off === undefined) return ts;
+  return { activation: part(ts.activationType || type, act, ts.atrIndicator), offset: part(ts.offsetType || type, off, ts.atrIndicator) };
+}
+
 export function coerceArchitect(out) {
   if (!out || typeof out !== "object" || !out.sdl || typeof out.sdl !== "object") return out;
   const s = out.sdl;
@@ -71,6 +90,7 @@ export function coerceArchitect(out) {
   if (!Array.isArray(st.directions) || !st.directions.length) st.directions = [s.signals.longEntry && "long", s.signals.shortEntry && "short"].filter(Boolean);
   s.market = { assetClass: "crypto", symbols: [], timeframe: "240", timezone: "Etc/UTC", session: "0000-2359:1234567", chartType: "standard_ohlc", ...(s.market || {}) };
   s.execution = { entryOrder: "market_next_bar", pyramiding: 0, allowReversal: false, processOnClose: false, calcOnEveryTick: false, ...(s.execution || {}) };
+  if (s.risk && typeof s.risk === "object" && "trailingStop" in s.risk) { const t = normaliseTrail(s.risk.trailingStop, s); if (t) s.risk.trailingStop = t; else delete s.risk.trailingStop; }
   if (s.risk && typeof s.risk === "object") { if (s.risk.oneStopOneTarget === undefined) s.risk.oneStopOneTarget = true; if (!s.risk.sizingModel) s.risk.sizingModel = "percent_of_equity"; if (!s.risk.leverage) s.risk.leverage = 1; if (!s.risk.takeProfit) s.risk.takeProfit = { type: "none" }; }
   s.costs = { commissionType: "percent", commissionValue: 0.06, slippageTicks: 1, tickSize: 0.01, ...(s.costs || {}) };
   if (!Array.isArray(s.parameters)) s.parameters = [];
@@ -123,7 +143,10 @@ MISSION: Produce one machine-readable SDL document that another agent can implem
 YOU MUST: define the exact entry/exit state machine, directions, one stop-loss and one take-profit, sizing, costs (realistic: crypto spot ≈ 0.05–0.1% per side; slippage ≥ 1 tick), warm-up, segment selection mode and embargo; declare every optimisable parameter with range and rationale; pre-register falsification conditions and expected failure regimes; keep the grid ≤ 500 combinations.
 YOU MUST NOT: add complexity to improve a curve; use hidden discretion; reference undeclared names.
 ${SDL_GRAMMAR_DOC}`,
-    schema: withCommon({ sdl: SDL_SCHEMA, ambiguityNotes: S.arr(S.str()), expectedFailureModes: S.arr(S.str()), backtestExpectations: S.obj({ tradesPerYear: S.num(), expectedWinRatePct: S.num(), notes: S.str() }), changeCategory: S.str("For a child version: logic|parameters|risk|costs|filters; else 'initial'"), changedFields: S.arr(S.str()) })
+    schema: withCommon({ sdl: SDL_SCHEMA, ambiguityNotes: S.arr(S.str()), expectedFailureModes: S.arr(S.str()), backtestExpectations: S.obj({ tradesPerYear: S.num(), expectedWinRatePct: S.num(), notes: S.str() }), changeCategory: S.str("For a child version: logic|parameters|risk|costs|filters; else 'initial'"), changedFields: S.arr(S.str()) }),
+    // The SDL inside is checked by the research runner's own validator, whose errors go back to the
+    // architect for repair; the client only requires the envelope here.
+    clientSchema: { type: "object", required: ["sdl"], properties: { sdl: { type: "object" }, ambiguityNotes: { type: "array", items: { type: "string" } } } }
   },
   {
     id: "pine", code: "PINE_ENGINEER", role: "Pine Script Engineer", name: "Kip Okafor", alias: "The Machinist", hue: 12, model: "claude-opus-5-5", effort: "medium", maxTokens: 32000,
