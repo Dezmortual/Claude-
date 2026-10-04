@@ -232,3 +232,17 @@ test("architect coercion fills descriptive fields but never invents logic", asyn
   assert.deepEqual(empty.sdl.strategy.directions, []);
   assert.equal(validateSDL(empty.sdl).ok, false);
 });
+
+test("architect coercion maps flat and Pine-style trailing stops", async () => {
+  const { coerceArchitect } = await import("../js/agents.js");
+  const base = () => ({ sdl: { strategy: { name: "x" }, indicators: [{ id: "atr14", type: "atr", length: 14 }], signals: { longEntry: "close > close[1]" },
+    risk: { sizingModel: "percent_of_equity", sizePercent: 100, leverage: 1, stopLoss: { type: "percent", value: 3 }, takeProfit: { type: "none" } }, parameters: [] } });
+  const a = base(); a.sdl.risk.trailingStop = { type: "atr_multiple", value: 0.015, atrIndicator: "atr14" };
+  let s = coerceArchitect(a).sdl;
+  assert.deepEqual(s.risk.trailingStop, { activation: { type: "atr_multiple", value: 0.015, atrIndicator: "atr14" }, offset: { type: "atr_multiple", value: 0.015, atrIndicator: "atr14" } });
+  assert.equal(validateSDL(s).ok, true, validateSDL(s).errors.join("; "));
+  const b = base(); b.sdl.risk.trailingStop = { type: "percent", trail_points: 0.5, trail_offset: 0.2 };
+  s = coerceArchitect(b).sdl;
+  assert.equal(s.risk.trailingStop.activation.value, 0.5); assert.equal(s.risk.trailingStop.offset.value, 0.2);
+  assert.equal(validateSDL(s).ok, true);
+});

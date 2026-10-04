@@ -218,7 +218,7 @@ async function architectLoop(agentInput, c, ds, task, signal) {
     last = v.errors;
     input = { ...agentInput, previousSDL: output.sdl, validationErrors: v.errors, instruction: "Your SDL failed validation by the research runner. Fix every error and return the full corrected output." };
   }
-  throw Object.assign(new Error("SDL failed validation 3 times: " + last.slice(0, 4).join("; ")), { code: "schema_failure" });
+  throw Object.assign(new Error("The strategy definition still had problems after 3 attempts: " + last.slice(0, 4).join("; ")), { code: "sdl_invalid", sdlErrors: last });
 }
 
 H.ARCHITECT = async (task, { signal }) => {
