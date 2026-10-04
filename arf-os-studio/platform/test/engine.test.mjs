@@ -92,6 +92,35 @@ test("full backtest stage, robustness and evidence", async () => {
   assert.ok(ev.gates.length >= 10);
 });
 
+test("grade caps: adverse-path dependence, untested neighbours, implausible PF", async () => {
+  const bt = await runBacktestStage(sdl, bars, "discovery");
+  const rob = robustnessSuite(sdl, bars, bt.selectedParams, "discovery");
+  const ho = runHoldout(sdl, bars, bt.selectedParams);
+  const ds = { integrity: integrityReport(bars, "240") };
+  const rank = g => "ABCDF".indexOf(g);
+  // Profit mostly from intrabar ordering: grade can be at most C.
+  const r1 = structuredClone(rob);
+  r1.baseMetrics.netProfit = 4000; r1.sensitivity.adversePath = 600;
+  const e1 = evaluateEvidence({ dataset: ds, backtest: bt, robustness: r1, holdout: ho, sdl }, "discovery");
+  assert.ok(rank(e1.grade) >= rank("C"), e1.grade);
+  assert.ok(e1.caps.some(c => /adverse intrabar/.test(c.why)));
+  assert.ok(e1.softConcerns.some(c => /15% of the profit survives/.test(c)));
+  // Profit gone under the adverse path: at most D.
+  const r2 = structuredClone(rob); r2.baseMetrics.netProfit = 4000; r2.sensitivity.adversePath = -10;
+  assert.ok(rank(evaluateEvidence({ dataset: ds, backtest: bt, robustness: r2, holdout: ho, sdl }, "discovery").grade) >= rank("D"));
+  // No tunable parameters: the neighbour gate is "not tested", not a pass, and earns half credit.
+  const r3 = structuredClone(rob); r3.neighbourSurvival = null;
+  const e3 = evaluateEvidence({ dataset: ds, backtest: bt, robustness: r3, holdout: ho, sdl }, "discovery");
+  const g3 = e3.gates.find(g => g.name.startsWith("Neighbour survival"));
+  assert.equal(g3.pass, null); assert.equal(g3.required, false);
+  assert.equal(e3.parts.parameterStability, 5);
+  // Validation PF of 40 is flagged and caps the grade at B.
+  const b4 = structuredClone(bt); b4.validation.metrics.profitFactor = 40; b4.validation.metrics.tradeCount = 50;
+  const e4 = evaluateEvidence({ dataset: ds, backtest: b4, robustness: rob, holdout: ho, sdl }, "discovery");
+  assert.ok(rank(e4.grade) >= rank("B"));
+  assert.ok(e4.softConcerns.some(c => /Implausibly high profit factor on validation/.test(c)));
+});
+
 test("integrity report flags duplicates and gaps", () => {
   const b = syntheticBars({ n: 800 });
   b.t[100] = b.t[99];

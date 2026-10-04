@@ -188,8 +188,9 @@ export function robustnessSuite(sdl, bars, params, policy, progress = () => {}) 
   progress("Parameter neighbourhood on validation");
   const nb = neighbours(sdl, params);
   const nbRes = nb.map(p => ({ params: p, m: computeMetrics(runBacktest(sdl, bars, p, { ...segs.validation, cache })) }));
-  const survival = nb.length ? (nbRes.filter(x => x.m.netProfit > 0 && x.m.profitFactor > 1).length / nb.length) * 100 : 100;
-  add("Neighbour survival (validation)", survival >= policy.neighbourSurvivalPct, survival, `${nb.length} one-step neighbours, PF>1 and net>0`);
+  // No tunable parameters means nothing to perturb: the test is "not run", never a free pass.
+  const survival = nb.length ? (nbRes.filter(x => x.m.netProfit > 0 && x.m.profitFactor > 1).length / nb.length) * 100 : null;
+  add("Neighbour survival (validation)", survival === null ? null : survival >= policy.neighbourSurvivalPct, survival, nb.length ? `${nb.length} one-step neighbours, PF>1 and net>0` : "not run: the strategy has no tunable parameters");
 
   progress("Start-date perturbation");
   const shifts = [0.05, 0.1, 0.2].map(f => {
@@ -291,14 +292,19 @@ export function evaluateEvidence(ev, policyId = "discovery") {
   gate(`Max drawdown < ${policy.maxDrawdown}%`, backtest ? -worstDD < policy.maxDrawdown : null, worstDD.toFixed(1) + "%");
   gate(`≥ ${policy.positiveSegmentsPct}% positive segments`, robustness ? robustness.positiveSegmentsPct >= policy.positiveSegmentsPct : null, robustness ? robustness.positiveSegmentsPct.toFixed(0) + "%" : "not run");
   gate(`No trade > ${policy.maxTopTradeShare}% of net profit`, robustness ? !(robustness.baseMetrics.topTradeShare > policy.maxTopTradeShare) : null, robustness ? fmt2(robustness.baseMetrics.topTradeShare) + "%" : "");
-  gate(`Neighbour survival ≥ ${policy.neighbourSurvivalPct}%`, robustness ? robustness.neighbourSurvival >= policy.neighbourSurvivalPct : null, robustness ? robustness.neighbourSurvival.toFixed(0) + "%" : "");
+  const nbs = robustness ? robustness.neighbourSurvival : null, nbTested = typeof nbs === "number";
+  gate(`Neighbour survival ≥ ${policy.neighbourSurvivalPct}%`, nbTested ? nbs >= policy.neighbourSurvivalPct : null, nbTested ? nbs.toFixed(0) + "%" : robustness ? "not tested (no tunable parameters)" : "", !robustness || nbTested);
+  // Share of the normal dev+validation profit that survives when every bar moves against the position first.
+  const advNet = robustness ? robustness.sensitivity.adversePath : undefined, baseNet = robustness ? robustness.baseMetrics.netProfit : 0;
+  const advKeep = advNet !== undefined && baseNet > 0 ? advNet / baseNet : null;
   gate("Realistic costs included", sdl ? sdl.costs.commissionValue > 0 && sdl.costs.slippageTicks > 0 : null, sdl ? `${sdl.costs.commissionValue}% + ${sdl.costs.slippageTicks} ticks` : "");
   gate("No unresolved repainting defect", lint ? !lint.findings.some(f => f.category === "repaint" && f.severity === "error") : null, lint ? `${lint.findings.length} lint findings` : "Pine not linted");
   gate("TradingView parity verified", parity ? parity.status === "PASS" || (parity.status === "FAIL" && !!parity.explanation) : null, parity ? parity.status : "not verified", policy.requireTradingViewParity);
   gate("Forward-test evidence", forward ? forward.trades >= policy.forwardMinTrades && forward.days >= policy.forwardMinDays : null, forward ? `${forward.trades} trades / ${forward.days.toFixed(0)} days` : "none", policy.requireForward || !!contaminated);
 
   // Soft concerns (§16.2)
-  if (robustness && robustness.neighbourSurvival < policy.neighbourSurvivalPct) soft.push("High parameter sensitivity");
+  if (nbTested && nbs < policy.neighbourSurvivalPct) soft.push("High parameter sensitivity");
+  if (robustness && !nbTested) soft.push("Parameter stability not tested: the strategy has no tunable parameters");
   if (robustness && robustness.baseMetrics.topTradeShare > policy.maxTopTradeShare) soft.push("High profit concentration");
   if (robustness && robustness.baseMetrics.longestDrawdownDays > 365) soft.push("Long stagnation (> 1 year under water)");
   if (robustness && robustness.longOnly && robustness.shortOnly && (robustness.longOnly.netProfit > 0) !== (robustness.shortOnly.netProfit > 0)) soft.push("Inconsistent long/short performance");
@@ -308,7 +314,10 @@ export function evaluateEvidence(ev, policyId = "discovery") {
   if (!parity) soft.push("No TradingView parity check yet");
   if (backtest && backtest.selectionFellBack) soft.push("No parameter set met the selection rule; defaults were used");
   if (sdl && sdl.execution && sdl.execution.processOnClose) soft.push("Orders fill at the signal bar's close (process_orders_on_close): optimistic versus live execution");
-  if (robustness && robustness.sensitivity.adversePath !== undefined && robustness.sensitivity.adversePath <= 0 && robustness.baseMetrics.netProfit > 0) soft.push("Profit disappears under an adverse intrabar path: the edge depends on the backtester's guess of price order inside bars");
+  if (advKeep !== null && advKeep <= 0) soft.push("Profit disappears under an adverse intrabar path: the edge depends on the backtester's guess of price order inside bars");
+  else if (advKeep !== null && advKeep < 0.5) soft.push(`Only ${(advKeep * 100).toFixed(0)}% of the profit survives an adverse intrabar path: most of the edge depends on the backtester's guess of price order inside bars`);
+  const pfs = [backtest && [backtest.validation.metrics, "validation"], holdout && !contaminated && [holdout.metrics, "final holdout"]].filter(x => x && x[0].tradeCount >= 20 && x[0].profitFactor > 5);
+  for (const [m, name] of pfs) soft.push(`Implausibly high profit factor on ${name} (${fmt2(m.profitFactor)}): real edges are rarely above 3; check fills, stops and look-ahead before trusting it`);
 
   // Composite score (§12.7)
   const parts = {};
@@ -321,16 +330,24 @@ export function evaluateEvidence(ev, policyId = "discovery") {
   if (holdout && !contaminated) oosParts.push(pfScore(holdout.metrics.profitFactor));
   parts.outOfSample = oosParts.length ? 15 * mean(oosParts) : 0;
   parts.segmentStability = robustness ? 15 * clamp((robustness.positiveSegmentsPct - 40) / 40, 0, 1) : 0;
-  parts.parameterStability = robustness ? 10 * robustness.neighbourSurvival / 100 : 0;
-  parts.costExecution = robustness ? (robustness.sensitivity.commission2x > 0 ? 3 : 0) + (robustness.sensitivity.slippage2x > 0 ? 2 : 0) + (robustness.sensitivity.delay1 > 0 ? 2 : 0) + (robustness.sensitivity.adversePath === undefined || robustness.sensitivity.adversePath > 0 ? 3 : 0) : 0;
+  parts.parameterStability = robustness ? (nbTested ? 10 * nbs / 100 : 5) : 0; // untested earns half: unknown, not proven
+  parts.costExecution = robustness ? (robustness.sensitivity.commission2x > 0 ? 3 : 0) + (robustness.sensitivity.slippage2x > 0 ? 2 : 0) + (robustness.sensitivity.delay1 > 0 ? 2 : 0) + (advNet === undefined ? 3 : advKeep === null ? (advNet > 0 ? 3 : 0) : 3 * clamp((advKeep - 0.25) / 0.5, 0, 1)) : 0;
   parts.concentration = robustness ? (robustness.baseMetrics.topTradeShare <= policy.maxTopTradeShare ? 3 : 0) + (robustness.tests.find(t => t.name.startsWith("Net after removing top 5%")).pass ? 2 : 0) : 0;
   parts.crossMarket = ev.transfer ? (ev.transfer.profitFactor > 1 ? 5 : 0) : robustness ? (robustness.longOnly && robustness.shortOnly ? ((robustness.longOnly.netProfit > 0) + (robustness.shortOnly.netProfit > 0)) * 1.25 : 1.5) : 0;
   parts.forward = forward ? 5 * clamp(forward.trades / policy.forwardMinTrades, 0, 1) * (forward.drift && forward.drift.flag ? 0.3 : 1) : 0;
   const score = Object.values(parts).reduce((s, x) => s + x, 0);
   let grade = score >= 80 ? "A" : score >= 65 ? "B" : score >= 45 ? "C" : "D";
-  if (hard.length) grade = "F";
   const requiredFailed = gates.filter(g => g.required && g.pass === false).map(g => g.name);
+  // Caps: a high score cannot outrank a specific red flag. Each cap lists why the grade is limited.
+  const caps = [], ORDER = "ABCD";
+  const cap = (max, why) => { caps.push({ max, why }); if (ORDER.indexOf(grade) < ORDER.indexOf(max)) grade = max; };
+  if (advKeep !== null && advKeep <= 0) cap("D", "profit disappears under an adverse intrabar path");
+  else if (advKeep !== null && advKeep < 0.5) cap("C", `only ${(advKeep * 100).toFixed(0)}% of profit survives an adverse intrabar path`);
+  if (pfs.length) cap("B", "implausibly high profit factor");
+  if (requiredFailed.length >= 2) cap("C", `${requiredFailed.length} required checks failed`);
+  else if (requiredFailed.length === 1) cap("B", `required check failed: ${requiredFailed[0]}`);
+  if (hard.length) grade = "F";
   const requiredMissing = gates.filter(g => g.required && g.pass === null).map(g => g.name);
-  return { policy: policy.id, policyVersion: policy.version, score: Math.round(score * 10) / 10, parts, grade, hardFails: hard, softConcerns: soft, gates, requiredFailed, requiredMissing, oosTrades, allTrades };
+  return { policy: policy.id, policyVersion: policy.version, score: Math.round(score * 10) / 10, parts, grade, caps, hardFails: hard, softConcerns: soft, gates, requiredFailed, requiredMissing, oosTrades, allTrades };
 }
 const fmt2 = x => (Number.isFinite(x) ? x.toFixed(2) : String(x));
