@@ -283,7 +283,9 @@ H.BACKTEST = async (task, { progress }) => {
   await db.put("backtests", bt);
   await db.update("versions", v.id, { backtestId: bt.id, selectedParams: result.selectedParams });
   await transition(v.id, "BACKTESTED", { reasons: [result.smoke.pass ? "SMOKE_PASS" : "SMOKE_FAIL"], summary: `validation PF ${r2(result.validation.metrics.profitFactor)}, ${result.validation.metrics.tradeCount} trades`, evidenceIds: [bt.id], actor: { type: "system", id: "backtest-runner" } });
-  await q("BACKTEST_REPORT", { campaignId: v.campaignId, lane: "backtest", title: `Backtest report: v${v.versionNumber}`, refs: { versionId: v.id } });
+  // Backtest Lab versions (no campaign) continue straight to the free robustness suite; AI reviews are optional.
+  if (!v.campaignId) await q("VALIDATION_RUN", { campaignId: null, lane: "validator", title: `Robustness tests: v${v.versionNumber}`, refs: { versionId: v.id }, input: { withAgents: false } });
+  else await q("BACKTEST_REPORT", { campaignId: v.campaignId, lane: "backtest", title: `Backtest report: v${v.versionNumber}`, refs: { versionId: v.id } });
   return { result: { backtestId: bt.id } };
 };
 
@@ -382,6 +384,10 @@ H.VALIDATION_RUN = async (task, { progress }) => {
   const ev = evaluateEvidence(await gatherEvidence({ ...v, validationId: val.id }), c.policy);
   await db.update("validations", val.id, { evidence: ev });
   await db.update("versions", v.id, { evidenceGrade: ev.grade, evidenceScore: ev.score });
+  if (task.input && task.input.withAgents === false) {
+    await transition(v.id, "VALIDATED", { decision: "ROBUSTNESS_COMPLETE", reasons: ["NO_AGENT_REVIEW"], summary: `Evidence grade ${ev.grade} (${ev.score}/100). No AI review requested.`, evidenceIds: [val.id], actor: { type: "system", id: "validation-runner" } });
+    return { result: { grade: ev.grade, score: ev.score } };
+  }
   await q("VALIDATE", { campaignId: v.campaignId, lane: "validator", title: `Validator review: v${v.versionNumber}`, refs: { versionId: v.id } });
   return { result: { grade: ev.grade, score: ev.score } };
 };
@@ -476,6 +482,12 @@ export async function sendToValidation(versionId) {
   const v = await db.get("versions", versionId);
   await db.audit("version.sent_to_validation", { versionId }, HUMAN);
   await q("VALIDATION_RUN", { campaignId: v.campaignId, lane: "validator", title: `Robustness + holdout: v${v.versionNumber} (human)`, refs: { versionId } });
+}
+// Optional AI review of a version that already has free robustness evidence.
+export async function askAgentReview(versionId) {
+  const v = await db.get("versions", versionId);
+  await db.audit("version.agent_review_requested", { versionId }, HUMAN);
+  await q("VALIDATE", { campaignId: v.campaignId, lane: "validator", title: `Validator review: v${v.versionNumber}`, refs: { versionId } });
 }
 export async function regeneratePine(versionId) {
   const v = await db.get("versions", versionId);

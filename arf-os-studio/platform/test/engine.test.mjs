@@ -246,3 +246,40 @@ test("architect coercion maps flat and Pine-style trailing stops", async () => {
   assert.equal(s.risk.trailingStop.activation.value, 0.5); assert.equal(s.risk.trailingStop.offset.value, 0.2);
   assert.equal(validateSDL(s).ok, true);
 });
+
+// ---- Free Pine converter ----
+import fs from "node:fs";
+import { convertPineToSDL } from "../js/pine-convert.js";
+const pine = f => fs.readFileSync(new URL(`./pine/${f}.pine`, import.meta.url), "utf8");
+
+test("free converter: MACD-CCI with CCI sign, MACD tuple and ATR trail", () => {
+  const { sdl, notes } = convertPineToSDL(pine("macd_cci"));
+  assert.equal(validateSDL(sdl).ok, true, validateSDL(sdl).errors.join("; "));
+  assert.equal(sdl.signals.longEntry, "crosses_above(macdline, signalline) AND close > close_mean");
+  assert.equal(sdl.execution.processOnClose, true);
+  assert.equal(sdl.costs.commissionValue, 0.05);
+  assert.deepEqual(sdl.risk.trailingStop.activation, { type: "atr_multiple", value: 0.015, atrIndicator: "atr" });
+  assert.ok(notes.some(n => /no stop-loss/.test(n)));
+});
+
+test("free converter: inputs, else-if, ATR stop and R-multiple target", () => {
+  const { sdl, skipped } = convertPineToSDL(pine("ema_atr"));
+  assert.equal(validateSDL(sdl).ok, true);
+  assert.deepEqual(skipped, []);
+  assert.deepEqual(sdl.risk.stopLoss, { type: "atr_multiple", valueParameter: "atrmult", atrIndicator: "a" });
+  assert.deepEqual(sdl.risk.takeProfit, { type: "risk_multiple", value: 2 });
+  assert.ok(sdl.parameters.find(p => p.key === "slowlen" && p.min === 50 && p.max === 250));
+  assert.equal(sdl.costs.slippageTicks, 2);
+  assert.equal(sdl.risk.sizePercent, 25);
+});
+
+test("free converter: strategy.close exits and percent stop", () => {
+  const { sdl } = convertPineToSDL(pine("rsi"));
+  assert.equal(sdl.signals.longExit, "r > 70");
+  assert.deepEqual(sdl.risk.stopLoss, { type: "percent", value: 3 });
+  assert.deepEqual(sdl.strategy.directions, ["long"]);
+});
+
+test("free converter refuses bar-by-bar state instead of inventing entries", () => {
+  assert.throws(() => convertPineToSDL(pine("r08")), /bar-by-bar state/);
+});

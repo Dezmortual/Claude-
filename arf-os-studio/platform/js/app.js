@@ -44,8 +44,8 @@ async function renderTop() {
   $("#topStats").innerHTML = `<span>Running <b>${runs.length}</b></span><span>Queued <b>${queued}</b></span><span>Model spend <b>$${spend.toFixed(2)}</b></span><span>Campaigns active <b>${campaigns.filter(c => c.status === "RUNNING").length}</b></span>`;
   const conn = $("#conn"), key = await db.setting("apikey");
   const t = transport();
-  conn.className = "conn " + (t === "claude" || (key && !IN_ARTIFACT) ? "ok" : "off");
-  conn.lastChild.textContent = t === "claude" ? "Claude connected" : IN_ARTIFACT ? "Claude access off" : key ? "API key set" : "No API key";
+  conn.className = "conn " + (t === "claude" || (key && !IN_ARTIFACT) ? "ok" : IN_ARTIFACT ? "off" : "free");
+  conn.lastChild.textContent = t === "claude" ? "Claude connected" : IN_ARTIFACT ? "Claude access off" : key ? "API key set" : "Free mode (AI off)";
   conn.title = t === "claude" ? "Running inside Claude: agents use your Claude session" : key ? "Agents call the Anthropic API with your key" : "Add an API key in Policies & Admin";
 }
 

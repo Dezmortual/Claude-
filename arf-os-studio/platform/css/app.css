@@ -83,6 +83,7 @@ p { margin: 0 0 8px; }
 .conn i { width: 8px; height: 8px; border-radius: 50%; background: var(--warn); display: inline-block; }
 .conn.ok i { background: var(--good); }
 .conn.off i { background: var(--bad); }
+.conn.free i { background: var(--muted); }
 .icon-btn { border: 1px solid var(--line); background: var(--panel-2); border-radius: 7px; width: 32px; height: 32px; display: inline-grid; place-items: center; font-size: 14px; }
 #pauseBtn[aria-pressed="true"] { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
 .menu-btn { display: none; }

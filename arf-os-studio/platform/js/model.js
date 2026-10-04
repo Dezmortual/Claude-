@@ -88,7 +88,8 @@ export async function callModel({ system, messages, model = DEFAULT_MODEL, effor
     if (!res.ok) {
       let msg = res.status + " " + res.statusText, type = "http";
       try { const j = await res.json(); msg = j.error?.message || msg; type = j.error?.type || type; } catch (_) {}
-      const err = new ModelError(res.status === 429 ? "rate_limited" : res.status === 401 ? "bad_key" : res.status >= 500 || res.status === 529 ? "upstream_error" : type, msg);
+      if (/credit balance/i.test(msg)) msg = "Your Anthropic API account has no credit left. Everything except the AI agents is free: use the free converter and examples, or open the platform in the Claude app to use your Claude plan.";
+      const err = new ModelError(/credit balance/i.test(msg) ? "no_credit" : res.status === 429 ? "rate_limited" : res.status === 401 ? "bad_key" : res.status >= 500 || res.status === 529 ? "upstream_error" : type, msg);
       err.status = res.status;
       throw err;
     }

@@ -1,0 +1,15 @@
+//@version=6
+strategy("EMA cross ATR", overlay=true, commission_type=strategy.commission.percent, commission_value=0.1, slippage=2,
+     default_qty_type=strategy.percent_of_equity, default_qty_value=25)
+fastLen = input.int(20, "Fast EMA", minval=5, maxval=60)
+slowLen = input.int(100, "Slow EMA", minval=50, maxval=250, step=10)
+atrMult = input.float(2.0, "Stop ATR", minval=1.0, maxval=4.0, step=0.5)
+fast = ta.ema(close, fastLen)
+slow = ta.ema(close, slowLen)
+a = ta.atr(14)
+if ta.crossover(fast, slow)
+    strategy.entry("L", strategy.long)
+else if ta.crossunder(fast, slow)
+    strategy.entry("S", strategy.short)
+strategy.exit("XL", "L", stop=strategy.position_avg_price - a * atrMult, limit=strategy.position_avg_price + a * atrMult * 2)
+strategy.exit("XS", "S", stop=strategy.position_avg_price + a * atrMult, limit=strategy.position_avg_price - a * atrMult * 2)

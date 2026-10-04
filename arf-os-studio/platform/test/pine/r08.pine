@@ -1,0 +1,18 @@
+//@version=6
+strategy("R08 PROFIT-TRIGGER lab", overlay=true, pyramiding=1, process_orders_on_close=true,
+         commission_type=strategy.commission.percent, commission_value=0.05, initial_capital=10000,
+         default_qty_type=strategy.percent_of_equity, default_qty_value=100,
+         margin_long=100, margin_short=100)
+chartMin = input.int(240, "Chart timeframe in minutes")
+stopPct  = input.float(3.0, "Safety stop % from entry")
+var float ema4 = na
+bool longSig = false
+bool shortSig = false
+if barstate.isconfirmed
+    ema4 := na(ema4) ? close : ema4 + 2.0 / 5.0 * (close - ema4)
+    longSig := close > ema4
+if longSig
+    strategy.close("S")
+    strategy.entry("L", strategy.long)
+if shortSig
+    strategy.entry("S", strategy.short)

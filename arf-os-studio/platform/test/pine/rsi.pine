@@ -1,0 +1,10 @@
+//@version=5
+strategy("RSI reversion", overlay=false)
+len = input(14, "RSI length")
+lo = input.int(30, "Oversold")
+r = ta.rsi(close, len)
+if ta.crossover(r, lo) and close > ta.sma(close, 200)
+    strategy.entry("Long", strategy.long)
+if r > 70
+    strategy.close("Long")
+strategy.exit("SL", from_entry="Long", stop=strategy.position_avg_price * (1 - 3 / 100))
