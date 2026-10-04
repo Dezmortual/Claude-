@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-04T12:38:26.318Z",
+ "updatedAt": "2026-10-04T12:43:19.525Z",
  "sets": [
   {
    "symbol": "XAUUSD",
@@ -257,108 +257,108 @@
    "symbol": "NAS100",
    "label": "Nasdaq 100",
    "group": "Indices",
-   "source": "Yahoo Finance (^NDX)",
+   "source": "Yahoo Finance (NQ=F)",
    "market": "sessions",
    "timeframe": "60",
    "file": "NAS100_60.csv",
-   "bars": 5081,
-   "from": 1699018200000,
-   "to": 1790971200000
+   "bars": 13683,
+   "from": 1715551200000,
+   "to": 1790974798000
   },
   {
    "symbol": "NAS100",
    "label": "Nasdaq 100",
    "group": "Indices",
-   "source": "Yahoo Finance (^NDX)",
+   "source": "Yahoo Finance (NQ=F)",
    "market": "sessions",
    "timeframe": "240",
    "file": "NAS100_240.csv",
-   "bars": 1707,
-   "from": 1699012800000,
+   "bars": 3704,
+   "from": 1715544000000,
    "to": 1790971200000
   },
   {
    "symbol": "NAS100",
    "label": "Nasdaq 100",
    "group": "Indices",
-   "source": "Yahoo Finance (^NDX)",
+   "source": "Yahoo Finance (NQ=F)",
    "market": "sessions",
    "timeframe": "1D",
    "file": "NAS100_1D.csv",
    "bars": 2514,
-   "from": 1475452800000,
+   "from": 1475539200000,
    "to": 1790899200000
   },
   {
    "symbol": "SPX500",
    "label": "S&P 500",
    "group": "Indices",
-   "source": "Yahoo Finance (^GSPC)",
+   "source": "Yahoo Finance (ES=F)",
    "market": "sessions",
    "timeframe": "60",
    "file": "SPX500_60.csv",
-   "bars": 5081,
-   "from": 1699018200000,
-   "to": 1790971200000
+   "bars": 13685,
+   "from": 1715551200000,
+   "to": 1790974800000
   },
   {
    "symbol": "SPX500",
    "label": "S&P 500",
    "group": "Indices",
-   "source": "Yahoo Finance (^GSPC)",
+   "source": "Yahoo Finance (ES=F)",
    "market": "sessions",
    "timeframe": "240",
    "file": "SPX500_240.csv",
-   "bars": 1707,
-   "from": 1699012800000,
+   "bars": 3707,
+   "from": 1715544000000,
    "to": 1790971200000
   },
   {
    "symbol": "SPX500",
    "label": "S&P 500",
    "group": "Indices",
-   "source": "Yahoo Finance (^GSPC)",
+   "source": "Yahoo Finance (ES=F)",
    "market": "sessions",
    "timeframe": "1D",
    "file": "SPX500_1D.csv",
    "bars": 2514,
-   "from": 1475452800000,
+   "from": 1475539200000,
    "to": 1790899200000
   },
   {
    "symbol": "US30",
    "label": "Dow Jones",
    "group": "Indices",
-   "source": "Yahoo Finance (^DJI)",
+   "source": "Yahoo Finance (YM=F)",
    "market": "sessions",
    "timeframe": "60",
    "file": "US30_60.csv",
-   "bars": 5081,
-   "from": 1699018200000,
-   "to": 1790971200000
+   "bars": 13679,
+   "from": 1715551200000,
+   "to": 1790974799000
   },
   {
    "symbol": "US30",
    "label": "Dow Jones",
    "group": "Indices",
-   "source": "Yahoo Finance (^DJI)",
+   "source": "Yahoo Finance (YM=F)",
    "market": "sessions",
    "timeframe": "240",
    "file": "US30_240.csv",
-   "bars": 1707,
-   "from": 1699012800000,
+   "bars": 3705,
+   "from": 1715544000000,
    "to": 1790971200000
   },
   {
    "symbol": "US30",
    "label": "Dow Jones",
    "group": "Indices",
-   "source": "Yahoo Finance (^DJI)",
+   "source": "Yahoo Finance (YM=F)",
    "market": "sessions",
    "timeframe": "1D",
    "file": "US30_1D.csv",
    "bars": 2514,
-   "from": 1475452800000,
+   "from": 1475539200000,
    "to": 1790899200000
   },
   {
@@ -429,8 +429,8 @@
    "market": "24x7",
    "timeframe": "1D",
    "file": "BTCUSDT_1D.csv",
-   "bars": 1824,
-   "from": 1633478400000,
+   "bars": 2919,
+   "from": 1538870400000,
    "to": 1790985600000
   },
   {
@@ -465,8 +465,8 @@
    "market": "24x7",
    "timeframe": "1D",
    "file": "ETHUSDT_1D.csv",
-   "bars": 1824,
-   "from": 1633478400000,
+   "bars": 2919,
+   "from": 1538870400000,
    "to": 1790985600000
   },
   {
@@ -501,8 +501,8 @@
    "market": "24x7",
    "timeframe": "1D",
    "file": "SOLUSDT_1D.csv",
-   "bars": 1824,
-   "from": 1633478400000,
+   "bars": 2245,
+   "from": 1597104000000,
    "to": 1790985600000
   },
   {
@@ -537,8 +537,8 @@
    "market": "24x7",
    "timeframe": "1D",
    "file": "XRPUSDT_1D.csv",
-   "bars": 1824,
-   "from": 1633478400000,
+   "bars": 2919,
+   "from": 1538870400000,
    "to": 1790985600000
   },
   {
@@ -573,8 +573,8 @@
    "market": "24x7",
    "timeframe": "1D",
    "file": "BNBUSDT_1D.csv",
-   "bars": 1824,
-   "from": 1633478400000,
+   "bars": 2919,
+   "from": 1538870400000,
    "to": 1790985600000
   },
   {
@@ -609,8 +609,8 @@
    "market": "24x7",
    "timeframe": "1D",
    "file": "DOGEUSDT_1D.csv",
-   "bars": 1824,
-   "from": 1633478400000,
+   "bars": 2648,
+   "from": 1562284800000,
    "to": 1790985600000
   },
   {
@@ -645,8 +645,8 @@
    "market": "24x7",
    "timeframe": "1D",
    "file": "PAXGUSDT_1D.csv",
-   "bars": 1824,
-   "from": 1633478400000,
+   "bars": 2228,
+   "from": 1598572800000,
    "to": 1790985600000
   }
  ],
