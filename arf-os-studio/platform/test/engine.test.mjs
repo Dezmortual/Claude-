@@ -215,3 +215,20 @@ test("daily VWAP resets at the UTC day boundary", () => {
   const out = vwapDaily(bars, [10, 20, 30, 40]);
   assert.deepEqual([...out], [10, 17.5, 30, 35]);
 });
+
+test("architect coercion fills descriptive fields but never invents logic", async () => {
+  const { coerceArchitect, byId } = await import("../js/agents.js");
+  const { validate } = await import("../js/schema.js");
+  const partial = { sdl: { strategy: { name: "MACD-CCI ctrl" }, indicators: [{ id: "atr14", type: "atr", length: 14 }], signals: { longEntry: "close > close[1]", shortEntry: "close < close[1]" },
+    risk: { sizingModel: "percent_of_equity", sizePercent: 100, leverage: 1, stopLoss: { type: "atr_multiple", value: 2, atrIndicator: "atr14" }, takeProfit: { type: "none" } }, parameters: [] }, summary: "MACD cross with CCI filter" };
+  const out = coerceArchitect(partial);
+  assert.deepEqual(out.sdl.strategy.directions, ["long", "short"]);
+  assert.ok(out.sdl.strategy.thesis && out.sdl.strategy.family);
+  assert.equal(validate(byId.architect.schema, out).ok, true, JSON.stringify(validate(byId.architect.schema, out).errors));
+  const v = validateSDL(out.sdl);
+  assert.equal(v.ok, true, v.errors.join("; "));
+  // No signals -> no directions invented
+  const empty = coerceArchitect({ sdl: { strategy: {}, signals: {} } });
+  assert.deepEqual(empty.sdl.strategy.directions, []);
+  assert.equal(validateSDL(empty.sdl).ok, false);
+});

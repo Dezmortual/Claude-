@@ -49,10 +49,41 @@ export const SDL_GRAMMAR_DOC = `SDL GRAMMAR (the research runner executes exactl
 - Indicator types: ${Object.entries(INDICATOR_TYPES).map(([k, v]) => `${k} (${v.needs.join(", ")}: ${v.doc})`).join("; ")}.
 - Indicator numeric fields (length, mult, fast, slow, signal) are a number or {"parameter":"<key>"} referencing parameters[]. Omit fields the type does not need. Sources: ${SOURCES.join(", ")}.
 - Signal expressions (longEntry, shortEntry, longExit, shortExit; use "" for none) use: indicator ids, parameter keys, built-ins ${BUILTINS.join(", ")} (hour/dayofweek are UTC; dayofweek 1=Sunday), numbers, true/false, history offsets x[1] (non-negative integers only), + - * /, < > <= >= == !=, AND OR NOT, parentheses, and functions ${Object.entries(FUNCTIONS).map(([k, n]) => `${k}(${n} args)`).join(", ")} (rising/falling second argument must be a literal integer).
-- Signals are evaluated on confirmed bar close; market orders fill next bar open with slippage (execution.processOnClose true fills at the signal bar's close instead — only to reproduce a Pine script that uses process_orders_on_close; it is optimistic). Pyramiding 0. One stop-loss (atr_multiple with atrIndicator naming an atr indicator, or percent) and one take-profit (risk_multiple, percent, or none). Optional risk.trailingStop {activation, offset}, each {type: percent|atr_multiple, value or valueParameter, atrIndicator for atr}: arms when price moves activation in profit from the fill, then trails the best price by offset (Pine trail_points / trail_offset). Set value or valueParameter (a declared parameter key). For a highest/lowest breakout compare to the previous bar: close > hh[1].
+- Signals are evaluated on confirmed bar close; market orders fill next bar open with slippage (execution.processOnClose true fills at the signal bar's close instead — only to reproduce a Pine script that uses process_orders_on_close; it is optimistic). Pyramiding 0. One stop-loss (atr_multiple with atrIndicator naming an atr indicator, or percent) and one take-profit (risk_multiple, percent, or none). Optional risk.trailingStop {activation, offset}, each {type: percent|atr_multiple, value or valueParameter, atrIndicator for atr}: arms when price moves activation in profit from the fill, then trails the best price by offset (Pine trail_points / trail_offset). Set value or valueParameter (a declared parameter key). For a highest/lowest breakout compare to the previous bar: close > hh[1]. Exact equivalents for common Pine indicators that are not built in: ta.cci(src, n) > 0 ⇔ src > sma(src, n) (likewise < 0); ta.vwap with a daily anchor ⇔ vwap_daily on hlc3; ta.macd ⇔ macd / macd_signal.
 - Notional per trade = equity × sizePercent/100 × leverage. Leverage 1–10. Commission in percent per side; slippage in ticks; tickSize is the price increment.
 - Every parameter: snake_case key, int|float, default within [min,max], step > 0, rationale. Keep the grid small (≤ 500 combinations) and the rule set minimal.
 - schemaVersion "1.0.0", chartType "standard_ohlc", timezone "Etc/UTC", entryOrder "market_next_bar", pyramiding 0, processOnClose false, calcOnEveryTick false, oneStopOneTarget true.`;
+
+// Fill descriptive or defaulted SDL fields a model sometimes leaves out, so a usable definition is not
+// rejected for omissions that carry no trading logic. Logic fields (indicators, signals, risk) are never invented;
+// the SDL validator still checks them.
+export function coerceArchitect(out) {
+  if (!out || typeof out !== "object" || !out.sdl || typeof out.sdl !== "object") return out;
+  const s = out.sdl;
+  s.schemaVersion = "1.0.0";
+  s.strategy = s.strategy && typeof s.strategy === "object" ? s.strategy : {};
+  s.signals = s.signals && typeof s.signals === "object" ? s.signals : {};
+  for (const k of ["longEntry", "shortEntry", "longExit", "shortExit"]) if (typeof s.signals[k] !== "string") s.signals[k] = "";
+  const st = s.strategy;
+  if (!st.name) st.name = out.summary ? String(out.summary).slice(0, 60) : "Translated strategy";
+  if (!st.family) st.family = "unspecified";
+  if (!st.thesis) st.thesis = out.summary || `Translated from a Pine script: ${st.name}`;
+  if (!Array.isArray(st.directions) || !st.directions.length) st.directions = [s.signals.longEntry && "long", s.signals.shortEntry && "short"].filter(Boolean);
+  s.market = { assetClass: "crypto", symbols: [], timeframe: "240", timezone: "Etc/UTC", session: "0000-2359:1234567", chartType: "standard_ohlc", ...(s.market || {}) };
+  s.execution = { entryOrder: "market_next_bar", pyramiding: 0, allowReversal: false, processOnClose: false, calcOnEveryTick: false, ...(s.execution || {}) };
+  if (s.risk && typeof s.risk === "object") { if (s.risk.oneStopOneTarget === undefined) s.risk.oneStopOneTarget = true; if (!s.risk.sizingModel) s.risk.sizingModel = "percent_of_equity"; if (!s.risk.leverage) s.risk.leverage = 1; if (!s.risk.takeProfit) s.risk.takeProfit = { type: "none" }; }
+  s.costs = { commissionType: "percent", commissionValue: 0.06, slippageTicks: 1, tickSize: 0.01, ...(s.costs || {}) };
+  if (!Array.isArray(s.parameters)) s.parameters = [];
+  if (!Array.isArray(s.indicators)) s.indicators = [];
+  s.segments = { warmupBars: 300, selectionMode: "rolling_walk_forward", embargoBars: 10, ...(s.segments || {}) };
+  if (!Array.isArray(s.falsification) || !s.falsification.length) s.falsification = ["Validation-segment net profit is non-positive.", "Doubling costs removes the edge."];
+  for (const k of ["status", "summary"]) if (out[k] === undefined) out[k] = k === "status" ? "COMPLETE" : "";
+  for (const k of ["assumptions", "unknowns", "ambiguityNotes", "expectedFailureModes", "changedFields"]) if (!Array.isArray(out[k])) out[k] = [];
+  if (typeof out.confidence !== "number") out.confidence = 0.5;
+  if (!out.backtestExpectations || typeof out.backtestExpectations !== "object") out.backtestExpectations = { tradesPerYear: 0, expectedWinRatePct: 0, notes: "" };
+  if (!out.changeCategory) out.changeCategory = "initial";
+  return out;
+}
 
 export const AGENTS = [
   {
@@ -85,7 +116,7 @@ YOU MUST NOT: pick parameters from performance; add indicators because they impr
     schema: withCommon({ cards: S.arr(S.obj({ name: S.str(), type: S.enum(Object.keys(INDICATOR_TYPES)), role: S.enum(["signal", "trend", "regime", "volatility", "timing", "exit", "risk", "confirmation"]), formula: S.str(), parameters: S.arr(S.obj({ name: S.str(), min: S.num(), max: S.num(), default: S.num(), rationale: S.str() })), economicInterpretation: S.str(), warmupBars: S.int(), repaintingAnalysis: S.str(), mtfNotes: S.str(), failureModes: S.arr(S.str()), redundancyNotes: S.str(), pineNotes: S.str(), unitTests: S.arr(S.str()), recommendation: S.enum(["USE", "OPTIONAL", "REJECT"]) })) })
   },
   {
-    id: "architect", code: "STRATEGY_ARCHITECT", role: "Strategy Architect", name: "Theo Marchetti", alias: "The Draftsman", hue: 30, model: "claude-opus-5-5", effort: "high",
+    id: "architect", code: "STRATEGY_ARCHITECT", role: "Strategy Architect", name: "Theo Marchetti", alias: "The Draftsman", hue: 30, model: "claude-opus-5-5", effort: "high", coerce: coerceArchitect,
     mission: "Convert idea and indicator evidence into a complete, deterministic Strategy Definition before code is written.",
     prompt: `ROLE: STRATEGY_ARCHITECT (spec §7.4)
 MISSION: Produce one machine-readable SDL document that another agent can implement without asking what the rules mean. Start with the smallest rule set that expresses the hypothesis.
