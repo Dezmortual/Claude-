@@ -6,7 +6,7 @@ import { VERSION_STATES, activeTasks, cancelTask, retryTask, championPrompt, pum
 import * as L from "./lanes.js";
 import { POLICIES, evaluateEvidence, buildSegments } from "./research.js";
 import { validateSDL, gridSize, SDL_TEMPLATE, paramAxis } from "./sdl.js";
-import { SOURCES as DATA_SOURCES, fetchBars, parseOhlcCsv, QUICK_DATA, encodeDataset, parseDataText } from "./data.js";
+import { SOURCES as DATA_SOURCES, fetchBars, parseOhlcCsv, QUICK_DATA, BINANCE_SYMBOLS, symbolLabel, suggestSymbol, encodeDataset, parseDataText } from "./data.js";
 import { convertPineToSDL } from "./pine-convert.js";
 import { EXAMPLES } from "./examples.js";
 import { SUITES, runPractice, createChallenger, promotionCheck, promote, rollback } from "./practice.js";
@@ -475,7 +475,12 @@ function runsTable(runs) {
 /* ======================= Backtest Lab ======================= */
 // Phone-first flow: 1) strategy (paste Pine for Claude to convert, or edit the SDL), 2) price data (one tap), 3) run.
 function dataPicker(datasets, selectId = "labDataset") {
-  const quick = IN_ARTIFACT ? "" : `<div class="quick-data">${QUICK_DATA.map(([sym, tf]) => { const have = datasets.find(d => d.source === "binance" && d.symbol === sym && d.timeframe === tf); return `<button class="btn ${have ? "" : "primary"}" data-act="quickData" data-symbol="${sym}" data-tf="${tf}">${have ? "✓ " : ""}${sym.replace("USDT", "")} ${tf === "1D" ? "daily" : tf === "60" ? "1h" : "4h"}</button>`; }).join("")}</div><p class="small muted">One tap loads ~2 years of Binance candles. No file needed.</p>`;
+  const tfName = tf => (tf === "1D" ? "daily" : tf === "60" ? "1h" : tf === "15" ? "15m" : "4h");
+  const quick = IN_ARTIFACT ? "" : `<div class="quick-data">${QUICK_DATA.map(([sym, tf]) => { const have = datasets.find(d => d.source === "binance" && d.symbol === sym && d.timeframe === tf); return `<button class="btn ${have ? "" : "primary"}" data-act="quickData" data-symbol="${sym}" data-tf="${tf}">${have ? "✓ " : ""}${symbolLabel(sym)} ${tfName(tf)}</button>`; }).join("")}</div>
+    <div class="sym-pick"><label class="field">Any Binance pair<input type="text" id="symPick" list="symList" placeholder="e.g. XRPUSDT or PAXGUSDT for gold" autocapitalize="characters" autocomplete="off"></label><datalist id="symList">${BINANCE_SYMBOLS.map(([s, n]) => `<option value="${s}">${esc(n)}</option>`).join("")}</datalist>
+      <label class="field">Timeframe<select id="tfPick"><option value="15">15m</option><option value="60">1h</option><option value="240" selected>4h</option><option value="1D">daily</option></select></label>
+      <button class="btn primary" data-act="quickDataPick">Load</button></div>
+    <p class="small muted">Loads ~2 years of Binance candles. No file needed. Gold is the PAXG token (backed by physical gold, trades 24/7); forex pairs and stocks aren't available from a free source here.</p>`;
   const select = datasets.length ? `<label class="field">Use this data<select id="${selectId}">${datasets.map(d => `<option value="${d.id}">${esc(d.symbol)} ${esc(d.timeframe)} · ${fmt(d.bars, 0)} bars · to ${isoDate(d.to)}</option>`).join("")}</select></label>` : "";
   const other = IN_ARTIFACT
     ? `<div class="row"><button class="btn primary" data-act="pasteDataset" data-return="lab">Paste price data</button><button class="btn" data-act="loadDataset" data-return="lab">Upload a CSV file</button></div><p class="small muted">This Claude view can't download prices. Get them in one tap on the <a href="https://dezmortual.github.io/Claude-/platform/#/lab" target="_blank" rel="noopener">website version</a>, press <b>Copy for Claude</b> there, then come back and paste.</p>`
@@ -889,6 +894,13 @@ export const actions = {
       });
     });
   },
+  quickDataPick: async el => {
+    const sym = ($("#symPick").value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!sym) return toast("Type a Binance pair, e.g. XRPUSDT", "bad");
+    const fixed = /XAU|GOLD/.test(sym) ? "PAXGUSDT" : /USDT$|BTC$|ETH$|USDC$|FDUSD$/.test(sym) ? sym : sym + "USDT";
+    if (fixed !== sym) toast(`Using ${fixed}` + (fixed === "PAXGUSDT" ? " (gold-backed token)" : ""));
+    return actions.quickData(el, { symbol: fixed, tf: $("#tfPick").value });
+  },
   quickData: async (el, d) => {
     const label = el.textContent; el.textContent = "Loading…";
     try {
@@ -899,7 +911,7 @@ export const actions = {
     } catch (e) { el.textContent = label; toast("Could not load prices: " + e.message + ". If Binance is blocked where you are, use Other symbol → Coinbase.", "bad"); }
   },
   pasteDataset: async (el, d, ui) => {
-    ui.openModal(`<h2>Paste price data</h2><p class="small muted">Long-press the box and choose <b>Paste</b>. Accepts text from <b>Copy for Claude</b> on the website version, or CSV text with a header row.</p>
+    ui.openModal(`<h2>Paste price data</h2><p class="small muted">Long-press the box and choose <b>Paste</b>. This box is for <b>prices</b>: text from <b>Copy for Claude</b> on the website version, or CSV text with a header row. (If you paste a strategy here by mistake, it's moved to step 1 for you.)</p>
       <textarea id="pdText" class="code" style="min-height:160px" placeholder="#ARF-DATA v1 source=binance symbol=BTCUSDT timeframe=240&#10;time,open,high,low,close,volume&#10;..."></textarea>
       <div class="form-grid"><label class="field">Symbol<input type="text" id="pdSym" placeholder="from pasted data" autocapitalize="characters"></label><label class="field">Timeframe<input type="text" id="pdTf" placeholder="240, 60, 1D"></label></div>
       <div id="pdOut" class="small"></div><div class="foot"><button class="btn" data-act="closeModal">Cancel</button><button class="btn primary" id="pdGo">Load data</button></div>`, m => {
@@ -907,6 +919,18 @@ export const actions = {
       ta.addEventListener("input", () => { try { const { meta } = parseDataText(ta.value.slice(0, 400) + "\ntime"); if (meta.symbol) m.querySelector("#pdSym").value = meta.symbol; if (meta.timeframe) m.querySelector("#pdTf").value = meta.timeframe; } catch (_) {} });
       m.querySelector("#pdGo").addEventListener("click", async () => {
         try {
+          const raw = ta.value.trim();
+          if (/^\{[\s\S]*"schemaVersion"/.test(raw)) {
+            // A strategy definition was pasted here by mistake: put it into step 1 instead.
+            let sdl; try { sdl = JSON.parse(raw); } catch (e) { throw new Error("This looks like a strategy definition but isn't complete JSON: " + e.message); }
+            ui.closeModal();
+            if (location.hash.split("?")[0] !== "#/lab") { location.hash = "#/lab"; await new Promise(r => setTimeout(r, 400)); }
+            const box = $("#labSdl"); if (box) { box.value = JSON.stringify(sdl, null, 2); const det = document.querySelector(".sdl-box"); if (det) det.open = true; }
+            await db.setting("labDraft", JSON.stringify(sdl, null, 2));
+            const hint = suggestSymbol(sdl.market && sdl.market.symbols && sdl.market.symbols[0]);
+            toast(`That was a strategy, not price data — loaded “${sdl.strategy?.name || "strategy"}” into step 1.${hint ? ` Now load ${symbolLabel(hint)} prices.` : ""}`);
+            return;
+          }
           const { meta, bars } = parseDataText(ta.value);
           const sym = (m.querySelector("#pdSym").value || meta.symbol || "").trim().toUpperCase(), tf = (m.querySelector("#pdTf").value || meta.timeframe || "").trim().toUpperCase();
           if (!sym || !tf) throw new Error("Enter the symbol and timeframe");
@@ -933,7 +957,7 @@ export const actions = {
     const ex = EXAMPLES.find(x => x.id === d.id);
     $("#labSdl").value = JSON.stringify(ex.sdl, null, 2);
     await db.setting("labDraft", $("#labSdl").value);
-    $("#pineOut").innerHTML = `<div class="note good small"><b>✓ Loaded “${esc(ex.label)}”.</b> Pick price data in step 2 and tap Run backtest.</div>`;
+    $("#pineOut").innerHTML = `<div class="note good small"><b>✓ Loaded “${esc(ex.label)}”.</b> Pick price data in step 2 (any coin or gold works) and tap Run backtest.</div>`;
     toast("Loaded " + ex.label);
   },
   convertPineFree: async () => {

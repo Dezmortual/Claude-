@@ -68,7 +68,13 @@ await page.waitForTimeout(800);
 res.reviewButton = await page.isVisible("[data-act=askAgentReview]");
 if (shots) await page.screenshot({ path: path.join(shots, "f2-evidence.png") });
 res.failedTasks = await page.evaluate(async u => (await (await import(u)).all("tasks", t => ["FAILED_TERMINAL", "WAITING_HUMAN"].includes(t.status))).map(t => t.kind), dbu);
+// Gold (PAXG) via the symbol box: typing "gold" maps to PAXGUSDT.
+await page.goto(base + "#/lab");
+await page.fill("#symPick", "gold");
+await page.click("[data-act=quickDataPick]");
+await page.waitForTimeout(3000);
+res.gold = await page.evaluate(async u => (await (await import(u)).all("datasets")).some(d => d.symbol === "PAXGUSDT"), dbu);
 res.aiCalls = aiCalls; res.errors = errors;
 console.log(JSON.stringify(res, null, 1));
 await browser.close(); server.close();
-if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer) process.exit(1);
+if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer || !res.gold) process.exit(1);

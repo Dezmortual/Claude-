@@ -74,7 +74,16 @@ export function parseOhlcCsv(text) {
   return rowsToBars(rows.filter(r => Number.isFinite(r[0])));
 }
 // Text form of a dataset for moving it between the website and the Claude artifact by copy/paste.
-export const QUICK_DATA = [["BTCUSDT", "240"], ["ETHUSDT", "240"], ["SOLUSDT", "240"], ["BTCUSDT", "60"], ["BTCUSDT", "1D"], ["ETHUSDT", "1D"]];
+export const QUICK_DATA = [["BTCUSDT", "240"], ["ETHUSDT", "240"], ["SOLUSDT", "240"], ["PAXGUSDT", "240"], ["BTCUSDT", "60"], ["BTCUSDT", "1D"]];
+// Binance pairs offered in the symbol box. PAXG is a token backed 1:1 by physical gold and tracks spot gold.
+export const BINANCE_SYMBOLS = [["BTCUSDT", "Bitcoin"], ["ETHUSDT", "Ethereum"], ["SOLUSDT", "Solana"], ["PAXGUSDT", "Gold (PAXG, gold-backed token)"], ["BNBUSDT", "BNB"], ["XRPUSDT", "XRP"], ["DOGEUSDT", "Dogecoin"], ["ADAUSDT", "Cardano"], ["AVAXUSDT", "Avalanche"], ["LINKUSDT", "Chainlink"], ["LTCUSDT", "Litecoin"], ["DOTUSDT", "Polkadot"], ["TRXUSDT", "TRON"], ["SUIUSDT", "Sui"], ["TONUSDT", "Toncoin"]];
+export const symbolLabel = s => (s === "PAXGUSDT" ? "Gold" : s.replace(/USDT$/, ""));
+// Map common non-crypto names in a strategy (gold) to the closest free Binance pair.
+export function suggestSymbol(name) {
+  const n = String(name || "").toUpperCase();
+  if (/XAU|GOLD|PAXG/.test(n)) return "PAXGUSDT";
+  const m = n.match(/([A-Z]{2,10})USDT?/); return m ? m[1] + "USDT" : null;
+}
 export function encodeDataset(ds, bars) {
   const head = `#ARF-DATA v1 source=${ds.source} symbol=${ds.symbol} timeframe=${ds.timeframe} tick=${ds.tickSize}`;
   const rows = [];
