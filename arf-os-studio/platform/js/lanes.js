@@ -522,7 +522,7 @@ export async function startForward(versionId) {
 
 // Re-evaluates the deployment on bars that closed after it started. Only bars after startedAt can produce
 // forward trades, so nothing is backfilled; indicator warm-up uses earlier history, which is causal.
-export async function checkDeployment(depId, { signal } = {}) {
+export async function checkDeployment(depId, { signal, bars: uploaded = null } = {}) {
   const dep = await db.get("deployments", depId);
   if (!dep || !["ACTIVE", "DEGRADED"].includes(dep.status)) return dep;
   const v = await db.get("versions", dep.versionId);
@@ -530,7 +530,7 @@ export async function checkDeployment(depId, { signal } = {}) {
   const start = new Date(dep.startedAt).getTime();
   const warm = longestLookback(v.sdl, dep.params) + (v.sdl.segments.warmupBars || 0) + 5;
   let bars, health = { checkedAt: nowIso(), issues: [] };
-  try { bars = await fetchBars({ source: dep.source, symbol: dep.symbol, timeframe: dep.timeframe, from: start - warm * tf, signal }); }
+  try { bars = uploaded || await fetchBars({ source: dep.source, symbol: dep.symbol, timeframe: dep.timeframe, from: start - warm * tf, signal }); }
   catch (e) { health.issues.push("Data fetch failed: " + e.message); await db.update("deployments", depId, { status: "DEGRADED", health }); return db.get("deployments", depId); }
   const firstIdx = bars.t.findIndex(t => t >= start);
   const lastBar = bars.t[bars.t.length - 1];

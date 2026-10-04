@@ -4,7 +4,7 @@ import { connect, transport } from "./model.js";
 import { recover, pump, onActivity, activeTasks, setPaused } from "./workflow.js";
 import "./lanes.js";
 import { installChartHover, clearCharts } from "./charts.js";
-import { esc, toast, $ } from "./ui-util.js";
+import { esc, toast, $, IN_ARTIFACT } from "./ui-util.js";
 import { routes, actions, navCounts } from "./views.js";
 
 const NAV = [
@@ -103,7 +103,13 @@ document.addEventListener("click", async e => {
   const fn = actions[el.dataset.act];
   if (!fn) return;
   e.preventDefault();
-  if (el.dataset.confirm && !confirm(el.dataset.confirm)) return;
+  if (el.dataset.confirm && !el.dataset.confirmed) {
+    // Browser confirm() is unavailable in artifacts, so confirmations are always in-page.
+    openModal(`<h2>Please confirm</h2><p>${esc(el.dataset.confirm)}</p><div class="foot"><button class="btn" data-act="closeModal">Keep it</button><button class="btn danger" id="confirmGo">Confirm</button></div>`, m => {
+      m.querySelector("#confirmGo").addEventListener("click", () => { closeModal(); el.dataset.confirmed = "1"; el.click(); delete el.dataset.confirmed; });
+    });
+    return;
+  }
   const prev = el.disabled; el.disabled = true;
   try { await fn(el, el.dataset, { openModal, closeModal, render }); }
   catch (err) { console.error(err); toast(err.message || String(err), "bad"); }
@@ -128,6 +134,7 @@ $("#pauseBtn").addEventListener("click", async () => {
 });
 
 async function boot() {
+  if (IN_ARTIFACT) { const back = document.querySelector('.rail-foot a[href="../"]'); if (back) back.hidden = true; $("#envBadge").textContent = "Research · paper only · in Claude"; }
   applyTheme(await db.setting("theme"));
   installChartHover(document);
   const persistent = await db.persistent();
@@ -145,6 +152,6 @@ async function boot() {
   await render();
   pump();
   // Forward deployments refresh every 15 minutes while the page is open.
-  setInterval(async () => { const { autoCheckDeployments } = await import("./views.js"); autoCheckDeployments(); }, 15 * 60_000);
+  if (!IN_ARTIFACT) setInterval(async () => { const { autoCheckDeployments } = await import("./views.js"); autoCheckDeployments(); }, 15 * 60_000);
 }
 boot();

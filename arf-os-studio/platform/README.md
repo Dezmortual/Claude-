@@ -69,6 +69,22 @@ Every lane defaults to Claude Opus 5.5. You can change the model and effort per
 agent on the Agents page. Spend is estimated from token usage at list prices
 and is capped by each campaign's budget.
 
+## Running inside Claude (artifact)
+
+`artifact.html` is the entry page for publishing the platform as a Claude
+artifact. Regenerate it with `node build-artifact.mjs` after changing
+`index.html` or `css/app.css`. Publish it with the `js/` files and the `sample`
+and `downloads` capabilities. In that mode:
+
+- agents run on the viewer's Claude plan, so no API key is needed
+- the sandbox blocks other websites, so price history comes from CSV uploads
+  (TradingView → Export chart data), including fresh bars for forward-test
+  checks
+- exports go through the viewer's save dialog, and confirmations are shown on
+  the page
+- data lives in the artifact's own browser storage, so export the workspace
+  regularly as a backup
+
 ## Boundaries
 
 - No live orders, no exchange keys, no capital movement.
