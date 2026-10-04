@@ -73,6 +73,23 @@ export function parseOhlcCsv(text) {
   }
   return rowsToBars(rows.filter(r => Number.isFinite(r[0])));
 }
+// Text form of a dataset for moving it between the website and the Claude artifact by copy/paste.
+export const QUICK_DATA = [["BTCUSDT", "240"], ["ETHUSDT", "240"], ["SOLUSDT", "240"], ["BTCUSDT", "60"], ["BTCUSDT", "1D"], ["ETHUSDT", "1D"]];
+export function encodeDataset(ds, bars) {
+  const head = `#ARF-DATA v1 source=${ds.source} symbol=${ds.symbol} timeframe=${ds.timeframe} tick=${ds.tickSize}`;
+  const rows = [];
+  for (let i = 0; i < bars.t.length; i++) rows.push(`${bars.t[i]},${bars.o[i]},${bars.h[i]},${bars.l[i]},${bars.c[i]},${bars.v[i]}`);
+  return `${head}\ntime,open,high,low,close,volume\n${rows.join("\n")}`;
+}
+export function parseDataText(text) {
+  text = String(text || "").trim();
+  const meta = {};
+  const m = text.match(/^#ARF-DATA v1([^\n]*)\n/);
+  if (m) { for (const kv of m[1].trim().split(/\s+/)) { const [k, v] = kv.split("="); if (k) meta[k] = v; } text = text.slice(m[0].length); }
+  if (!/^[^\n]*(time|date)/i.test(text)) throw new Error("This doesn't look like price data. Paste the text copied with \"Copy for Claude\", or CSV text with a header row (time, open, high, low, close, volume).");
+  return { meta, bars: parseOhlcCsv(text) };
+}
+
 export function parseTime(s) {
   if (/^\d{12,}$/.test(s)) return +s;
   if (/^\d{9,11}$/.test(s)) return +s * 1000;

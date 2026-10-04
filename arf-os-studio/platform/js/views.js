@@ -6,7 +6,7 @@ import { VERSION_STATES, activeTasks, cancelTask, retryTask, championPrompt, pum
 import * as L from "./lanes.js";
 import { POLICIES, evaluateEvidence, buildSegments } from "./research.js";
 import { validateSDL, gridSize, SDL_TEMPLATE, paramAxis } from "./sdl.js";
-import { SOURCES as DATA_SOURCES, fetchBars, parseOhlcCsv } from "./data.js";
+import { SOURCES as DATA_SOURCES, fetchBars, parseOhlcCsv, QUICK_DATA, encodeDataset, parseDataText } from "./data.js";
 import { SUITES, runPractice, createChallenger, promotionCheck, promote, rollback } from "./practice.js";
 import { lineChart, barChart, heatmap, fanChart } from "./charts.js";
 import { drawdownSeries, monthlyReturns } from "./metrics.js";
@@ -143,7 +143,8 @@ async function campaignForm() {
     <div class="form-grid">
       <label class="field wide">Name<input type="text" name="name" required placeholder="BTC volatility regimes, 4h"></label>
       <label class="field wide">Research brief<textarea name="brief" required placeholder="What should the agents look for? Constraints, markets, ideas to avoid…">Find simple, robust trend or volatility-regime strategies on this market that survive realistic costs and out-of-sample testing. Prefer few parameters. Avoid anything that needs data beyond OHLCV.</textarea></label>
-      <label class="field">Data source<select name="source" id="cfSource">${IN_ARTIFACT ? "" : Object.entries(DATA_SOURCES).map(([k, s]) => `<option value="${k}">${esc(s.name)}</option>`).join("")}${datasets.length ? `<option value="dataset">Existing dataset…</option>` : ""}<option value="csv">Upload CSV…</option></select></label>
+      <label class="field">Data source<select name="source" id="cfSource">${IN_ARTIFACT ? "" : Object.entries(DATA_SOURCES).map(([k, s]) => `<option value="${k}">${esc(s.name)}</option>`).join("")}${datasets.length ? `<option value="dataset">Existing dataset…</option>` : ""}<option value="csv">Upload CSV…</option><option value="paste">Paste price data…</option></select></label>
+      <label class="field wide" id="cfPasteWrap" hidden>Pasted price data<textarea name="pasteText" class="code" style="min-height:110px" placeholder="Paste text from Copy for Claude, or CSV text with a header row"></textarea></label>
       <label class="field wide" id="cfCsvWrap" hidden>Price history CSV<input type="file" name="csvFile" accept=".csv,text/csv"><span class="hint">${CSV_HINT}</span></label>
       <label class="field" id="cfTickWrap" hidden>Tick size (optional)<input type="number" step="any" name="tickSize" placeholder="auto"></label>
       <label class="field">Symbol<input type="text" name="symbol" value="BTCUSDT" required></label>
@@ -469,19 +470,37 @@ function runsTable(runs) {
 }
 
 /* ======================= Backtest Lab ======================= */
+// Phone-first flow: 1) strategy (paste Pine for Claude to convert, or edit the SDL), 2) price data (one tap), 3) run.
+function dataPicker(datasets, selectId = "labDataset") {
+  const quick = IN_ARTIFACT ? "" : `<div class="quick-data">${QUICK_DATA.map(([sym, tf]) => { const have = datasets.find(d => d.source === "binance" && d.symbol === sym && d.timeframe === tf); return `<button class="btn ${have ? "" : "primary"}" data-act="quickData" data-symbol="${sym}" data-tf="${tf}">${have ? "✓ " : ""}${sym.replace("USDT", "")} ${tf === "1D" ? "daily" : tf === "60" ? "1h" : "4h"}</button>`; }).join("")}</div><p class="small muted">One tap loads ~2 years of Binance candles. No file needed.</p>`;
+  const select = datasets.length ? `<label class="field">Use this data<select id="${selectId}">${datasets.map(d => `<option value="${d.id}">${esc(d.symbol)} ${esc(d.timeframe)} · ${fmt(d.bars, 0)} bars · to ${isoDate(d.to)}</option>`).join("")}</select></label>` : "";
+  const other = IN_ARTIFACT
+    ? `<div class="row"><button class="btn primary" data-act="pasteDataset" data-return="lab">Paste price data</button><button class="btn" data-act="loadDataset" data-return="lab">Upload a CSV file</button></div><p class="small muted">This Claude view can't download prices. Get them in one tap on the <a href="https://dezmortual.github.io/Claude-/platform/#/lab" target="_blank" rel="noopener">website version</a>, press <b>Copy for Claude</b> there, then come back and paste.</p>`
+    : `<div class="row"><button class="btn" data-act="loadDataset" data-return="lab">Other symbol or CSV…</button>${datasets.length ? `<button class="btn" data-act="copyForClaude" data-select="${selectId}">Copy for Claude</button>` : ""}</div>`;
+  return quick + select + other;
+}
 async function viewLab() {
   const datasets = sortDesc(await db.all("datasets", d => d.status !== "QUARANTINED"));
   const draft = (await db.setting("labDraft")) || JSON.stringify(SDL_TEMPLATE, null, 2);
-  const left = `<div class="card"><h2>Strategy Definition (SDL)</h2><p class="small muted">Write or paste an SDL document. It is validated against the same grammar agents use, then registered as an immutable version and run through the full backtest plan. Every run is recorded; nothing is a throwaway.</p>
-    <textarea class="code" id="labSdl" spellcheck="false">${esc(draft)}</textarea>
-    <div class="row section"><button class="btn" data-act="labValidate">Validate</button><button class="btn" data-act="labTemplate">Reset to template</button></div>
-    <div class="lab-run section">
-      <label class="field">Price data${datasets.length ? `<select id="labDataset">${datasets.map(d => `<option value="${d.id}">${esc(d.symbol)} ${esc(d.timeframe)} · ${d.bars} bars · ${isoDate(d.from)}→${isoDate(d.to)}</option>`).join("")}</select>` : `<span class="note warn small">No price data yet. Upload a CSV exported from TradingView to run a backtest.</span>`}</label>
-      <div class="row"><button class="btn" data-act="loadDataset" data-return="lab">Upload price CSV…</button><button class="btn primary" data-act="labRun" ${datasets.length ? "" : "disabled"}>Register &amp; run backtest plan</button></div>
-    </div><div id="labOut" class="section"></div></div>`;
+  const pineDraft = (await db.setting("labPine")) || "";
+  const { transport } = await import("./model.js");
+  const canAsk = transport() === "claude" || !!(await db.setting("apikey"));
   const { SDL_GRAMMAR_DOC } = await import("./agents.js");
-  const right = `<details class="card lab-grammar"><summary><h2 style="display:inline">Grammar reference</h2></summary><pre style="white-space:pre-wrap;max-height:none;margin-top:10px">${esc(SDL_GRAMMAR_DOC)}</pre></details>`;
-  return page(header("Backtest Lab", "Hand-write a strategy definition and run it through the same predeclared plan as the agents: smoke → baseline → in-sample search → validation → walk-forward."), `<div class="grid lab-grid">${left}${right}</div>`);
+  return page(header("Backtest Lab", "Test a strategy in three steps. Every run is recorded."), `<div class="lab-steps">
+    <section class="card step"><h2><span class="step-n">1</span> Strategy</h2>
+      <details class="pine-box" ${pineDraft || !draft.includes('"Example EMA trend') ? "" : "open"}><summary><b>Paste a Pine script</b> and let Claude write the definition</summary>
+        <textarea class="code pine" id="labPine" spellcheck="false" placeholder="//@version=6&#10;strategy(&quot;My strategy&quot;, ...)">${esc(pineDraft)}</textarea>
+        <div class="row"><button class="btn primary" data-act="convertPine" ${canAsk ? "" : "disabled"}>Convert with Claude</button>${canAsk ? "" : `<span class="small muted">${IN_ARTIFACT ? "Allow Claude access for this page first." : `Add an API key in <a href="#/admin">Policies &amp; Admin</a> first.`}</span>`}</div>
+        <div id="pineOut"></div></details>
+      <details class="sdl-box" ${pineDraft ? "" : "open"}><summary><b>Strategy definition</b> (edit or paste JSON)</summary>
+        <textarea class="code" id="labSdl" spellcheck="false">${esc(draft)}</textarea>
+        <div class="row"><button class="btn" data-act="labValidate">Check definition</button><button class="btn" data-act="labTemplate">Reset to example</button></div></details>
+      <div id="labOut"></div></section>
+    <section class="card step"><h2><span class="step-n">2</span> Price data</h2>${dataPicker(datasets)}</section>
+    <section class="card step"><h2><span class="step-n">3</span> Run</h2><p class="small muted">Runs the full plan: smoke test, baseline, parameter search on the first 60%, validation on the next 20%, and walk-forward. The last 20% stays untouched until validation.</p>
+      <button class="btn primary big" data-act="labRun" ${datasets.length ? "" : "disabled"}>Run backtest</button>${datasets.length ? "" : `<p class="small muted">Load price data in step 2 first.</p>`}</section>
+    <details class="card lab-grammar"><summary><b>Grammar reference</b></summary><pre style="white-space:pre-wrap;max-height:none;margin-top:10px">${esc(SDL_GRAMMAR_DOC)}</pre></details>
+  </div>`);
 }
 
 /* ======================= Validation Lab ======================= */
@@ -594,7 +613,7 @@ async function viewData([id]) {
   if (id) return viewDataset(id);
   const ds = sortDesc(await db.all("datasets"));
   const vs = await db.all("versions");
-  return page(header("Data Health", IN_ARTIFACT ? "Dataset versions, integrity checks and the strategies that depend on them. Upload price history exported from TradingView." : "Dataset versions, integrity checks and the strategies that depend on them.", `<button class="btn primary" data-act="loadDataset">Load dataset…</button>`),
+  return page(header("Data Health", IN_ARTIFACT ? "Dataset versions, integrity checks and the strategies that depend on them. Upload price history exported from TradingView." : "Dataset versions, integrity checks and the strategies that depend on them.", IN_ARTIFACT ? `<button class="btn primary" data-act="pasteDataset" data-return="stay">Paste price data</button><button class="btn" data-act="loadDataset">Upload CSV…</button>` : `<button class="btn primary" data-act="loadDataset">Load dataset…</button>`),
     ds.length ? `<div class="table-wrap"><table class="t"><thead><tr><th>Dataset</th><th>Status</th><th class="num">Bars</th><th>Range</th><th class="num">Missing</th><th class="num">Duplicates</th><th class="num">Bad OHLC</th><th>Checksum</th><th class="num">Versions</th><th>Review</th></tr></thead><tbody>${ds.map(d => `<tr class="click" data-href="#/data/${d.id}"><td><a href="#/data/${d.id}">${esc(d.source)}:${esc(d.symbol)} ${esc(d.timeframe)}</a><div class="small muted">tick ${d.tickSize}${d.note ? " · " + esc(d.note) : ""}</div></td><td>${badge(d.status)}</td><td class="num">${fmt(d.bars, 0)}</td><td class="small">${isoDate(d.from)} → ${isoDate(d.to)}</td><td class="num">${d.integrity.missing} (${fmt(d.integrity.missingPct, 2)}%)</td><td class="num">${d.integrity.duplicates}</td><td class="num">${d.integrity.badOhlc}</td><td><code>${esc(d.checksum.slice(0, 10))}</code></td><td class="num">${vs.filter(v => v.datasetId === d.id).length}</td><td>${d.review ? badge(d.review.verdict) : "—"}</td></tr>`).join("")}</tbody></table></div>` : empty("No datasets", "Datasets load automatically when a campaign starts, or load one here.", `<button class="btn primary" data-act="loadDataset">Load dataset…</button>`));
 }
 async function viewDataset(id) {
@@ -604,7 +623,7 @@ async function viewDataset(id) {
   const vs = await db.all("versions", v => v.datasetId === id);
   const segs = buildSegments(bars.t.length, { segments: { embargoBars: 10 } });
   const pts = bars.t.map((t, i) => [t, bars.c[i]]);
-  return page(header(`${esc(d.source)}:${esc(d.symbol)} ${esc(d.timeframe)}`, `${badge(d.status)} ${fmt(d.bars, 0)} bars · checksum <code>${esc(d.checksum.slice(0, 16))}</code>`, "", `<a href="#/data">Data Health</a>`),
+  return page(header(`${esc(d.source)}:${esc(d.symbol)} ${esc(d.timeframe)}`, `${badge(d.status)} ${fmt(d.bars, 0)} bars · checksum <code>${esc(d.checksum.slice(0, 16))}</code>`, IN_ARTIFACT ? "" : `<button class="btn" data-act="copyForClaude" data-id="${d.id}">Copy for Claude</button>`, `<a href="#/data">Data Health</a>`),
     `<div class="card">${lineChart({ series: [{ name: "Close", points: pts, slot: 1 }], bands: [{ from: bars.t[0], to: bars.t[segs.development.end - 1], label: "Development 60%", kind: "dev" }, { from: bars.t[segs.validation.start], to: bars.t[segs.validation.end - 1], label: "Validation 20%", kind: "val" }, { from: bars.t[segs.holdout.start], to: bars.t.at(-1), label: "Holdout 20% (protected)", kind: "hold" }], title: "Close price with the default segment split", yFmt: x => fmt(x, x < 10 ? 4 : 0) })}</div>
     <div class="grid g2 section"><div class="card"><h2>Integrity report</h2><dl class="kv"><dt>Range</dt><dd>${isoMinute(d.from)} → ${isoMinute(d.to)}</dd><dt>Missing bars</dt><dd>${d.integrity.missing} in ${d.integrity.gaps} gaps (${fmt(d.integrity.missingPct, 2)}%), largest ${d.integrity.largestGapBars}</dd><dt>Duplicates</dt><dd>${d.integrity.duplicates}</dd><dt>Out of order</dt><dd>${d.integrity.outOfOrder}</dd><dt>Impossible OHLC</dt><dd>${d.integrity.badOhlc}</dd><dt>Zero volume</dt><dd>${d.integrity.zeroVolume}</dd><dt>Tick size</dt><dd>${d.tickSize}</dd></dl>
       ${d.integrity.errors.length ? `<div class="note bad small section">${esc(d.integrity.errors.join("; "))}</div>` : ""}${d.integrity.warnings.length ? `<div class="note warn small section">${esc(d.integrity.warnings.join("; "))}</div>` : ""}</div>
@@ -678,6 +697,17 @@ document.addEventListener("change", e => {
 document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches("input[data-nav]")) e.target.dispatchEvent(new Event("change", { bubbles: true })); });
 
 /* ======================= Actions ======================= */
+async function saveLabDrafts() {
+  const sdl = $("#labSdl"), pine = $("#labPine");
+  if (sdl) await db.setting("labDraft", sdl.value);
+  if (pine) await db.setting("labPine", pine.value);
+}
+// After a dataset is added: go back to where the user was and select it.
+async function afterDataset(ds, ret) {
+  if (ret === "lab") { await saveLabDrafts(); const { render } = await import("./app.js"); await render(); const sel = $("#labDataset"); if (sel) sel.value = ds.id; }
+  else if (ret !== "stay") location.hash = `#/data/${ds.id}`;
+  toast(`Loaded ${fmt(ds.bars, 0)} bars of ${ds.symbol} ${ds.timeframe}${ds.status === "OK" ? "" : " — " + ds.status}`, ds.status === "QUARANTINED" ? "bad" : "");
+}
 const HUMAN_STATES = ["REJECTED", "ARCHIVED", "RESEARCH_APPROVED", "PAPER_APPROVED", "REWORK_REQUESTED", "LIVE_CANDIDATE"];
 export const actions = {
   closeModal: (el, d, ui) => ui.closeModal(),
@@ -687,7 +717,8 @@ export const actions = {
       const sync = () => {
         dsw.hidden = src.value !== "dataset";
         m.querySelector("#cfCsvWrap").hidden = m.querySelector("#cfTickWrap").hidden = src.value !== "csv";
-        m.querySelector("#cfDaysWrap").hidden = ["csv", "dataset"].includes(src.value);
+        m.querySelector("#cfDaysWrap").hidden = ["csv", "dataset", "paste"].includes(src.value);
+        m.querySelector("#cfPasteWrap").hidden = src.value !== "paste";
       };
       sync();
       src.addEventListener("change", () => {
@@ -705,8 +736,13 @@ export const actions = {
             const bars = parseOhlcCsv(await readFile(file)); if (bars.t.length < 2) throw new Error("No bars found in that CSV");
             const ds = await L.saveDataset({ source: "csv", symbol: f.symbol.trim().toUpperCase(), timeframe: f.timeframe, bars, tickSize: +f.tickSize || null, note: file.name });
             f.uploadedDatasetId = ds.id;
+          } else if (f.source === "paste") {
+            const { meta, bars } = parseDataText(f.pasteText); if (bars.t.length < 2) throw new Error("No bars found in the pasted data");
+            if (meta.symbol) f.symbol = meta.symbol; if (meta.timeframe) f.timeframe = meta.timeframe;
+            const ds = await L.saveDataset({ source: meta.source || "paste", symbol: f.symbol.trim().toUpperCase(), timeframe: f.timeframe, bars, tickSize: +meta.tick || null, note: "pasted" });
+            f.source = ds.source; f.uploadedDatasetId = ds.id;
           } else f.uploadedDatasetId = null;
-          delete f.csvFile;
+          delete f.csvFile; delete f.pasteText;
           const c = await L.createCampaign(f);
           ui.closeModal();
           if (e.submitter && e.submitter.dataset.start) await L.startCampaign(c.id);
@@ -842,12 +878,65 @@ export const actions = {
           if (!bars.t.length) throw new Error("No bars returned");
           const ds = await L.saveDataset({ source: src, symbol: sym, timeframe: tf, bars, tickSize: tick, note: src === "csv" ? "CSV upload" : "" });
           ui.closeModal();
-          if (d.return === "lab") { const draft = $("#labSdl"); if (draft) await db.setting("labDraft", draft.value); const { render } = await import("./app.js"); await render(); const sel = $("#labDataset"); if (sel) sel.value = ds.id; }
-          else location.hash = `#/data/${ds.id}`;
-          toast(`Loaded ${ds.bars} bars — ${ds.status}`);
+          await afterDataset(ds, d.return);
         } catch (e) { out.innerHTML = `<span class="fail">${esc(e.message)}</span>`; }
       });
     });
+  },
+  quickData: async (el, d) => {
+    const label = el.textContent; el.textContent = "Loading…";
+    try {
+      const bars = await fetchBars({ source: "binance", symbol: d.symbol, timeframe: d.tf, from: Date.now() - (d.tf === "1D" ? 1460 : 730) * 86_400_000, onProgress: n => (el.textContent = `${n} bars…`) });
+      if (!bars.t.length) throw new Error("No bars returned");
+      const ds = await L.saveDataset({ source: "binance", symbol: d.symbol, timeframe: d.tf, bars });
+      await afterDataset(ds, "lab");
+    } catch (e) { el.textContent = label; toast("Could not load prices: " + e.message + ". If Binance is blocked where you are, use Other symbol → Coinbase.", "bad"); }
+  },
+  pasteDataset: async (el, d, ui) => {
+    ui.openModal(`<h2>Paste price data</h2><p class="small muted">Long-press the box and choose <b>Paste</b>. Accepts text from <b>Copy for Claude</b> on the website version, or CSV text with a header row.</p>
+      <textarea id="pdText" class="code" style="min-height:160px" placeholder="#ARF-DATA v1 source=binance symbol=BTCUSDT timeframe=240&#10;time,open,high,low,close,volume&#10;..."></textarea>
+      <div class="form-grid"><label class="field">Symbol<input type="text" id="pdSym" placeholder="from pasted data" autocapitalize="characters"></label><label class="field">Timeframe<input type="text" id="pdTf" placeholder="240, 60, 1D"></label></div>
+      <div id="pdOut" class="small"></div><div class="foot"><button class="btn" data-act="closeModal">Cancel</button><button class="btn primary" id="pdGo">Load data</button></div>`, m => {
+      const ta = m.querySelector("#pdText");
+      ta.addEventListener("input", () => { try { const { meta } = parseDataText(ta.value.slice(0, 400) + "\ntime"); if (meta.symbol) m.querySelector("#pdSym").value = meta.symbol; if (meta.timeframe) m.querySelector("#pdTf").value = meta.timeframe; } catch (_) {} });
+      m.querySelector("#pdGo").addEventListener("click", async () => {
+        try {
+          const { meta, bars } = parseDataText(ta.value);
+          const sym = (m.querySelector("#pdSym").value || meta.symbol || "").trim().toUpperCase(), tf = (m.querySelector("#pdTf").value || meta.timeframe || "").trim().toUpperCase();
+          if (!sym || !tf) throw new Error("Enter the symbol and timeframe");
+          if (bars.t.length < 2) throw new Error("No bars found in the pasted text");
+          const ds = await L.saveDataset({ source: meta.source || "paste", symbol: sym, timeframe: tf, bars, tickSize: +meta.tick || null, note: "pasted" });
+          ui.closeModal(); await afterDataset(ds, d.return);
+        } catch (e) { m.querySelector("#pdOut").innerHTML = `<span class="fail">${esc(e.message)}</span>`; }
+      });
+    });
+  },
+  copyForClaude: async (el, d, ui) => {
+    const id = d.id || $("#" + (d.select || "labDataset"))?.value;
+    const ds = await db.get("datasets", id), bars = await db.get("bars", id);
+    const text = encodeDataset(ds, bars);
+    ui.openModal(`<h2>Copy ${esc(ds.symbol)} ${esc(ds.timeframe)} for Claude</h2><p class="small muted">${fmt(ds.bars, 0)} bars (${Math.round(text.length / 1024)} KB of text). Tap Copy, open the platform in the Claude app, go to Backtest Lab → Paste price data, and paste.</p>
+      <textarea id="cfcText" class="code" style="min-height:120px" readonly></textarea><div class="foot"><button class="btn" data-act="closeModal">Close</button><button class="btn primary" id="cfcGo">Copy</button></div>`, m => {
+      const ta = m.querySelector("#cfcText"); ta.value = text;
+      m.querySelector("#cfcGo").addEventListener("click", () => {
+        navigator.clipboard.writeText(text).then(() => toast("Copied — now paste it in the Claude app")).catch(() => { ta.focus(); ta.select(); toast("Select all in the box and copy it", "bad"); });
+      });
+    });
+  },
+  convertPine: async el => {
+    const src = $("#labPine").value.trim();
+    if (!/strategy\s*\(/.test(src)) return toast("Paste a Pine script that contains strategy(…)", "bad");
+    await db.setting("labPine", src);
+    const out = $("#pineOut"), label = el.textContent;
+    el.textContent = "Claude is converting…"; out.innerHTML = `<p class="small muted">This usually takes 20–60 seconds.</p>`;
+    try {
+      const r = await L.convertPine(src, $("#labDataset")?.value || null);
+      $("#labSdl").value = JSON.stringify(r.sdl, null, 2);
+      await db.setting("labDraft", $("#labSdl").value);
+      const box = document.querySelector(".sdl-box"); if (box) box.open = true;
+      out.innerHTML = `<div class="note good small"><b>✓ Converted.</b> ${esc(r.summary || "")}</div>${r.notes.length ? `<div class="note warn small section"><b>Differences from your script:</b><ul style="margin:4px 0 0;padding-left:18px">${r.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul></div>` : ""}`;
+    } catch (e) { out.innerHTML = `<div class="note bad small">Conversion failed: ${esc(e.message)}</div>`; }
+    finally { el.textContent = label; }
   },
   portfolioReview: async () => { await L.runPortfolioReview(); toast("Portfolio Researcher queued"); },
   exportAudit: async () => download("arf-audit.json", JSON.stringify(await db.all("audit"), null, 1), "application/json"),

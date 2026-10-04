@@ -284,6 +284,38 @@ table.heat td span { color: var(--fg); mix-blend-mode: normal; text-shadow: 0 0 
   .funnel-row .badge { font-size: 10.5px; }
   .env-badge { display: none; }
 }
+
+/* Phone: bottom tab bar, larger touch targets, no input zoom */
+.tabbar { display: none; }
+.lab-steps { display: grid; gap: 14px; max-width: 900px; }
+.step h2 { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.step-n { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font: 700 14px/1 var(--body); }
+.step details { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; background: var(--panel-2); }
+.step details > summary { cursor: pointer; font-size: 14px; }
+.step details[open] > summary { margin-bottom: 10px; }
+.step details textarea { margin-bottom: 10px; }
+textarea.pine { min-height: 200px; }
+.quick-data { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-bottom: 6px; }
+.btn.big { width: 100%; justify-content: center; padding: 12px; font-size: 15px; }
+@media (max-width: 800px) {
+  .tabbar { display: grid; grid-template-columns: repeat(5, 1fr); position: sticky; bottom: 0; background: var(--panel); border-top: 1px solid var(--line); padding: 4px 4px calc(4px + env(safe-area-inset-bottom, 0px)); z-index: 30; }
+  .tabbar a, .tabbar button { display: grid; place-items: center; min-height: 48px; font: 600 12.5px/1.1 var(--body); color: var(--muted); text-decoration: none; background: none; border: 0; border-radius: 8px; position: relative; }
+  .tabbar a[aria-current="page"] { color: var(--accent); background: var(--accent-soft); }
+  .tabbar a[data-count]:not([data-count=""])::after { content: attr(data-count); position: absolute; top: 4px; right: calc(50% - 26px); min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--warn); color: var(--panel); font-size: 10px; display: grid; place-items: center; }
+  .btn { min-height: 42px; padding: 8px 14px; font-size: 14px; }
+  .btn.small { min-height: 36px; }
+  input[type=text], input[type=number], input[type=password], input[type=search], select, textarea { font-size: 16px; }
+  textarea.code { font-size: 13px; }
+  .topbar { padding: 6px 12px; gap: 8px; }
+  #pauseBtn { display: none; }
+  .conn span { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .page-head h1 { font-size: 22px; }
+  .modal { padding: 16px; }
+  .modal .foot { flex-wrap: wrap; }
+  .modal .foot .btn { flex: 1; justify-content: center; }
+  .quick-data { grid-template-columns: repeat(2, 1fr); }
+  .toast { bottom: calc(70px + env(safe-area-inset-bottom, 0px)); }
+}
 </style>
 <meta name="description" content="Multi-agent research operating system for discovering, testing, rejecting and forward-testing systematic trading strategies.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -314,6 +346,13 @@ table.heat td span { color: var(--fg); mix-blend-mode: normal; text-shadow: 0 0 
       </div>
     </header>
     <main id="view" tabindex="-1"></main>
+    <nav class="tabbar" id="tabbar" aria-label="Main">
+      <a href="#/" data-tab="">Home</a>
+      <a href="#/lab" data-tab="lab">Test</a>
+      <a href="#/library" data-tab="library">Strategies</a>
+      <a href="#/committee" data-tab="committee">Decide</a>
+      <button type="button" id="tabMore">More</button>
+    </nav>
   </div>
 </div>
 <div class="modal-back" id="modalBack" hidden><div class="modal" role="dialog" aria-modal="true" id="modal"></div></div>

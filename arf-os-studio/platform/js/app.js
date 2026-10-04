@@ -26,6 +26,9 @@ function parseHash() {
 
 async function renderNav() {
   const counts = await navCounts();
+  const tabKey = ["version", "lab"].includes(current.name) ? (current.name === "version" ? "library" : "lab") : current.name;
+  document.querySelectorAll("#tabbar a").forEach(a => a.setAttribute("aria-current", a.dataset.tab === tabKey ? "page" : "false"));
+  const dec = document.querySelector('#tabbar a[data-tab="committee"]'); if (dec) dec.dataset.count = counts.committee || "";
   const here = current.name === "version" ? "library" : current.name === "campaign" ? "campaigns" : current.name === "run" ? "agents" : current.name;
   $("#nav").innerHTML = NAV.map(([g, items]) => `<div class="nav-group">${g}</div>` + items.map(([r, label, ck]) => {
     const n = ck ? counts[ck] : 0;
@@ -41,7 +44,7 @@ async function renderTop() {
   $("#topStats").innerHTML = `<span>Running <b>${runs.length}</b></span><span>Queued <b>${queued}</b></span><span>Model spend <b>$${spend.toFixed(2)}</b></span><span>Campaigns active <b>${campaigns.filter(c => c.status === "RUNNING").length}</b></span>`;
   const conn = $("#conn"), key = await db.setting("apikey");
   const t = transport();
-  conn.className = "conn " + (t === "claude" || key ? "ok" : "off");
+  conn.className = "conn " + (t === "claude" || (key && !IN_ARTIFACT) ? "ok" : "off");
   conn.lastChild.textContent = t === "claude" ? "Claude connected" : IN_ARTIFACT ? "Claude access off" : key ? "API key set" : "No API key";
   conn.title = t === "claude" ? "Running inside Claude: agents use your Claude session" : key ? "Agents call the Anthropic API with your key" : "Add an API key in Policies & Admin";
 }
@@ -125,6 +128,8 @@ $("#themeBtn").addEventListener("click", async () => {
   applyTheme(next); await db.setting("theme", next); render();
 });
 $("#menuBtn").addEventListener("click", () => document.querySelector(".rail").classList.toggle("open"));
+$("#tabMore").addEventListener("click", () => document.querySelector(".rail").classList.toggle("open"));
+document.addEventListener("click", e => { const rail = document.querySelector(".rail"); if (rail.classList.contains("open") && !e.target.closest(".rail, #menuBtn, #tabMore")) rail.classList.remove("open"); });
 document.querySelector(".rail").addEventListener("click", e => { if (e.target.closest("a")) document.querySelector(".rail").classList.remove("open"); });
 $("#pauseBtn").addEventListener("click", async () => {
   const p = !(await db.setting("queuePaused"));
