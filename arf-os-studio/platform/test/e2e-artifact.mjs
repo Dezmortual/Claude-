@@ -83,7 +83,14 @@ await shot("a3-admin");
 await page.click("[data-act=resetWorkspace]");
 const resetModal = await page.isVisible("#rsText");
 await page.click("[data-act=closeModal]");
-console.log(JSON.stringify({ conn, sourceOptions: opts, versions: st.v, failures: st.f, saved: globalThis.__saved || [], resetModal, external: [...new Set(external)], errors }, null, 1));
+// A strategy pasted into the price box goes to step 1 instead of erroring.
+await page.goto(base + "#/lab");
+await page.click("[data-act=pasteDataset]");
+await page.evaluate(() => { document.querySelector("#pdText").value = JSON.stringify({ schemaVersion: "1.0", strategy: { name: "Gold test" }, market: { symbols: ["XAUUSD"] } }); });
+await page.click("#pdGo");
+await page.waitForTimeout(600);
+const sdlRouted = (await page.inputValue("#labSdl")).includes("Gold test") && await page.isHidden("#modalBack");
+console.log(JSON.stringify({ conn, sdlRouted, sourceOptions: opts, versions: st.v, failures: st.f, saved: globalThis.__saved || [], resetModal, external: [...new Set(external)], errors }, null, 1));
 void saved;
 await browser.close(); server.close();
-if (errors.length || st.f.length || !st.v.length || external.length) process.exit(1);
+if (!sdlRouted || errors.length || st.f.length || !st.v.length || external.length) process.exit(1);
