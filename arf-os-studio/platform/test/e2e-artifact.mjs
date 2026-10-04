@@ -56,6 +56,12 @@ await page.addInitScript(() => {
   const downloads = { save: async ({ filename }) => { await window.__mockSave(filename); return { status: "saved" }; } };
   window.claude = { use: async name => (name === "sample" ? sample : name === "downloads" ? downloads : null) };
 });
+// Built-in price library: a gold 4h file with weekend gaps, served like the published data/ files.
+const gb = syntheticBars({ n: 6000, seed: 9, start: end - 5999 * TF, tfMs: TF, price: 2400 });
+const keep = [...gb.t.keys()].filter(i => { const d = new Date(gb.t[i]); return !(d.getUTCDay() === 6 || (d.getUTCDay() === 0 && d.getUTCHours() < 22) || (d.getUTCDay() === 5 && d.getUTCHours() >= 21)); });
+const goldCsv = "#ARF-DATA v1 source=yahoo:GC=F symbol=XAUUSD timeframe=240 tick=0.01 market=sessions\ntime,open,high,low,close,volume\n" + keep.map(i => `${gb.t[i] / 1000},${gb.o[i]},${gb.h[i]},${gb.l[i]},${gb.c[i]},${gb.v[i]}`).join("\n");
+const lib = { updatedAt: new Date().toISOString(), sets: [{ symbol: "XAUUSD", label: "Gold", group: "Metals", timeframe: "240", file: "XAUUSD_240.csv", bars: keep.length, from: gb.t[keep[0]], to: gb.t[keep[keep.length - 1]], market: "sessions" }, { symbol: "XAUUSD", label: "Gold", group: "Metals", timeframe: "60", file: "XAUUSD_60.csv", bars: 1, market: "sessions" }] };
+await page.route(/\/data\/(index\.json|XAUUSD_240\.csv)$/, r => r.fulfill({ status: 200, contentType: r.request().url().endsWith(".json") ? "application/json" : "text/csv", body: r.request().url().endsWith(".json") ? JSON.stringify(lib) : goldCsv }));
 const shot = async n => { if (shots) await page.screenshot({ path: path.join(shots, n + ".png") }); };
 await page.goto(base);
 await page.waitForSelector(".tiles");
@@ -85,12 +91,30 @@ const resetModal = await page.isVisible("#rsText");
 await page.click("[data-act=closeModal]");
 // A strategy pasted into the price box goes to step 1 instead of erroring.
 await page.goto(base + "#/lab");
+await page.click(".own-data summary");
 await page.click("[data-act=pasteDataset]");
 await page.evaluate(() => { document.querySelector("#pdText").value = JSON.stringify({ schemaVersion: "1.0", strategy: { name: "Gold test" }, market: { symbols: ["XAUUSD"] } }); });
 await page.click("#pdGo");
 await page.waitForTimeout(600);
 const sdlRouted = (await page.inputValue("#labSdl")).includes("Gold test") && await page.isHidden("#modalBack");
-console.log(JSON.stringify({ conn, sdlRouted, sourceOptions: opts, versions: st.v, failures: st.f, saved: globalThis.__saved || [], resetModal, external: [...new Set(external)], errors }, null, 1));
+// Gold prices load inside the app, from the button that matches the pasted strategy, then a backtest runs.
+await page.click('[data-act=loadExample][data-id="ema"]');
+await page.evaluate(() => { const b = document.querySelector("#labSdl"), s = JSON.parse(b.value); s.market.symbols = ["OANDA:XAUUSD"]; b.value = JSON.stringify(s); });
+await page.click("[data-act=labValidate]").catch(() => {});
+await page.evaluate(async u => { const db = await import(u); await db.setting("labDraft", document.querySelector("#labSdl").value); }, dbu);
+await page.goto(base + "#/lab"); await page.reload();
+await page.waitForSelector("#dataStep .btn.want", { timeout: 10000 });
+await shot("a4-builtin");
+await page.click("#dataStep .btn.want");
+await page.waitForFunction(() => /XAUUSD/.test(document.querySelector("#labDataset")?.selectedOptions[0]?.textContent || ""), null, { timeout: 15000 });
+const goldDs = await page.evaluate(async u => (await (await import(u)).all("datasets")).find(d => d.symbol === "XAUUSD"), dbu);
+const nv = (await page.evaluate(async u => (await (await import(u)).all("versions")).length, dbu));
+await page.click("[data-act=labRun]");
+const t1 = Date.now(); let goldRun = null;
+while (Date.now() - t1 < 120000) { goldRun = await page.evaluate(async ([u, n]) => { const vs = await (await import(u)).all("versions"); return vs.length > n ? vs.sort((a, b) => a.createdAt.localeCompare(b.createdAt))[vs.length - 1].status : null; }, [dbu, nv]); if (["VALIDATED", "REJECTED"].includes(goldRun)) break; await page.waitForTimeout(500); }
+await shot("a5-gold-run");
+const gold = { status: goldDs?.status, market: goldDs?.market, missing: goldDs?.integrity?.missing, run: goldRun };
+console.log(JSON.stringify({ conn, sdlRouted, gold, sourceOptions: opts, versions: st.v, failures: st.f, saved: globalThis.__saved || [], resetModal, external: [...new Set(external)], errors }, null, 1));
 void saved;
 await browser.close(); server.close();
-if (!sdlRouted || errors.length || st.f.length || !st.v.length || external.length) process.exit(1);
+if (!sdlRouted || gold.status !== "OK" || !/VALIDATED|REJECTED/.test(gold.run) || errors.length || st.f.length || !st.v.length || external.length) process.exit(1);
