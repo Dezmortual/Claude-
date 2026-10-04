@@ -30,7 +30,18 @@ export function timeAgo(iso) {
   return Math.floor(s / 86400) + "d ago";
 }
 
-export function download(name, text, type = "text/plain") {
+// Inside a Claude artifact the page cannot reach other sites, start downloads or show browser dialogs.
+export const IN_ARTIFACT = typeof window !== "undefined" && (!!(window.claude && typeof window.claude.use === "function") || /claudeusercontent|claude\.ai/.test(location.hostname));
+
+let dl;
+export async function download(name, text, type = "text/plain") {
+  if (IN_ARTIFACT) {
+    if (dl === undefined) { try { dl = await window.claude.use("downloads"); } catch (_) { dl = null; } }
+    if (!dl) return toast("Saving files is not available in this view.", "bad");
+    try { const r = await dl.save({ filename: name, data: new Blob([text], { type }) }); if (r.status === "saved") toast("Saved " + name); }
+    catch (e) { if (e.code !== "cancelled" && e.code !== "declined") toast("Could not save: " + (e.message || e.code), "bad"); }
+    return;
+  }
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([text], { type }));
   a.download = name; a.click();

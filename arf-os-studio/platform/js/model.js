@@ -67,9 +67,10 @@ export async function callModel({ system, messages, model = DEFAULT_MODEL, effor
     const input = [{ role: "user", content: "Standing instructions for this whole conversation:\n\n" + system + (schema ? "\n\nReply with only a JSON value matching this JSON Schema:\n" + JSON.stringify(schema) : "") }, ...messages];
     try {
       const r = await sample(input, { signal, onText: onText ? ({ text }) => onText(text) : undefined, modelTier: tier, cache: false });
+      if (r.truncated) throw new ModelError("max_tokens", "Reply was cut off at the length limit.");
       const usage = { input_tokens: Math.round((system.length + JSON.stringify(messages).length) / 4), output_tokens: Math.round(r.text.length / 4), estimated: true };
       return { text: r.text, usage, cost: costOf(model, usage), model: "claude (" + tier + ")", structured: false };
-    } catch (e) { throw new ModelError(e.code || "upstream_error", e.message || String(e)); }
+    } catch (e) { if (e instanceof ModelError) throw e; throw new ModelError(e.code || "upstream_error", e.message || String(e)); }
   }
   const key = await setting("apikey");
   if (!key) throw new ModelError("no_key", "Add an Anthropic API key in Settings to run agents.");

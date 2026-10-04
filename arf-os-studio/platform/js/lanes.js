@@ -522,7 +522,7 @@ export async function startForward(versionId) {
 
 // Re-evaluates the deployment on bars that closed after it started. Only bars after startedAt can produce
 // forward trades, so nothing is backfilled; indicator warm-up uses earlier history, which is causal.
-export async function checkDeployment(depId, { signal } = {}) {
+export async function checkDeployment(depId, { signal, bars: uploaded = null } = {}) {
   const dep = await db.get("deployments", depId);
   if (!dep || !["ACTIVE", "DEGRADED"].includes(dep.status)) return dep;
   const v = await db.get("versions", dep.versionId);
@@ -530,7 +530,7 @@ export async function checkDeployment(depId, { signal } = {}) {
   const start = new Date(dep.startedAt).getTime();
   const warm = longestLookback(v.sdl, dep.params) + (v.sdl.segments.warmupBars || 0) + 5;
   let bars, health = { checkedAt: nowIso(), issues: [] };
-  try { bars = await fetchBars({ source: dep.source, symbol: dep.symbol, timeframe: dep.timeframe, from: start - warm * tf, signal }); }
+  try { bars = uploaded || await fetchBars({ source: dep.source, symbol: dep.symbol, timeframe: dep.timeframe, from: start - warm * tf, signal }); }
   catch (e) { health.issues.push("Data fetch failed: " + e.message); await db.update("deployments", depId, { status: "DEGRADED", health }); return db.get("deployments", depId); }
   const firstIdx = bars.t.findIndex(t => t >= start);
   const lastBar = bars.t[bars.t.length - 1];
@@ -623,6 +623,22 @@ H.PORTFOLIO_REVIEW = async (task, { signal }) => {
   const art = await artefact("PortfolioReview", { ...output, input }, { agentRunId: run.id });
   return { result: { artefactId: art.id } };
 };
+
+/* ---------------- Convert a pasted Pine script into SDL (Strategy Architect) ---------------- */
+export async function convertPine(pineSource, datasetId) {
+  const ds = datasetId ? await db.get("datasets", datasetId) : null;
+  const market = ds ? { source: ds.source, symbol: ds.symbol, timeframe: ds.timeframe } : { source: "binance", symbol: "BTCUSDT", timeframe: "240" };
+  const c = { id: null, policy: "discovery", market };
+  const fakeDs = ds || { tickSize: 0.01, bars: 0, from: Date.now(), to: Date.now() };
+  const input = {
+    task: "TRANSLATE_PINE",
+    pineSource: String(pineSource).slice(0, 40000),
+    market: { symbol: `${market.source.toUpperCase()}:${market.symbol.toUpperCase()}`, timeframe: market.timeframe, tickSize: fakeDs.tickSize },
+    instruction: "Translate this Pine Script strategy into one SDL document that reproduces its entries and exits as exactly as the grammar allows. Keep its inputs as parameters with sensible ranges around the script's defaults. Map process_orders_on_close to execution.processOnClose and trail_points/trail_offset to risk.trailingStop. The SDL requires a stop-loss: if the script has none, add a wide one and say so. In ambiguityNotes, list every place where the SDL differs from the script or where the script looks like it has a bug. Do not improve or optimise the strategy."
+  };
+  const { output, sdl, notes, warnings } = await architectLoop(input, c, fakeDs, { id: null }, undefined);
+  return { sdl, notes: [...(output.ambiguityNotes || []), ...notes], warnings, summary: output.summary };
+}
 
 /* ---------------- Ad-hoc: run a backtest on a hand-written SDL (Strategy Workbench) ---------------- */
 export async function createManualVersion({ campaignId, datasetId, sdl, name }) {

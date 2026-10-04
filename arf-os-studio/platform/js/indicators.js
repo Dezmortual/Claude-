@@ -131,6 +131,21 @@ export function adx(bars, n) {
   return a.map(v => 100 * v);
 }
 
+// Volume-weighted average of `src` since the first bar of each UTC day (resets daily).
+// Days are keyed by bar open time; a day with zero volume so far falls back to the source value.
+export function vwapDaily(bars, src) {
+  const out = nanArr(src.length);
+  let day = null, pv = 0, vv = 0;
+  for (let i = 0; i < src.length; i++) {
+    const d = Math.floor(bars.t[i] / 86_400_000);
+    if (d !== day) { day = d; pv = 0; vv = 0; }
+    const v = bars.v[i] || 0;
+    pv += src[i] * v; vv += v;
+    out[i] = vv > 0 ? pv / vv : src[i];
+  }
+  return out;
+}
+
 // Compute one SDL indicator. `val(spec)` resolves numbers or parameter references.
 export function computeIndicator(ind, bars, val, cache) {
   const len = val(ind.length), fast = val(ind.fast), slow = val(ind.slow), sig = val(ind.signal), mult = val(ind.mult);
@@ -164,6 +179,7 @@ export function computeIndicator(ind, bars, val, cache) {
     }
     case "adx": out = adx(bars, L); break;
     case "volume_sma": out = sma(bars.v, L); break;
+    case "vwap_daily": out = vwapDaily(bars, src); break;
     default: throw new Error("Unsupported indicator " + ind.type);
   }
   if (cache) cache.set(key, out);

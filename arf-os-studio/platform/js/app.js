@@ -4,7 +4,7 @@ import { connect, transport } from "./model.js";
 import { recover, pump, onActivity, activeTasks, setPaused } from "./workflow.js";
 import "./lanes.js";
 import { installChartHover, clearCharts } from "./charts.js";
-import { esc, toast, $ } from "./ui-util.js";
+import { esc, toast, $, IN_ARTIFACT } from "./ui-util.js";
 import { routes, actions, navCounts } from "./views.js";
 
 const NAV = [
@@ -26,6 +26,9 @@ function parseHash() {
 
 async function renderNav() {
   const counts = await navCounts();
+  const tabKey = ["version", "lab"].includes(current.name) ? (current.name === "version" ? "library" : "lab") : current.name;
+  document.querySelectorAll("#tabbar a").forEach(a => a.setAttribute("aria-current", a.dataset.tab === tabKey ? "page" : "false"));
+  const dec = document.querySelector('#tabbar a[data-tab="committee"]'); if (dec) dec.dataset.count = counts.committee || "";
   const here = current.name === "version" ? "library" : current.name === "campaign" ? "campaigns" : current.name === "run" ? "agents" : current.name;
   $("#nav").innerHTML = NAV.map(([g, items]) => `<div class="nav-group">${g}</div>` + items.map(([r, label, ck]) => {
     const n = ck ? counts[ck] : 0;
@@ -41,8 +44,8 @@ async function renderTop() {
   $("#topStats").innerHTML = `<span>Running <b>${runs.length}</b></span><span>Queued <b>${queued}</b></span><span>Model spend <b>$${spend.toFixed(2)}</b></span><span>Campaigns active <b>${campaigns.filter(c => c.status === "RUNNING").length}</b></span>`;
   const conn = $("#conn"), key = await db.setting("apikey");
   const t = transport();
-  conn.className = "conn " + (t === "claude" || key ? "ok" : "off");
-  conn.lastChild.textContent = t === "claude" ? "Claude connected" : key ? "API key set" : "No API key";
+  conn.className = "conn " + (t === "claude" || (key && !IN_ARTIFACT) ? "ok" : "off");
+  conn.lastChild.textContent = t === "claude" ? "Claude connected" : IN_ARTIFACT ? "Claude access off" : key ? "API key set" : "No API key";
   conn.title = t === "claude" ? "Running inside Claude: agents use your Claude session" : key ? "Agents call the Anthropic API with your key" : "Add an API key in Policies & Admin";
 }
 
@@ -103,7 +106,13 @@ document.addEventListener("click", async e => {
   const fn = actions[el.dataset.act];
   if (!fn) return;
   e.preventDefault();
-  if (el.dataset.confirm && !confirm(el.dataset.confirm)) return;
+  if (el.dataset.confirm && !el.dataset.confirmed) {
+    // Browser confirm() is unavailable in artifacts, so confirmations are always in-page.
+    openModal(`<h2>Please confirm</h2><p>${esc(el.dataset.confirm)}</p><div class="foot"><button class="btn" data-act="closeModal">Keep it</button><button class="btn danger" id="confirmGo">Confirm</button></div>`, m => {
+      m.querySelector("#confirmGo").addEventListener("click", () => { closeModal(); el.dataset.confirmed = "1"; el.click(); delete el.dataset.confirmed; });
+    });
+    return;
+  }
   const prev = el.disabled; el.disabled = true;
   try { await fn(el, el.dataset, { openModal, closeModal, render }); }
   catch (err) { console.error(err); toast(err.message || String(err), "bad"); }
@@ -119,6 +128,8 @@ $("#themeBtn").addEventListener("click", async () => {
   applyTheme(next); await db.setting("theme", next); render();
 });
 $("#menuBtn").addEventListener("click", () => document.querySelector(".rail").classList.toggle("open"));
+$("#tabMore").addEventListener("click", () => document.querySelector(".rail").classList.toggle("open"));
+document.addEventListener("click", e => { const rail = document.querySelector(".rail"); if (rail.classList.contains("open") && !e.target.closest(".rail, #menuBtn, #tabMore")) rail.classList.remove("open"); });
 document.querySelector(".rail").addEventListener("click", e => { if (e.target.closest("a")) document.querySelector(".rail").classList.remove("open"); });
 $("#pauseBtn").addEventListener("click", async () => {
   const p = !(await db.setting("queuePaused"));
@@ -128,6 +139,7 @@ $("#pauseBtn").addEventListener("click", async () => {
 });
 
 async function boot() {
+  if (IN_ARTIFACT) { const back = document.querySelector('.rail-foot a[href="../"]'); if (back) back.hidden = true; $("#envBadge").textContent = "Research · paper only · in Claude"; }
   applyTheme(await db.setting("theme"));
   installChartHover(document);
   const persistent = await db.persistent();
@@ -145,6 +157,6 @@ async function boot() {
   await render();
   pump();
   // Forward deployments refresh every 15 minutes while the page is open.
-  setInterval(async () => { const { autoCheckDeployments } = await import("./views.js"); autoCheckDeployments(); }, 15 * 60_000);
+  if (!IN_ARTIFACT) setInterval(async () => { const { autoCheckDeployments } = await import("./views.js"); autoCheckDeployments(); }, 15 * 60_000);
 }
 boot();

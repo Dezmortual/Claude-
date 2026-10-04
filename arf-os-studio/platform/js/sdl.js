@@ -21,7 +21,8 @@ export const INDICATOR_TYPES = {
   macd: { needs: ["source", "fast", "slow"], doc: "MACD line: ema(fast) − ema(slow)" },
   macd_signal: { needs: ["source", "fast", "slow", "signal"], doc: "EMA(signal) of the MACD line" },
   adx: { needs: ["length"], doc: "Average directional index (Wilder, DI length = smoothing = length)" },
-  volume_sma: { needs: ["length"], doc: "SMA of volume" }
+  volume_sma: { needs: ["length"], doc: "SMA of volume" },
+  vwap_daily: { needs: ["source"], doc: "Volume-weighted average of source since the first bar of the UTC day; resets each day" }
 };
 export const SOURCES = ["open", "high", "low", "close", "volume", "hl2", "hlc3", "ohlc4"];
 export const FUNCTIONS = {
@@ -278,7 +279,7 @@ export function validateSDL(sdl) {
   if (ex.entryOrder && ex.entryOrder !== "market_next_bar") err('execution.entryOrder must be "market_next_bar" (only model supported by the runner)');
   if ((ex.pyramiding ?? 0) !== 0) err("execution.pyramiding must be 0 (spec §11.6)");
   if (ex.calcOnEveryTick) err("execution.calcOnEveryTick must be false (spec §11.2)");
-  if (ex.processOnClose) err("execution.processOnClose must be false (spec §11.2)");
+  if (ex.processOnClose) warn("execution.processOnClose fills at the signal bar's close (Pine process_orders_on_close). This is a declared deviation from the default next-bar-open model and is usually optimistic live.");
 
   // Risk
   const r = sdl.risk || {};
@@ -298,6 +299,18 @@ export function validateSDL(sdl) {
     if (!atrId || !inds.find(x => x.id === atrId && x.type === "atr")) err("risk.stopLoss.atrIndicator must name an indicator of type atr");
   }
   if (r.oneStopOneTarget === false) err("risk.oneStopOneTarget must be true");
+  if (r.trailingStop !== undefined && r.trailingStop !== null) {
+    const tsv = r.trailingStop;
+    for (const [part, name] of [[tsv.activation, "activation"], [tsv.offset, "offset"]]) {
+      if (!part || !["percent", "atr_multiple"].includes(part.type)) { err(`risk.trailingStop.${name}.type must be "percent" or "atr_multiple"`); continue; }
+      if (part.value === undefined && part.valueParameter === undefined) err(`risk.trailingStop.${name} needs value or valueParameter`);
+      if (part.valueParameter !== undefined && !keys.has(part.valueParameter)) err(`risk.trailingStop.${name}.valueParameter "${part.valueParameter}" is not declared`);
+      if (part.type === "atr_multiple" && !inds.find(x => x.id === part.atrIndicator && x.type === "atr")) err(`risk.trailingStop.${name}.atrIndicator must name an indicator of type atr`);
+    }
+    const off = tsv.offset;
+    if (off && off.type === "atr_multiple" && typeof off.value === "number" && off.value < 0.1) warn(`Trailing offset of ${off.value}×ATR is a small fraction of a typical bar: results depend on the intrabar path assumption. Check the "Adverse intrabar path" robustness test.`);
+    if (off && off.type === "percent" && typeof off.value === "number" && off.value < 0.3) warn(`Trailing offset of ${off.value}% is tighter than most bars' range: results depend on the intrabar path assumption.`);
+  }
 
   // Costs (spec §11.7)
   const c = sdl.costs || {};
