@@ -1,7 +1,8 @@
 // Refreshes the built-in price library in ../data (run by .github/workflows/prices.yml).
 // The Claude app version of the platform cannot reach outside websites, so it loads prices from
 // these files, which are published alongside the page. Crypto comes from Binance's public data API;
-// gold, silver, forex, indices and oil come from Yahoo Finance charts (futures for metals and oil).
+// gold, silver, forex, indices and oil come from Yahoo Finance charts (futures for metals, indices and oil,
+// which trade nearly 24 hours like the CFDs most brokers chart).
 // Run: node tools/fetch-prices.mjs   (needs Node 20+ and internet access)
 import fs from "node:fs";
 
@@ -16,9 +17,9 @@ const MARKETS = [
   ["USDJPY", "USD/JPY", "Forex", "yahoo", "USDJPY=X"],
   ["AUDUSD", "AUD/USD", "Forex", "yahoo", "AUDUSD=X"],
   ["GBPJPY", "GBP/JPY", "Forex", "yahoo", "GBPJPY=X"],
-  ["NAS100", "Nasdaq 100", "Indices", "yahoo", "^NDX"],
-  ["SPX500", "S&P 500", "Indices", "yahoo", "^GSPC"],
-  ["US30", "Dow Jones", "Indices", "yahoo", "^DJI"],
+  ["NAS100", "Nasdaq 100", "Indices", "yahoo", "NQ=F"],
+  ["SPX500", "S&P 500", "Indices", "yahoo", "ES=F"],
+  ["US30", "Dow Jones", "Indices", "yahoo", "YM=F"],
   ["USOIL", "Oil (WTI)", "Energy", "yahoo", "CL=F"],
   ["BTCUSDT", "Bitcoin", "Crypto", "binance", "BTCUSDT"],
   ["ETHUSDT", "Ethereum", "Crypto", "binance", "ETHUSDT"],
@@ -99,7 +100,7 @@ for (const [sym, label, group, src, id] of MARKETS) {
   const base = { symbol: sym, label, group, source: NOTES[src] + (src === "yahoo" ? ` (${id})` : ""), market };
   try {
     let series;
-    if (src === "binance") series = { "60": await binance(id, "1h", H, 730), "240": await binance(id, "4h", 4 * H, 1095), "1D": await binance(id, "1d", D, 1825) };
+    if (src === "binance") series = { "60": await binance(id, "1h", H, 730), "240": await binance(id, "4h", 4 * H, 1095), "1D": await binance(id, "1d", D, 2920) };
     else { const h1 = await yahoo(id, "1h", "730d", H); series = { "60": h1, "240": aggregate(h1, 4 * H), "1D": await yahoo(id, "1d", "10y", D) }; }
     for (const [tf, rows] of Object.entries(series)) {
       if (rows.length < 500) throw new Error(`${sym} ${tf}: only ${rows.length} bars`);
