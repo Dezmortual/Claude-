@@ -489,7 +489,7 @@ function builtinPicker(datasets, lib, want) {
     <div class="sym-pick"><label class="field">Market<select id="biPick">${groups.map(g => `<optgroup label="${esc(g)}">${syms.filter(s => s.group === g).map(s => `<option value="${esc(s.symbol)}" ${want && want.symbol === s.symbol ? "selected" : ""}>${esc(s.label)} (${esc(s.symbol)})</option>`).join("")}</optgroup>`).join("")}</select></label>
       <label class="field">Timeframe<select id="biTf">${tfs.map(t => `<option value="${t}" ${(want && sets.some(s => s.timeframe === want.timeframe) ? want.timeframe : "240") === t ? "selected" : ""}>${tfName(t)}</option>`).join("")}</select></label>
       <button class="btn primary" data-act="loadBuiltinPick">Load</button></div>
-    <p class="small muted">Built-in prices, updated ${esc(isoDate(Date.parse(lib.updatedAt)))}. Gold is COMEX gold futures, which move with XAUUSD but sit a few dollars above it. Forex and indices are from Yahoo Finance, crypto from Binance.</p>`;
+    <p class="small muted">Built-in prices, updated ${esc(isoDate(Date.parse(lib.updatedAt)))}. Gold, silver, oil and the indices are futures prices (they move with XAUUSD, NAS100 and so on but sit a little above or below them). Forex is from Yahoo Finance, crypto from Binance.</p>`;
 }
 function dataPicker(datasets, selectId = "labDataset", lib = null, want = null) {
   const builtin = lib && lib.sets && lib.sets.length ? builtinPicker(datasets, lib, want) : "";

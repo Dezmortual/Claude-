@@ -153,7 +153,7 @@ export function integrityReport(bars, timeframe, { market = "24x7" } = {}) {
   const missPct = n ? (missing / (n + missing)) * 100 : 0;
   if (missPct > 5) errors.push(`${missing} missing bars (${missPct.toFixed(1)}%) — above the 5% policy threshold`);
   else if (missing) warnings.push(`${missing} missing bars in ${gaps} gaps (${missPct.toFixed(2)}%); largest ${biggest} bars after ${isoMinute(firstGap)}`);
-  if (zeroVol / Math.max(1, n) > 0.05) warnings.push(`${zeroVol} zero-volume bars (${((zeroVol / n) * 100).toFixed(1)}%)`);
+  if (zeroVol / Math.max(1, n) > 0.05 && !(market === "sessions" && zeroVol === n)) warnings.push(`${zeroVol} zero-volume bars (${((zeroVol / n) * 100).toFixed(1)}%)`);
   return {
     bars: n, from: bars.t[0], to: bars.t[n - 1], duplicates: dup, outOfOrder, gaps, missing, missingPct: missPct, largestGapBars: biggest, badOhlc: bad, zeroVolume: zeroVol,
     errors, warnings, status: errors.length ? "QUARANTINED" : warnings.length ? "WARN" : "OK"

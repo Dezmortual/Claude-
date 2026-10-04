@@ -87,8 +87,11 @@ page2.on("pageerror", e => errors.push("artifact: " + e.message));
 await page2.route("**/*", r => (new URL(r.request().url()).hostname === "localhost" ? r.continue() : r.abort()));
 await page2.addInitScript(() => { window.claude = { use: async () => null }; });
 await page2.goto(base + "artifact/#/lab");
-await page2.waitForSelector("[data-act=pasteDataset]");
-result.artifactHasQuickButtons = await page2.isVisible(".quick-data");
+await page2.waitForSelector("#dataStep [data-act=loadBuiltinSet]");
+result.artifactBuiltinButtons = await page2.$$eval("#dataStep [data-act=loadBuiltinSet]", bs => bs.map(b => b.textContent.trim()));
+await page2.$eval("#dataStep", el => el.scrollIntoView());
+if (shots) await page2.screenshot({ path: path.join(shots, "m4-artifact-builtin.png") });
+await page2.click(".own-data summary");
 await page2.click("[data-act=pasteDataset]");
 // A real paste inserts the whole text at once; set it the same way (fill() types it and times out on 200 KB).
 await page2.$eval("#pdText", (el, v) => { el.value = v; el.dispatchEvent(new Event("input", { bubbles: true })); }, copied);
