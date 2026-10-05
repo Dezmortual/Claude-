@@ -1,8 +1,8 @@
-/* DezEdge (formerly ARF-OS research platform). Dense research console, phone-friendly. Brand: navy tile, gold D, green breakout line. */
+/* DezQuant (formerly ARF-OS research platform). Dense research console, phone-friendly. Brand: midnight tile, gold DQ monogram (a D with a Q tail) and a gold breakout line. */
 :root {
   --bg: #eef1f4; --panel: #ffffff; --panel-2: #f6f8fa; --line: #d5dce3; --line-2: #e6ebf0;
   --fg: #16202b; --muted: #5a6876; --faint: #8a96a3;
-  --accent: #123a5c; --accent-ink: #ffffff; --accent-soft: #dfe8f1; --brand-gold: #b8860b;
+  --accent: #13263b; --accent-ink: #ffffff; --accent-soft: #e2e8ef; --brand-gold: #a8762a;
   --good: #0f7a3a; --good-soft: #e1f3e8; --warn: #8a5d00; --warn-soft: #fbf0d6; --bad: #b23a3a; --bad-soft: #fbe5e5; --info-soft: #e5eefb;
   --code-bg: #eaeef2;
   /* chart tokens: reference categorical palette (validated), sequential blue, diverging blue↔red */
@@ -18,7 +18,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #10161d; --panel: #171f28; --panel-2: #1c2631; --line: #2b3846; --line-2: #24303c; --fg: #e3e9ef; --muted: #93a2b1; --faint: #6c7a88;
-    --accent: #e8b84a; --accent-ink: #14100a; --accent-soft: #352b14; --brand-gold: #e8b84a;
+    --accent: #e2b65a; --accent-ink: #14100a; --accent-soft: #33291a; --brand-gold: #e2b65a;
     --good: #5cc592; --good-soft: #15301f; --warn: #e2b54f; --warn-soft: #33290f; --bad: #ef8080; --bad-soft: #3a1c1c; --info-soft: #1b2a3f; --code-bg: #0f151c;
     --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
     --grid: #2c2c2a; --axis: #383835; --tick: #a3a29a;
@@ -29,7 +29,7 @@
 }
 :root[data-theme="dark"] {
   --bg: #10161d; --panel: #171f28; --panel-2: #1c2631; --line: #2b3846; --line-2: #24303c; --fg: #e3e9ef; --muted: #93a2b1; --faint: #6c7a88;
-  --accent: #e8b84a; --accent-ink: #14100a; --accent-soft: #352b14; --brand-gold: #e8b84a;
+  --accent: #e2b65a; --accent-ink: #14100a; --accent-soft: #33291a; --brand-gold: #e2b65a;
   --good: #5cc592; --good-soft: #15301f; --warn: #e2b54f; --warn-soft: #33290f; --bad: #ef8080; --bad-soft: #3a1c1c; --info-soft: #1b2a3f; --code-bg: #0f151c;
   --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
   --grid: #2c2c2a; --axis: #383835; --tick: #a3a29a;
@@ -63,6 +63,11 @@ p { margin: 0 0 8px; }
 .brand-link small { color: var(--muted); font-size: 11.5px; }
 .logo { width: 34px; height: 34px; flex: none; display: block; }
 .brand-link b em, .top-brand b em { font-style: normal; color: var(--brand-gold); }
+/* Metallic gold on the "Quant" of the wordmark where background-clip text is supported. */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .brand-link b em, .top-brand b em { background: linear-gradient(135deg, #f3d98a, #d4a24a 55%, #a06e22); -webkit-background-clip: text; background-clip: text; color: transparent; }
+}
+.brand-link b, .top-brand b { letter-spacing: .01em; }
 .top-brand { display: none; align-items: center; gap: 8px; color: var(--fg); text-decoration: none; }
 .top-brand .logo { width: 28px; height: 28px; }
 .top-brand b { display: block; font: 700 17px/1 var(--display); }

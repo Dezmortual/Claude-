@@ -470,7 +470,7 @@ export async function approvePaper(versionId, note) {
 export async function humanDecision(versionId, to, reason, override = false) {
   const v = await db.get("versions", versionId);
   if (!reason) throw new Error("Give a reason for this decision.");
-  if (to === "LIVE_APPROVED") throw new Error("LIVE_APPROVED can only be granted by a human-authorised process outside DezEdge.");
+  if (to === "LIVE_APPROVED") throw new Error("LIVE_APPROVED can only be granted by a human-authorised process outside DezQuant.");
   await transition(versionId, to, { decision: to, reasons: ["HUMAN_DECISION"], summary: reason, actor: HUMAN, override, overrideReason: reason });
   await db.put("decisions", { id: uuidv7(), versionId, strategyId: v.strategyId, campaignId: v.campaignId, by: HUMAN, decision: to, memo: reason, override, createdAt: nowIso() });
   await db.update("versions", versionId, { lastDecisionSummary: reason });

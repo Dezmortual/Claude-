@@ -21,7 +21,7 @@ export const VERSION_STATES = {
   PAPER_PENDING_HUMAN: "Judge recommends paper test — human approval required",
   PAPER_APPROVED: "Approved for paper forward test",
   FORWARD_TESTING: "Paper forward test active",
-  LIVE_CANDIDATE: "Passed forward requirements — eligible for human live review outside DezEdge",
+  LIVE_CANDIDATE: "Passed forward requirements — eligible for human live review outside DezQuant",
   REWORK_REQUESTED: "Rework requested — child version will be created",
   REJECTED: "Failed one or more gates",
   ARCHIVED: "Retained for knowledge"

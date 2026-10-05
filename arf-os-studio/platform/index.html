@@ -3,31 +3,31 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>DezEdge</title>
-<meta name="description" content="DezEdge: find your edge before you trade. Test TradingView strategies and indicators on real prices, from your phone.">
+<title>DezQuant</title>
+<meta name="description" content="DezQuant: find your edge before you trade. Test TradingView strategies and indicators on real prices, from your phone.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="css/app.css">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%230e2438'/%3E%3Cpath d='M16 14h12.5a18 18 0 0 1 0 36H16z' fill='none' stroke='%23e8b84a' stroke-width='6' stroke-linejoin='round'/%3E%3Cpath d='M22 41l7.5-8.5 5 4L49 20' fill='none' stroke='%233fd896' stroke-width='4.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M41 19.5h9v9' fill='none' stroke='%233fd896' stroke-width='4.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='dqBg' cx='35%25' cy='25%25' r='85%25'%3E%3Cstop offset='0' stop-color='%231d3047'/%3E%3Cstop offset='1' stop-color='%23070c14'/%3E%3C/radialGradient%3E%3ClinearGradient id='dqAu' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23fbe8a6'/%3E%3Cstop offset='.45' stop-color='%23e2b65a'/%3E%3Cstop offset='1' stop-color='%23a8762a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='15' fill='url%28%23dqBg%29'/%3E%3Crect x='1.6' y='1.6' width='60.8' height='60.8' rx='13.6' fill='none' stroke='url%28%23dqAu%29' stroke-opacity='.55' stroke-width='1'/%3E%3Cpath d='M17 15h11.5a17 17 0 0 1 0 34H17z' fill='none' stroke='url%28%23dqAu%29' stroke-width='4.6' stroke-linejoin='round'/%3E%3Cpath d='M38 41l11 11' stroke='url%28%23dqAu%29' stroke-width='4.6' stroke-linecap='round'/%3E%3Cpath d='M22.5 39l6.5-7 4.5 3.5L44 24' fill='none' stroke='%23fbe8a6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M38.5 23.5h6v6' fill='none' stroke='%23fbe8a6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="dzLogo" viewBox="0 0 64 64"><rect width="64" height="64" rx="15" fill="#0e2438"/><path d="M16 14h12.5a18 18 0 0 1 0 36H16z" fill="none" stroke="#e8b84a" stroke-width="6" stroke-linejoin="round"/><path d="M22 41l7.5-8.5 5 4L49 20" fill="none" stroke="#3fd896" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M41 19.5h9v9" fill="none" stroke="#3fd896" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/></symbol></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="dzLogo" viewBox="0 0 64 64"><defs><radialGradient id="dqBg" cx="35%" cy="25%" r="85%"><stop offset="0" stop-color="#1d3047"/><stop offset="1" stop-color="#070c14"/></radialGradient><linearGradient id="dqAu" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbe8a6"/><stop offset=".45" stop-color="#e2b65a"/><stop offset="1" stop-color="#a8762a"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#dqBg)"/><rect x="1.6" y="1.6" width="60.8" height="60.8" rx="13.6" fill="none" stroke="url(#dqAu)" stroke-opacity=".55" stroke-width="1"/><path d="M17 15h11.5a17 17 0 0 1 0 34H17z" fill="none" stroke="url(#dqAu)" stroke-width="4.6" stroke-linejoin="round"/><path d="M38 41l11 11" stroke="url(#dqAu)" stroke-width="4.6" stroke-linecap="round"/><path d="M22.5 39l6.5-7 4.5 3.5L44 24" fill="none" stroke="#fbe8a6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M38.5 23.5h6v6" fill="none" stroke="#fbe8a6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol></svg>
 <div class="app">
   <nav class="rail" aria-label="Primary">
     <div class="brand">
-      <a href="#/" class="brand-link"><svg class="logo" aria-hidden="true"><use href="#dzLogo"/></svg><span><b>Dez<em>Edge</em></b><small>Find your edge before you trade</small></span></a>
+      <a href="#/" class="brand-link"><svg class="logo" aria-hidden="true"><use href="#dzLogo"/></svg><span><b>Dez<em>Quant</em></b><small>Find your edge before you trade</small></span></a>
     </div>
     <div class="navlist" id="nav"></div>
     <div class="rail-foot">
-      <a href="../" class="muted-link">← DezEdge Agent Desk (chat)</a>
+      <a href="../" class="muted-link">← DezQuant Agent Desk (chat)</a>
       <a href="https://github.com/Dezmortual/Claude-/blob/HEAD/AI_RESEARCH_HEDGE_FUND_SPEC.md" class="muted-link" target="_blank" rel="noopener">Specification</a>
     </div>
   </nav>
   <div class="main-col">
     <header class="topbar">
       <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open navigation">☰</button>
-      <a href="#/" class="top-brand" aria-label="DezEdge home"><svg class="logo" aria-hidden="true"><use href="#dzLogo"/></svg><span><b>Dez<em>Edge</em></b><small>Find your edge before you trade</small></span></a>
+      <a href="#/" class="top-brand" aria-label="DezQuant home"><svg class="logo" aria-hidden="true"><use href="#dzLogo"/></svg><span><b>Dez<em>Quant</em></b><small>Find your edge before you trade</small></span></a>
       <div class="env-badge" id="envBadge">Research · paper only</div>
       <div class="top-stats" id="topStats"></div>
       <div class="top-right">

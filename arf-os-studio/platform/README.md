@@ -1,6 +1,6 @@
-# DezEdge
+# DezQuant
 
-**Find your edge before you trade.** DezEdge (formerly the ARF-OS Research Platform) is a browser-based build of the ARF-OS spec (`AI_RESEARCH_HEDGE_FUND_SPEC.md`): a
+**Find your edge before you trade.** DezQuant (formerly the ARF-OS Research Platform) is a browser-based build of the ARF-OS spec (`AI_RESEARCH_HEDGE_FUND_SPEC.md`): a
 multi-agent research factory that discovers, builds, backtests, tries to break,
 judges and paper-tests systematic trading strategies. Everything runs as a
 static site. There is no server and no build step, and data lives in your
