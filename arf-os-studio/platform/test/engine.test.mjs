@@ -365,3 +365,13 @@ test("free Pine generator: every example and an indicator strategy pass Pine QA"
   const r = structuredClone(sdl); r.signals.longEntry = "rising(close, 2)";
   assert.match(generatePine(r).source, /close > close\[1\] and close\[1\] > close\[2\]/);
 });
+
+test("realistic costs: slippage is about half a typical spread, in the dataset's ticks", async () => {
+  const { realisticCosts, costsLookUnrealistic } = await import("../js/data.js");
+  assert.equal(realisticCosts("XAUUSD", 0.01, 4150, { commissionValue: 0.05 }).slippageTicks, 10);
+  assert.equal(realisticCosts("OANDA:XAUUSD", 0.01, 4150, {}).commissionValue, 0.01);
+  assert.equal(realisticCosts("EURUSD", 0.00001, 1.1, {}).slippageTicks, 6);
+  assert.equal(realisticCosts("BTCUSDT", 0.01, 65000, { commissionValue: 0.1 }).slippageTicks, 650);
+  assert.ok(costsLookUnrealistic({ costs: { slippageTicks: 0, commissionValue: 0.05 } }));
+  assert.ok(!costsLookUnrealistic({ costs: { slippageTicks: 2, commissionValue: 0.05 } }));
+});

@@ -7,7 +7,7 @@ import { enqueue, runAgent, transition, handoff, artefact, registerHandlers, cha
 import { validateSDL, gridSize, longestLookback } from "./sdl.js";
 import { lintPine, fixPineConstants } from "./pine-lint.js";
 import { generatePine, PINE_GEN_VERSION } from "./pine-gen.js";
-import { fetchBars, integrityReport, datasetChecksum, inferTickSize } from "./data.js";
+import { fetchBars, integrityReport, datasetChecksum, inferTickSize, realisticCosts } from "./data.js";
 import { evaluateEvidence, POLICIES } from "./research.js";
 import { parseTradingViewTrades, parity as parityCheck } from "./tv.js";
 import { computeMetrics } from "./metrics.js";
@@ -683,6 +683,30 @@ export async function createManualVersion({ campaignId, datasetId, sdl, name }) 
   // Hand-written and converted strategies get TradingView code right away, for free.
   try { await freePine(v.id); } catch (e) { await db.audit("pine.free_failed", { versionId: v.id, error: e.message }, HUMAN); }
   return db.get("versions", v.id);
+}
+// Free, no-AI fix for a strategy tested without realistic costs: a child version with market-typical
+// slippage (and a minimal commission if none), Pine code regenerated, and the full test plan re-run.
+export async function fixCostsAndRetest(versionId) {
+  const v = await db.get("versions", versionId);
+  const ds = await db.get("datasets", v.datasetId);
+  const bars = await db.get("bars", ds.id);
+  const price = bars && bars.c.length ? bars.c[bars.c.length - 1] : null;
+  const rc = realisticCosts(ds.symbol, ds.tickSize || v.sdl.costs.tickSize, price, v.sdl.costs);
+  if (v.sdl.costs.slippageTicks >= rc.slippageTicks && v.sdl.costs.commissionValue > 0) throw new Error(`Costs already look realistic (${v.sdl.costs.slippageTicks} ticks slippage, ${v.sdl.costs.commissionValue}% commission).`);
+  const sdl = structuredClone(v.sdl);
+  sdl.costs = { ...sdl.costs, slippageTicks: Math.max(rc.slippageTicks, sdl.costs.slippageTicks || 0), commissionValue: rc.commissionValue, tickSize: rc.tickSize };
+  const check = validateSDL(sdl);
+  if (!check.ok) throw new Error(check.errors.join("; "));
+  // A free costs fix replaces a pending AI rework of the same version.
+  for (const t of await db.all("tasks", t => t.kind === "REWORK" && t.refs?.versionId === v.id && ["QUEUED", "WAITING_HUMAN"].includes(t.status))) await db.update("tasks", t.id, { status: "CANCELLED", finishedAt: nowIso(), error: { code: "replaced", message: "Replaced by the free costs fix" } });
+  const strategy = await db.get("strategies", v.strategyId);
+  const c = await campaignOf(v.campaignId);
+  const changed = ["costs.slippageTicks", ...(v.sdl.costs.commissionValue > 0 ? [] : ["costs.commissionValue"]), ...(sdl.costs.tickSize !== v.sdl.costs.tickSize ? ["costs.tickSize"] : [])];
+  const child = await createVersion({ strategy, c, ds, sdl, output: { expectedFailureModes: [], backtestExpectations: null, ambiguityNotes: [] }, run: { id: "human" }, notes: [], warnings: check.warnings, ambiguityDefects: 0, parent: v, changeReason: `Realistic costs: ${rc.note}`, changeCategory: "costs", changedFields: changed });
+  await db.audit("strategy_version.costs_fixed", { parent: v.id, child: child.id, slippageTicks: sdl.costs.slippageTicks, commission: sdl.costs.commissionValue }, HUMAN);
+  try { await freePine(child.id); } catch (_) {}
+  await backtestNow(child.id);
+  return { child, note: rc.note };
 }
 export async function backtestNow(versionId) {
   const v = await db.get("versions", versionId);
