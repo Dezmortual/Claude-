@@ -531,6 +531,28 @@ export async function explainVerification(id, text) {
 }
 
 /* ---------------- Forward testing (spec §7.8) ---------------- */
+// One tap: approve a paper (forward) test and start it. A forward test trades nothing real and is the
+// only fair evidence left once a version's holdout has been seen, so the human approval is recorded
+// (as an override where the lifecycle would not normally allow it) and a pending AI rework is cancelled.
+export const FORWARD_FROM = ["VALIDATED", "IN_COMMITTEE", "REWORK_REQUESTED", "RESEARCH_APPROVED", "PAPER_PENDING_HUMAN", "PAPER_APPROVED"];
+export async function forwardTestNow(versionId) {
+  const v = await db.get("versions", versionId);
+  if (!FORWARD_FROM.includes(v.status)) throw new Error(`A ${v.status} version can't start a forward test.`);
+  if (!v.backtestId || !v.validationId) throw new Error("Run the full backtest plan first.");
+  const running = await db.all("deployments", d => d.versionId === v.id && ["ACTIVE", "DEGRADED"].includes(d.status));
+  if (running.length) return running[0];
+  const c = await campaignOf(v.campaignId);
+  const ev = evaluateEvidence(await gatherEvidence(v), c.policy || "discovery");
+  if (ev.hardFails.length) throw new Error("Hard fails block a forward test: " + ev.hardFails.join("; "));
+  for (const t of await db.all("tasks", t => t.kind === "REWORK" && t.refs?.versionId === v.id && ["QUEUED", "WAITING_HUMAN"].includes(t.status))) await db.update("tasks", t.id, { status: "CANCELLED", finishedAt: nowIso(), error: { code: "replaced", message: "Replaced by a forward test" } });
+  if (v.status !== "PAPER_APPROVED") {
+    const reason = "One-tap forward test: collect evidence on new, unseen bars (paper only).";
+    const normal = ["RESEARCH_APPROVED", "PAPER_PENDING_HUMAN"].includes(v.status);
+    await transition(versionId, "PAPER_APPROVED", { decision: "PAPER_APPROVED", reasons: ["HUMAN_FORWARD_TEST"], summary: reason, actor: HUMAN, override: !normal, overrideReason: normal ? "" : reason });
+    await db.put("decisions", { id: uuidv7(), versionId, strategyId: v.strategyId, campaignId: v.campaignId, by: HUMAN, decision: "PAPER_APPROVED", memo: reason, override: !normal, evidenceGrade: ev.grade, evidenceScore: ev.score, createdAt: nowIso() });
+  }
+  return startForward(versionId);
+}
 export async function startForward(versionId) {
   const v = await db.get("versions", versionId);
   if (v.status !== "PAPER_APPROVED") throw new Error("Only PAPER_APPROVED versions can start a forward test.");
