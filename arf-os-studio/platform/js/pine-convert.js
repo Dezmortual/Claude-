@@ -1,4 +1,6 @@
 // Free, offline Pine Script → SDL converter for common strategy patterns. No AI involved.
+// indicator() scripts are supported too: the converter lists their signals (alertcondition, plotshape,
+// plotchar and boolean variables); the caller picks which mean buy and sell, and a stop and target.
 // It understands inputs, ta.* indicators, crossovers, if/else blocks with strategy.entry/close,
 // strategy.exit stops, limits and trails, and strategy() properties. Everything it cannot express
 // is listed in `skipped` / `notes`, never silently dropped.
@@ -102,7 +104,7 @@ const SOURCES = ["open", "high", "low", "close", "volume", "hl2", "hlc3", "ohlc4
 const TA_SIMPLE = { "ta.ema": "ema", "ta.sma": "sma", "ta.rma": "rma", "ta.wma": "wma", "ta.rsi": "rsi", "ta.highest": "highest", "ta.lowest": "lowest", "ta.stdev": "stdev", "ta.roc": "roc" };
 const sid = s => String(s).toLowerCase().replace(/[^a-z0-9_]/g, "_").replace(/^([0-9])/, "_$1").slice(0, 40) || "x";
 
-export function convertPineToSDL(pine, { timeframe = "240", symbol = "BINANCE:BTCUSDT", tickSize = 0.01 } = {}) {
+export function convertPineToSDL(pine, { timeframe = "240", symbol = "BINANCE:BTCUSDT", tickSize = 0.01, signals = null } = {}) {
   const notes = [], skipped = [];
   const params = {}, paramOrder = [];
   const env = {};           // name → { kind: "expr"|"ind"|"param"|"tuple"|"cci", ... }
@@ -112,6 +114,18 @@ export function convertPineToSDL(pine, { timeframe = "240", symbol = "BINANCE:BT
   const exits = [];
   const props = {};
   let usedId = new Set(SOURCES.concat(["hour", "dayofweek", "bar_index"]));
+  // Signals an indicator() script exposes: { label, sdl, from }.
+  const candidates = [];
+  const boolNames = new Set();
+  const addCandidate = (label, sdl, from) => {
+    if (!sdl || sdl === "false") return;
+    label = String(label).slice(0, 60);
+    const same = candidates.find(c => c.sdl === sdl || c.sdl === `(${sdl})` || `(${c.sdl})` === sdl);
+    if (same) { if (from !== "variable" && same.from === "variable" && !candidates.some(c => c.label === label)) { same.label = label; same.from = from; } return; } // prefer the title shown on the chart
+    if (candidates.some(c => c.label === label)) label += ` (${candidates.length + 1})`;
+    candidates.push({ label, sdl, from });
+  };
+  const isBool = n => ["cmp", "logic", "not"].includes(n.k) || (n.k === "call" && ["ta.crossover", "ta.crossunder", "ta.cross", "ta.rising", "ta.falling"].includes(n.fn)) || (n.k === "id" && boolNames.has(n.v));
 
   const uniq = base => { let id = sid(base), n = 2; while (usedId.has(id)) id = sid(base) + "_" + n++; usedId.add(id); return id; };
   const numOrParam = node => {
@@ -297,6 +311,16 @@ export function convertPineToSDL(pine, { timeframe = "240", symbol = "BINANCE:BT
     const text = ln.text;
     let outer;
     try {
+      if (/^(plotshape|plotchar|alertcondition)\s*\(/.test(text)) {
+        condAt(ln.indent);
+        try {
+          const c = parse(text), arg = c.args[0] || c.named.series || c.named.condition;
+          const label = c.named.title?.v || (c.args[1] && c.args[1].k === "str" ? c.args[1].v : null) || c.named.text?.v || text.slice(0, 40);
+          if (arg && isBool(arg)) addCandidate(label, tr(arg), text.split("(")[0]);
+        } catch (_) { /* a signal the converter can't read is simply not offered */ }
+        continue;
+      }
+      if (/^indicator\s*\(/.test(text)) { try { const c = parse(text); props.title = c.named.title?.v || c.args[0]?.v; } catch (_) {} condAt(ln.indent); continue; }
       if (/^\/\/@version/.test(text) || /^(indicator|plot|plotshape|plotchar|bgcolor|barcolor|fill|hline|alertcondition|alert|label\.|line\.|box\.|table\.|var\s+table)/.test(text)) { condAt(ln.indent); continue; }
       if (/^strategy\s*\(/.test(text)) {
         const c = parse(text);
@@ -343,6 +367,7 @@ export function convertPineToSDL(pine, { timeframe = "240", symbol = "BINANCE:BT
         const rel = relDistance(node);
         if (rel) { env[name] = { kind: "level", rel }; continue; }
         env[name] = { kind: "expr", sdl: tr(node) };
+        if (isBool(node)) { boolNames.add(name); addCandidate(name, env[name].sdl, "variable"); }
         continue;
       }
       if (/^strategy\.(entry|order)\s*\(/.test(text)) {
@@ -374,8 +399,34 @@ export function convertPineToSDL(pine, { timeframe = "240", symbol = "BINANCE:BT
     }
   }
 
+  // indicator() script: turn the chosen signals into entries with an ATR stop and an R-multiple target.
+  const isIndicator = /^\s*indicator\s*\(/m.test(pine) && !cond.longEntry.length && !cond.shortEntry.length;
+  if (isIndicator) {
+    if (!candidates.length) throw Object.assign(new Error("This is an indicator, but none of its signals could be read. The converter looks for alertcondition(), plotshape() or plotchar() with a true/false condition, or true/false variables such as buy = ta.crossover(fast, slow)."), { skipped, notes });
+    if (!signals) throw Object.assign(new Error("This is an indicator: choose which signal means buy and which means sell."), { code: "pick_signals", candidates, name: String(props.title || "Indicator"), skipped, notes });
+    const pick = label => (label ? candidates.find(c => c.label === label) : null);
+    const buy = pick(signals.buy), sell = pick(signals.sell), mode = signals.mode || "both";
+    if (signals.buy && !buy) throw new Error(`Unknown signal "${signals.buy}"`);
+    if (signals.sell && !sell) throw new Error(`Unknown signal "${signals.sell}"`);
+    if (mode === "both" && (!buy || !sell)) throw new Error("Long and short needs both a buy and a sell signal.");
+    if (mode === "long" && !buy) throw new Error("Long only needs a buy signal.");
+    if (mode === "short" && !sell) throw new Error("Short only needs a sell signal.");
+    if (mode !== "short") cond.longEntry.push(buy.sdl); else if (buy) cond.shortExit.push(buy.sdl);
+    if (mode !== "long") cond.shortEntry.push(sell.sdl); else if (sell) cond.longExit.push(sell.sdl);
+    const stopAtr = +signals.stopAtr > 0 ? +signals.stopAtr : 1.5, targetR = +signals.targetR >= 0 ? +signals.targetR : 2;
+    params.stop_atr = { key: "stop_atr", type: "float", default: stopAtr, min: Math.min(0.5, stopAtr), max: Math.max(4, stopAtr), step: 0.5, rationale: "Stop distance in ATRs (chosen when converting the indicator)" };
+    paramOrder.push("stop_atr"); usedId.add("stop_atr");
+    if (targetR > 0) { params.target_r = { key: "target_r", type: "float", default: targetR, min: Math.min(1, targetR), max: Math.max(4, targetR), step: 0.5, rationale: "Target as a multiple of the stop distance" }; paramOrder.push("target_r"); usedId.add("target_r"); }
+    exits.length = 0;
+    notes.push(`Built from the indicator: ${mode === "both" ? "long on" : mode === "long" ? "long on" : "short on"} "${mode === "short" ? sell.label : buy.label}"${mode === "both" ? `, short on "${sell.label}"` : mode === "long" && sell ? `, exit on "${sell.label}"` : mode === "short" && buy ? `, exit on "${buy.label}"` : ""}; stop ${stopAtr}× ATR(14)${targetR > 0 ? `, target ${targetR}R` : ", no fixed target"}.`);
+  }
+
   // Exits → stop, target, trail
   let stopLoss = null, takeProfit = { type: "none" }, trailingStop = null;
+  if (isIndicator) {
+    stopLoss = { type: "atr_multiple", valueParameter: "stop_atr", atrIndicator: addInd("atr", { length: 14 }, "atr14") };
+    if (params.target_r) takeProfit = { type: "risk_multiple", valueParameter: "target_r" };
+  }
   const atrIdFallback = () => addInd("atr", { length: 14 }, "atr14");
   const asPart = d => {
     if (!d) return null;
@@ -428,12 +479,13 @@ export function convertPineToSDL(pine, { timeframe = "240", symbol = "BINANCE:BT
   const qtyType = String(props.default_qty_type || "");
   let size = 100;
   if (/percent_of_equity/.test(qtyType) && typeof props.default_qty_value === "number") size = Math.min(100, props.default_qty_value);
-  else notes.push("Order size is not a percent of equity in the script; using 100% of equity.");
+  else if (!isIndicator) notes.push("Order size is not a percent of equity in the script; using 100% of equity.");
   if (typeof props.pyramiding === "number" && props.pyramiding > 1) notes.push(`pyramiding=${props.pyramiding} in the script; the backtester allows one position at a time.`);
   const commission = typeof props.commission_value === "number" ? props.commission_value : 0.06;
-  if (props.commission_value === undefined) notes.push("No commission in the script; using 0.06% per side.");
-  const slippage = typeof props.slippage === "number" ? props.slippage : 0;
-  if (!slippage) notes.push("No slippage in the script. Add 1–2 ticks for a realistic test.");
+  if (props.commission_value === undefined && !isIndicator) notes.push("No commission in the script; using 0.06% per side.");
+  const slippage = typeof props.slippage === "number" ? props.slippage : isIndicator ? 2 : 0;
+  if (isIndicator) notes.push(`Costs: ${commission}% commission per side and ${slippage} ticks of slippage. Raise slippage to about half your broker's spread in ticks (e.g. 10 for gold on a 0.18 spread).`);
+  else if (!slippage) notes.push("No slippage in the script. Add 1–2 ticks for a realistic test.");
 
   // Keep the parameter grid ≤ 500 by widening steps on the largest axes.
   const paramList = paramOrder.map(k => params[k]);
@@ -452,7 +504,7 @@ export function convertPineToSDL(pine, { timeframe = "240", symbol = "BINANCE:BT
   const join = arr => (arr.length ? (arr.length === 1 ? unwrap(arr[0]) : arr.map(c => `(${unwrap(c)})`).join(" OR ")) : "");
   const sdl = {
     schemaVersion: "1.0.0",
-    strategy: { name: String(props.title || (pine.match(/strategy\s*\(\s*["']([^"']+)/) || [])[1] || "Converted strategy"), family: "converted_pine", thesis: "Converted from a Pine Script strategy by the built-in converter.", directions },
+    strategy: { name: String(props.title || (pine.match(/(?:strategy|indicator)\s*\(\s*["']([^"']+)/) || [])[1] || "Converted strategy"), family: isIndicator ? "converted_indicator" : "converted_pine", thesis: isIndicator ? "Tests whether the indicator's signals make money after costs, with an ATR stop and R-multiple target." : "Converted from a Pine Script strategy by the built-in converter.", directions },
     market: { assetClass: "crypto", symbols: [symbol], timeframe, timezone: "Etc/UTC", session: "0000-2359:1234567", chartType: "standard_ohlc" },
     indicators,
     signals: { longEntry: join(cond.longEntry), shortEntry: join(cond.shortEntry), longExit: join(cond.longExit), shortExit: join(cond.shortExit) },

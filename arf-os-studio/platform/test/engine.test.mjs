@@ -324,3 +324,25 @@ test("input.time defaults are made constant for TradingView (CE10123)", () => {
   // A variable argument cannot be fixed mechanically, so Pine QA still rejects it.
   assert.deepEqual(lintPine(r.source).findings.filter(f => f.rule === "input-time-const").map(f => f.line), [6]);
 });
+
+test("free converter: indicator() signals become a strategy with an ATR stop and R target", async () => {
+  const fs = await import("node:fs");
+  const { convertPineToSDL } = await import("../js/pine-convert.js");
+  const pine = fs.readFileSync(new URL("./pine/ema_cross_indicator.pine", import.meta.url), "utf8");
+  let err = null;
+  try { convertPineToSDL(pine); } catch (e) { err = e; }
+  assert.equal(err?.code, "pick_signals");
+  assert.deepEqual(err.candidates.map(c => c.label), ["Buy", "Sell", "Overbought"]);
+  const both = convertPineToSDL(pine, { signals: { buy: "Buy", sell: "Sell", mode: "both", stopAtr: 1.5, targetR: 2 } }).sdl;
+  assert.equal(validateSDL(both).ok, true);
+  assert.deepEqual(both.strategy.directions, ["long", "short"]);
+  assert.match(both.signals.longEntry, /crosses_above\(fast, slow\)/);
+  assert.equal(both.risk.stopLoss.valueParameter, "stop_atr");
+  assert.equal(both.risk.takeProfit.valueParameter, "target_r");
+  const longOnly = convertPineToSDL(pine, { signals: { buy: "Buy", sell: "Sell", mode: "long", stopAtr: 2, targetR: 0 } }).sdl;
+  assert.deepEqual(longOnly.strategy.directions, ["long"]);
+  assert.match(longOnly.signals.longExit, /crosses_below/);
+  assert.equal(longOnly.risk.takeProfit.type, "none");
+  const r = runBacktest(both, bars, Object.fromEntries(both.parameters.map(p => [p.key, p.default])));
+  assert.ok(computeMetrics(r).tradeCount > 0);
+});
