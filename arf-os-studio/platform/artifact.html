@@ -67,7 +67,9 @@ p { margin: 0 0 8px; }
 .brand-link b em, .top-brand b em { font-style: normal; color: var(--brand-gold); }
 .top-brand { display: none; align-items: center; gap: 8px; color: var(--fg); text-decoration: none; }
 .top-brand .logo { width: 28px; height: 28px; }
-.top-brand b { font: 700 17px/1 var(--display); }
+.top-brand b { display: block; font: 700 17px/1 var(--display); }
+.top-brand small { display: block; margin-top: 2px; font-size: 10px; line-height: 1.15; color: var(--muted); white-space: nowrap; }
+.top-brand > span { min-width: 0; }
 .navlist { overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 1px; flex: 1; }
 .nav-group { font: 500 10.5px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--faint); padding: 12px 10px 5px; }
 .nav-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: 7px; color: var(--fg); text-decoration: none; font-weight: 500; font-size: 13.5px; }
@@ -319,6 +321,12 @@ textarea.pine { min-height: 200px; }
   .top-brand { display: flex; }
   #pauseBtn { display: none; }
   .conn span { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .topbar .conn { margin-left: auto; }
+}
+@media (max-width: 480px) {
+  /* Room for the logo and tagline: the connection status shows as its coloured dot (full text in its tooltip). */
+  .topbar .conn > span { display: none; }
+  .topbar .conn i { width: 10px; height: 10px; }
   .page-head h1 { font-size: 22px; }
   .modal { padding: 16px; }
   .modal .foot { flex-wrap: wrap; }
@@ -348,7 +356,7 @@ textarea.pine { min-height: 200px; }
   <div class="main-col">
     <header class="topbar">
       <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open navigation">☰</button>
-      <a href="#/" class="top-brand" aria-label="DezEdge home"><svg class="logo" aria-hidden="true"><use href="#dzLogo"/></svg><b>Dez<em>Edge</em></b></a>
+      <a href="#/" class="top-brand" aria-label="DezEdge home"><svg class="logo" aria-hidden="true"><use href="#dzLogo"/></svg><span><b>Dez<em>Edge</em></b><small>Find your edge before you trade</small></span></a>
       <div class="env-badge" id="envBadge">Research · paper only</div>
       <div class="top-stats" id="topStats"></div>
       <div class="top-right">
