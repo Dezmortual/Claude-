@@ -1,6 +1,5 @@
 #ARF-DATA v1 source=yahoo:CL=F symbol=USOIL timeframe=1D tick=0.001 market=sessions
 time,open,high,low,close,volume
-1475539200,48.65,49.26,48.26,48.69,513710
 1475625600,49.26,49.97,49.1,49.83,520070
 1475712000,49.65,50.63,49.33,50.44,547915
 1475798400,50.59,50.74,49.4,49.81,618809

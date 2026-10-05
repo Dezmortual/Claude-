@@ -1,6 +1,5 @@
 #ARF-DATA v1 source=yahoo:SI=F symbol=XAGUSD timeframe=1D tick=0.001 market=sessions
 time,open,high,low,close,volume
-1475539200,18.5,18.5,17.713,17.713,160
 1475625600,17.85,17.85,17.605,17.634,19
 1475712000,17.735,17.765,17.28,17.288,16
 1475798400,17.245,17.52,17.195,17.324,69
