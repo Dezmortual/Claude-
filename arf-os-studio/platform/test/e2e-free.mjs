@@ -91,7 +91,17 @@ await page.fill("#symPick", "gold");
 await page.click("[data-act=quickDataPick]");
 await page.waitForTimeout(3000);
 res.gold = await page.evaluate(async u => (await (await import(u)).all("datasets")).some(d => d.symbol === "PAXGUSDT"), dbu);
+// Campaign quick setup on a phone: tap choices, save a draft (no AI runs for a draft).
+await page.goto(base + "#/campaigns");
+await page.click("[data-act=newCampaign]");
+await page.waitForSelector(".quick-setup");
+await page.click('button.chip[data-group="tf"][data-value="60"]');
+await page.click('button.chip[data-group="idea"][data-value="pullback"]');
+if (shots) await page.screenshot({ path: path.join(shots, "f4-campaign-quick.png") });
+await page.click("#campaignForm button[type=submit]:not([data-start])");
+await page.waitForTimeout(1500);
+res.quickCampaign = await page.evaluate(async u => { const db = await import(u); const c = (await db.all("campaigns"))[0]; const ds = c && await db.get("datasets", c.market.uploadedDatasetId); return c && { name: c.name, symbol: c.market.symbol, tf: c.market.timeframe, ds: ds && ds.symbol + " " + ds.timeframe + " " + ds.status }; }, dbu);
 res.aiCalls = aiCalls; res.errors = errors;
 console.log(JSON.stringify(res, null, 1));
 await browser.close(); server.close();
-if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer || !res.gold || res.indicatorPicks.join() !== "Buy,Sell" || !res.indicatorRun || !res.freePine) process.exit(1);
+if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer || !res.gold || res.indicatorPicks.join() !== "Buy,Sell" || !res.indicatorRun || !res.freePine || res.quickCampaign?.name !== "Gold 1h · Pullbacks" || !/^XAUUSD 60 (OK|WARN)$/.test(res.quickCampaign?.ds || "")) process.exit(1);

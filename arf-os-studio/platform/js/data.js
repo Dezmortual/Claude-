@@ -19,6 +19,16 @@ async function getJSON(url, signal) {
 export async function fetchBars({ source, symbol, timeframe, from, to = Date.now(), signal, onProgress = () => {} }) {
   const tfMs = timeframeMs(timeframe);
   const rows = [];
+  if (String(source).startsWith("builtin")) {
+    // Built-in library (refreshed daily): the newest file for this market and timeframe.
+    const set = (await builtinPrices())?.sets.find(s => s.symbol === symbol && s.timeframe === timeframe);
+    if (!set) throw new Error(`No built-in ${symbol} ${timeframe} prices`);
+    const { bars } = await loadBuiltin(set.file);
+    const out = emptyBars();
+    for (let i = 0; i < bars.t.length; i++) if (bars.t[i] >= from && bars.t[i] <= to) for (const k of ["t", "o", "h", "l", "c", "v"]) out[k].push(bars[k][i]);
+    onProgress(out.t.length);
+    return out;
+  }
   if (source === "binance") {
     const interval = SOURCES.binance.tf[timeframe];
     if (!interval) throw new Error(`Binance does not support timeframe ${timeframe}`);
