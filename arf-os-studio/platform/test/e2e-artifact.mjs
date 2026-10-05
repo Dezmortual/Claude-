@@ -52,7 +52,7 @@ await page.exposeFunction("__mockSample", input => {
 });
 await page.exposeFunction("__mockSave", (name) => { globalThis.__saved = (globalThis.__saved || []).concat(name); return true; });
 await page.addInitScript(() => {
-  const sample = async (input, opts = {}) => { const text = await window.__mockSample(input); opts.onText && opts.onText({ text, delta: text }); return { text, truncated: false, modelTierApplied: opts.modelTier || "default" }; };
+  const sample = async (input, opts = {}) => { await new Promise(r => setTimeout(r, window.__sampleDelay || 0)); const text = await window.__mockSample(input); opts.onText && opts.onText({ text, delta: text }); return { text, truncated: false, modelTierApplied: opts.modelTier || "default" }; };
   const downloads = { save: async ({ filename }) => { await window.__mockSave(filename); return { status: "saved" }; } };
   window.claude = { use: async name => (name === "sample" ? sample : name === "downloads" ? downloads : null) };
 });
@@ -115,7 +115,20 @@ const t1 = Date.now(); let goldRun = null;
 while (Date.now() - t1 < 120000) { goldRun = await page.evaluate(async ([u, n]) => { const vs = await (await import(u)).all("versions"); return vs.length > n ? vs.sort((a, b) => a.createdAt.localeCompare(b.createdAt))[vs.length - 1].status : null; }, [dbu, nv]); if (["VALIDATED", "REJECTED"].includes(goldRun)) break; await page.waitForTimeout(500); }
 await shot("a5-gold-run");
 const gold = { status: goldDs?.status, market: goldDs?.market, missing: goldDs?.integrity?.missing, run: goldRun };
-console.log(JSON.stringify({ conn, sdlRouted, gold, sourceOptions: opts, versions: st.v, failures: st.f, saved: globalThis.__saved || [], resetModal, external: [...new Set(external)], errors }, null, 1));
+// Decide page: ask the AI to review the gold strategy and watch each step's status, then the verdict.
+await page.goto(base + "#/committee");
+await page.evaluate(() => { window.__sampleDelay = 2500; });
+const goldVid = await page.evaluate(async u => { const vs = await (await import(u)).all("versions"); return vs.sort((a, b) => a.createdAt.localeCompare(b.createdAt)).at(-1).id; }, dbu);
+await page.click(`[data-act=askAgentReview][data-id="${goldVid}"]`);
+await page.waitForFunction(() => /Step 1 of 2/.test(document.body.textContent), null, { timeout: 15000 });
+const step1 = true;
+await page.waitForFunction(() => /Step 2 of 2/.test(document.body.textContent), null, { timeout: 30000 });
+const step2 = true;
+const t2 = Date.now(); let verdict = null;
+while (Date.now() - t2 < 30000) { verdict = await page.evaluate(async ([u, id]) => (await (await import(u)).get("versions", id)).status, [dbu, goldVid]); if (!["VALIDATED", "IN_COMMITTEE"].includes(verdict)) break; await page.waitForTimeout(500); }
+await page.evaluate(() => { window.__sampleDelay = 0; });
+const review = { step1, step2, verdict };
+console.log(JSON.stringify({ conn, sdlRouted, gold, review, sourceOptions: opts, versions: st.v, failures: st.f, saved: globalThis.__saved || [], resetModal, external: [...new Set(external)], errors }, null, 1));
 void saved;
 await browser.close(); server.close();
-if (!sdlRouted || gold.status !== "OK" || !/VALIDATED|REJECTED/.test(gold.run) || errors.length || st.f.length || !st.v.length || external.length) process.exit(1);
+if (["VALIDATED", "IN_COMMITTEE", null].includes(review.verdict) || !sdlRouted || gold.status !== "OK" || !/VALIDATED|REJECTED/.test(gold.run) || errors.length || st.f.length || !st.v.length || external.length) process.exit(1);
