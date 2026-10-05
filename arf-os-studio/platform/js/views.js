@@ -138,31 +138,62 @@ async function viewCampaigns() {
     `<div class="table-wrap"><table class="t"><thead><tr><th>Campaign</th><th>Status</th><th>Market</th><th>Policy</th><th class="num">Versions</th><th class="num">Approved</th><th class="num">Spend</th><th class="num">Calls</th><th>Created</th></tr></thead><tbody>${rows}</tbody></table></div>`);
 }
 
+// Tap-to-choose campaign presets. Each fills the detailed fields below, which stay editable under "Advanced".
+const CAMPAIGN_IDEAS = [
+  ["trend", "Trend following", "Find simple trend-following strategies (moving averages, channels) that ride sustained moves and cut losers quickly."],
+  ["breakout", "Breakouts", "Find range or volatility breakout strategies (highest/lowest channels, Bollinger squeezes) with ATR stops."],
+  ["pullback", "Pullbacks", "Find strategies that buy dips in an uptrend or sell rallies in a downtrend, or fade stretched moves back to the mean (RSI, z-score, bands)."],
+  ["momentum", "Momentum", "Find RSI, MACD or rate-of-change momentum strategies with a trend filter."],
+  ["volatility", "Volatility regimes", "Find strategies that behave differently in calm and volatile conditions (ATR, ADX, Bollinger width)."],
+  ["any", "Let the AI decide", "Find simple, robust strategies of any style on this market."]
+];
+const CAMPAIGN_RULES = " They must survive realistic costs and out-of-sample testing. Prefer few parameters. Use only OHLCV price data.";
+const CAMPAIGN_EFFORT = [
+  ["quick", "Quick", "1 idea · about 30 AI calls", { maxDirections: 1, maxCandidates: 1, maxCalls: 30, maxCostUsd: 4 }],
+  ["standard", "Standard", "2 ideas · about 60 AI calls", { maxDirections: 2, maxCandidates: 2, maxCalls: 60, maxCostUsd: 10 }],
+  ["deep", "Deep", "4 ideas · about 120 AI calls", { maxDirections: 3, maxCandidates: 4, maxCalls: 120, maxCostUsd: 25 }]
+];
 async function campaignForm() {
   const datasets = await db.all("datasets", d => d.status !== "QUARANTINED");
+  const lib = await builtinPrices();
+  const sets = lib?.sets || [];
+  const markets = [...new Map(sets.map(s => [s.symbol, s])).values()];
   const tfOpts = src => Object.keys(DATA_SOURCES[src].tf).map(t => `<option value="${t}" ${t === "240" ? "selected" : ""}>${t}</option>`).join("");
+  const chips = (group, items, sel) => `<div class="chipset pick" data-group="${group}">${items.map(([v, label, sub]) => `<button type="button" class="chip big" data-group="${group}" data-value="${esc(v)}" aria-pressed="${v === sel}">${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ""}</button>`).join("")}</div>`;
+  const quick = markets.length ? `<div class="quick-setup">
+      <div class="q"><b>1. Market</b>${chips("market", markets.map(m => [m.symbol, m.label]), markets.find(m => m.symbol === "XAUUSD") ? "XAUUSD" : markets[0].symbol)}</div>
+      <div class="q"><b>2. Timeframe</b>${chips("tf", [["60", "1 hour"], ["240", "4 hours"], ["1D", "Daily"]], "240")}</div>
+      <div class="q"><b>3. What should the AI look for?</b>${chips("idea", CAMPAIGN_IDEAS.map(([v, l]) => [v, l]), "trend")}</div>
+      <div class="q"><b>4. How deep?</b>${chips("effort", CAMPAIGN_EFFORT.map(([v, l, sub]) => [v, l, sub]), "standard")}</div>
+      <div class="q"><b>5. Testing rules</b>${chips("policy", [["discovery", "Normal", "find promising ideas"], ["strict", "Strict", "only very solid results pass"]], "discovery")}</div>
+      <label class="field">Name<input type="text" name="name" required></label>
+    </div>` : "";
   return `<h2>New research campaign</h2>
+  <p class="small muted">Tap your choices. The AI research team then finds, builds and tests strategies for you.</p>
   <form id="campaignForm" class="stack">
-    <div class="form-grid">
-      <label class="field wide">Name<input type="text" name="name" required placeholder="BTC volatility regimes, 4h"></label>
-      <label class="field wide">Research brief<textarea name="brief" required placeholder="What should the agents look for? Constraints, markets, ideas to avoid…">Find simple, robust trend or volatility-regime strategies on this market that survive realistic costs and out-of-sample testing. Prefer few parameters. Avoid anything that needs data beyond OHLCV.</textarea></label>
-      <label class="field">Data source<select name="source" id="cfSource">${IN_ARTIFACT ? "" : Object.entries(DATA_SOURCES).map(([k, s]) => `<option value="${k}">${esc(s.name)}</option>`).join("")}${datasets.length ? `<option value="dataset">Existing dataset…</option>` : ""}<option value="csv">Upload CSV…</option><option value="paste">Paste price data…</option></select></label>
+    ${quick}
+    <details class="adv" ${quick ? "" : "open"}><summary>Advanced settings</summary>
+    <div class="form-grid section">
+      ${quick ? "" : `<label class="field wide">Name<input type="text" name="name" required placeholder="BTC volatility regimes, 4h"></label>`}
+      <label class="field wide">Research brief<textarea name="brief" required placeholder="What should the agents look for? Constraints, markets, ideas to avoid…">${esc(CAMPAIGN_IDEAS[0][2] + CAMPAIGN_RULES)}</textarea></label>
+      <label class="field">Data source<select name="source" id="cfSource">${markets.length ? `<option value="builtin">Built-in prices</option>` : ""}${IN_ARTIFACT ? "" : Object.entries(DATA_SOURCES).map(([k, s]) => `<option value="${k}">${esc(s.name)}</option>`).join("")}${datasets.length ? `<option value="dataset">Existing dataset…</option>` : ""}<option value="csv">Upload CSV…</option><option value="paste">Paste price data…</option></select></label>
+      <label class="field" id="cfBuiltinWrap" ${markets.length ? "" : "hidden"}>Built-in market<select name="builtinFile" id="cfBuiltin">${sets.map(s => `<option value="${esc(s.file)}" data-symbol="${esc(s.symbol)}" data-tf="${esc(s.timeframe)}" ${s.symbol === "XAUUSD" && s.timeframe === "240" ? "selected" : ""}>${esc(s.label)} ${esc(tfName(s.timeframe))}</option>`).join("")}</select></label>
       <label class="field wide" id="cfPasteWrap" hidden>Pasted price data<textarea name="pasteText" class="code" style="min-height:110px" placeholder="Paste text from Copy for Claude, or CSV text with a header row"></textarea></label>
       <label class="field wide" id="cfCsvWrap" hidden>Price history CSV<input type="file" name="csvFile" accept=".csv,text/csv"><span class="hint">${CSV_HINT}</span></label>
       <label class="field" id="cfTickWrap" hidden>Tick size (optional)<input type="number" step="any" name="tickSize" placeholder="auto"></label>
-      <label class="field">Symbol<input type="text" name="symbol" value="BTCUSDT" required></label>
-      <label class="field">Timeframe<select name="timeframe" id="cfTf">${IN_ARTIFACT ? ["15", "60", "240", "1D"].map(t => `<option ${t === "240" ? "selected" : ""}>${t}</option>`).join("") : tfOpts("binance")}</select></label>
+      <label class="field" id="cfSymWrap">Symbol<input type="text" name="symbol" value="${markets.length ? "XAUUSD" : "BTCUSDT"}" required></label>
+      <label class="field" id="cfTfWrap">Timeframe<select name="timeframe" id="cfTf">${IN_ARTIFACT || markets.length ? ["15", "60", "240", "1D"].map(t => `<option ${t === "240" ? "selected" : ""}>${t}</option>`).join("") : tfOpts("binance")}</select></label>
       <label class="field" id="cfDaysWrap">History (days)<input type="number" name="historyDays" value="1460" min="120" max="4000"></label>
       <label class="field" id="cfDsWrap" hidden>Dataset<select name="uploadedDatasetId">${datasets.map(d => `<option value="${d.id}">${esc(d.symbol)} ${esc(d.timeframe)} · ${d.bars} bars · ${isoDate(d.from)}→${isoDate(d.to)}</option>`).join("")}</select></label>
-      <label class="field">Policy profile<select name="policy">${Object.values(POLICIES).map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select></label>
+      <label class="field">Policy profile<select name="policy" id="cfPolicy">${Object.values(POLICIES).map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("")}</select></label>
       <label class="field">Research directions<input type="number" name="maxDirections" value="2" min="1" max="6"><span class="hint">Scout tasks the Orchestrator may create</span></label>
       <label class="field">Max candidates<input type="number" name="maxCandidates" value="2" min="1" max="10"><span class="hint">Ideas promoted to strategy design</span></label>
       <label class="field">Budget: model calls<input type="number" name="maxCalls" value="60" min="5"></label>
       <label class="field">Budget: USD<input type="number" name="maxCostUsd" value="10" min="0.5" step="0.5"></label>
       <label class="check wide"><input type="checkbox" name="autoTriage" checked> Auto-triage ideas by policy (otherwise every idea waits in the Research Inbox for you)</label>
-    </div>
-    <p class="small muted">Roughly 12–20 model calls per candidate strategy end to end. ${IN_ARTIFACT ? "Agents run on your Claude plan; dollar figures are list-price estimates used only for the budget cap." : "Spend is estimated from token usage at list prices."}</p>
-    <div class="foot"><button type="button" class="btn" data-act="closeModal">Cancel</button><button type="submit" class="btn">Create draft</button><button type="submit" class="btn primary" data-start="1">Create and start</button></div>
+    </div></details>
+    <p class="small muted">${IN_ARTIFACT ? "The AI team runs on your Claude plan. The budget caps how many AI calls the campaign may make." : "The AI team needs an Anthropic API key with credit (Policies & Admin). The budget caps spending."}</p>
+    <div class="foot"><button type="button" class="btn" data-act="closeModal">Cancel</button><button type="submit" class="btn">Save as draft</button><button type="submit" class="btn primary" data-start="1">Start research</button></div>
   </form>`;
 }
 
@@ -786,10 +817,33 @@ export const actions = {
       const sync = () => {
         dsw.hidden = src.value !== "dataset";
         m.querySelector("#cfCsvWrap").hidden = m.querySelector("#cfTickWrap").hidden = src.value !== "csv";
-        m.querySelector("#cfDaysWrap").hidden = ["csv", "dataset", "paste"].includes(src.value);
+        m.querySelector("#cfDaysWrap").hidden = ["csv", "dataset", "paste", "builtin"].includes(src.value);
         m.querySelector("#cfPasteWrap").hidden = src.value !== "paste";
+        m.querySelector("#cfBuiltinWrap").hidden = src.value !== "builtin";
+        m.querySelector("#cfSymWrap").hidden = m.querySelector("#cfTfWrap").hidden = ["builtin", "dataset"].includes(src.value);
       };
       sync();
+      // Quick setup: each tap fills the detailed fields.
+      const form = m.querySelector("#campaignForm"), nameIn = form.querySelector("[name=name]");
+      let nameTouched = false;
+      nameIn.addEventListener("input", () => { nameTouched = true; });
+      const pick = g => m.querySelector(`button.chip[data-group="${g}"][aria-pressed="true"]`)?.dataset.value;
+      const applyQuick = () => {
+        if (!m.querySelector(".quick-setup")) return;
+        const sym = pick("market"), tfv = pick("tf"), idea = CAMPAIGN_IDEAS.find(x => x[0] === pick("idea")), eff = CAMPAIGN_EFFORT.find(x => x[0] === pick("effort"));
+        const opt = [...m.querySelectorAll("#cfBuiltin option")].find(o => o.dataset.symbol === sym && o.dataset.tf === tfv);
+        if (opt) { src.value = "builtin"; m.querySelector("#cfBuiltin").value = opt.value; sync(); }
+        if (idea) form.brief.value = idea[2] + CAMPAIGN_RULES;
+        if (eff) for (const [k, v] of Object.entries(eff[3])) form[k].value = v;
+        m.querySelector("#cfPolicy").value = pick("policy") || "discovery";
+        const label = m.querySelector(`button.chip[data-group="market"][aria-pressed="true"]`)?.textContent || sym;
+        if (!nameTouched) nameIn.value = `${label} ${tfName(tfv)} · ${idea ? idea[1] : "Research"}`;
+      };
+      m.querySelectorAll("button.chip[data-group]").forEach(b => b.addEventListener("click", () => {
+        m.querySelectorAll(`button.chip[data-group="${b.dataset.group}"]`).forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+        applyQuick();
+      }));
+      applyQuick();
       src.addEventListener("change", () => {
         sync();
         if (DATA_SOURCES[src.value]) { tf.innerHTML = Object.keys(DATA_SOURCES[src.value].tf).map(t => `<option ${t === "240" || (src.value === "coinbase" && t === "360") ? "selected" : ""}>${t}</option>`).join(""); m.querySelector("[name=symbol]").value = DATA_SOURCES[src.value].example; }
@@ -799,7 +853,11 @@ export const actions = {
         const f = Object.fromEntries(new FormData(e.target).entries());
         f.autoTriage = !!f.autoTriage;
         try {
-          if (f.source === "dataset") { const ds = await db.get("datasets", f.uploadedDatasetId); f.source = ds.source; f.symbol = ds.symbol; f.timeframe = ds.timeframe; }
+          if (f.source === "builtin") {
+            const { meta, bars } = await loadBuiltin(f.builtinFile);
+            const ds = await L.saveDataset({ source: "builtin:" + (meta.source || "file"), symbol: meta.symbol, timeframe: meta.timeframe, bars, tickSize: +meta.tick || null, market: meta.market || "24x7", note: "built-in prices" });
+            f.source = ds.source; f.symbol = ds.symbol; f.timeframe = ds.timeframe; f.uploadedDatasetId = ds.id;
+          } else if (f.source === "dataset") { const ds = await db.get("datasets", f.uploadedDatasetId); f.source = ds.source; f.symbol = ds.symbol; f.timeframe = ds.timeframe; }
           else if (f.source === "csv") {
             const file = e.target.csvFile.files[0]; if (!file) throw new Error("Choose the price history CSV");
             const bars = parseOhlcCsv(await readFile(file)); if (bars.t.length < 2) throw new Error("No bars found in that CSV");
@@ -811,7 +869,7 @@ export const actions = {
             const ds = await L.saveDataset({ source: meta.source || "paste", symbol: f.symbol.trim().toUpperCase(), timeframe: f.timeframe, bars, tickSize: +meta.tick || null, note: "pasted" });
             f.source = ds.source; f.uploadedDatasetId = ds.id;
           } else f.uploadedDatasetId = null;
-          delete f.csvFile; delete f.pasteText;
+          delete f.csvFile; delete f.pasteText; delete f.builtinFile;
           const c = await L.createCampaign(f);
           ui.closeModal();
           if (e.submitter && e.submitter.dataset.start) await L.startCampaign(c.id);

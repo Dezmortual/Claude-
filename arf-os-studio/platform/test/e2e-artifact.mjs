@@ -70,6 +70,7 @@ const conn = await page.textContent("#conn");
 await page.click("[data-act=newCampaign]");
 const opts = await page.$$eval("#cfSource option", os => os.map(o => o.value));
 await page.fill("[name=name]", "Artifact campaign");
+await page.click("details.adv summary");
 await page.selectOption("#cfSource", "csv");
 await page.setInputFiles("[name=csvFile]", { name: "BTCUSDT_240.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
 await shot("a2-form");

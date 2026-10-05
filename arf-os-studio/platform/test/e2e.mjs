@@ -95,8 +95,17 @@ await page.click("[data-act=saveKey]");
 // Campaign
 await page.goto(base + "#/campaigns");
 await page.click("[data-act=newCampaign]");
-await page.fill("[name=name]", "E2E BTC trend");
-await page.selectOption("[name=maxDirections]".replace("select", ""), {}).catch(() => {});
+// Quick setup: tap market, timeframe, idea and depth; the name and fields fill themselves in.
+await page.click('button.chip[data-group="market"][data-value="BTCUSDT"]');
+await page.click('button.chip[data-group="idea"][data-value="breakout"]');
+await page.click('button.chip[data-group="effort"][data-value="quick"]');
+const autoName = await page.inputValue("[name=name]");
+if (autoName !== "Bitcoin 4h · Breakouts") throw new Error("Quick setup name: " + autoName);
+if (await page.inputValue("[name=maxCandidates]") !== "1") throw new Error("Quick setup effort not applied");
+// The rest of this test drives the live (mocked) Binance source, set under Advanced.
+await page.click("details.adv summary");
+await page.selectOption("#cfSource", "binance");
+await page.fill("[name=maxCandidates]", "2"); await page.fill("[name=maxDirections]", "2"); await page.fill("[name=maxCalls]", "60");
 await shot("02-new-campaign");
 await page.click("button[data-start='1']");
 const dbmod = `${base}js/db.js`;
