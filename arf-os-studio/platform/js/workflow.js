@@ -104,6 +104,7 @@ export async function agentConfig(agentId) {
  * Records an agentRun (inputs are summarised; secrets never stored), charges the campaign budget,
  * and makes one repair attempt if the output fails its contract.
  */
+export const AGENT_TIMEOUT_MS = 8 * 60_000;
 export async function runAgent(agentId, input, { campaignId = null, taskId = null, practice = false, promptOverride = null, signal, onText } = {}) {
   const agent = agentById[agentId];
   if (!agent) throw new Error("Unknown agent " + agentId);
@@ -123,7 +124,15 @@ export async function runAgent(agentId, input, { campaignId = null, taskId = nul
     let parsed = null, lastErrors = [];
     for (let attempt = 0; attempt < 2 && !parsed; attempt++) {
       run.attempts = attempt + 1;
-      const r = await callWithRetry({ system, messages, model: cfg.model, effort: cfg.effort, schema: agent.schema, maxTokens: agent.maxTokens || 16000, signal, onText });
+      // A call that never answers (a dropped connection, a phone app put to sleep) must not hold the
+      // queue forever: give up after AGENT_TIMEOUT_MS so the task is retried or reported.
+      const ctl = new AbortController(); let timedOut = false;
+      const onAbort = () => ctl.abort(); if (signal) signal.addEventListener("abort", onAbort, { once: true });
+      const timer = setTimeout(() => { timedOut = true; ctl.abort(); }, AGENT_TIMEOUT_MS);
+      let r;
+      try { r = await callWithRetry({ system, messages, model: cfg.model, effort: cfg.effort, schema: agent.schema, maxTokens: agent.maxTokens || 16000, signal: ctl.signal, onText }); }
+      catch (e) { if (timedOut) throw new ModelError("timeout", `${agent.role} didn't answer within ${AGENT_TIMEOUT_MS / 60000} minutes`); throw e; }
+      finally { clearTimeout(timer); if (signal) signal.removeEventListener("abort", onAbort); }
       run.usage.input_tokens += r.usage.input_tokens; run.usage.output_tokens += r.usage.output_tokens; run.cost += r.cost; run.structured = r.structured; run.servedModel = r.model;
       if (campaignId && !practice) await charge(campaignId, r);
       let obj = null;

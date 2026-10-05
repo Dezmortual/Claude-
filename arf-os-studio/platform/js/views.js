@@ -2,7 +2,7 @@
 import * as db from "./db.js";
 import { AGENTS, byId as agentById } from "./agents.js";
 import { MODELS } from "./model.js";
-import { VERSION_STATES, activeTasks, cancelTask, retryTask, championPrompt, pump } from "./workflow.js";
+import { VERSION_STATES, activeTasks, cancelTask, retryTask, championPrompt, pump, setPaused } from "./workflow.js";
 import * as L from "./lanes.js";
 import { POLICIES, evaluateEvidence, buildSegments } from "./research.js";
 import { validateSDL, gridSize, SDL_TEMPLATE, paramAxis } from "./sdl.js";
@@ -598,7 +598,22 @@ async function viewCommittee() {
   const approved = vs.filter(v => v.status === "RESEARCH_APPROVED");
   const forward = vs.filter(v => v.status === "FORWARD_TESTING");
   // An AI review is under way when a validator/judge task is queued or running for the version.
-  const active = new Set((await db.all("tasks", t => ["VALIDATE", "JUDGE"].includes(t.kind) && ["QUEUED", "RUNNING"].includes(t.status))).map(t => t.refs?.versionId));
+  const reviewTasks = await db.all("tasks", t => ["VALIDATE", "JUDGE"].includes(t.kind));
+  const active = new Set(reviewTasks.filter(t => ["QUEUED", "RUNNING"].includes(t.status)).map(t => t.refs?.versionId));
+  const lastReview = {};
+  for (const t of reviewTasks.sort((a, b) => a.createdAt.localeCompare(b.createdAt))) lastReview[t.refs?.versionId] = t;
+  const runningNow = Object.fromEntries(activeTasks().map(r => [r.task.id, r]));
+  const paused = !!(await db.setting("queuePaused"));
+  // One line saying where the AI review is: waiting, which step is running and for how long, or why it stopped.
+  const reviewStatus = v => {
+    const t = lastReview[v.id];
+    if (!t || t.status === "SUCCEEDED" && v.status !== "IN_COMMITTEE") return "";
+    const step = t.kind === "VALIDATE" ? "Step 1 of 2: the validator is trying to break the strategy" : "Step 2 of 2: the judge is deciding";
+    if (t.status === "RUNNING") { const r = runningNow[t.id]; const mins = r ? Math.floor((Date.now() - r.startedAt) / 60000) : null; return `<p class="note small"><span class="badge run">running</span> ${step}${mins !== null ? ` · ${mins} min so far` : ""}. Each step usually takes 1–5 minutes; keep this page open.${r?.progress ? ` <span class="faint">${esc(r.progress)}</span>` : ""}</p>`; }
+    if (t.status === "QUEUED") return `<p class="note small">${paused ? `<b>The job queue is paused</b>, so the review can't start. <button class="btn small primary" data-act="resumeQueue">Resume queue</button>` : `Waiting to start. ${step}.${t.error?.code === "timeout" ? " The last try timed out and will run again." : ""}`}</p>`;
+    if (["FAILED_TERMINAL", "WAITING_HUMAN", "FAILED_RETRYABLE"].includes(t.status)) return `<p class="note bad small"><b>The review stopped.</b> ${esc(t.error?.message || "Unknown error")} <button class="btn small primary" data-act="retryTask" data-id="${t.id}">Try again</button></p>`;
+    return "";
+  };
   const reviewing = vs.filter(v => v.status === "IN_COMMITTEE" || (v.status === "VALIDATED" && active.has(v.id)));
   const ready = vs.filter(v => v.status === "VALIDATED" && !active.has(v.id));
   const card = async (v, actions) => {
@@ -609,10 +624,11 @@ async function viewCommittee() {
     const missing = ev.gates.filter(g => g.pass === null && !/^not tested/.test(g.detail || "")).map(g => g.name);
     return `<div class="card"><div class="card-head"><h3>${vlink(v)}</h3><span>${badge(v.status)} ${grade(ev.grade)} <span class="small muted">${fmt(ev.score, 0)}/100</span></span></div>
       <div class="grid g2"><div class="case pos small"><b>Strongest positive case.</b> ${esc(dec?.positiveCase || val?.report?.positiveCase || "—")}</div><div class="case neg small"><b>Strongest rejection case.</b> ${esc(dec?.rejectionCase || val?.report?.rejectionCase || "—")}</div></div>
-      <dl class="kv section"><dt>Validator</dt><dd>${val?.report ? badge(val.report.recommendation) : "—"}</dd><dt>Judge</dt><dd>${dec ? badge(dec.decision) + " " + esc((dec.memo || "").slice(0, 200)) : "—"}</dd><dt>Hard fails</dt><dd class="${ev.hardFails.length ? "fail" : ""}">${ev.hardFails.length ? esc(ev.hardFails.join("; ")) : "none"}</dd><dt>Missing evidence</dt><dd>${missing.length ? esc(missing.join("; ")) : "none"}</dd><dt>Conditions</dt><dd>${esc((dec?.conditions || []).join("; ") || "—")}</dd><dt>Expires when</dt><dd>Code, parameters, costs, execution, market or data change</dd></dl>${actions ? `<div class="row section">${actions}</div>` : ""}</div>`;
+      <dl class="kv section"><dt>Validator</dt><dd>${val?.report ? badge(val.report.recommendation) : "—"}</dd><dt>Judge</dt><dd>${dec ? badge(dec.decision) + " " + esc((dec.memo || "").slice(0, 200)) : "—"}</dd><dt>Hard fails</dt><dd class="${ev.hardFails.length ? "fail" : ""}">${ev.hardFails.length ? esc(ev.hardFails.join("; ")) : "none"}</dd><dt>Missing evidence</dt><dd>${missing.length ? esc(missing.join("; ")) : "none"}</dd><dt>Conditions</dt><dd>${esc((dec?.conditions || []).join("; ") || "—")}</dd><dt>Expires when</dt><dd>Code, parameters, costs, execution, market or data change</dd></dl>${reviewStatus(v)}${actions ? `<div class="row section">${actions}</div>` : ""}</div>`;
   };
   const sec = async (title, sub, list, act) => `<div class="section"><h2>${title} <span class="muted small">(${list.length})</span></h2><p class="small muted">${sub}</p><div class="stack">${list.length ? (await Promise.all(list.map(v => card(v, act(v))))).join("") : `<p class="muted small">None.</p>`}</div></div>`;
   let html = "";
+  if (paused) html += `<div class="note warn"><b>The job queue is paused.</b> AI reviews and backtests wait until you resume it. <button class="btn small primary" data-act="resumeQueue">Resume queue</button></div>`;
   if (tasks.length) html += `<div class="section"><h2>Tasks waiting for you <span class="muted small">(${tasks.length})</span></h2><div class="table-wrap"><table class="t"><tbody>${tasks.map(t => `<tr><td>${avatar(t.lane, true)} ${esc(t.title)}</td><td class="small">${esc(t.error?.message || "Human approval required")}</td><td>${t.campaignId ? `<a href="#/campaign/${t.campaignId}/tasks">campaign</a>` : ""}</td><td><button class="btn small primary" data-act="retryTask" data-id="${t.id}">Approve &amp; run</button> <button class="btn small" data-act="cancelTask" data-id="${t.id}">Dismiss</button></td></tr>`).join("")}</tbody></table></div></div>`;
   html += await sec("Ready for a decision", `Backtest and stress tests are done. Ask the AI validator and judge to review it${IN_ARTIFACT ? " (uses your Claude plan)" : " (needs API credit)"}, or decide yourself.`, ready, v => `<button class="btn small primary" data-act="askAgentReview" data-id="${v.id}">Ask AI to review</button><button class="btn small" data-act="humanDecision" data-id="${v.id}">Decide myself…</button>`);
   html += await sec("With the AI judge", "The validator and judge are reviewing these now. Results appear here and on the strategy page.", reviewing, () => "");
@@ -1127,6 +1143,7 @@ export const actions = {
       out.innerHTML = `<div class="note bad small"><b>Couldn't convert this script.</b> ${esc(e.message)}${isR08 ? `<div class="section"><button class="btn small primary" data-act="loadExample" data-id="r08">Load the ready-made R08 definition</button></div>` : ""}${(e.skipped || []).length ? `<details class="section"><summary>Lines it couldn't read (${e.skipped.length})</summary><ul style="margin:4px 0 0;padding-left:18px">${e.skipped.map(n => `<li>${esc(n)}</li>`).join("")}</ul></details>` : ""}<p class="small" style="margin-top:8px">For custom logic like this, paste the script to Claude in the chat and ask for a strategy definition, then paste it into “Strategy definition”.</p></div>`;
     }
   },
+  resumeQueue: async (el, d, ui) => { await db.setting("queuePaused", false); setPaused(false); const b = $("#pauseBtn"); if (b) { b.setAttribute("aria-pressed", "false"); b.textContent = "Pause queue"; } toast("Job queue resumed"); await ui.render(); },
   askAgentReview: async (el, d, ui) => { await L.askAgentReview(d.id); toast("Validator and judge are reviewing it (uses AI)"); await ui.render(); },
   convertPine: async el => {
     const src = $("#labPine").value.trim();
