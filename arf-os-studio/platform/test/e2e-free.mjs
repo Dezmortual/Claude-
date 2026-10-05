@@ -66,6 +66,10 @@ res.r08 = vs[1];
 await page.goto(base + "#/version/" + (await page.evaluate(async u => (await (await import(u)).all("versions")).sort((a, b) => a.createdAt.localeCompare(b.createdAt))[1].id, dbu)) + "/evidence");
 await page.waitForTimeout(800);
 res.reviewButton = await page.isVisible("[data-act=askAgentReview]");
+// The Lab version already has free Pine code (no AI) on its Pine source tab.
+await page.click('.tabs a[href$="/source"], a[href$="/source"]');
+await page.waitForTimeout(800);
+res.freePine = (await page.textContent("pre")).startsWith("//@version=6");
 if (shots) await page.screenshot({ path: path.join(shots, "f2-evidence.png") });
 res.failedTasks = await page.evaluate(async u => (await (await import(u)).all("tasks", t => ["FAILED_TERMINAL", "WAITING_HUMAN"].includes(t.status))).map(t => t.kind), dbu);
 // An indicator script: pick its signals, build a strategy and run it.
@@ -90,4 +94,4 @@ res.gold = await page.evaluate(async u => (await (await import(u)).all("datasets
 res.aiCalls = aiCalls; res.errors = errors;
 console.log(JSON.stringify(res, null, 1));
 await browser.close(); server.close();
-if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer || !res.gold || res.indicatorPicks.join() !== "Buy,Sell" || !res.indicatorRun) process.exit(1);
+if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer || !res.gold || res.indicatorPicks.join() !== "Buy,Sell" || !res.indicatorRun || !res.freePine) process.exit(1);

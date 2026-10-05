@@ -346,3 +346,22 @@ test("free converter: indicator() signals become a strategy with an ATR stop and
   const r = runBacktest(both, bars, Object.fromEntries(both.parameters.map(p => [p.key, p.default])));
   assert.ok(computeMetrics(r).tradeCount > 0);
 });
+
+test("free Pine generator: every example and an indicator strategy pass Pine QA", async () => {
+  const { generatePine } = await import("../js/pine-gen.js");
+  const { EXAMPLES } = await import("../js/examples.js");
+  for (const ex of [{ id: "template", sdl }, ...EXAMPLES]) {
+    const { source } = generatePine(ex.sdl, { ids: { strategyVersionId: "v1" } });
+    const l = lintPine(source, ex.sdl);
+    assert.equal(l.errors, 0, ex.id + ": " + l.findings.filter(f => f.severity === "error").map(f => f.message).join("; "));
+    assert.match(source, /^\/\/@version=6/);
+    assert.match(source, /input\.time\(timestamp\("01 Jan 2000 00:00 \+0000"\)/);
+    for (const p of ex.sdl.parameters) assert.match(source, new RegExp(`input\\.(int|float)\\(${p.default}`));
+  }
+  const longOnly = { ...structuredClone(sdl), strategy: { ...sdl.strategy, directions: ["long"] } };
+  const g = generatePine(longOnly).source;
+  assert.ok(!/strategy\.entry\("Short"/.test(g), "long-only strategy must not place short entries");
+  // rising(x, 2) means two consecutive higher values, as in the runner.
+  const r = structuredClone(sdl); r.signals.longEntry = "rising(close, 2)";
+  assert.match(generatePine(r).source, /close > close\[1\] and close\[1\] > close\[2\]/);
+});
