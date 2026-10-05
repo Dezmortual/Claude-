@@ -103,7 +103,7 @@ export function lintPine(src, sdl = null) {
     if (/\bprocess_orders_on_close\s*=\s*true/.test(args) && !(sdl && sdl.execution && sdl.execution.processOnClose)) add("warning", "execution", "process_orders_on_close", "process_orders_on_close = true differs from the SDL's next-bar-open model.");
     if (sdl && sdl.execution && sdl.execution.processOnClose && !/\bprocess_orders_on_close\s*=\s*true/.test(args)) add("error", "sdl", "process-on-close", "SDL declares processOnClose but strategy() does not set process_orders_on_close=true.");
     if (/\bcalc_on_order_fills\s*=\s*true/.test(args)) add("warning", "execution", "calc_on_order_fills", "calc_on_order_fills = true can cause intrabar recalculation.");
-    if (/commission_value\s*=\s*0(\.0+)?\b/.test(args)) add("warning", "costs", "zero-commission", "commission_value is 0.");
+    if (/commission_value\s*=\s*0(\.0+)?(?![\d.])/.test(args)) add("warning", "costs", "zero-commission", "commission_value is 0.");
   }
 
   // Input defaults must be compile-time constants, or TradingView refuses to compile (CE10123).
