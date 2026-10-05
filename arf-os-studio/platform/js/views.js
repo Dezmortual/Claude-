@@ -597,24 +597,28 @@ async function viewCommittee() {
   const pending = vs.filter(v => v.status === "PAPER_PENDING_HUMAN");
   const approved = vs.filter(v => v.status === "RESEARCH_APPROVED");
   const forward = vs.filter(v => v.status === "FORWARD_TESTING");
-  const judge = vs.filter(v => ["IN_COMMITTEE", "VALIDATED"].includes(v.status));
+  // An AI review is under way when a validator/judge task is queued or running for the version.
+  const active = new Set((await db.all("tasks", t => ["VALIDATE", "JUDGE"].includes(t.kind) && ["QUEUED", "RUNNING"].includes(t.status))).map(t => t.refs?.versionId));
+  const reviewing = vs.filter(v => v.status === "IN_COMMITTEE" || (v.status === "VALIDATED" && active.has(v.id)));
+  const ready = vs.filter(v => v.status === "VALIDATED" && !active.has(v.id));
   const card = async (v, actions) => {
     const val = v.validationId ? await db.get("validations", v.validationId) : null;
     const dec = v.lastDecisionId ? await db.get("decisions", v.lastDecisionId) : null;
     const c = v.campaignId ? await db.get("campaigns", v.campaignId) : null;
     const ev = evaluateEvidence(await L.gatherEvidence(v), c?.policy || "discovery");
-    const missing = ev.gates.filter(g => g.pass === null).map(g => g.name);
-    return `<div class="card"><div class="card-head"><h3>${vlink(v)}</h3><span>${badge(v.status)} ${grade(ev.grade)} <span class="small muted">${fmt(ev.score, 0)}/100</span></span><div class="right">${actions}</div></div>
+    const missing = ev.gates.filter(g => g.pass === null && !/^not tested/.test(g.detail || "")).map(g => g.name);
+    return `<div class="card"><div class="card-head"><h3>${vlink(v)}</h3><span>${badge(v.status)} ${grade(ev.grade)} <span class="small muted">${fmt(ev.score, 0)}/100</span></span></div>
       <div class="grid g2"><div class="case pos small"><b>Strongest positive case.</b> ${esc(dec?.positiveCase || val?.report?.positiveCase || "—")}</div><div class="case neg small"><b>Strongest rejection case.</b> ${esc(dec?.rejectionCase || val?.report?.rejectionCase || "—")}</div></div>
-      <dl class="kv section"><dt>Validator</dt><dd>${val?.report ? badge(val.report.recommendation) : "—"}</dd><dt>Judge</dt><dd>${dec ? badge(dec.decision) + " " + esc((dec.memo || "").slice(0, 200)) : "—"}</dd><dt>Hard fails</dt><dd class="${ev.hardFails.length ? "fail" : ""}">${ev.hardFails.length ? esc(ev.hardFails.join("; ")) : "none"}</dd><dt>Missing evidence</dt><dd>${missing.length ? esc(missing.join("; ")) : "none"}</dd><dt>Conditions</dt><dd>${esc((dec?.conditions || []).join("; ") || "—")}</dd><dt>Expires when</dt><dd>Code, parameters, costs, execution, market or data change</dd></dl></div>`;
+      <dl class="kv section"><dt>Validator</dt><dd>${val?.report ? badge(val.report.recommendation) : "—"}</dd><dt>Judge</dt><dd>${dec ? badge(dec.decision) + " " + esc((dec.memo || "").slice(0, 200)) : "—"}</dd><dt>Hard fails</dt><dd class="${ev.hardFails.length ? "fail" : ""}">${ev.hardFails.length ? esc(ev.hardFails.join("; ")) : "none"}</dd><dt>Missing evidence</dt><dd>${missing.length ? esc(missing.join("; ")) : "none"}</dd><dt>Conditions</dt><dd>${esc((dec?.conditions || []).join("; ") || "—")}</dd><dt>Expires when</dt><dd>Code, parameters, costs, execution, market or data change</dd></dl>${actions ? `<div class="row section">${actions}</div>` : ""}</div>`;
   };
   const sec = async (title, sub, list, act) => `<div class="section"><h2>${title} <span class="muted small">(${list.length})</span></h2><p class="small muted">${sub}</p><div class="stack">${list.length ? (await Promise.all(list.map(v => card(v, act(v))))).join("") : `<p class="muted small">None.</p>`}</div></div>`;
   let html = "";
   if (tasks.length) html += `<div class="section"><h2>Tasks waiting for you <span class="muted small">(${tasks.length})</span></h2><div class="table-wrap"><table class="t"><tbody>${tasks.map(t => `<tr><td>${avatar(t.lane, true)} ${esc(t.title)}</td><td class="small">${esc(t.error?.message || "Human approval required")}</td><td>${t.campaignId ? `<a href="#/campaign/${t.campaignId}/tasks">campaign</a>` : ""}</td><td><button class="btn small primary" data-act="retryTask" data-id="${t.id}">Approve &amp; run</button> <button class="btn small" data-act="cancelTask" data-id="${t.id}">Dismiss</button></td></tr>`).join("")}</tbody></table></div></div>`;
+  html += await sec("Ready for a decision", `Backtest and stress tests are done. Ask the AI validator and judge to review it${IN_ARTIFACT ? " (uses your Claude plan)" : " (needs API credit)"}, or decide yourself.`, ready, v => `<button class="btn small primary" data-act="askAgentReview" data-id="${v.id}">Ask AI to review</button><button class="btn small" data-act="humanDecision" data-id="${v.id}">Decide myself…</button>`);
+  html += await sec("With the AI judge", "The validator and judge are reviewing these now. Results appear here and on the strategy page.", reviewing, () => "");
   html += await sec("Paper-test approvals", "The Strategy Judge recommends a paper forward test. Only a human can approve it (spec §25).", pending, v => `<button class="btn small primary" data-act="approvePaper" data-id="${v.id}">Approve paper test…</button><button class="btn small danger" data-act="humanDecision" data-id="${v.id}" data-to="REJECTED">Reject…</button>`);
   html += await sec("Research-approved", "Historical evidence is sufficient for continued research. You may still approve a paper test.", approved, v => `<button class="btn small" data-act="approvePaper" data-id="${v.id}">Approve paper test…</button>`);
   html += await sec("Forward testing", "Eligible for live-candidate review once forward-test requirements are met. LIVE_APPROVED is granted outside DezQuant.", forward, v => `<button class="btn small" data-act="markLive" data-id="${v.id}">Mark live candidate…</button>`);
-  html += await sec("Awaiting the Strategy Judge", "Evidence packs complete; the judge is deciding.", judge, () => "");
   return page(header("Committee", "Decisions are made from evidence, including failures and dissent — not persuasive prose."), html);
 }
 
@@ -1123,7 +1127,7 @@ export const actions = {
       out.innerHTML = `<div class="note bad small"><b>Couldn't convert this script.</b> ${esc(e.message)}${isR08 ? `<div class="section"><button class="btn small primary" data-act="loadExample" data-id="r08">Load the ready-made R08 definition</button></div>` : ""}${(e.skipped || []).length ? `<details class="section"><summary>Lines it couldn't read (${e.skipped.length})</summary><ul style="margin:4px 0 0;padding-left:18px">${e.skipped.map(n => `<li>${esc(n)}</li>`).join("")}</ul></details>` : ""}<p class="small" style="margin-top:8px">For custom logic like this, paste the script to Claude in the chat and ask for a strategy definition, then paste it into “Strategy definition”.</p></div>`;
     }
   },
-  askAgentReview: async (el, d) => { await L.askAgentReview(d.id); toast("Validator and Judge queued (uses AI)"); },
+  askAgentReview: async (el, d, ui) => { await L.askAgentReview(d.id); toast("Validator and judge are reviewing it (uses AI)"); await ui.render(); },
   convertPine: async el => {
     const src = $("#labPine").value.trim();
     if (!/(strategy|indicator)\s*\(/.test(src)) return toast("Paste a Pine script that contains strategy(…) or indicator(…)", "bad");

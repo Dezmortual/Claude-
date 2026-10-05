@@ -91,6 +91,11 @@ await page.fill("#symPick", "gold");
 await page.click("[data-act=quickDataPick]");
 await page.waitForTimeout(3000);
 res.gold = await page.evaluate(async u => (await (await import(u)).all("datasets")).some(d => d.symbol === "PAXGUSDT"), dbu);
+// Decide page: Test strategies are "Ready for a decision" with a review button on each card.
+await page.goto(base + "#/committee");
+await page.waitForTimeout(1200);
+res.decideButtons = await page.$$eval("[data-act=askAgentReview]", bs => bs.length);
+if (shots) await page.screenshot({ path: path.join(shots, "f5-decide.png") });
 // Campaign quick setup on a phone: tap choices, save a draft (no AI runs for a draft).
 await page.goto(base + "#/campaigns");
 await page.click("[data-act=newCampaign]");
@@ -104,4 +109,4 @@ res.quickCampaign = await page.evaluate(async u => { const db = await import(u);
 res.aiCalls = aiCalls; res.errors = errors;
 console.log(JSON.stringify(res, null, 1));
 await browser.close(); server.close();
-if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer || !res.gold || res.indicatorPicks.join() !== "Buy,Sell" || !res.indicatorRun || !res.freePine || res.quickCampaign?.name !== "Gold 1h · Pullbacks" || !/^XAUUSD 60 (OK|WARN)$/.test(res.quickCampaign?.ds || "")) process.exit(1);
+if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer || !res.gold || res.indicatorPicks.join() !== "Buy,Sell" || !res.indicatorRun || !res.freePine || !(res.decideButtons > 0) || res.quickCampaign?.name !== "Gold 1h · Pullbacks" || !/^XAUUSD 60 (OK|WARN)$/.test(res.quickCampaign?.ds || "")) process.exit(1);
