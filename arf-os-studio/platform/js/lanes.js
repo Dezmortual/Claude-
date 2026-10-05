@@ -631,7 +631,7 @@ H.FORWARD_REVIEW = async (task, { signal }) => {
   const s = dep.snapshot;
   const input = { deployment: { id: dep.id, status: dep.status, startedAt: dep.startedAt, symbol: dep.symbol, timeframe: dep.timeframe, configHash: dep.configHash, fillModel: dep.fillModel }, expectation: dep.expectation, snapshot: s ? { lastBarTime: new Date(s.lastBarTime).toISOString(), trades: s.trades.length, netReturnPct: s.netReturnPct, avgTradePct: s.avgTradePct, drift: s.drift, health: s.health, open: s.open } : null };
   const { output, run } = await runAgent("forward", input, { taskId: task.id, signal });
-  await db.update("deployments", dep.id, { review: output, reviewRunId: run.id });
+  await db.update("deployments", dep.id, { review: output, reviewRunId: run.id, reviewedAt: nowIso(), reviewedSnapshotAt: s?.at || null });
   return { result: { health: output.health } };
 };
 export async function markLiveCandidate(versionId, note) {
