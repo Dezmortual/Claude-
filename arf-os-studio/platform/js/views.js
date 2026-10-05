@@ -7,7 +7,7 @@ import * as L from "./lanes.js";
 import { POLICIES, evaluateEvidence, buildSegments } from "./research.js";
 import { validateSDL, gridSize, SDL_TEMPLATE, paramAxis } from "./sdl.js";
 import { lintPine, fixPineConstants } from "./pine-lint.js";
-import { SOURCES as DATA_SOURCES, fetchBars, parseOhlcCsv, QUICK_DATA, BINANCE_SYMBOLS, symbolLabel, suggestSymbol, encodeDataset, parseDataText, builtinPrices, loadBuiltin, matchBuiltin } from "./data.js";
+import { SOURCES as DATA_SOURCES, fetchBars, parseOhlcCsv, QUICK_DATA, BINANCE_SYMBOLS, symbolLabel, suggestSymbol, encodeDataset, parseDataText, builtinPrices, loadBuiltin, matchBuiltin, realisticCosts, costsLookUnrealistic } from "./data.js";
 import { convertPineToSDL } from "./pine-convert.js";
 import { EXAMPLES } from "./examples.js";
 import { SUITES, runPractice, createChallenger, promotionCheck, promote, rollback } from "./practice.js";
@@ -303,6 +303,11 @@ async function viewVersion([id, tab = "evidence"], q) {
   const base = `#/version/${id}`;
   const st = v.status;
   const acts = [];
+  // Tested without realistic costs: offer the free one-tap fix, or point to the version that has it.
+  if (v.backtestId && costsLookUnrealistic(v.sdl)) {
+    const fixed = (await db.all("versions", x => x.parentVersionId === v.id && x.changeCategory === "costs"))[0];
+    acts.push(fixed ? `<a class="btn" href="#/version/${fixed.id}">Costs fixed in v${fixed.versionNumber} →</a>` : `<button class="btn primary" data-act="fixCosts" data-id="${id}">Fix costs &amp; retest (free)</button>`);
+  }
   if (st === "BACKTESTED") acts.push(`<button class="btn primary" data-act="sendToValidation" data-id="${id}">Send to validation</button>`);
   if (st === "VALIDATED" && v.validationId && !(await db.get("validations", v.validationId))?.report) acts.push(`<button class="btn" data-act="askAgentReview" data-id="${id}">Ask AI to review (optional)</button>`);
   if (st === "DEFINED" && !v.backtestId) acts.push(`<button class="btn primary" data-act="backtestNow" data-id="${id}">Run backtest plan</button>`);
@@ -630,7 +635,7 @@ async function viewCommittee() {
   let html = "";
   if (paused) html += `<div class="note warn"><b>The job queue is paused.</b> AI reviews and backtests wait until you resume it. <button class="btn small primary" data-act="resumeQueue">Resume queue</button></div>`;
   if (tasks.length) html += `<div class="section"><h2>Tasks waiting for you <span class="muted small">(${tasks.length})</span></h2><div class="table-wrap"><table class="t"><tbody>${tasks.map(t => `<tr><td>${avatar(t.lane, true)} ${esc(t.title)}</td><td class="small">${esc(t.error?.message || "Human approval required")}</td><td>${t.campaignId ? `<a href="#/campaign/${t.campaignId}/tasks">campaign</a>` : ""}</td><td><button class="btn small primary" data-act="retryTask" data-id="${t.id}">Approve &amp; run</button> <button class="btn small" data-act="cancelTask" data-id="${t.id}">Dismiss</button></td></tr>`).join("")}</tbody></table></div></div>`;
-  html += await sec("Ready for a decision", `Backtest and stress tests are done. Ask the AI validator and judge to review it${IN_ARTIFACT ? " (uses your Claude plan)" : " (needs API credit)"}, or decide yourself.`, ready, v => `<button class="btn small primary" data-act="askAgentReview" data-id="${v.id}">Ask AI to review</button><button class="btn small" data-act="humanDecision" data-id="${v.id}">Decide myself…</button>`);
+  html += await sec("Ready for a decision", `Backtest and stress tests are done. Ask the AI validator and judge to review it${IN_ARTIFACT ? " (uses your Claude plan)" : " (needs API credit)"}, or decide yourself.`, ready, v => `${costsLookUnrealistic(v.sdl) ? `<button class="btn small primary" data-act="fixCosts" data-id="${v.id}">Fix costs &amp; retest (free)</button>` : ""}<button class="btn small ${costsLookUnrealistic(v.sdl) ? "" : "primary"}" data-act="askAgentReview" data-id="${v.id}">Ask AI to review</button><button class="btn small" data-act="humanDecision" data-id="${v.id}">Decide myself…</button>`);
   html += await sec("With the AI judge", "The validator and judge are reviewing these now. Results appear here and on the strategy page.", reviewing, () => "");
   html += await sec("Paper-test approvals", "The Strategy Judge recommends a paper forward test. Only a human can approve it (spec §25).", pending, v => `<button class="btn small primary" data-act="approvePaper" data-id="${v.id}">Approve paper test…</button><button class="btn small danger" data-act="humanDecision" data-id="${v.id}" data-to="REJECTED">Reject…</button>`);
   html += await sec("Research-approved", "Historical evidence is sufficient for continued research. You may still approve a paper test.", approved, v => `<button class="btn small" data-act="approvePaper" data-id="${v.id}">Approve paper test…</button>`);
@@ -988,10 +993,18 @@ export const actions = {
     const ds = await db.get("datasets", $("#labDataset").value);
     sdl.market = { ...sdl.market, timeframe: ds.timeframe, symbols: [`${ds.source.toUpperCase()}:${ds.symbol}`] };
     sdl.costs.tickSize = ds.tickSize;
+    // Never test with zero costs: fill in market-typical slippage (and a minimal commission) when missing.
+    let costNote = "";
+    if (costsLookUnrealistic(sdl)) {
+      const bars = await db.get("bars", ds.id);
+      const rc = realisticCosts(ds.symbol, ds.tickSize, bars?.c?.[bars.c.length - 1], sdl.costs);
+      sdl.costs = { ...sdl.costs, slippageTicks: Math.max(rc.slippageTicks, sdl.costs.slippageTicks || 0), commissionValue: rc.commissionValue };
+      costNote = ` Added ${rc.note}.`;
+    }
     const v = await L.createManualVersion({ campaignId: null, datasetId: ds.id, sdl });
     await L.backtestNow(v.id);
     location.hash = `#/version/${v.id}/backtest`;
-    toast("Version registered — backtest plan running");
+    toast("Version registered — backtest plan running." + costNote);
   },
   agentModel: async (el, d) => { const cfg = (await db.setting("agentModels")) || {}; cfg[d.id] = { ...(cfg[d.id] || {}), model: el.value }; await db.setting("agentModels", cfg); await db.audit("agent.model_changed", { agentId: d.id, model: el.value }, { type: "human", id: "operator" }); toast("Model updated"); },
   agentEffort: async (el, d) => { const cfg = (await db.setting("agentModels")) || {}; cfg[d.id] = { ...(cfg[d.id] || {}), effort: el.value }; await db.setting("agentModels", cfg); toast("Effort updated"); },
@@ -1142,6 +1155,11 @@ export const actions = {
       const isR08 = /R08|PROFIT-TRIGGER/i.test(src);
       out.innerHTML = `<div class="note bad small"><b>Couldn't convert this script.</b> ${esc(e.message)}${isR08 ? `<div class="section"><button class="btn small primary" data-act="loadExample" data-id="r08">Load the ready-made R08 definition</button></div>` : ""}${(e.skipped || []).length ? `<details class="section"><summary>Lines it couldn't read (${e.skipped.length})</summary><ul style="margin:4px 0 0;padding-left:18px">${e.skipped.map(n => `<li>${esc(n)}</li>`).join("")}</ul></details>` : ""}<p class="small" style="margin-top:8px">For custom logic like this, paste the script to Claude in the chat and ask for a strategy definition, then paste it into “Strategy definition”.</p></div>`;
     }
+  },
+  fixCosts: async (el, d) => {
+    const { child, note } = await L.fixCostsAndRetest(d.id);
+    location.hash = `#/version/${child.id}/backtest`;
+    toast(`v${child.versionNumber} created with ${note}. Re-running the full test.`);
   },
   resumeQueue: async (el, d, ui) => { await db.setting("queuePaused", false); setPaused(false); const b = $("#pauseBtn"); if (b) { b.setAttribute("aria-pressed", "false"); b.textContent = "Pause queue"; } toast("Job queue resumed"); await ui.render(); },
   askAgentReview: async (el, d, ui) => { await L.askAgentReview(d.id); toast("Validator and judge are reviewing it (uses AI)"); await ui.render(); },

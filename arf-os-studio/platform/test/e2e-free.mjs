@@ -91,6 +91,15 @@ await page.fill("#symPick", "gold");
 await page.click("[data-act=quickDataPick]");
 await page.waitForTimeout(3000);
 res.gold = await page.evaluate(async u => (await (await import(u)).all("datasets")).some(d => d.symbol === "PAXGUSDT"), dbu);
+// Costs: Lab runs never use zero slippage, and an old zero-cost version gets a one-tap free fix.
+res.autoSlippage = await page.evaluate(async u => (await (await import(u)).all("versions")).every(v => v.sdl.costs.slippageTicks > 0), dbu);
+const oldId = await page.evaluate(async u => { const db = await import(u); const v = (await db.all("versions")).find(x => x.status === "VALIDATED"); await db.update("versions", v.id, x => { x.sdl.costs.slippageTicks = 0; }); return v.id; }, dbu);
+await page.goto(base + "#/version/" + oldId + "/evidence");
+await page.click("[data-act=fixCosts]");
+await page.waitForFunction(() => /\/version\/.+\/backtest/.test(location.hash), null, { timeout: 10000 });
+const t3 = Date.now(); let fixed = null;
+while (Date.now() - t3 < 120000) { fixed = await page.evaluate(async ([u, id]) => { const c = (await (await import(u)).all("versions")).find(x => x.parentVersionId === id); return c && { s: c.status, slip: c.sdl.costs.slippageTicks, cat: c.changeCategory, pine: !!c.pineArtefactId }; }, [dbu, oldId]); if (fixed && ["VALIDATED", "REJECTED"].includes(fixed.s)) break; await page.waitForTimeout(500); }
+res.costsFix = fixed;
 // Decide page: Test strategies are "Ready for a decision" with a review button on each card.
 await page.goto(base + "#/committee");
 await page.waitForTimeout(1200);
@@ -109,4 +118,4 @@ res.quickCampaign = await page.evaluate(async u => { const db = await import(u);
 res.aiCalls = aiCalls; res.errors = errors;
 console.log(JSON.stringify(res, null, 1));
 await browser.close(); server.close();
-if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer || !res.gold || res.indicatorPicks.join() !== "Buy,Sell" || !res.indicatorRun || !res.freePine || !(res.decideButtons > 0) || res.quickCampaign?.name !== "Gold 1h · Pullbacks" || !/^XAUUSD 60 (OK|WARN)$/.test(res.quickCampaign?.ds || "")) process.exit(1);
+if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer || !res.gold || res.indicatorPicks.join() !== "Buy,Sell" || !res.indicatorRun || !res.freePine || !res.autoSlippage || !(res.costsFix?.slip > 0 && res.costsFix.cat === "costs" && res.costsFix.pine && ["VALIDATED", "REJECTED"].includes(res.costsFix.s)) || !(res.decideButtons > 0) || res.quickCampaign?.name !== "Gold 1h · Pullbacks" || !/^XAUUSD 60 (OK|WARN)$/.test(res.quickCampaign?.ds || "")) process.exit(1);

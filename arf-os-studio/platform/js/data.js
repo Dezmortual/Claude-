@@ -113,6 +113,20 @@ export function matchBuiltin(name, sets) {
   const alias = /XAU|GOLD/.test(n) ? "XAUUSD" : /XAG|SILVER/.test(n) ? "XAGUSD" : /NAS|NDX|US100|NQ/.test(n) ? "NAS100" : /SPX|US500|SP500|ES1/.test(n) ? "SPX500" : /US30|DJI|DOW/.test(n) ? "US30" : /WTI|USOIL|CL1/.test(n) ? "USOIL" : n;
   return sets.find(s => s.symbol === alias) || sets.find(s => s.symbol === alias + "T") || sets.find(s => s.symbol === n.replace(/USDT?$/, "") + "USDT") || null;
 }
+// Realistic trading costs per market. Slippage is about half the typical broker spread (you pay
+// roughly half the spread on the way in and half on the way out), expressed in the dataset's ticks.
+const HALF_SPREAD = { XAUUSD: 0.10, XAGUSD: 0.015, EURUSD: 0.00006, GBPUSD: 0.00008, AUDUSD: 0.00006, USDJPY: 0.007, GBPJPY: 0.015, NAS100: 0.75, SPX500: 0.25, US30: 1.5, USOIL: 0.015 };
+export function realisticCosts(symbol, tickSize, price, current = {}) {
+  const sym = String(symbol || "").toUpperCase().replace(/^[A-Z]+:/, "");
+  const tick = tickSize > 0 ? tickSize : 0.01;
+  const half = HALF_SPREAD[sym] ?? (price > 0 ? price * 0.0001 : tick); // crypto and others: 0.01% of price
+  const slippageTicks = Math.max(1, Math.ceil(half / tick - 1e-9));
+  const commissionValue = current.commissionValue > 0 ? current.commissionValue : 0.01;
+  const label = HALF_SPREAD[sym] !== undefined ? `about half a typical ${sym} spread` : "about 0.01% of the price";
+  return { slippageTicks, commissionValue, tickSize: tick, note: `${slippageTicks} ticks of slippage (${label})${current.commissionValue > 0 ? "" : " and 0.01% commission"}` };
+}
+export const costsLookUnrealistic = sdl => !(sdl?.costs?.slippageTicks > 0) || !(sdl?.costs?.commissionValue > 0);
+
 export function encodeDataset(ds, bars) {
   const head = `#ARF-DATA v1 source=${ds.source} symbol=${ds.symbol} timeframe=${ds.timeframe} tick=${ds.tickSize}`;
   const rows = [];
