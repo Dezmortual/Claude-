@@ -68,6 +68,19 @@ await page.waitForTimeout(800);
 res.reviewButton = await page.isVisible("[data-act=askAgentReview]");
 if (shots) await page.screenshot({ path: path.join(shots, "f2-evidence.png") });
 res.failedTasks = await page.evaluate(async u => (await (await import(u)).all("tasks", t => ["FAILED_TERMINAL", "WAITING_HUMAN"].includes(t.status))).map(t => t.kind), dbu);
+// An indicator script: pick its signals, build a strategy and run it.
+await page.goto(base + "#/lab");
+await page.fill("#labPine", fs.readFileSync(path.join(dir, "test/pine/ema_cross_indicator.pine"), "utf8"));
+await page.click("[data-act=convertPineFree]");
+await page.waitForSelector("#isBuy");
+res.indicatorPicks = [await page.inputValue("#isBuy"), await page.inputValue("#isSell")];
+if (shots) await page.screenshot({ path: path.join(shots, "f3-indicator-picker.png"), fullPage: false });
+await page.click("[data-act=buildFromIndicator]");
+await page.waitForSelector("#pineOut .note.good");
+const nBefore = (await page.evaluate(async u => (await (await import(u)).all("versions")).length, dbu));
+await page.click("[data-act=labRun]");
+vs = await waitVersion(nBefore + 1);
+res.indicatorRun = vs[vs.length - 1];
 // Gold (PAXG) via the symbol box: typing "gold" maps to PAXGUSDT.
 await page.goto(base + "#/lab");
 await page.fill("#symPick", "gold");
@@ -77,4 +90,4 @@ res.gold = await page.evaluate(async u => (await (await import(u)).all("datasets
 res.aiCalls = aiCalls; res.errors = errors;
 console.log(JSON.stringify(res, null, 1));
 await browser.close(); server.close();
-if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer || !res.gold) process.exit(1);
+if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer || !res.gold || res.indicatorPicks.join() !== "Buy,Sell" || !res.indicatorRun) process.exit(1);

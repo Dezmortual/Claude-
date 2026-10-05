@@ -520,12 +520,12 @@ async function viewLab() {
   const { SDL_GRAMMAR_DOC } = await import("./agents.js");
   return page(header("Backtest Lab", "Test a strategy in three steps. Every run is recorded."), `<div class="lab-steps">
     <section class="card step"><h2><span class="step-n">1</span> Strategy</h2>
-      <p class="small muted">Tap an example, or paste your own Pine script.</p>
+      <p class="small muted">Tap an example, or paste your own Pine script (a strategy or an indicator).</p>
       <div class="chipset examples">${EXAMPLES.map(e => `<button class="btn small" data-act="loadExample" data-id="${e.id}">${esc(e.label)}</button>`).join("")}</div>
       <details class="pine-box" open><summary><b>Paste a Pine script</b></summary>
         <textarea class="code pine" id="labPine" spellcheck="false" placeholder="//@version=6&#10;strategy(&quot;My strategy&quot;, ...)">${esc(pineDraft)}</textarea>
         <div class="row"><button class="btn primary" data-act="convertPineFree">Convert (free)</button>${canAsk ? `<button class="btn" data-act="convertPine">Ask Claude instead</button>` : ""}</div>
-        <p class="small muted">The free converter runs on your phone. It reads inputs, ta.* indicators, crossovers, entries, closes, stops, targets and trailing stops.</p>
+        <p class="small muted">The free converter runs on your phone. It reads inputs, ta.* indicators, crossovers, entries, closes, stops, targets and trailing stops. Indicators work too: you pick which signal buys and which sells.</p>
         <div id="pineOut"></div></details>
       <details class="sdl-box"><summary><b>Strategy definition</b> <span class="muted">(what will be tested — view or edit)</span></summary>
         <textarea class="code" id="labSdl" spellcheck="false">${esc(draft)}</textarea>
@@ -747,6 +747,22 @@ async function refreshDataStep() {
   const datasets = sortDesc(await db.all("datasets", d => d.status !== "QUARANTINED"));
   card.innerHTML = `<h2><span class="step-n">2</span> Price data</h2>${dataPicker(datasets, "labDataset", lib, wantedMarket($("#labSdl").value, lib))}`;
   if (sel && $("#labDataset")) $("#labDataset").value = sel;
+}
+// Chooser shown when an indicator() script is converted: which signal buys, which sells, stop and target.
+function signalPicker(e) {
+  const cs = e.candidates, guess = re => (cs.find(c => re.test(c.label)) || {}).label || "";
+  const buy = guess(/buy|long|bull|\bup\b|enter/i), sell = guess(/sell|short|bear|\bdown\b|exit/i);
+  const opts = sel => `<option value="">— none —</option>` + cs.map(c => `<option value="${esc(c.label)}" ${c.label === sel ? "selected" : ""}>${esc(c.label)}</option>`).join("");
+  return `<div class="note small"><b>“${esc(e.name)}” is an indicator.</b> Indicators don't trade, so choose which of its signals means buy and which means sell. The app adds a stop and target and tests it like a strategy.</div>
+    <div class="form-grid section ind-pick">
+      <label class="field">Buy signal<select id="isBuy">${opts(buy)}</select></label>
+      <label class="field">Sell signal<select id="isSell">${opts(sell)}</select></label>
+      <label class="field">Trade<select id="isMode"><option value="both">Long and short</option><option value="long">Long only (sell signal exits)</option><option value="short">Short only (buy signal exits)</option></select></label>
+      <label class="field">Stop-loss (× ATR)<input type="number" id="isStop" value="1.5" min="0.5" max="10" step="0.5" inputmode="decimal"></label>
+      <label class="field">Target (× stop, 0 = none)<input type="number" id="isTarget" value="2" min="0" max="10" step="0.5" inputmode="decimal"></label>
+    </div>
+    <details class="small section"><summary>Signals found (${cs.length})</summary><ul style="margin:4px 0 0;padding-left:18px">${cs.map(c => `<li><b>${esc(c.label)}</b> <span class="faint">(${esc(c.from)})</span>: <code>${esc(c.sdl)}</code></li>`).join("")}</ul></details>
+    <div class="row section"><button class="btn primary" data-act="buildFromIndicator">Build strategy</button></div>`;
 }
 // Guess the market from a Pine script's title or comments (e.g. "XAUUSD 4H scalper").
 const PINE_SYMBOL = /\b(XAUUSD|GOLD|XAGUSD|SILVER|EURUSD|GBPUSD|USDJPY|AUDUSD|GBPJPY|NAS100|US100|NDX|SPX500|US500|US30|USOIL|WTI|BTCUSDT?|ETHUSDT?|SOLUSDT?|XRPUSDT?)\b/i;
@@ -1020,15 +1036,21 @@ export const actions = {
     toast("Loaded " + ex.label);
     await refreshDataStep();
   },
-  convertPineFree: async () => {
+  // Indicator → strategy: read the picks from the signal chooser and convert again with them.
+  buildFromIndicator: async el => {
+    const g = id => $("#" + id)?.value;
+    const picks = { buy: g("isBuy") || null, sell: g("isSell") || null, mode: g("isMode"), stopAtr: +g("isStop"), targetR: +g("isTarget") };
+    return actions.convertPineFree(el, { picks });
+  },
+  convertPineFree: async (el, d = {}) => {
     const src = $("#labPine").value.trim();
-    if (!/strategy\s*\(/.test(src)) return toast("Paste a Pine script that contains strategy(…)", "bad");
+    if (!/(strategy|indicator)\s*\(/.test(src)) return toast("Paste a Pine script that contains strategy(…) or indicator(…)", "bad");
     await db.setting("labPine", src);
     const out = $("#pineOut");
     const ds = $("#labDataset") ? await db.get("datasets", $("#labDataset").value) : null;
     try {
       const guess = (src.match(PINE_SYMBOL) || [])[1];
-      const r = convertPineToSDL(src, { timeframe: ds?.timeframe || "240", symbol: guess ? guess.toUpperCase() : ds ? `${ds.source.split(":")[0].toUpperCase()}:${ds.symbol}` : "BINANCE:BTCUSDT", tickSize: ds?.tickSize || 0.01 });
+      const r = convertPineToSDL(src, { timeframe: ds?.timeframe || "240", symbol: guess ? guess.toUpperCase() : ds ? `${ds.source.split(":")[0].toUpperCase()}:${ds.symbol}` : "BINANCE:BTCUSDT", tickSize: ds?.tickSize || 0.01, signals: d.picks || null });
       const v = validateSDL(r.sdl);
       if (!v.ok) throw Object.assign(new Error("The converted definition breaks a backtester rule: " + v.errors.slice(0, 3).join("; ")), { skipped: r.skipped });
       $("#labSdl").value = JSON.stringify(r.sdl, null, 2);
@@ -1037,6 +1059,7 @@ export const actions = {
       out.innerHTML = `<div class="note good small"><b>✓ Converted ${esc(r.sdl.strategy.name)}.</b> ${r.sdl.strategy.directions.join(" + ")} · ${r.sdl.indicators.length} indicators · ${r.sdl.parameters.length} inputs. Now pick price data and tap Run backtest.</div>${list("Please check:", [...r.notes, ...v.warnings], "warn")}${list("Lines the converter skipped:", r.skipped, "bad")}`;
       await refreshDataStep();
     } catch (e) {
+      if (e.code === "pick_signals") { out.innerHTML = signalPicker(e); out.scrollIntoView({ block: "nearest" }); return; }
       const isR08 = /R08|PROFIT-TRIGGER/i.test(src);
       out.innerHTML = `<div class="note bad small"><b>Couldn't convert this script.</b> ${esc(e.message)}${isR08 ? `<div class="section"><button class="btn small primary" data-act="loadExample" data-id="r08">Load the ready-made R08 definition</button></div>` : ""}${(e.skipped || []).length ? `<details class="section"><summary>Lines it couldn't read (${e.skipped.length})</summary><ul style="margin:4px 0 0;padding-left:18px">${e.skipped.map(n => `<li>${esc(n)}</li>`).join("")}</ul></details>` : ""}<p class="small" style="margin-top:8px">For custom logic like this, paste the script to Claude in the chat and ask for a strategy definition, then paste it into “Strategy definition”.</p></div>`;
     }
@@ -1044,7 +1067,7 @@ export const actions = {
   askAgentReview: async (el, d) => { await L.askAgentReview(d.id); toast("Validator and Judge queued (uses AI)"); },
   convertPine: async el => {
     const src = $("#labPine").value.trim();
-    if (!/strategy\s*\(/.test(src)) return toast("Paste a Pine script that contains strategy(…)", "bad");
+    if (!/(strategy|indicator)\s*\(/.test(src)) return toast("Paste a Pine script that contains strategy(…) or indicator(…)", "bad");
     await db.setting("labPine", src);
     const out = $("#pineOut"), label = el.textContent;
     el.textContent = "Claude is converting…"; out.innerHTML = `<p class="small muted">This usually takes 20–60 seconds.</p>`;

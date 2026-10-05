@@ -1,0 +1,15 @@
+//@version=6
+indicator("EMA Cross Signals", overlay=true)
+fastLen = input.int(9, "Fast", minval=2, maxval=50)
+slowLen = input.int(21, "Slow", minval=5, maxval=200)
+rsiLen = input.int(14, "RSI")
+fast = ta.ema(close, fastLen)
+slow = ta.ema(close, slowLen)
+r = ta.rsi(close, rsiLen)
+buy = ta.crossover(fast, slow) and r > 50
+sell = ta.crossunder(fast, slow) and r < 50
+plot(fast, color=color.green)
+plot(slow, color=color.red)
+plotshape(buy, title="Buy", style=shape.triangleup, location=location.belowbar)
+plotshape(sell, title="Sell", style=shape.triangledown, location=location.abovebar)
+alertcondition(r > 70, title="Overbought", message="RSI overbought")
