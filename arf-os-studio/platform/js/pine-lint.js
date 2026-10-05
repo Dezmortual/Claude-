@@ -27,6 +27,61 @@ function declArgs(code) {
   return code.slice(start, i);
 }
 
+// First argument (the default value) of each input.time(...) call, with its offsets in `code`.
+function inputTimeDefaults(code) {
+  const out = [], re = /\binput\.time\s*\(/g;
+  let m;
+  while ((m = re.exec(code))) {
+    let depth = 0, i = m.index + m[0].length, start = i, inStr = null;
+    for (; i < code.length; i++) {
+      const ch = code[i];
+      if (inStr) { if (ch === inStr && code[i - 1] !== "\\") inStr = null; continue; }
+      if (ch === '"' || ch === "'") inStr = ch;
+      else if (ch === "(") depth++;
+      else if (ch === ")") { if (depth === 0) break; depth--; }
+      else if (ch === "," && depth === 0) break;
+    }
+    out.push({ start, end: i, text: code.slice(start, i) });
+  }
+  return out;
+}
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const p2 = n => String(n).padStart(2, "0");
+// UTC offset of a timezone literal such as "UTC", "GMT+3" or "UTC-05:30"; null for named zones.
+function tzOffset(tz) {
+  if (/^(UTC|GMT|Etc\/UTC|Etc\/GMT|Z)$/i.test(tz)) return "+0000";
+  const m = tz.match(/^(?:UTC|GMT)\s*([+-])(\d{1,2})(?::?(\d{2}))?$/i);
+  return m ? m[1] + p2(m[2]) + p2(m[3] || 0) : null;
+}
+const CONST_TS = /^\s*(defval\s*=\s*)?timestamp\s*\(\s*"[^"]*"\s*\)\s*$/;
+
+/**
+ * TradingView requires input defaults to be compile-time constants (error CE10123). Forms such as
+ * timestamp(2020, 1, 1, 0, 0) or timestamp("GMT+3", 2020, 1, 1) return a "simple int", while the
+ * single-string form timestamp("01 Jan 2020 00:00 +0000") is a constant. This rewrites literal-only
+ * calls inside input.time() defaults to the constant form. Returns { source, fixes }.
+ */
+export function fixPineConstants(src) {
+  let source = String(src || ""); const fixes = [];
+  for (const d of inputTimeDefaults(source).reverse()) {
+    if (CONST_TS.test(d.text)) continue;
+    const m = d.text.match(/^(\s*(?:defval\s*=\s*)?)timestamp\s*\(([^()]*)\)(\s*)$/);
+    if (!m) continue;
+    let args = m[2].split(",").map(a => a.trim()), off = "+0000", note = "";
+    if (args.length && !/^\d+$/.test(args[0])) {
+      const tz = args.shift(), lit = tz.match(/^"([^"]*)"$/), o = lit && tzOffset(lit[1]);
+      if (o) off = o; else note = ` (time zone ${tz} replaced by UTC)`;
+    }
+    if (args.length < 3 || args.length > 6 || !args.every(a => /^\d+$/.test(a))) continue;
+    const [y, mo, dd, hh = 0, mi = 0] = args.map(Number);
+    if (mo < 1 || mo > 12) continue;
+    const lit = `timestamp("${p2(dd)} ${MONTHS[mo - 1]} ${y} ${p2(hh)}:${p2(mi)} ${off}")`;
+    source = source.slice(0, d.start) + m[1] + lit + m[3] + source.slice(d.end);
+    fixes.push(`input.time default ${m[2].trim() ? "timestamp(" + m[2].trim() + ")" : "timestamp()"} → ${lit}${note}`);
+  }
+  return { source, fixes: fixes.reverse() };
+}
+
 export function lintPine(src, sdl = null) {
   const findings = [];
   const add = (severity, category, rule, message, line = null) => findings.push({ severity, category, rule, message, line });
@@ -49,6 +104,13 @@ export function lintPine(src, sdl = null) {
     if (sdl && sdl.execution && sdl.execution.processOnClose && !/\bprocess_orders_on_close\s*=\s*true/.test(args)) add("error", "sdl", "process-on-close", "SDL declares processOnClose but strategy() does not set process_orders_on_close=true.");
     if (/\bcalc_on_order_fills\s*=\s*true/.test(args)) add("warning", "execution", "calc_on_order_fills", "calc_on_order_fills = true can cause intrabar recalculation.");
     if (/commission_value\s*=\s*0(\.0+)?\b/.test(args)) add("warning", "costs", "zero-commission", "commission_value is 0.");
+  }
+
+  // Input defaults must be compile-time constants, or TradingView refuses to compile (CE10123).
+  for (const d of inputTimeDefaults(code)) {
+    const t = d.text.trim().replace(/^defval\s*=\s*/, "");
+    if (/^timestamp\s*\(/.test(t) && !CONST_TS.test(t)) add("error", "compile", "input-time-const", `input.time default ${t} is not a constant (TradingView error CE10123). Use the one-string form, e.g. timestamp("01 Jan 2020 00:00 +0000").`, code.slice(0, d.start).split("\n").length);
+    else if (!/^timestamp\s*\(|^\d+$/.test(t)) add("error", "compile", "input-time-const", `input.time default "${t}" must be a constant such as timestamp("01 Jan 2020 00:00 +0000") (TradingView error CE10123).`, code.slice(0, d.start).split("\n").length);
   }
 
   // Repainting and leakage (§11.3)

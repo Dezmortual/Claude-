@@ -6,6 +6,7 @@ import { VERSION_STATES, activeTasks, cancelTask, retryTask, championPrompt, pum
 import * as L from "./lanes.js";
 import { POLICIES, evaluateEvidence, buildSegments } from "./research.js";
 import { validateSDL, gridSize, SDL_TEMPLATE, paramAxis } from "./sdl.js";
+import { lintPine, fixPineConstants } from "./pine-lint.js";
 import { SOURCES as DATA_SOURCES, fetchBars, parseOhlcCsv, QUICK_DATA, BINANCE_SYMBOLS, symbolLabel, suggestSymbol, encodeDataset, parseDataText, builtinPrices, loadBuiltin, matchBuiltin } from "./data.js";
 import { convertPineToSDL } from "./pine-convert.js";
 import { EXAMPLES } from "./examples.js";
@@ -345,9 +346,10 @@ async function tabDefinition(v) {
 async function tabSource(v) {
   if (!v.pineArtefactId) return empty("No Pine source yet", "The Pine Engineer writes it after the definition is approved.", `<button class="btn" data-act="regenPine" data-id="${v.id}">Generate Pine now</button>`);
   const art = await db.get("artefacts", v.pineArtefactId);
-  const d = art.data;
+  const fixed = fixPineConstants(art.data.source);
+  const d = fixed.fixes.length ? { ...art.data, source: fixed.source, lint: lintPine(fixed.source, v.sdl) } : art.data;
   return `<div class="grid g2"><div class="card"><div class="card-head"><h2>Pine Script v6</h2><div class="right"><button class="btn small" data-act="copyPine" data-id="${v.id}">Copy</button><button class="btn small" data-act="downloadPine" data-id="${v.id}">Download .pine</button><button class="btn small" data-act="regenPine" data-id="${v.id}">New revision</button></div></div>
-    <p class="small muted">Revision ${v.pineRevisions.length} · source hash <code>${esc(art.hash.slice(0, 16))}</code> · tested revisions are read-only; regenerating appends a revision.</p><pre>${esc(d.source)}</pre></div>
+    <p class="small muted">Revision ${v.pineRevisions.length} · source hash <code>${esc(art.hash.slice(0, 16))}</code> · tested revisions are read-only; regenerating appends a revision.</p>${fixed.fixes.length ? `<div class="note good small"><b>Fixed for TradingView:</b> ${esc(fixed.fixes.join("; "))}. Copy and Download include this fix.</div>` : ""}<pre>${esc(d.source)}</pre></div>
     <div class="stack"><div class="card"><div class="card-head"><h2>Pine QA</h2><span class="right">${d.lint.pass ? badge("PASS") : badge("FAIL")}</span></div><p class="small muted">${esc(d.lint.version)} · ${d.lint.errors} errors · ${d.lint.warnings} warnings</p>
       ${d.lint.findings.length ? `<div class="table-wrap"><table class="t"><tbody>${d.lint.findings.map(f => `<tr><td>${f.severity === "error" ? `<span class="fail">✕ error</span>` : `<span class="pend">! warning</span>`}</td><td><code>${esc(f.rule)}</code></td><td class="small">${esc(f.message)}${f.line ? ` <span class="faint">line ${f.line}</span>` : ""}</td></tr>`).join("")}</tbody></table></div>` : `<p class="pass">✓ No findings</p>`}</div>
       <div class="card"><h2>Implementation notes</h2><div class="prose small">${md(d.implementationNotes || "")}</div>${d.deviations?.length ? `<h3>Deviations from SDL</h3><ul>${d.deviations.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : `<p class="small muted">No declared deviations.</p>`}</div>
@@ -859,8 +861,9 @@ export const actions = {
   },
   copySDL: async (el, d) => copyText(JSON.stringify((await db.get("versions", d.id)).sdl, null, 2)),
   downloadSDL: async (el, d) => { const v = await db.get("versions", d.id); download(`${v.sdl.strategy.name.replace(/\W+/g, "_")}_v${v.versionNumber}.sdl.json`, JSON.stringify(v.sdl, null, 2), "application/json"); },
-  copyPine: async (el, d) => { const v = await db.get("versions", d.id); copyText((await db.get("artefacts", v.pineArtefactId)).data.source); },
-  downloadPine: async (el, d) => { const v = await db.get("versions", d.id); download(`${v.sdl.strategy.name.replace(/\W+/g, "_")}_v${v.versionNumber}.pine`, (await db.get("artefacts", v.pineArtefactId)).data.source); },
+  // Copies and downloads always carry the TradingView compile fixes, including for revisions saved before them.
+  copyPine: async (el, d) => { const v = await db.get("versions", d.id); copyText(fixPineConstants((await db.get("artefacts", v.pineArtefactId)).data.source).source); },
+  downloadPine: async (el, d) => { const v = await db.get("versions", d.id); download(`${v.sdl.strategy.name.replace(/\W+/g, "_")}_v${v.versionNumber}.pine`, fixPineConstants((await db.get("artefacts", v.pineArtefactId)).data.source).source); },
   downloadTrades: async (el, d) => {
     const v = await db.get("versions", d.id); const bt = await db.get("backtests", v.backtestId);
     const trades = d.seg === "development" ? bt.result.development.trades : d.seg === "holdout" ? v.holdoutResult?.trades || [] : bt.result.validation.trades;

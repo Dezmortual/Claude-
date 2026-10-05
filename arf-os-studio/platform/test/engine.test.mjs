@@ -7,7 +7,7 @@ import { computeMetrics } from "../js/metrics.js";
 import { ema, rsi, sma, atr } from "../js/indicators.js";
 import { runBacktestStage, robustnessSuite, runHoldout, evaluateEvidence } from "../js/research.js";
 import { integrityReport } from "../js/data.js";
-import { lintPine } from "../js/pine-lint.js";
+import { lintPine, fixPineConstants } from "../js/pine-lint.js";
 import { parseTradingViewTrades, parity } from "../js/tv.js";
 
 const bars = syntheticBars({ n: 3000, seed: 3 });
@@ -311,4 +311,16 @@ test("free converter: strategy.close exits and percent stop", () => {
 
 test("free converter refuses bar-by-bar state instead of inventing entries", () => {
   assert.throws(() => convertPineToSDL(pine("r08")), /bar-by-bar state/);
+});
+
+test("input.time defaults are made constant for TradingView (CE10123)", () => {
+  const src = `//@version=6\nstrategy("x")\na = input.time(timestamp(2020, 1, 1, 0, 0), "Start")\nb = input.time(defval = timestamp("GMT+3", 2099, 12, 31, 23, 59), title = "End")\nc = input.time(timestamp("2020-01-01T00:00:00"), "OK")\nd = input.time(timestamp(startY, 1, 1), "Bad")`;
+  assert.equal(lintPine(src).findings.filter(f => f.rule === "input-time-const").length, 3);
+  const r = fixPineConstants(src);
+  assert.match(r.source, /input\.time\(timestamp\("01 Jan 2020 00:00 \+0000"\), "Start"\)/);
+  assert.match(r.source, /defval = timestamp\("31 Dec 2099 23:59 \+0300"\)/);
+  assert.match(r.source, /timestamp\("2020-01-01T00:00:00"\)/);
+  assert.equal(r.fixes.length, 2);
+  // A variable argument cannot be fixed mechanically, so Pine QA still rejects it.
+  assert.deepEqual(lintPine(r.source).findings.filter(f => f.rule === "input-time-const").map(f => f.line), [6]);
 });
