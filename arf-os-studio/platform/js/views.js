@@ -313,6 +313,7 @@ async function viewVersion([id, tab = "evidence"], q) {
   if (st === "DEFINED" && !v.backtestId) acts.push(`<button class="btn primary" data-act="backtestNow" data-id="${id}">Run backtest plan</button>`);
   if (["RESEARCH_APPROVED", "PAPER_PENDING_HUMAN"].includes(st)) acts.push(`<button class="btn primary" data-act="approvePaper" data-id="${id}">Approve paper test…</button>`);
   if (st === "PAPER_APPROVED") acts.push(`<button class="btn primary" data-act="startForward" data-id="${id}">Start forward test</button>`);
+  else if (L.FORWARD_FROM.includes(st) && v.validationId && !(await db.all("deployments", x => x.versionId === v.id && ["ACTIVE", "DEGRADED"].includes(x.status))).length) acts.push(`<button class="btn ${v.contaminatedDatasetIds?.length || st === "REWORK_REQUESTED" ? "primary" : ""}" data-act="forwardNow" data-id="${id}">Forward-test it (free)</button>`);
   if (st === "FORWARD_TESTING") acts.push(`<button class="btn primary" data-act="markLive" data-id="${id}">Mark live candidate…</button>`);
   if (!["REJECTED", "ARCHIVED", "REWORK_REQUESTED"].includes(st)) acts.push(`<button class="btn" data-act="humanRework" data-id="${id}">Request new version…</button>`);
   acts.push(`<button class="btn" data-act="humanDecision" data-id="${id}">Decision / override…</button>`);
@@ -635,7 +636,7 @@ async function viewCommittee() {
   let html = "";
   if (paused) html += `<div class="note warn"><b>The job queue is paused.</b> AI reviews and backtests wait until you resume it. <button class="btn small primary" data-act="resumeQueue">Resume queue</button></div>`;
   if (tasks.length) html += `<div class="section"><h2>Tasks waiting for you <span class="muted small">(${tasks.length})</span></h2><div class="table-wrap"><table class="t"><tbody>${tasks.map(t => `<tr><td>${avatar(t.lane, true)} ${esc(t.title)}</td><td class="small">${esc(t.error?.message || "Human approval required")}</td><td>${t.campaignId ? `<a href="#/campaign/${t.campaignId}/tasks">campaign</a>` : ""}</td><td><button class="btn small primary" data-act="retryTask" data-id="${t.id}">Approve &amp; run</button> <button class="btn small" data-act="cancelTask" data-id="${t.id}">Dismiss</button></td></tr>`).join("")}</tbody></table></div></div>`;
-  html += await sec("Ready for a decision", `Backtest and stress tests are done. Ask the AI validator and judge to review it${IN_ARTIFACT ? " (uses your Claude plan)" : " (needs API credit)"}, or decide yourself.`, ready, v => `${costsLookUnrealistic(v.sdl) ? `<button class="btn small primary" data-act="fixCosts" data-id="${v.id}">Fix costs &amp; retest (free)</button>` : ""}<button class="btn small ${costsLookUnrealistic(v.sdl) ? "" : "primary"}" data-act="askAgentReview" data-id="${v.id}">Ask AI to review</button><button class="btn small" data-act="humanDecision" data-id="${v.id}">Decide myself…</button>`);
+  html += await sec("Ready for a decision", `Backtest and stress tests are done. Ask the AI validator and judge to review it${IN_ARTIFACT ? " (uses your Claude plan)" : " (needs API credit)"}, or decide yourself.`, ready, v => `${costsLookUnrealistic(v.sdl) ? `<button class="btn small primary" data-act="fixCosts" data-id="${v.id}">Fix costs &amp; retest (free)</button>` : ""}<button class="btn small ${costsLookUnrealistic(v.sdl) ? "" : "primary"}" data-act="askAgentReview" data-id="${v.id}">Ask AI to review</button><button class="btn small" data-act="forwardNow" data-id="${v.id}">Forward-test it (free)</button><button class="btn small" data-act="humanDecision" data-id="${v.id}">Decide myself…</button>`);
   html += await sec("With the AI judge", "The validator and judge are reviewing these now. Results appear here and on the strategy page.", reviewing, () => "");
   html += await sec("Paper-test approvals", "The Strategy Judge recommends a paper forward test. Only a human can approve it (spec §25).", pending, v => `<button class="btn small primary" data-act="approvePaper" data-id="${v.id}">Approve paper test…</button><button class="btn small danger" data-act="humanDecision" data-id="${v.id}" data-to="REJECTED">Reject…</button>`);
   html += await sec("Research-approved", "Historical evidence is sufficient for continued research. You may still approve a paper test.", approved, v => `<button class="btn small" data-act="approvePaper" data-id="${v.id}">Approve paper test…</button>`);
@@ -922,6 +923,12 @@ export const actions = {
         try { await L.approvePaper(d.id, m.querySelector("#paperNote").value); ui.closeModal(); toast("Paper test approved"); } catch (e) { toast(e.message, "bad"); }
       });
     });
+  },
+  forwardNow: async (el, d) => {
+    const dep = await L.forwardTestNow(d.id);
+    toast("Forward test started: it trades new candles on paper as they arrive");
+    location.hash = `#/version/${d.id}/forward`;
+    setTimeout(() => L.checkDeployment(dep.id).catch(() => {}), 500);
   },
   startForward: async (el, d) => { const dep = await L.startForward(d.id); toast("Deployment started"); location.hash = `#/version/${d.id}/forward`; setTimeout(() => L.checkDeployment(dep.id).catch(() => {}), 500); },
   checkDeployment: async (el, d, ui) => {

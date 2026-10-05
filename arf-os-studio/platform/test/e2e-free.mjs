@@ -100,6 +100,12 @@ await page.waitForFunction(() => /\/version\/.+\/backtest/.test(location.hash), 
 const t3 = Date.now(); let fixed = null;
 while (Date.now() - t3 < 120000) { fixed = await page.evaluate(async ([u, id]) => { const c = (await (await import(u)).all("versions")).find(x => x.parentVersionId === id); return c && { s: c.status, slip: c.sdl.costs.slippageTicks, cat: c.changeCategory, pine: !!c.pineArtefactId }; }, [dbu, oldId]); if (fixed && ["VALIDATED", "REJECTED"].includes(fixed.s)) break; await page.waitForTimeout(500); }
 res.costsFix = fixed;
+// One-tap forward test from the strategy page.
+const fwdId = await page.evaluate(async u => (await (await import(u)).all("versions")).find(x => x.status === "VALIDATED").id, dbu);
+await page.goto(base + "#/version/" + fwdId + "/evidence");
+await page.click("[data-act=forwardNow]");
+await page.waitForTimeout(1500);
+res.forward = await page.evaluate(async ([u, id]) => { const db = await import(u); const v = await db.get("versions", id); const d = (await db.all("deployments")).find(x => x.versionId === id); const dec = (await db.all("decisions")).find(x => x.versionId === id && x.decision === "PAPER_APPROVED"); return { status: v.status, dep: d && d.status, decided: !!dec, hash: location.hash.endsWith("/forward") }; }, [dbu, fwdId]);
 // Decide page: Test strategies are "Ready for a decision" with a review button on each card.
 await page.goto(base + "#/committee");
 await page.waitForTimeout(1200);
@@ -118,4 +124,4 @@ res.quickCampaign = await page.evaluate(async u => { const db = await import(u);
 res.aiCalls = aiCalls; res.errors = errors;
 console.log(JSON.stringify(res, null, 1));
 await browser.close(); server.close();
-if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer || !res.gold || res.indicatorPicks.join() !== "Buy,Sell" || !res.indicatorRun || !res.freePine || !res.autoSlippage || !(res.costsFix?.slip > 0 && res.costsFix.cat === "costs" && res.costsFix.pine && ["VALIDATED", "REJECTED"].includes(res.costsFix.s)) || !(res.decideButtons > 0) || res.quickCampaign?.name !== "Gold 1h · Pullbacks" || !/^XAUUSD 60 (OK|WARN)$/.test(res.quickCampaign?.ds || "")) process.exit(1);
+if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer || !res.gold || res.indicatorPicks.join() !== "Buy,Sell" || !res.indicatorRun || !res.freePine || res.forward?.status !== "FORWARD_TESTING" || !res.forward?.dep || !res.forward?.decided || !res.autoSlippage || !(res.costsFix?.slip > 0 && res.costsFix.cat === "costs" && res.costsFix.pine && ["VALIDATED", "REJECTED"].includes(res.costsFix.s)) || !(res.decideButtons > 0) || res.quickCampaign?.name !== "Gold 1h · Pullbacks" || !/^XAUUSD 60 (OK|WARN)$/.test(res.quickCampaign?.ds || "")) process.exit(1);
