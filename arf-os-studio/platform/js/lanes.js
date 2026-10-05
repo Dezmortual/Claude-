@@ -5,7 +5,7 @@ import * as db from "./db.js";
 import { uuidv7, nowIso, hashObject, timeframeMs } from "./util.js";
 import { enqueue, runAgent, transition, handoff, artefact, registerHandlers, championPrompt } from "./workflow.js";
 import { validateSDL, gridSize, longestLookback } from "./sdl.js";
-import { lintPine } from "./pine-lint.js";
+import { lintPine, fixPineConstants } from "./pine-lint.js";
 import { fetchBars, integrityReport, datasetChecksum, inferTickSize } from "./data.js";
 import { evaluateEvidence, POLICIES } from "./research.js";
 import { parseTradingViewTrades, parity as parityCheck } from "./tv.js";
@@ -257,11 +257,14 @@ H.PINE = async (task, { signal }) => {
   const v = await db.get("versions", task.refs.versionId);
   const strategy = await db.get("strategies", v.strategyId);
   const base = { sdl: v.sdl, ids: { strategyId: v.strategyId, strategyVersionId: v.id, sdlHash: v.definitionHash, parentVersionId: v.parentVersionId || "none", campaignId: v.campaignId }, strategyName: strategy.name };
+  // Mechanical compile fixes (constant input.time defaults) are applied before Pine QA and noted.
+  const tidy = out => { const f = fixPineConstants(out.source); if (f.fixes.length) { out.source = f.source; out.deviations = [...(out.deviations || []), ...f.fixes.map(x => "Auto-fixed for TradingView: " + x)]; } return out; };
   let { output, run } = await runAgent("pine", base, { campaignId: v.campaignId, taskId: task.id, signal });
+  output = tidy(output);
   let lint = lintPine(output.source, v.sdl);
   if (!lint.pass) {
     const retry = await runAgent("pine", { ...base, previousSource: output.source, lintFindings: lint.findings.filter(f => f.severity === "error"), instruction: "Pine QA rejected your source. Fix every error finding and return the complete corrected source." }, { campaignId: v.campaignId, taskId: task.id, signal });
-    output = retry.output; run = retry.run; lint = lintPine(output.source, v.sdl);
+    output = tidy(retry.output); run = retry.run; lint = lintPine(output.source, v.sdl);
   }
   const art = await artefact("PineRevision", { source: output.source, implementationNotes: output.implementationNotes, deviations: output.deviations, alertExamples: output.alertExamples, lint }, { campaignId: v.campaignId, strategyId: v.strategyId, versionId: v.id, agentRunId: run.id });
   const rev = { n: v.pineRevisions.length + 1, artefactId: art.id, sourceHash: art.hash.slice(0, 16), lintPass: lint.pass, errors: lint.errors, warnings: lint.warnings, createdAt: nowIso() };

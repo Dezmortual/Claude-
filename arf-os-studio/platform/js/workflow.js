@@ -76,8 +76,17 @@ async function getPolicy(campaignId) {
 /* ---------------- Prompts (champion / challenger) ---------------- */
 export async function championPrompt(agentId) {
   const rows = await db.all("prompts", p => p.agentId === agentId && p.status === "champion");
-  if (rows.length) return rows.sort((a, b) => b.version - a.version)[0];
   const a = agentById[agentId];
+  if (rows.length) {
+    const champ = rows.sort((x, y) => y.version - x.version)[0];
+    // A built-in prompt saved by an earlier release follows the shipped text; user-edited prompts are kept.
+    if (/^Built-in prompt/.test(champ.notes || "") && a && champ.text !== a.prompt) {
+      const upd = { ...champ, text: a.prompt, hash: await hashObject(a.prompt), notes: "Built-in prompt (updated)", updatedAt: nowIso() };
+      await db.put("prompts", upd);
+      return upd;
+    }
+    return champ;
+  }
   const p = { id: `${agentId}-v1`, agentId, version: 1, text: a.prompt, status: "champion", createdAt: nowIso(), notes: "Built-in prompt", hash: await hashObject(a.prompt) };
   await db.put("prompts", p);
   return p;
