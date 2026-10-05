@@ -1,8 +1,8 @@
-/* ARF-OS research platform. Dense, desktop-first research console (spec §15.1); responsive for monitoring. */
+/* DezEdge (formerly ARF-OS research platform). Dense research console, phone-friendly. Brand: navy tile, gold D, green breakout line. */
 :root {
   --bg: #eef1f4; --panel: #ffffff; --panel-2: #f6f8fa; --line: #d5dce3; --line-2: #e6ebf0;
   --fg: #16202b; --muted: #5a6876; --faint: #8a96a3;
-  --accent: #1f5f8b; --accent-ink: #ffffff; --accent-soft: #dceaf4;
+  --accent: #123a5c; --accent-ink: #ffffff; --accent-soft: #dfe8f1; --brand-gold: #b8860b;
   --good: #0f7a3a; --good-soft: #e1f3e8; --warn: #8a5d00; --warn-soft: #fbf0d6; --bad: #b23a3a; --bad-soft: #fbe5e5; --info-soft: #e5eefb;
   --code-bg: #eaeef2;
   /* chart tokens: reference categorical palette (validated), sequential blue, diverging blue↔red */
@@ -18,7 +18,7 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #10161d; --panel: #171f28; --panel-2: #1c2631; --line: #2b3846; --line-2: #24303c; --fg: #e3e9ef; --muted: #93a2b1; --faint: #6c7a88;
-    --accent: #6fb2e0; --accent-ink: #0c1620; --accent-soft: #1e3446;
+    --accent: #e8b84a; --accent-ink: #14100a; --accent-soft: #352b14; --brand-gold: #e8b84a;
     --good: #5cc592; --good-soft: #15301f; --warn: #e2b54f; --warn-soft: #33290f; --bad: #ef8080; --bad-soft: #3a1c1c; --info-soft: #1b2a3f; --code-bg: #0f151c;
     --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
     --grid: #2c2c2a; --axis: #383835; --tick: #a3a29a;
@@ -29,7 +29,7 @@
 }
 :root[data-theme="dark"] {
   --bg: #10161d; --panel: #171f28; --panel-2: #1c2631; --line: #2b3846; --line-2: #24303c; --fg: #e3e9ef; --muted: #93a2b1; --faint: #6c7a88;
-  --accent: #6fb2e0; --accent-ink: #0c1620; --accent-soft: #1e3446;
+  --accent: #e8b84a; --accent-ink: #14100a; --accent-soft: #352b14; --brand-gold: #e8b84a;
   --good: #5cc592; --good-soft: #15301f; --warn: #e2b54f; --warn-soft: #33290f; --bad: #ef8080; --bad-soft: #3a1c1c; --info-soft: #1b2a3f; --code-bg: #0f151c;
   --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
   --grid: #2c2c2a; --axis: #383835; --tick: #a3a29a;
@@ -61,8 +61,11 @@ p { margin: 0 0 8px; }
 .brand-link { display: flex; gap: 10px; align-items: center; color: var(--fg); text-decoration: none; }
 .brand-link b { display: block; font: 700 18px/1 var(--display); }
 .brand-link small { color: var(--muted); font-size: 11.5px; }
-.logo { width: 30px; height: 30px; border-radius: 8px; background: var(--accent); position: relative; flex: none; }
-.logo::after { content: ""; position: absolute; inset: 8px 6px; border-left: 3px solid var(--accent-ink); border-bottom: 3px solid var(--accent-ink); transform: skewX(-12deg); opacity: .9; }
+.logo { width: 34px; height: 34px; flex: none; display: block; }
+.brand-link b em, .top-brand b em { font-style: normal; color: var(--brand-gold); }
+.top-brand { display: none; align-items: center; gap: 8px; color: var(--fg); text-decoration: none; }
+.top-brand .logo { width: 28px; height: 28px; }
+.top-brand b { font: 700 17px/1 var(--display); }
 .navlist { overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 1px; flex: 1; }
 .nav-group { font: 500 10.5px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; color: var(--faint); padding: 12px 10px 5px; }
 .nav-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 10px; border-radius: 7px; color: var(--fg); text-decoration: none; font-weight: 500; font-size: 13.5px; }
@@ -311,6 +314,7 @@ textarea.pine { min-height: 200px; }
   input[type=text], input[type=number], input[type=password], input[type=search], select, textarea { font-size: 16px; }
   textarea.code { font-size: 13px; }
   .topbar { padding: 6px 12px; gap: 8px; }
+  .top-brand { display: flex; }
   #pauseBtn { display: none; }
   .conn span { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .page-head h1 { font-size: 22px; }

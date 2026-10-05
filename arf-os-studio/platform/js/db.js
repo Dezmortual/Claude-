@@ -97,7 +97,7 @@ export async function exportWorkspace() {
   return out;
 }
 export async function importWorkspace(data, { replace = false } = {}) {
-  if (!data || data.format !== "arf-os-workspace") throw new Error("Not an ARF-OS workspace file");
+  if (!data || data.format !== "arf-os-workspace") throw new Error("Not a DezEdge workspace file");
   if (replace) await clearAll();
   for (const s of STORES) for (const row of data.stores[s] || []) await put(s, row);
   await audit("workspace.imported", { replace, exportedAt: data.exportedAt });
