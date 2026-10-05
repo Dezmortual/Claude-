@@ -563,8 +563,11 @@ export async function checkDeployment(depId, { signal, bars: uploaded = null } =
   catch (e) { health.issues.push("Data fetch failed: " + e.message); await db.update("deployments", depId, { status: "DEGRADED", health }); return db.get("deployments", depId); }
   const firstIdx = bars.t.findIndex(t => t >= start);
   const lastBar = bars.t[bars.t.length - 1];
-  const stale = Date.now() - (lastBar + tf) > tf * 2.5;
-  if (stale) health.issues.push(`Last closed bar ${new Date(lastBar).toISOString()} is stale`);
+  // Built-in prices refresh once a day, so up to a day's lag is expected, not a fault.
+  const daily = String(dep.source).startsWith("builtin") && !bars.live;
+  const lag = Date.now() - (lastBar + tf), allowed = daily ? Math.max(tf * 2.5, 30 * 3_600_000) : tf * 2.5;
+  if (lag > allowed) health.issues.push(`Last closed bar ${new Date(lastBar).toISOString()} is stale${daily ? " (the daily price update is late)" : ""}`);
+  else if (daily && lag > tf * 2.5) health.notes = [`Built-in prices update once a day; bars after ${isoMinuteUtc(lastBar)} UTC arrive with the next daily update.`];
   const integ = integrityReport(bars, dep.timeframe);
   if (integ.missing) health.issues.push(`${integ.missing} missing bars in forward window`);
   let trades = [], open = null;
@@ -590,6 +593,7 @@ export async function checkDeployment(depId, { signal, bars: uploaded = null } =
   if (status !== dep.status) await db.audit("forward.deployment_" + status.toLowerCase(), { deploymentId: depId, issues: health.issues });
   return db.get("deployments", depId);
 }
+const isoMinuteUtc = t => new Date(t).toISOString().slice(0, 16).replace("T", " ");
 export async function stopDeployment(depId, status = "COMPLETED") {
   const dep = await db.update("deployments", depId, { status, endedAt: nowIso() });
   await db.audit("forward.deployment_" + status.toLowerCase(), { deploymentId: depId }, HUMAN);

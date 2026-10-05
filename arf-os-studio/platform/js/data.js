@@ -20,6 +20,13 @@ export async function fetchBars({ source, symbol, timeframe, from, to = Date.now
   const tfMs = timeframeMs(timeframe);
   const rows = [];
   if (String(source).startsWith("builtin")) {
+    // Crypto from Binance: on the website, take live bars (up to the latest close); the Claude app can't
+    // reach Binance, so it uses the built-in file.
+    const [, under, remote] = String(source).split(":");
+    const canFetch = typeof window !== "undefined" && !(window.claude && typeof window.claude.use === "function") && !/claudeusercontent|claude\.ai/.test(location.hostname);
+    if (under === "binance" && canFetch && SOURCES.binance.tf[timeframe]) {
+      try { const live = await fetchBars({ source: "binance", symbol: remote || symbol, timeframe, from, to, signal, onProgress }); if (live.t.length) { live.live = true; return live; } } catch (_) { /* fall back to the built-in file */ }
+    }
     // Built-in library (refreshed daily): the newest file for this market and timeframe.
     const set = (await builtinPrices())?.sets.find(s => s.symbol === symbol && s.timeframe === timeframe);
     if (!set) throw new Error(`No built-in ${symbol} ${timeframe} prices`);
