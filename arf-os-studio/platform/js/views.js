@@ -292,7 +292,9 @@ async function viewLibrary(_, q) {
     <select data-nav="state"><option value="">Any state</option>${Object.keys(VERSION_STATES).map(s => `<option ${q.state === s ? "selected" : ""}>${s}</option>`).join("")}</select>
     <select data-nav="grade"><option value="">Any grade</option>${["A", "B", "C", "D", "F"].map(g => `<option ${q.grade === g ? "selected" : ""}>${g}</option>`).join("")}</select>
     <input type="search" data-nav="q" placeholder="Search name or thesis" value="${esc(q.q || "")}"></div>`;
-  return page(header("Strategy Library", "Every strategy version, including rejected ones. Failed research is a knowledge asset."), filters + await versionsTable(() => true, q));
+  const rejected = (await db.all("versions", v => v.status === "REJECTED")).length;
+  const del = rejected ? `<button class="btn danger" data-act="deleteRejected" data-n="${rejected}">Delete all rejected (${rejected})</button>` : "";
+  return page(header("Strategy Library", "Every strategy version, including rejected ones. Failed research is a knowledge asset.", del), filters + await versionsTable(() => true, q));
 }
 
 /* ======================= Strategy version detail ======================= */
@@ -533,7 +535,7 @@ async function tabDecisions(v) {
 async function tabLineage(v) {
   const all = (await db.all("versions", x => x.strategyId === v.strategyId)).sort((a, b) => a.versionNumber - b.versionNumber);
   const handoffs = sortDesc(await db.all("handoffs", h => h.strategyVersionId === v.id));
-  return `<div class="grid g2"><div class="card"><h2>Version lineage</h2><div class="lineage">${all.map(x => `<a class="node ${x.id === v.id ? "cur" : ""}" href="#/version/${x.id}"><b>v${x.versionNumber}</b> ${badge(x.status)} ${grade(x.evidenceGrade)}<span class="small muted">${x.parentVersionId ? `from v${all.find(p => p.id === x.parentVersionId)?.versionNumber} · ${esc(x.changeCategory)}: ${esc((x.changeReason || "").slice(0, 80))}` : "initial"}</span></a>`).join("")}</div>
+  return `<div class="grid g2"><div class="card"><h2>Version lineage</h2><div class="lineage">${all.map(x => `<a class="node ${x.id === v.id ? "cur" : ""}" href="#/version/${x.id}"><b>v${x.versionNumber}</b> ${badge(x.status)} ${grade(x.evidenceGrade)}<span class="small muted">${x.parentVersionId ? `from ${all.find(p => p.id === x.parentVersionId) ? "v" + all.find(p => p.id === x.parentVersionId).versionNumber : "a deleted version"} · ${esc(x.changeCategory)}: ${esc((x.changeReason || "").slice(0, 80))}` : "initial"}</span></a>`).join("")}</div>
     <p class="small muted" style="margin-top:10px">Contaminated datasets for this version: ${v.contaminatedDatasetIds?.length ? v.contaminatedDatasetIds.map(d => `<code>${esc(d.slice(0, 8))}</code>`).join(", ") + " — the parent's holdout result motivated this version, so the holdout no longer counts as evidence here." : "none"}</p></div>
     <div class="card"><h2>Agent handoffs</h2>${handoffs.length ? `<div class="table-wrap"><table class="t"><thead><tr><th>From → to</th><th>Action</th><th>Accepted</th><th>When</th></tr></thead><tbody>${handoffs.map(h => `<tr><td class="small">${esc(h.fromAgent.role)} → ${esc(h.toRole)}</td><td class="small">${esc(h.requestedAction)}<div class="faint">${esc(h.summary.slice(0, 140))}</div></td><td>${h.accepted ? `<span class="pass">✓</span>` : `<span class="fail" title="${esc(h.problems.join("; "))}">✕ ${esc(h.problems.join("; "))}</span>`}</td><td class="small">${timeAgo(h.createdAt)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="muted small">No handoffs recorded.</p>`}</div></div>`;
 }
@@ -986,6 +988,16 @@ export const actions = {
   humanRework: async (el, d, ui) => {
     ui.openModal(`<h2>Request a new version</h2><p class="small muted">Describe one explicit change. The Strategy Architect creates a child version; the parent stays immutable. If the parent's holdout was evaluated, the child's holdout is marked contaminated.</p><label class="field">Explicit change<textarea id="rwText" placeholder="e.g. Add a 200-EMA regime filter: only long when close > ema200, because the validator found losses concentrated in bear regimes."></textarea></label><div class="foot"><button class="btn" data-act="closeModal">Cancel</button><button class="btn primary" id="rwGo">Request child version</button></div>`, m => {
       m.querySelector("#rwGo").addEventListener("click", async () => { try { await L.requestHumanRework(d.id, m.querySelector("#rwText").value.trim()); ui.closeModal(); toast("Rework queued"); } catch (e) { toast(e.message, "bad"); } });
+    });
+  },
+  deleteRejected: async (el, d, ui) => {
+    ui.openModal(`<h2>Delete all rejected strategies?</h2><p>This permanently deletes <b>${esc(d.n)}</b> rejected version${d.n === "1" ? "" : "s"} with their backtests, Pine scripts, decisions and forward tests. Strategies left with no versions are removed too.</p><p class="small muted">It can't be undone. The audit log and lessons learned are kept, so the AI still avoids repeating the same mistakes. To keep a copy first, use Export workspace under More → Policies &amp; Admin.</p>
+      <div class="foot"><button class="btn" data-act="closeModal">Cancel</button><button class="btn danger" id="drGo">Delete ${esc(d.n)}</button></div>`, m => {
+      m.querySelector("#drGo").addEventListener("click", async e => {
+        e.target.disabled = true;
+        try { const r = await L.deleteRejected(); ui.closeModal(); toast(`Deleted ${r.versions} rejected version${r.versions === 1 ? "" : "s"}`); }
+        catch (err) { e.target.disabled = false; toast(err.message, "bad"); }
+      });
     });
   },
   humanDecision: async (el, d, ui) => {
