@@ -2,6 +2,7 @@
 import { runBacktestStage, robustnessSuite, runHoldout } from "./research.js";
 import { runBacktest } from "./runner.js";
 import { computeMetrics } from "./metrics.js";
+import { improve } from "./improve.js";
 
 export async function execute(op, payload, progress = () => {}) {
   const { sdl, bars, params, policy } = payload;
@@ -9,6 +10,7 @@ export async function execute(op, payload, progress = () => {}) {
     case "backtest": return runBacktestStage(sdl, bars, policy, progress);
     case "robustness": return robustnessSuite(sdl, bars, params, policy, progress);
     case "holdout": return runHoldout(sdl, bars, params);
+    case "improve": return improve(sdl, bars, params, payload.goals, { maxRounds: payload.maxRounds, progress });
     case "full": { const r = runBacktest(sdl, bars, params, payload.opts || {}); return { ...r, metrics: computeMetrics(r) }; }
   }
   throw new Error("Unknown op " + op);

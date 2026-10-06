@@ -100,6 +100,21 @@ await page.waitForFunction(() => /\/version\/.+\/backtest/.test(location.hash), 
 const t3 = Date.now(); let fixed = null;
 while (Date.now() - t3 < 120000) { fixed = await page.evaluate(async ([u, id]) => { const c = (await (await import(u)).all("versions")).find(x => x.parentVersionId === id); return c && { s: c.status, slip: c.sdl.costs.slippageTicks, cat: c.changeCategory, pine: !!c.pineArtefactId }; }, [dbu, oldId]); if (fixed && ["VALIDATED", "REJECTED"].includes(fixed.s)) break; await page.waitForTimeout(500); }
 res.costsFix = fixed;
+// Improve tab: tap targets, find improvements, create the improved version.
+const impId = await page.evaluate(async u => (await (await import(u)).all("versions")).find(x => x.status === "VALIDATED").id, dbu);
+await page.goto(base + "#/version/" + impId + "/improve");
+await page.waitForSelector("[data-act=runImprove]");
+await page.click('button.chip[data-goal="wr"][data-value="45"]');
+await page.click('button.chip[data-goal="trades"][data-value="100"]');
+await page.click("[data-act=runImprove]");
+await page.waitForFunction(() => /variants tried/.test(document.body.textContent), null, { timeout: 60000 });
+if (shots) await page.screenshot({ path: path.join(shots, "f6-improve.png"), fullPage: true });
+res.improve = await page.evaluate(async ([u, id]) => { const a = (await (await import(u)).all("artefacts")).find(x => x.kind === "Improvement" && x.versionId === id); return { allMet: a.data.allMet, base: a.data.baseline, tried: a.data.tried, goals: a.data.goals.map(g => g.key).join(","), changes: a.data.best.changes.length }; }, [dbu, impId]);
+if (await page.$("[data-act=applyImprove]")) {
+  await page.click("[data-act=applyImprove]");
+  await page.waitForTimeout(1500);
+  res.improvedChild = await page.evaluate(async ([u, id]) => { const c = (await (await import(u)).all("versions")).find(x => x.parentVersionId === id && x.changeCategory === "improve"); return c && { cat: c.changeCategory, pine: !!c.pineArtefactId }; }, [dbu, impId]);
+}
 // One-tap forward test from the strategy page.
 const fwdId = await page.evaluate(async u => (await (await import(u)).all("versions")).find(x => x.status === "VALIDATED").id, dbu);
 await page.goto(base + "#/version/" + fwdId + "/evidence");
@@ -124,4 +139,4 @@ res.quickCampaign = await page.evaluate(async u => { const db = await import(u);
 res.aiCalls = aiCalls; res.errors = errors;
 console.log(JSON.stringify(res, null, 1));
 await browser.close(); server.close();
-if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer || !res.gold || res.indicatorPicks.join() !== "Buy,Sell" || !res.indicatorRun || !res.freePine || res.forward?.status !== "FORWARD_TESTING" || !res.forward?.dep || !res.forward?.decided || !res.autoSlippage || !(res.costsFix?.slip > 0 && res.costsFix.cat === "costs" && res.costsFix.pine && ["VALIDATED", "REJECTED"].includes(res.costsFix.s)) || !(res.decideButtons > 0) || res.quickCampaign?.name !== "Gold 1h · Pullbacks" || !/^XAUUSD 60 (OK|WARN)$/.test(res.quickCampaign?.ds || "")) process.exit(1);
+if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer || !res.gold || res.indicatorPicks.join() !== "Buy,Sell" || !res.indicatorRun || !res.freePine || !(res.improve?.tried > 0) || res.improve?.goals !== "pf,dd,wr,trades" || res.forward?.status !== "FORWARD_TESTING" || !res.forward?.dep || !res.forward?.decided || !res.autoSlippage || !(res.costsFix?.slip > 0 && res.costsFix.cat === "costs" && res.costsFix.pine && ["VALIDATED", "REJECTED"].includes(res.costsFix.s)) || !(res.decideButtons > 0) || res.quickCampaign?.name !== "Gold 1h · Pullbacks" || !/^XAUUSD 60 (OK|WARN)$/.test(res.quickCampaign?.ds || "")) process.exit(1);
