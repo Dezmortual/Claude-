@@ -136,7 +136,17 @@ if (shots) await page.screenshot({ path: path.join(shots, "f4-campaign-quick.png
 await page.click("#campaignForm button[type=submit]:not([data-start])");
 await page.waitForTimeout(1500);
 res.quickCampaign = await page.evaluate(async u => { const db = await import(u); const c = (await db.all("campaigns"))[0]; const ds = c && await db.get("datasets", c.market.uploadedDatasetId); return c && { name: c.name, symbol: c.market.symbol, tf: c.market.timeframe, ds: ds && ds.symbol + " " + ds.timeframe + " " + ds.status }; }, dbu);
+// Strategies page: delete all rejected versions in one go (with their records), keep everything else.
+const lu = base + "js/lanes.js";
+await page.evaluate(async ([u, l, keep]) => { const v = (await (await import(u)).all("versions")).find(x => x.id !== keep && x.status !== "REJECTED" && x.status !== "FORWARD_TESTING"); if (v) await (await import(l)).humanDecision(v.id, "REJECTED", "test cleanup", true); }, [dbu, lu, fwdId]);
+const before = await page.evaluate(async u => { const db = await import(u); const vs = await db.all("versions"); const rej = new Set(vs.filter(v => v.status === "REJECTED").map(v => v.id)); return { rej: rej.size, other: vs.length - rej.size, bts: (await db.all("backtests")).filter(b => rej.has(b.versionId)).length }; }, dbu);
+await page.goto(base + "#/library");
+await page.click("[data-act=deleteRejected]");
+if (shots) await page.screenshot({ path: path.join(shots, "f6-delete-rejected.png") });
+await page.click("#drGo");
+await page.waitForTimeout(1500);
+res.deleteRejected = { before, after: await page.evaluate(async u => { const db = await import(u); const vs = await db.all("versions"); const ids = new Set(vs.map(v => v.id)); return { rej: vs.filter(v => v.status === "REJECTED").length, other: vs.length, orphanBts: (await db.all("backtests")).filter(b => b.versionId && !ids.has(b.versionId)).length, lessons: (await db.all("lessons")).length, button: !!document.querySelector("[data-act=deleteRejected]") }; }, dbu) };
 res.aiCalls = aiCalls; res.errors = errors;
 console.log(JSON.stringify(res, null, 1));
 await browser.close(); server.close();
-if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer || !res.gold || res.indicatorPicks.join() !== "Buy,Sell" || !res.indicatorRun || !res.freePine || !(res.improve?.tried > 0) || res.improve?.goals !== "pf,dd,wr,trades" || res.forward?.status !== "FORWARD_TESTING" || !res.forward?.dep || !res.forward?.decided || !res.autoSlippage || !(res.costsFix?.slip > 0 && res.costsFix.cat === "costs" && res.costsFix.pine && ["VALIDATED", "REJECTED"].includes(res.costsFix.s)) || !(res.decideButtons > 0) || res.quickCampaign?.name !== "Gold 1h · Pullbacks" || !/^XAUUSD 60 (OK|WARN)$/.test(res.quickCampaign?.ds || "")) process.exit(1);
+if (errors.length || aiCalls || res.failedTasks.length || !res.r08Offer || !res.gold || res.indicatorPicks.join() !== "Buy,Sell" || !res.indicatorRun || !res.freePine || !(res.improve?.tried > 0) || res.improve?.goals !== "pf,dd,wr,trades" || res.forward?.status !== "FORWARD_TESTING" || !res.forward?.dep || !res.forward?.decided || !res.autoSlippage || !(res.costsFix?.slip > 0 && res.costsFix.cat === "costs" && res.costsFix.pine && ["VALIDATED", "REJECTED"].includes(res.costsFix.s)) || !(res.decideButtons > 0) || res.quickCampaign?.name !== "Gold 1h · Pullbacks" || !/^XAUUSD 60 (OK|WARN)$/.test(res.quickCampaign?.ds || "") || !(res.deleteRejected.before.rej > 0 && res.deleteRejected.before.bts > 0) || res.deleteRejected.after.rej || res.deleteRejected.after.orphanBts || res.deleteRejected.after.other !== res.deleteRejected.before.other || res.deleteRejected.after.lessons !== res.deleteRejected.before.rej || res.deleteRejected.after.button) process.exit(1);

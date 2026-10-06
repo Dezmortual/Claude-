@@ -46,7 +46,10 @@ async function campaignOf(id) { return (id && await db.get("campaigns", id)) || 
 async function graveyard(excludeCampaign = null) {
   const versions = await db.all("versions");
   const strategies = Object.fromEntries((await db.all("strategies")).map(s => [s.id, s]));
-  return versions.filter(v => ["REJECTED", "ARCHIVED", "REWORK_REQUESTED"].includes(v.status)).slice(-40).map(v => ({ name: strategies[v.strategyId]?.name, thesis: v.sdl?.strategy?.thesis, status: v.status, reason: v.lastDecisionSummary || "" }));
+  const live = versions.filter(v => ["REJECTED", "ARCHIVED", "REWORK_REQUESTED"].includes(v.status)).slice(-40).map(v => ({ name: strategies[v.strategyId]?.name, thesis: v.sdl?.strategy?.thesis, status: v.status, reason: v.lastDecisionSummary || "" }));
+  // Deleted rejected versions leave a one-line lesson, so agents still avoid repeating them.
+  const kept = (await db.all("lessons", l => l.kind === "deleted_rejected")).map(l => ({ name: l.name, thesis: l.thesis, status: "REJECTED", reason: l.reason }));
+  return [...kept, ...live].slice(-40);
 }
 function words(s) { return new Set(String(s).toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(w => w.length > 3)); }
 function similarity(a, b) { const A = words(a), B = words(b); const inter = [...A].filter(x => B.has(x)).length; return inter / Math.max(1, Math.min(A.size, B.size)); }
@@ -243,7 +246,7 @@ async function createVersion({ strategy, c, ds, sdl, output, run, notes, warning
   const siblings = await db.all("versions", v => v.strategyId === strategy.id);
   const contaminated = parent ? [...new Set([...(parent.contaminatedDatasetIds || []), ...(parent.holdoutEvaluated ? [parent.datasetId] : [])])] : [];
   const v = {
-    id: uuidv7(), strategyId: strategy.id, campaignId: c.id, versionNumber: siblings.length + 1, parentVersionId: parent ? parent.id : null,
+    id: uuidv7(), strategyId: strategy.id, campaignId: c.id, versionNumber: siblings.reduce((m, x) => Math.max(m, x.versionNumber || 0), 0) + 1, parentVersionId: parent ? parent.id : null,
     status: "DEFINED", sdl, definitionHash: await hashObject(sdl), sdlArtefactId: sdlArt.id, createdByAgentRunId: run.id, changeReason, changeCategory, changedFields,
     normalisations: notes, sdlWarnings: warnings, ambiguityDefects, gridSize: gridSize(sdl), datasetId: ds.id, contaminatedDatasetIds: contaminated,
     pineRevisions: [], createdAt: nowIso()
@@ -772,3 +775,27 @@ export async function backtestNow(versionId) {
 const wrapped = Object.fromEntries(Object.entries(H).map(([k, fn]) => [k, async (task, ctx) => { try { return await fn(task, ctx); } finally { setTimeout(() => checkCampaignIdle(task.campaignId), 50); } }]));
 registerHandlers(wrapped);
 export { championPrompt };
+
+/* Housekeeping: permanently delete rejected strategy versions and everything recorded only for them
+   (backtests, validations, Pine, decisions, forward tests, queued jobs). The audit log is append-only and
+   keeps its entries; lessons learned are kept too. A strategy with no versions left is removed. */
+const VERSION_LINKED = ["backtests", "validations", "verifications", "decisions", "deployments", "artefacts", "transitions", "handoffs", "tasks", "agentRuns"];
+const linkedVersion = r => r.versionId || r.strategy_version_id || r.strategyVersionId || r.refs?.versionId || r.input?.versionId || null;
+export async function deleteRejected() {
+  const gone = await db.all("versions", v => v.status === "REJECTED");
+  if (!gone.length) return { versions: 0, strategies: 0, records: 0 };
+  const ids = new Set(gone.map(v => v.id));
+  const names = Object.fromEntries((await db.all("strategies")).map(x => [x.id, x.name]));
+  for (const v of gone) await db.put("lessons", { id: uuidv7(), kind: "deleted_rejected", name: names[v.strategyId] || v.sdl?.strategy?.name, thesis: v.sdl?.strategy?.thesis, reason: v.lastDecisionSummary || "", versionId: null, createdAt: nowIso() });
+  let records = 0;
+  for (const store of VERSION_LINKED) {
+    const rows = await db.all(store, r => ids.has(linkedVersion(r)) && !(store === "tasks" && r.status === "RUNNING"));
+    for (const r of rows) { await db.del(store, r.id); records++; }
+  }
+  for (const v of gone) await db.del("versions", v.id);
+  const left = new Set((await db.all("versions")).map(v => v.strategyId));
+  const strategies = await db.all("strategies", s => !left.has(s.id) && gone.some(v => v.strategyId === s.id));
+  for (const s of strategies) await db.del("strategies", s.id);
+  await db.audit("versions.deleted_rejected", { versions: gone.length, strategies: strategies.length, records, names: gone.slice(0, 50).map(v => `${v.sdl?.strategy?.name || "?"} v${v.versionNumber}`) }, HUMAN);
+  return { versions: gone.length, strategies: strategies.length, records };
+}
