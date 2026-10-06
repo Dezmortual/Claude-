@@ -81,8 +81,8 @@ class Trade:
     side: int                     # +1 long, -1 short
     entry_time: pd.Timestamp
     entry_price: float            # fill price, after slippage
-    shares: int
-    stop: float
+    shares: float                 # whole units unless the engine allows fractions
+    stop: float                   # initial hard stop: risk and R are measured from it
     target: float
     exit_time: Optional[pd.Timestamp] = None
     exit_price: Optional[float] = None
@@ -99,6 +99,7 @@ class Trade:
     decision_note: str = ""
     entry_prob: float = 1.0
     features: Dict[str, float] = field(default_factory=dict)
+    trail: float = 0.0            # trailing-stop distance in price; 0 means no trail
 
     @property
     def hold_minutes(self) -> float:

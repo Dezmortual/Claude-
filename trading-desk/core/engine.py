@@ -21,6 +21,13 @@ The things that separate this from the backtest in most tutorials:
 
 4. Risk-based sizing. A 1:2 strategy is meaningless unless every trade risks the
    same fraction of equity, so size comes from stop distance, not a flat "1 unit".
+
+5. Optional trailing stops. A plan row may carry `trail`, a price distance. Once
+   price has moved that far in the trade's favour the stop follows the best
+   price by that distance, never looser than the hard stop. In the default
+   "causal" mode the stop used on a bar comes only from bars already closed: a
+   daily bar's high and low carry no order, so trailing from the same bar's
+   high and stopping on its low assumes the high came first.
 """
 
 from __future__ import annotations
@@ -71,6 +78,9 @@ MYM = Instrument(kind="future", multiplier=0.5, tick_size=1.0, slippage_ticks=1.
                  commission_per_unit=0.62, margin_per_unit=800.0, reg_fees=False)
 ES = Instrument(kind="future", multiplier=50.0, tick_size=0.25, slippage_ticks=1.0,
                 commission_per_unit=2.50, margin_per_unit=15000.0, reg_fees=False)
+# Spot crypto: no SEC or FINRA fees. Pair it with EngineConfig.commission_bps and
+# fractional_units, since one BTC costs more than a small account.
+CRYPTO = Instrument(kind="crypto", tick_size=0.01, reg_fees=False)
 
 
 @dataclass
@@ -108,6 +118,20 @@ class EngineConfig:
     # Only ever after a STOP, never after a target or a time exit, otherwise this
     # is not a re-entry rule, it is just trading the same level repeatedly.
     reentry_after_stop_only: bool = True
+    # Exchange commission as a share of notional, per side (crypto venues charge
+    # this way). 5.0 = 0.05%.
+    commission_bps: float = 0.0
+    # Size in fractions of a unit (crypto) instead of whole shares or contracts.
+    fractional_units: bool = False
+    # A stop the market opens beyond fills at the open, not at the stop. Matters
+    # on daily bars, where overnight gaps are common.
+    gap_fills: bool = False
+    # How a trailing stop reads the bar it is checked on:
+    #   causal    the stop comes from bars already closed (honest on OHLC bars)
+    #   same_bar  the bar's own high moves the stop before its low is checked,
+    #             as TradingView does without bar magnifier. Optimistic; kept
+    #             only to measure how much that assumption flatters a result.
+    trail_mode: str = "causal"
 
 
 @dataclass
@@ -130,7 +154,7 @@ class BacktestResult:
                 "exit_time": t.exit_time,
                 "entry": round(t.entry_price, 4),
                 "exit": round(t.exit_price, 4) if t.exit_price else None,
-                "shares": t.shares,
+                "shares": round(t.shares, 8),
                 "stop": round(t.stop, 4),
                 "target": round(t.target, 4),
                 "reason": t.exit_reason,
@@ -151,12 +175,14 @@ class BacktestResult:
 
 class _Open:
     """An open position being tracked bar by bar."""
-    __slots__ = ("trade", "bars_held", "entry_slip")
+    __slots__ = ("trade", "bars_held", "entry_slip", "extreme", "trail_on")
 
     def __init__(self, trade: Trade, entry_slip: float):
         self.trade = trade
         self.bars_held = 0
         self.entry_slip = entry_slip
+        self.extreme = trade.raw_entry   # best price since entry, for trailing
+        self.trail_on = False
 
 
 def _slip(price: float, is_buy: bool, bps: float,
@@ -192,6 +218,8 @@ class Engine:
                    if inst.margin_per_unit > 0 else by_risk)
         else:
             cap = (equity * self.cfg.max_notional_pct) / price
+        if self.cfg.fractional_units:
+            return float(max(0.0, min(by_risk, cap)))
         units = int(max(0, np.floor(min(by_risk, cap))))
         if units == 0 and self.cfg.allow_min_one_unit and cap >= 1:
             # take one unit only if that stays inside the hard risk ceiling
@@ -201,22 +229,66 @@ class Engine:
 
     # ---------------------------------------------------------- exits
 
-    def _check_exit(self, pos: _Open, high: float, low: float) -> Optional[Tuple[float, str]]:
+    def _update_trail(self, pos: _Open, high: float, low: float) -> None:
+        """Fold this bar into the best price since entry and arm the trail."""
+        t = pos.trade
+        if t.trail <= 0:
+            return
+        if t.side > 0:
+            pos.extreme = max(pos.extreme, high)
+            if pos.extreme >= t.raw_entry + t.trail:
+                pos.trail_on = True
+        else:
+            pos.extreme = min(pos.extreme, low)
+            if pos.extreme <= t.raw_entry - t.trail:
+                pos.trail_on = True
+
+    def _stop_level(self, pos: _Open) -> Tuple[float, bool]:
+        """The stop in force now, and whether the trail (not the hard stop) set it."""
+        t = pos.trade
+        if not pos.trail_on:
+            return t.stop, False
+        if t.side > 0:
+            trail_stop = pos.extreme - t.trail
+            return (trail_stop, True) if trail_stop >= t.stop else (t.stop, False)
+        trail_stop = pos.extreme + t.trail
+        return (trail_stop, True) if trail_stop <= t.stop else (t.stop, False)
+
+    def _check_exit(self, pos: _Open, high: float, low: float,
+                    open_: Optional[float] = None) -> Optional[Tuple[float, str]]:
         """Did this bar take us out? Returns (exit_price_before_slippage, reason)."""
         t = pos.trade
+        # The stop resting in the market when this bar opened.
+        open_stop, open_trailing = self._stop_level(pos)
+        if t.trail > 0 and self.cfg.trail_mode == "same_bar":
+            self._update_trail(pos, high, low)
+        stop, trailing = self._stop_level(pos)
         if t.side > 0:
-            hit_stop, hit_target = low <= t.stop, high >= t.target
+            hit_stop, hit_target = low <= stop, high >= t.target
         else:
-            hit_stop, hit_target = high >= t.stop, low <= t.target
+            hit_stop, hit_target = high >= stop, low <= t.target
+
+        stop_fill = stop
+        if hit_stop and self.cfg.gap_fills and open_ is not None:
+            # Opened through the stop that was resting at the open: the order
+            # fills at the open, not the level. A stop the bar itself moved
+            # later (same_bar mode) was not in the market at the open.
+            gapped = open_ <= open_stop if t.side > 0 else open_ >= open_stop
+            if gapped:
+                stop_fill, trailing = open_, open_trailing
+        stop_word = "TRAIL" if trailing else "STOP"
 
         if hit_stop and hit_target:
             if self.cfg.ambiguous == "target_first":
                 return t.target, "TARGET*"
-            return t.stop, "STOP*"          # '*' marks an ambiguous bar
+            return stop_fill, stop_word + "*"   # '*' marks an ambiguous bar
         if hit_stop:
-            return t.stop, "STOP"
+            return stop_fill, stop_word
         if hit_target:
             return t.target, "TARGET"
+        if t.trail > 0 and self.cfg.trail_mode != "same_bar":
+            # Survived the bar: only now may its range move the stop.
+            self._update_trail(pos, high, low)
         return None
 
     def _close(self, pos: _Open, raw_exit: float, ts: pd.Timestamp, reason: str) -> Trade:
@@ -241,6 +313,9 @@ class Engine:
 
         fees = self.cfg.commission_per_trade * 2 + self.cfg.commission_per_share * t.shares * 2
         fees += inst.commission_per_unit * t.shares * 2
+        if self.cfg.commission_bps:
+            notional = (t.entry_price + fill) * t.shares * mult
+            fees += notional * self.cfg.commission_bps / 10_000
         if inst.reg_fees:
             # The sell side pays regulatory fees: the exit for a long, the entry for a short.
             fees += _sale_fees(t.shares, fill if t.side > 0 else t.entry_price)
@@ -349,7 +424,7 @@ class Engine:
                 # A position opened on THIS bar's close cannot be stopped on it.
                 if pos.trade.entry_time != ts or cfg.fill in ("next_open", "level"):
                     pos.bars_held += 1
-                    hit = self._check_exit(pos, float(h), float(lo_))
+                    hit = self._check_exit(pos, float(h), float(lo_), float(o))
                     if hit:
                         raw, reason = hit
                         if reason.endswith("*"):
@@ -456,7 +531,7 @@ class Engine:
             return None
 
         shares = self._size(equity, fill, stop)
-        if shares < 1:
+        if shares <= 0 or (shares < 1 and not cfg.fractional_units):
             diag["skipped_no_size"] += 1
             return None
 
@@ -474,6 +549,8 @@ class Engine:
             decision_note=str(row.get("_note", "")), features=feats,
         )
         trade.features["attempt"] = float(attempt)
+        if "trail" in row and pd.notna(row["trail"]) and float(row["trail"]) > 0:
+            trade.trail = float(row["trail"])
         entry_slip = abs(fill - raw_price) * shares * inst.multiplier
         return _Open(trade, entry_slip)
 
