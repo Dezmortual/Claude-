@@ -375,3 +375,18 @@ test("realistic costs: slippage is about half a typical spread, in the dataset's
   assert.ok(costsLookUnrealistic({ costs: { slippageTicks: 0, commissionValue: 0.05 } }));
   assert.ok(!costsLookUnrealistic({ costs: { slippageTicks: 2, commissionValue: 0.05 } }));
 });
+
+test("improver: explainable changes, chosen on development, confirmed on validation", async () => {
+  const { improve, variants } = await import("../js/improve.js");
+  const params = Object.fromEntries(sdl.parameters.map(p => [p.key, p.default]));
+  const vs = variants(sdl, params);
+  assert.ok(vs.length >= 10);
+  for (const v of vs) assert.equal(validateSDL(v.sdl).ok, true, v.id);
+  const r = improve(sdl, bars, params, [{ key: "pf", value: 1.5 }, { key: "dd", value: -15 }], { maxRounds: 3 });
+  assert.ok(r.tried >= vs.length);
+  for (const rd of r.rounds) { const p = rd.candidates.filter(c => c.picked); assert.ok(p.length <= 1); if (p[0]) assert.equal(p[0].tooFew, false); }
+  // Every accepted change must not get worse on validation than what it replaced.
+  assert.ok(r.best.changes.length === r.rounds.filter(x => x.picked).length);
+  const impossible = improve(sdl, bars, params, [{ key: "pf", value: 100 }], { maxRounds: 2 });
+  assert.equal(impossible.allMet, false);
+});

@@ -7,6 +7,7 @@ import * as L from "./lanes.js";
 import { POLICIES, evaluateEvidence, buildSegments } from "./research.js";
 import { validateSDL, gridSize, SDL_TEMPLATE, paramAxis } from "./sdl.js";
 import { lintPine, fixPineConstants } from "./pine-lint.js";
+import { GOALS as IMPROVE_GOALS } from "./improve.js";
 import { SOURCES as DATA_SOURCES, fetchBars, parseOhlcCsv, QUICK_DATA, BINANCE_SYMBOLS, symbolLabel, suggestSymbol, encodeDataset, parseDataText, builtinPrices, loadBuiltin, matchBuiltin, realisticCosts, costsLookUnrealistic } from "./data.js";
 import { convertPineToSDL } from "./pine-convert.js";
 import { EXAMPLES } from "./examples.js";
@@ -308,6 +309,7 @@ async function viewVersion([id, tab = "evidence"], q) {
     const fixed = (await db.all("versions", x => x.parentVersionId === v.id && x.changeCategory === "costs"))[0];
     acts.push(fixed ? `<a class="btn" href="#/version/${fixed.id}">Costs fixed in v${fixed.versionNumber} →</a>` : `<button class="btn primary" data-act="fixCosts" data-id="${id}">Fix costs &amp; retest (free)</button>`);
   }
+  if (v.backtestId && !["REJECTED", "ARCHIVED"].includes(st) && tab !== "improve") acts.push(`<a class="btn" href="#/version/${id}/improve">Improve it (free)</a>`);
   if (st === "BACKTESTED") acts.push(`<button class="btn primary" data-act="sendToValidation" data-id="${id}">Send to validation</button>`);
   if (st === "VALIDATED" && v.validationId && !(await db.get("validations", v.validationId))?.report) acts.push(`<button class="btn" data-act="askAgentReview" data-id="${id}">Ask AI to review (optional)</button>`);
   if (st === "DEFINED" && !v.backtestId) acts.push(`<button class="btn primary" data-act="backtestNow" data-id="${id}">Run backtest plan</button>`);
@@ -319,8 +321,8 @@ async function viewVersion([id, tab = "evidence"], q) {
   acts.push(`<button class="btn" data-act="humanDecision" data-id="${id}">Decision / override…</button>`);
   const crumbs = `<a href="#/library">Strategy Library</a>${c ? ` · <a href="#/campaign/${c.id}">${esc(c.name)}</a>` : ""}`;
   const head = header(`${esc(strategy?.name || v.sdl.strategy.name)} <span class="muted">v${v.versionNumber}</span>`, `${badge(st)} ${grade(v.evidenceGrade)} ${esc(VERSION_STATES[st] || "")}${v.contaminatedDatasetIds?.length ? ` · <span class="badge warn">! holdout contaminated</span>` : ""}`, acts.join(""), crumbs);
-  const t = tabs(base, [["evidence", "Evidence"], ["definition", "Definition"], ["source", "Pine source"], ["backtest", "Backtests"], ["robustness", "Robustness"], ["tradingview", "TradingView"], ["forward", "Forward"], ["decisions", "Decisions"], ["lineage", "Lineage"], ["runs", "Agent runs"]], tab);
-  const R = { evidence: tabEvidence, definition: tabDefinition, source: tabSource, backtest: tabBacktest, robustness: tabRobustness, tradingview: tabTradingView, forward: tabForward, decisions: tabDecisions, lineage: tabLineage, runs: tabRuns };
+  const t = tabs(base, [["evidence", "Evidence"], ["definition", "Definition"], ["source", "Pine source"], ["backtest", "Backtests"], ["robustness", "Robustness"], ["improve", "Improve"], ["tradingview", "TradingView"], ["forward", "Forward"], ["decisions", "Decisions"], ["lineage", "Lineage"], ["runs", "Agent runs"]], tab);
+  const R = { evidence: tabEvidence, definition: tabDefinition, source: tabSource, backtest: tabBacktest, robustness: tabRobustness, improve: tabImprove, tradingview: tabTradingView, forward: tabForward, decisions: tabDecisions, lineage: tabLineage, runs: tabRuns };
   return page(head, t + await (R[tab] || tabEvidence)(v, q, c));
 }
 
@@ -434,6 +436,37 @@ function tradeTable(trades, limit = 300) {
   return `<div class="table-wrap" style="max-height:420px;overflow:auto"><table class="t"><thead><tr><th>#</th><th>Dir</th><th>Entry</th><th class="num">Entry px</th><th>Exit</th><th class="num">Exit px</th><th class="num">Qty</th><th class="num">Fees</th><th class="num">Net</th><th class="num">MAE / MFE</th><th>Exit reason</th></tr></thead><tbody>${trades.slice(0, limit).map(t => `<tr><td>${t.id}</td><td>${t.dir}</td><td class="small">${isoMinute(t.entryTime)}</td><td class="num">${fmt(t.entryPrice, 2)}</td><td class="small">${isoMinute(t.exitTime)}</td><td class="num">${fmt(t.exitPrice, 2)}</td><td class="num">${fmt(t.qty, 4)}</td><td class="num">${fmt(t.fees, 2)}</td><td class="num ${t.net >= 0 ? "pass" : "fail"}">${fmt(t.net, 2)}</td><td class="num small">${t.mae !== undefined ? `${fmt(t.mae * 100, 1)}% / ${fmt(t.mfe * 100, 1)}%` : "—"}</td><td class="small">${esc(t.reason || "")}${t.boundary ? " (boundary)" : ""}</td></tr>`).join("")}</tbody></table></div>${trades.length > limit ? `<p class="small muted">Showing ${limit} of ${trades.length}; download CSV for all.</p>` : ""}`;
 }
 
+/* ---- Improve tab: goal-driven search over explainable changes (js/improve.js) ---- */
+const IMPROVE_DEFAULTS = { pf: 1.5, dd: -15 };
+const mfmt = (k, x) => (x === null || x === undefined || Number.isNaN(x) ? "—" : k === "profitFactor" ? (x === Infinity ? "∞" : x.toFixed(2)) : k === "tradeCount" ? String(x) : `${x.toFixed(1)}%`);
+async function tabImprove(v) {
+  if (!v.backtestId) return empty("Run the backtest first", "The improver starts from this version's tested settings.", "");
+  const arts = sortDesc(await db.all("artefacts", a => a.kind === "Improvement" && a.versionId === v.id));
+  const last = arts[0];
+  // Show the targets used last time, so the result below matches what's selected.
+  const chosen = last ? Object.fromEntries(last.data.goals.map(g => [g.key, g.value])) : IMPROVE_DEFAULTS;
+  const goalRows = Object.entries(IMPROVE_GOALS).map(([k, g]) => `<div class="q"><b>${esc(g.label)}</b><div class="chipset pick" data-goal="${k}">
+      <button type="button" class="chip big" data-goal="${k}" data-value="" aria-pressed="${!(k in chosen)}">Any</button>${g.presets.map(p => `<button type="button" class="chip big" data-goal="${k}" data-value="${p}" aria-pressed="${chosen[k] === p}">${esc(g.fmt(p))}</button>`).join("")}</div></div>`).join("");
+  const form = `<div class="card"><h2>What result do you want?</h2>
+    <p class="small muted">Tap a target for each thing you care about. The improver then tries specific changes one at a time: trend and ADX filters, trading hours, wider or tighter stops, profit targets, trailing stops, long-only or short-only. It keeps the best and repeats in rounds until your targets are met. Free, no AI.</p>
+    <div class="quick-setup section">${goalRows}
+      <div class="q"><b>How many rounds?</b><div class="chipset pick" data-goal="rounds">${[2, 4, 6].map(n => `<button type="button" class="chip big" data-goal="rounds" data-value="${n}" aria-pressed="${n === 4}">${n} rounds</button>`).join("")}</div></div></div>
+    <div class="row section"><button class="btn primary big" data-act="runImprove" data-id="${v.id}">Find improvements (free)</button></div>
+    <p class="small muted">Fair-test rules: changes are chosen on the first 60% of history and must also hold up on the next 20%. The final 20% is never used here. Each change must keep enough trades to mean something.</p></div>`;
+  if (!last) return form;
+  const r = last.data, best = r.best;
+  const met = r.goalsMet.map(g => `<tr><td>${esc(IMPROVE_GOALS[g.key].label)} ${esc(IMPROVE_GOALS[g.key].fmt(g.value))}</td><td>${g.dev ? `<span class="pass">✓</span>` : `<span class="fail">✕</span>`}</td><td>${g.val ? `<span class="pass">✓</span>` : `<span class="fail">✕</span>`}</td></tr>`).join("");
+  const metric = (label, k) => `<tr><td>${label}</td><td class="num">${mfmt(k, r.baseline.dev?.[k])} → <b>${mfmt(k, best.dev?.[k])}</b></td><td class="num">${mfmt(k, r.baseline.val?.[k])} → <b>${mfmt(k, best.val?.[k])}</b></td></tr>`;
+  const child = last.appliedVersionId ? await db.get("versions", last.appliedVersionId) : null;
+  const result = `<div class="card section"><div class="card-head"><h2>${r.allMet && !best.changes.length ? "Already meets these targets" : r.allMet ? "Targets met" : best.changes.length ? "Improved, but not every target was met" : "No change helped"}</h2><span class="right small muted">${timeAgo(last.createdAt)} · ${r.tried} variants tried</span></div>
+    ${best.changes.length ? `<ol class="small" style="padding-left:18px">${best.changes.map(c => `<li><b>${esc(c.label)}</b>: ${esc(c.why)}</li>`).join("")}</ol>` : (r.allMet ? `<p class="small">The strategy already reaches every target on both periods, so nothing was changed. Pick tougher targets to search for more.</p>` : `<p class="small">None of the changes improved the strategy on both periods. That is useful information: the idea itself may not have an edge on this market.</p>`)}
+    <div class="table-wrap section"><table class="t"><thead><tr><th>Target</th><th>First 60%</th><th>Next 20%</th></tr></thead><tbody>${met}</tbody></table></div>
+    <div class="table-wrap section"><table class="t"><thead><tr><th>Before → after</th><th class="num">First 60%</th><th class="num">Next 20%</th></tr></thead><tbody>${metric("Profit factor", "profitFactor")}${metric("Max drawdown", "maxDrawdown")}${metric("Win rate", "winRate")}${metric("Trades", "tradeCount")}${metric("Return", "totalReturn")}</tbody></table></div>
+    <p class="note warn small section"><b>Before you trust it:</b> ${r.tried} variants were tried, and the more you try, the more likely one looks good by luck. The improved version gets the full test again, but this version's final test period has already been used, so the real proof is a forward test on new prices.</p>
+    ${best.changes.length ? (child ? `<p class="section"><a class="btn primary" href="#/version/${child.id}">Open improved v${child.versionNumber} →</a></p>` : `<div class="row section"><button class="btn primary" data-act="applyImprove" data-id="${last.id}">Create improved v${v.versionNumber + 1} and run the full test</button></div>`) : ""}
+    <details class="section"><summary class="small">Every change tried, round by round</summary>${r.rounds.map(rd => `<h3 class="section">Round ${rd.round}${rd.picked ? `: kept “${esc(rd.picked)}”` : ": nothing improved"}</h3><div class="table-wrap"><table class="t"><thead><tr><th>Change</th><th class="num">PF 60% / 20%</th><th class="num">DD 60% / 20%</th><th class="num">Win 60% / 20%</th><th class="num">Trades</th></tr></thead><tbody>${rd.candidates.map(c => `<tr><td>${c.picked ? "✓ " : ""}${esc(c.label)}${c.tooFew ? ` <span class="faint small">(too few trades)</span>` : ""}</td><td class="num">${mfmt("profitFactor", c.dev?.profitFactor)} / ${mfmt("profitFactor", c.val?.profitFactor)}</td><td class="num">${mfmt("maxDrawdown", c.dev?.maxDrawdown)} / ${mfmt("maxDrawdown", c.val?.maxDrawdown)}</td><td class="num">${mfmt("winRate", c.dev?.winRate)} / ${mfmt("winRate", c.val?.winRate)}</td><td class="num">${c.dev?.tradeCount ?? "—"} / ${c.val?.tradeCount ?? "—"}</td></tr>`).join("")}</tbody></table></div>`).join("")}</details></div>`;
+  return form + result;
+}
 async function tabRobustness(v) {
   if (!v.validationId) return empty("Not validated yet", "The robustness suite runs after the Backtest Engineer recommends validation.", v.status === "BACKTESTED" ? `<button class="btn primary" data-act="sendToValidation" data-id="${v.id}">Send to validation</button>` : "");
   const val = await db.get("validations", v.validationId);
@@ -1169,6 +1202,23 @@ export const actions = {
     location.hash = `#/version/${child.id}/backtest`;
     toast(`v${child.versionNumber} created with ${note}. Re-running the full test.`);
   },
+  runImprove: async (el, d, ui) => {
+    const root = el.closest(".page") || document;
+    const goals = [...root.querySelectorAll('button.chip[data-goal][aria-pressed="true"]')].filter(b => b.dataset.goal !== "rounds" && b.dataset.value !== "").map(b => ({ key: b.dataset.goal, value: +b.dataset.value }));
+    if (!goals.length) return toast("Pick at least one target", "bad");
+    const rounds = +(root.querySelector('button.chip[data-goal="rounds"][aria-pressed="true"]')?.dataset.value || 4);
+    const label = el.textContent; el.textContent = "Trying changes…";
+    try {
+      const art = await L.improveVersion(d.id, goals, { maxRounds: rounds, progress: m => { el.textContent = m; } });
+      toast(art.data.allMet ? "Targets met — review the changes below" : art.data.best.changes.length ? "Found improvements — not every target met" : "No change helped");
+      await ui.render();
+    } finally { el.textContent = label; }
+  },
+  applyImprove: async (el, d) => {
+    const child = await L.createImprovedVersion(d.id);
+    location.hash = `#/version/${child.id}/backtest`;
+    toast(`v${child.versionNumber} created with the improvements. Running the full test.`);
+  },
   resumeQueue: async (el, d, ui) => { await db.setting("queuePaused", false); setPaused(false); const b = $("#pauseBtn"); if (b) { b.setAttribute("aria-pressed", "false"); b.textContent = "Pause queue"; } toast("Job queue resumed"); await ui.render(); },
   askAgentReview: async (el, d, ui) => { await L.askAgentReview(d.id); toast("Validator and judge are reviewing it (uses AI)"); await ui.render(); },
   convertPine: async el => {
@@ -1212,3 +1262,10 @@ export const actions = {
     });
   }
 };
+
+// Single-choice chip rows on the Improve tab (one target per goal, one rounds choice).
+if (typeof document !== "undefined") document.addEventListener("click", e => {
+  const b = e.target.closest("button.chip[data-goal]");
+  if (!b) return;
+  document.querySelectorAll(`button.chip[data-goal="${b.dataset.goal}"]`).forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+});

@@ -7,7 +7,7 @@ import { enqueue, runAgent, transition, handoff, artefact, registerHandlers, cha
 import { validateSDL, gridSize, longestLookback } from "./sdl.js";
 import { lintPine, fixPineConstants } from "./pine-lint.js";
 import { generatePine, PINE_GEN_VERSION } from "./pine-gen.js";
-import { fetchBars, integrityReport, datasetChecksum, inferTickSize, realisticCosts } from "./data.js";
+import { fetchBars, integrityReport, datasetChecksum, inferTickSize, realisticCosts, costsLookUnrealistic } from "./data.js";
 import { evaluateEvidence, POLICIES } from "./research.js";
 import { parseTradingViewTrades, parity as parityCheck } from "./tv.js";
 import { computeMetrics } from "./metrics.js";
@@ -733,6 +733,35 @@ export async function fixCostsAndRetest(versionId) {
   try { await freePine(child.id); } catch (_) {}
   await backtestNow(child.id);
   return { child, note: rc.note };
+}
+// Improver (free): search explainable changes toward the user's goals on development/validation only.
+export async function improveVersion(versionId, goals, { maxRounds = 4, progress = () => {} } = {}) {
+  const v = await db.get("versions", versionId);
+  if (!v.backtestId) throw new Error("Run the backtest first.");
+  const bars = await db.get("bars", v.datasetId);
+  const result = await research("improve", { sdl: v.sdl, bars, params: v.selectedParams || {}, goals, maxRounds }, progress);
+  const art = await artefact("Improvement", result, { campaignId: v.campaignId, strategyId: v.strategyId, versionId: v.id });
+  await db.audit("strategy.improver_run", { versionId: v.id, goals, tried: result.tried, allMet: result.allMet, changes: result.best.changes.map(c => c.id) }, HUMAN);
+  return art;
+}
+export async function createImprovedVersion(artefactId) {
+  const art = await db.get("artefacts", artefactId);
+  const v = await db.get("versions", art.versionId);
+  const best = art.data.best;
+  if (!best.changes.length) throw new Error("No improvement was found to apply.");
+  const sdl = structuredClone(best.sdl);
+  const ds = await db.get("datasets", v.datasetId);
+  if (costsLookUnrealistic(sdl)) { const bars = await db.get("bars", ds.id); const rc = realisticCosts(ds.symbol, ds.tickSize, bars?.c?.at(-1), sdl.costs); sdl.costs = { ...sdl.costs, slippageTicks: Math.max(rc.slippageTicks, sdl.costs.slippageTicks || 0), commissionValue: rc.commissionValue, tickSize: rc.tickSize }; }
+  const check = validateSDL(sdl);
+  if (!check.ok) throw new Error(check.errors.join("; "));
+  const strategy = await db.get("strategies", v.strategyId);
+  const c = await campaignOf(v.campaignId);
+  const child = await createVersion({ strategy, c, ds, sdl, output: { expectedFailureModes: [], backtestExpectations: null, ambiguityNotes: [] }, run: { id: "human" }, notes: [], warnings: check.warnings, ambiguityDefects: 0, parent: v, changeReason: "Improver: " + best.changes.map(x => x.label).join(" + "), changeCategory: "improve", changedFields: best.changes.map(x => x.id) });
+  await db.update("artefacts", art.id, { appliedVersionId: child.id });
+  await db.audit("strategy_version.improved", { parent: v.id, child: child.id, changes: best.changes.map(x => x.id), tried: art.data.tried }, HUMAN);
+  try { await freePine(child.id); } catch (_) {}
+  await backtestNow(child.id);
+  return child;
 }
 export async function backtestNow(versionId) {
   const v = await db.get("versions", versionId);
