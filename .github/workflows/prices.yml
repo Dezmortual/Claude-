@@ -4,7 +4,11 @@ name: Refresh built-in prices
 # (which cannot reach outside websites) has up-to-date prices, then redeploys the website.
 on:
   schedule:
+    # GitHub often delays or skips scheduled runs, so there are backups; they skip if today's prices are already in.
     - cron: "17 1 * * *"
+    - cron: "17 7 * * *"
+    - cron: "17 13 * * *"
+    - cron: "17 19 * * *"
   workflow_dispatch:
 
 permissions:
@@ -20,12 +24,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Already refreshed today?
+        id: fresh
+        run: |
+          last=$(grep -o '"updatedAt": *"[0-9-]*' arf-os-studio/platform/data/index.json | grep -o '[0-9-]*$' || true)
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$last" = "$(date -u +%F)" ]; then echo "skip=1" >> "$GITHUB_OUTPUT"; echo "Prices already refreshed today"; fi
       - uses: actions/setup-node@v4
+        if: steps.fresh.outputs.skip != '1'
         with:
           node-version: 22
       - name: Download prices
+        if: steps.fresh.outputs.skip != '1'
         run: node arf-os-studio/platform/tools/fetch-prices.mjs
       - name: Commit
+        if: steps.fresh.outputs.skip != '1'
         run: |
           git config user.name "price-refresh[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -34,6 +46,7 @@ jobs:
           git commit -m "Refresh built-in prices $(date -u +%F)"
           git push
       - name: Redeploy website
+        if: steps.fresh.outputs.skip != '1'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run pages.yml --ref "${GITHUB_REF_NAME}"
