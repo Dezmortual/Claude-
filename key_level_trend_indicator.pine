@@ -16,51 +16,55 @@ indicator("Key Level Trend Indicator", shorttitle="KLT", overlay=true, max_label
 // Inputs
 // ============================================================================
 grpLvl   = "1. Key Levels"
-usePD    = input.bool(true,  "Previous Day High / Low",  group=grpLvl)
-usePW    = input.bool(true,  "Previous Week High / Low", group=grpLvl)
-useAsia  = input.bool(true,  "Asia Session High / Low",  group=grpLvl)
-useLon   = input.bool(true,  "London Session High / Low", group=grpLvl)
-useSwing = input.bool(false, "Swing Highs / Lows",       group=grpLvl)
-swingLen = input.int(10, "Swing Strength (bars each side)", minval=2, group=grpLvl)
-tz       = input.string("America/New_York", "Session Time Zone", group=grpLvl)
-asiaSess = input.session("2000-0000", "Asia Session",   group=grpLvl)
-lonSess  = input.session("0200-0500", "London Session", group=grpLvl)
+usePD    = input.bool(true,  "Previous Day High / Low",  group=grpLvl, display=display.none)
+usePW    = input.bool(true,  "Previous Week High / Low", group=grpLvl, display=display.none)
+useAsia  = input.bool(false, "Asia Session High / Low",  group=grpLvl, display=display.none)
+useLon   = input.bool(false, "London Session High / Low", group=grpLvl, display=display.none)
+useSwing = input.bool(false, "Swing Highs / Lows",       group=grpLvl, display=display.none)
+swingLen = input.int(10, "Swing Strength (bars each side)", minval=2, group=grpLvl, display=display.none)
+tz       = input.string("America/New_York", "Session Time Zone", group=grpLvl, display=display.none)
+asiaSess = input.session("2000-0000", "Asia Session",   group=grpLvl, display=display.none)
+lonSess  = input.session("0200-0500", "London Session", group=grpLvl, display=display.none)
 
 grpTr     = "2. Trend"
-trendMode = input.string("HTF EMA", "Trend Method", options=["HTF EMA", "Market Structure", "Off"], group=grpTr)
-htfTf     = input.timeframe("240", "HTF Timeframe", group=grpTr)
-htfLen    = input.int(50, "HTF EMA Length", minval=1, group=grpTr)
-needSlope = input.bool(true, "Require EMA Slope in Trend Direction", group=grpTr)
-msLen     = input.int(5, "Structure Pivot Strength", minval=2, group=grpTr)
+trendMode = input.string("HTF EMA", "Trend Method", options=["HTF EMA", "Market Structure", "Off"], group=grpTr, display=display.none)
+htfTf     = input.timeframe("240", "HTF Timeframe", group=grpTr, display=display.none)
+htfLen    = input.int(50, "HTF EMA Length", minval=1, group=grpTr, display=display.none)
+needSlope = input.bool(true, "Require EMA Slope in Trend Direction", group=grpTr, display=display.none)
+msLen     = input.int(5, "Structure Pivot Strength", minval=2, group=grpTr, display=display.none)
 
 grpConf   = "3. Confirmation"
-confMode  = input.string("Rejection Wick", "Confirmation Candle", options=["Close Back Over Level", "Rejection Wick", "Engulfing"], group=grpConf)
-wickMin   = input.float(0.4, "Min Rejection Wick (% of candle range)", minval=0.0, maxval=1.0, step=0.05, group=grpConf)
-touchBars = input.int(3, "Level Touch Lookback (bars)", minval=1, maxval=20, group=grpConf)
-tolMult   = input.float(0.1, "Level Tolerance (x ATR)", minval=0.0, step=0.05, group=grpConf)
+confMode  = input.string("Rejection Wick", "Confirmation Candle", options=["Close Back Over Level", "Rejection Wick", "Engulfing"], group=grpConf, display=display.none)
+wickMin   = input.float(0.4, "Min Rejection Wick (% of candle range)", minval=0.0, maxval=1.0, step=0.05, group=grpConf, display=display.none)
+touchBars = input.int(3, "Level Touch Lookback (bars)", minval=1, maxval=20, group=grpConf, display=display.none)
+tolMult   = input.float(0.1, "Level Tolerance (x ATR)", minval=0.0, step=0.05, group=grpConf, display=display.none)
 
 grpRisk   = "4. Risk Management"
-rr        = input.float(2.0, "Target (R multiple)", minval=0.1, step=0.25, group=grpRisk)
-stopBuf   = input.float(0.1, "Stop Buffer Beyond Candle (x ATR)", minval=0.0, step=0.05, group=grpRisk)
-beAt      = input.float(1.0, "Move Stop to Breakeven at R (0 = off)", minval=0.0, step=0.25, group=grpRisk)
-atrLen    = input.int(14, "ATR Length", minval=1, group=grpRisk)
+rr        = input.float(1.5, "Target (R multiple)", minval=0.1, step=0.25, group=grpRisk, display=display.none)
+stopBuf   = input.float(0.25, "Stop Buffer Beyond Candle (x ATR)", minval=0.0, step=0.05, group=grpRisk, display=display.none)
+beAt      = input.float(0.0, "Move Stop to Breakeven at R (0 = off)", minval=0.0, step=0.25, group=grpRisk, display=display.none)
+atrLen    = input.int(14, "ATR Length", minval=1, group=grpRisk, display=display.none)
+minRisk   = input.float(0.5, "Min Stop Distance (x ATR)", minval=0.0, step=0.1, group=grpRisk, display=display.none)
 
 grpFlt    = "Filters"
-useTrSess = input.bool(true, "Only Enter During Trading Window", group=grpFlt)
-trSess    = input.session("0930-1600", "Trading Window", group=grpFlt)
-allowL    = input.bool(true, "Allow Longs",  group=grpFlt)
-allowS    = input.bool(true, "Allow Shorts", group=grpFlt)
+useTrSess = input.bool(true, "Only Enter During Trading Window", group=grpFlt, display=display.none)
+trSess    = input.session("0930-1600", "Trading Window", group=grpFlt, display=display.none)
+allowL    = input.bool(true, "Allow Longs",  group=grpFlt, display=display.none)
+allowS    = input.bool(true, "Allow Shorts", group=grpFlt, display=display.none)
+oncePerLvl = input.bool(true, "One Trade per Level per Day", group=grpFlt, display=display.none)
 
 grpVis    = "Visuals"
-showLvls  = input.bool(true, "Plot Key Levels", group=grpVis)
-showSessBg = input.bool(true, "Shade Asia / London Sessions", group=grpVis)
-showTrade = input.bool(true, "Draw Stop / Target Lines", group=grpVis)
-showTrBg  = input.bool(false, "Tint Background by Trend", group=grpVis)
+showLvls  = input.bool(true, "Plot Key Levels", group=grpVis, display=display.none)
+showLvlLbl = input.bool(true, "Name Levels at Right Edge", group=grpVis, display=display.none)
+showSessBg = input.bool(false, "Shade Asia / London Sessions", group=grpVis, display=display.none)
+showTrade = input.bool(true, "Draw Stop / Target Lines", group=grpVis, display=display.none)
+showTrBg  = input.bool(false, "Tint Background by Trend", group=grpVis, display=display.none)
 
 grpDash   = "Dashboard"
-showDash  = input.bool(true, "Show Dashboard", group=grpDash)
-dashPos   = input.string("Top Right", "Position", options=["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group=grpDash)
-dashSize  = input.string("Small", "Text Size", options=["Tiny", "Small", "Normal"], group=grpDash)
+showDash  = input.bool(true, "Show Dashboard", group=grpDash, display=display.none)
+dashFull  = input.bool(false, "Full Stats (off = compact)", group=grpDash, display=display.none)
+dashPos   = input.string("Bottom Left", "Position", options=["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group=grpDash, display=display.none)
+dashSize  = input.string("Tiny", "Text Size", options=["Tiny", "Small", "Normal"], group=grpDash, display=display.none)
 
 atr = ta.atr(atrLen)
 tol = atr * tolMult
@@ -184,8 +188,15 @@ for i = 0 to array.size(lvlVals) - 1
 
 bool inWindow = not useTrSess or not na(time(timeframe.period, trSess, tz))
 
-bool longSetup  = allowL and inWindow and trendLongOk  and bullConf and not na(longLvl)
-bool shortSetup = allowS and inWindow and trendShortOk and bearConf and not na(shortLvl)
+// Levels already traded today (a failed level is not retried until tomorrow).
+var array<float> usedLvls = array.new<float>()
+if timeframe.change("D")
+    array.clear(usedLvls)
+bool longFresh  = not oncePerLvl or not array.includes(usedLvls, longLvl)
+bool shortFresh = not oncePerLvl or not array.includes(usedLvls, shortLvl)
+
+bool longSetup  = allowL and inWindow and trendLongOk  and bullConf and not na(longLvl) and longFresh
+bool shortSetup = allowS and inWindow and trendShortOk and bearConf and not na(shortLvl) and shortFresh
 
 // ============================================================================
 // 4. Position + risk management (one trade at a time, entry on signal close)
@@ -272,6 +283,7 @@ if enterLong or enterShort
     pos    := enterLong ? 1 : -1
     entry  := close
     stop   := enterLong ? low - atr * stopBuf : high + atr * stopBuf
+    stop   := enterLong ? math.min(stop, entry - atr * minRisk) : math.max(stop, entry + atr * minRisk)
     risk   := math.abs(entry - stop)
     target := enterLong ? entry + risk * rr : entry - risk * rr
     beDone := false
@@ -280,6 +292,7 @@ if enterLong or enterShort
         tgtLn  := line.new(bar_index, target, bar_index, target, color=color.green, width=2)
         entLn  := line.new(bar_index, entry,  bar_index, entry,  color=color.gray,  style=line.style_dotted)
     string nm = enterLong ? longName : shortName
+    array.push(usedLvls, enterLong ? longLvl : shortLvl)
     label.new(bar_index, enterLong ? low : high, (enterLong ? "LONG\n" : "SHORT\n") + nm,
          style=enterLong ? label.style_label_up : label.style_label_down, size=size.small,
          color=enterLong ? color.new(color.green, 0) : color.new(color.red, 0), textcolor=color.white)
@@ -295,19 +308,33 @@ lvlPlot(float v, bool on) =>
     bool same = ta.change(v) == 0
     showLvls and on and same ? v : na
 
-plot(lvlPlot(pdh, usePD),     "PDH",      color.new(color.orange, 0),  2, plot.style_linebr)
-plot(lvlPlot(pdl, usePD),     "PDL",      color.new(color.orange, 0),  2, plot.style_linebr)
-plot(lvlPlot(pwh, usePW),     "PWH",      color.new(color.purple, 0),  2, plot.style_linebr)
-plot(lvlPlot(pwl, usePW),     "PWL",      color.new(color.purple, 0),  2, plot.style_linebr)
-plot(lvlPlot(asiaH, useAsia), "Asia H",   color.new(color.blue, 30),   1, plot.style_linebr)
-plot(lvlPlot(asiaL, useAsia), "Asia L",   color.new(color.blue, 30),   1, plot.style_linebr)
-plot(lvlPlot(lonH, useLon),   "London H", color.new(color.teal, 30),   1, plot.style_linebr)
-plot(lvlPlot(lonL, useLon),   "London L", color.new(color.teal, 30),   1, plot.style_linebr)
-plot(lvlPlot(swH, useSwing),  "Swing H",  color.new(color.gray, 30),   1, plot.style_linebr)
-plot(lvlPlot(swL, useSwing),  "Swing L",  color.new(color.gray, 30),   1, plot.style_linebr)
+plot(lvlPlot(pdh, usePD),     "PDH",      color.new(color.orange, 0),  2, plot.style_linebr, display=display.pane)
+plot(lvlPlot(pdl, usePD),     "PDL",      color.new(color.orange, 0),  2, plot.style_linebr, display=display.pane)
+plot(lvlPlot(pwh, usePW),     "PWH",      color.new(color.purple, 0),  2, plot.style_linebr, display=display.pane)
+plot(lvlPlot(pwl, usePW),     "PWL",      color.new(color.purple, 0),  2, plot.style_linebr, display=display.pane)
+plot(lvlPlot(asiaH, useAsia), "Asia H",   color.new(color.blue, 30),   1, plot.style_linebr, display=display.pane)
+plot(lvlPlot(asiaL, useAsia), "Asia L",   color.new(color.blue, 30),   1, plot.style_linebr, display=display.pane)
+plot(lvlPlot(lonH, useLon),   "London H", color.new(color.teal, 30),   1, plot.style_linebr, display=display.pane)
+plot(lvlPlot(lonL, useLon),   "London L", color.new(color.teal, 30),   1, plot.style_linebr, display=display.pane)
+plot(lvlPlot(swH, useSwing),  "Swing H",  color.new(color.gray, 30),   1, plot.style_linebr, display=display.pane)
+plot(lvlPlot(swL, useSwing),  "Swing L",  color.new(color.gray, 30),   1, plot.style_linebr, display=display.pane)
 
 bgcolor(showSessBg and inAsia ? color.new(color.blue, 90) : na, title="Asia Session")
 bgcolor(showSessBg and inLon  ? color.new(color.teal, 90) : na, title="London Session")
+// Short level names just right of the last candle, replacing the price-scale tags.
+var array<label> lvlLbls = array.new<label>()
+lvlCols = array.from(color.purple, color.purple, color.orange, color.orange, color.teal, color.teal, color.blue, color.blue, color.gray, color.gray)
+if barstate.islast
+    for lb in lvlLbls
+        label.delete(lb)
+    array.clear(lvlLbls)
+    if showLvls and showLvlLbl
+        for i = 0 to array.size(lvlVals) - 1
+            float lv = array.get(lvlVals, i)
+            if array.get(lvlOn, i) and not na(lv)
+                array.push(lvlLbls, label.new(bar_index + 3, lv, array.get(lvlNames, i), style=label.style_none,
+                     textcolor=array.get(lvlCols, i), size=size.small, textalign=text.align_left))
+
 bgcolor(showTrBg ? (trend == 1 ? color.new(color.green, 93) : trend == -1 ? color.new(color.red, 93) : na) : na, title="Trend Tint")
 
 // ============================================================================
@@ -334,25 +361,27 @@ addRow(int r, string lbl, string value, color valColor) =>
 
 if showDash and barstate.islast
     float  winRate = rate(wins, wins + losses)
+    float  needWin = 100.0 / (1.0 + rr)   // win rate needed to break even at this target
     float  openR   = pos == 1 ? (close - entry) / risk : pos == -1 ? (entry - close) / risk : na
     string trTxt   = trendMode == "Off" ? "OFF" : trend == 1 ? "UP" : trend == -1 ? "DOWN" : "NEUTRAL"
     color  trCol   = trend == 1 ? color.green : trend == -1 ? color.red : color.gray
-    string posTxt  = pos == 1 ? "LONG" : pos == -1 ? "SHORT" : "FLAT"
+    string posTxt  = pos == 1 ? "LONG " : pos == -1 ? "SHORT " : "FLAT"
+    if pos != 0
+        posTxt += str.tostring(openR, "+#.##;-#.##") + "R"
     color  posCol  = pos == 1 ? color.green : pos == -1 ? color.red : color.gray
+    string wrTxt   = (na(winRate) ? "n/a" : str.tostring(winRate, "#") + "%") + " (need " + str.tostring(needWin, "#") + "%)"
+    color  wrCol   = na(winRate) ? color.gray : winRate >= needWin ? color.green : color.red
 
-    table.cell(dash, 0, 0, "Key Level Trend", text_color=color.white, text_size=txtSize, bgcolor=color.new(color.blue, 40))
-    table.cell(dash, 1, 0, "", bgcolor=color.new(color.blue, 40))
-    table.merge_cells(dash, 0, 0, 1, 0)
-    addRow(1,  "Trend (" + trendMode + ")", trTxt, trCol)
-    addRow(2,  "Trading Window", inWindow ? "OPEN" : "CLOSED", inWindow ? color.green : color.gray)
-    addRow(3,  "Position", posTxt, posCol)
-    addRow(4,  "Stop / Target", pos != 0 ? str.tostring(stop, format.mintick) + " / " + str.tostring(target, format.mintick) : "-", color.white)
-    addRow(5,  "Open R", na(openR) ? "-" : str.tostring(openR, "+#.##;-#.##") + "R", rColor(openR))
-    addRow(6,  "Trades", str.tostring(trades), color.white)
-    addRow(7,  "W / L / BE", str.tostring(wins) + " / " + str.tostring(losses) + " / " + str.tostring(bes), color.white)
-    addRow(8,  "Win Rate (ex BE)", na(winRate) ? "n/a" : str.tostring(winRate, "#.#") + "%", na(winRate) ? color.gray : winRate >= 100 / (1 + rr) ? color.green : color.red)
-    addRow(9,  "Total R", str.tostring(totalR, "+#.##;-#.##") + "R", rColor(totalR))
-    addRow(10, "Max Drawdown", str.tostring(-maxDDR, "#.##") + "R", maxDDR > 0 ? color.red : color.gray)
+    table.clear(dash, 0, 0, 1, 10)
+    addRow(0, "Trend", trTxt, trCol)
+    addRow(1, "Position", posTxt, posCol)
+    addRow(2, "Win rate", wrTxt, wrCol)
+    addRow(3, "Total", str.tostring(totalR, "+#.##;-#.##") + "R / " + str.tostring(trades) + " trades", rColor(totalR))
+    if dashFull
+        addRow(4, "Stop / Target", pos != 0 ? str.tostring(stop, format.mintick) + " / " + str.tostring(target, format.mintick) : "-", color.white)
+        addRow(5, "W / L / BE", str.tostring(wins) + " / " + str.tostring(losses) + " / " + str.tostring(bes), color.white)
+        addRow(6, "Max Drawdown", str.tostring(-maxDDR, "#.##") + "R", maxDDR > 0 ? color.red : color.gray)
+        addRow(7, "Trading Window", inWindow ? "OPEN" : "CLOSED", inWindow ? color.green : color.gray)
 
 // ============================================================================
 // Alerts
