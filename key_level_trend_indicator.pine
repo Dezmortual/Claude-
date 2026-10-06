@@ -1,0 +1,363 @@
+//@version=6
+// Key Level + Trend + Confirmation indicator.
+// Built from the "simple strategy" video:
+//   1. Identify levels   - previous day/week highs & lows, Asia & London session
+//                          highs & lows, and recent swing highs/lows.
+//   2. Determine trend   - higher-timeframe EMA (default 4H) or market structure.
+//   3. Enter / exit      - wait for price to hit a KEY LEVEL, watch for a
+//                          confirmation candle, enter only in the trend direction.
+//   4. Risk management   - stop beyond the confirmation candle, fixed R:R target,
+//                          optional move to breakeven.
+// Signals fire on bar close and higher-timeframe data uses only closed bars,
+// so nothing repaints.
+indicator("Key Level Trend Indicator", shorttitle="KLT", overlay=true, max_labels_count=500, max_lines_count=500)
+
+// ============================================================================
+// Inputs
+// ============================================================================
+grpLvl   = "1. Key Levels"
+usePD    = input.bool(true,  "Previous Day High / Low",  group=grpLvl)
+usePW    = input.bool(true,  "Previous Week High / Low", group=grpLvl)
+useAsia  = input.bool(true,  "Asia Session High / Low",  group=grpLvl)
+useLon   = input.bool(true,  "London Session High / Low", group=grpLvl)
+useSwing = input.bool(false, "Swing Highs / Lows",       group=grpLvl)
+swingLen = input.int(10, "Swing Strength (bars each side)", minval=2, group=grpLvl)
+tz       = input.string("America/New_York", "Session Time Zone", group=grpLvl)
+asiaSess = input.session("2000-0000", "Asia Session",   group=grpLvl)
+lonSess  = input.session("0200-0500", "London Session", group=grpLvl)
+
+grpTr     = "2. Trend"
+trendMode = input.string("HTF EMA", "Trend Method", options=["HTF EMA", "Market Structure", "Off"], group=grpTr)
+htfTf     = input.timeframe("240", "HTF Timeframe", group=grpTr)
+htfLen    = input.int(50, "HTF EMA Length", minval=1, group=grpTr)
+needSlope = input.bool(true, "Require EMA Slope in Trend Direction", group=grpTr)
+msLen     = input.int(5, "Structure Pivot Strength", minval=2, group=grpTr)
+
+grpConf   = "3. Confirmation"
+confMode  = input.string("Rejection Wick", "Confirmation Candle", options=["Close Back Over Level", "Rejection Wick", "Engulfing"], group=grpConf)
+wickMin   = input.float(0.4, "Min Rejection Wick (% of candle range)", minval=0.0, maxval=1.0, step=0.05, group=grpConf)
+touchBars = input.int(3, "Level Touch Lookback (bars)", minval=1, maxval=20, group=grpConf)
+tolMult   = input.float(0.1, "Level Tolerance (x ATR)", minval=0.0, step=0.05, group=grpConf)
+
+grpRisk   = "4. Risk Management"
+rr        = input.float(2.0, "Target (R multiple)", minval=0.1, step=0.25, group=grpRisk)
+stopBuf   = input.float(0.1, "Stop Buffer Beyond Candle (x ATR)", minval=0.0, step=0.05, group=grpRisk)
+beAt      = input.float(1.0, "Move Stop to Breakeven at R (0 = off)", minval=0.0, step=0.25, group=grpRisk)
+atrLen    = input.int(14, "ATR Length", minval=1, group=grpRisk)
+
+grpFlt    = "Filters"
+useTrSess = input.bool(true, "Only Enter During Trading Window", group=grpFlt)
+trSess    = input.session("0930-1600", "Trading Window", group=grpFlt)
+allowL    = input.bool(true, "Allow Longs",  group=grpFlt)
+allowS    = input.bool(true, "Allow Shorts", group=grpFlt)
+
+grpVis    = "Visuals"
+showLvls  = input.bool(true, "Plot Key Levels", group=grpVis)
+showSessBg = input.bool(true, "Shade Asia / London Sessions", group=grpVis)
+showTrade = input.bool(true, "Draw Stop / Target Lines", group=grpVis)
+showTrBg  = input.bool(false, "Tint Background by Trend", group=grpVis)
+
+grpDash   = "Dashboard"
+showDash  = input.bool(true, "Show Dashboard", group=grpDash)
+dashPos   = input.string("Top Right", "Position", options=["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group=grpDash)
+dashSize  = input.string("Small", "Text Size", options=["Tiny", "Small", "Normal"], group=grpDash)
+
+atr = ta.atr(atrLen)
+tol = atr * tolMult
+
+// ============================================================================
+// 1. Key levels
+// ============================================================================
+// Closed higher-timeframe bars only: [1] with lookahead_on is the standard non-repainting form.
+pdh = request.security(syminfo.tickerid, "D", high[1], lookahead=barmerge.lookahead_on)
+pdl = request.security(syminfo.tickerid, "D", low[1],  lookahead=barmerge.lookahead_on)
+pwh = request.security(syminfo.tickerid, "W", high[1], lookahead=barmerge.lookahead_on)
+pwl = request.security(syminfo.tickerid, "W", low[1],  lookahead=barmerge.lookahead_on)
+
+// High/low of the most recently *completed* session (the running range is not used until it closes).
+sessionRange(string sess) =>
+    bool inS = not na(time(timeframe.period, sess, tz))
+    var float runH  = na
+    var float runL  = na
+    var float doneH = na
+    var float doneL = na
+    if inS and not inS[1]
+        runH := high
+        runL := low
+    else if inS
+        runH := math.max(runH, high)
+        runL := math.min(runL, low)
+    if not inS and inS[1]
+        doneH := runH
+        doneL := runL
+    [doneH, doneL, inS]
+
+[asiaH, asiaL, inAsia] = sessionRange(asiaSess)
+[lonH,  lonL,  inLon]  = sessionRange(lonSess)
+
+// Last confirmed swing high / low.
+var float swH = na
+var float swL = na
+ph = ta.pivothigh(high, swingLen, swingLen)
+pl = ta.pivotlow(low,  swingLen, swingLen)
+if not na(ph)
+    swH := ph
+if not na(pl)
+    swL := pl
+
+// Level table: value, name, enabled. Higher-timeframe levels first so they win ties.
+lvlVals  = array.from(pwh, pwl, pdh, pdl, lonH, lonL, asiaH, asiaL, swH, swL)
+lvlNames = array.from("PWH", "PWL", "PDH", "PDL", "London H", "London L", "Asia H", "Asia L", "Swing H", "Swing L")
+lvlOn    = array.from(usePW, usePW, usePD, usePD, useLon, useLon, useAsia, useAsia, useSwing, useSwing)
+
+// ============================================================================
+// 2. Trend
+// ============================================================================
+htfClose   = request.security(syminfo.tickerid, htfTf, close[1], lookahead=barmerge.lookahead_on)
+htfEma     = request.security(syminfo.tickerid, htfTf, ta.ema(close, htfLen)[1], lookahead=barmerge.lookahead_on)
+htfEmaPrev = request.security(syminfo.tickerid, htfTf, ta.ema(close, htfLen)[2], lookahead=barmerge.lookahead_on)
+
+// Market structure: higher highs + higher lows = up, lower highs + lower lows = down.
+var float lastPH = na
+var float prevPH = na
+var float lastPL = na
+var float prevPL = na
+msPH = ta.pivothigh(high, msLen, msLen)
+msPL = ta.pivotlow(low,  msLen, msLen)
+if not na(msPH)
+    prevPH := lastPH
+    lastPH := msPH
+if not na(msPL)
+    prevPL := lastPL
+    lastPL := msPL
+
+int trend = 0
+if trendMode == "HTF EMA"
+    bool up = htfClose > htfEma and (not needSlope or htfEma > htfEmaPrev)
+    bool dn = htfClose < htfEma and (not needSlope or htfEma < htfEmaPrev)
+    trend := up ? 1 : dn ? -1 : 0
+else if trendMode == "Market Structure"
+    bool up = lastPH > prevPH and lastPL > prevPL
+    bool dn = lastPH < prevPH and lastPL < prevPL
+    trend := up ? 1 : dn ? -1 : 0
+
+bool trendLongOk  = trendMode == "Off" or trend == 1
+bool trendShortOk = trendMode == "Off" or trend == -1
+
+// ============================================================================
+// 3. Confirmation at a key level
+// ============================================================================
+rng       = high - low
+lowerWick = math.min(open, close) - low
+upperWick = high - math.max(open, close)
+
+bool bullCandle = close > open
+bool bearCandle = close < open
+bool bullConf = switch confMode
+    "Rejection Wick" => bullCandle and rng > 0 and lowerWick / rng >= wickMin
+    "Engulfing"      => bullCandle and close[1] < open[1] and close >= open[1] and open <= close[1]
+    => bullCandle
+bool bearConf = switch confMode
+    "Rejection Wick" => bearCandle and rng > 0 and upperWick / rng >= wickMin
+    "Engulfing"      => bearCandle and close[1] > open[1] and close <= open[1] and open >= close[1]
+    => bearCandle
+
+lowN  = ta.lowest(low,  touchBars)
+highN = ta.highest(high, touchBars)
+priorClose = close[touchBars]
+
+// Support hit from above: price was above the level, dipped into it, and closed back above.
+// Resistance hit from below: the mirror image.
+float  longLvl   = na
+string longName  = ""
+float  shortLvl  = na
+string shortName = ""
+for i = 0 to array.size(lvlVals) - 1
+    float lv = array.get(lvlVals, i)
+    if array.get(lvlOn, i) and not na(lv)
+        if na(longLvl) and priorClose > lv and lowN <= lv + tol and close > lv
+            longLvl  := lv
+            longName := array.get(lvlNames, i)
+        if na(shortLvl) and priorClose < lv and highN >= lv - tol and close < lv
+            shortLvl  := lv
+            shortName := array.get(lvlNames, i)
+
+bool inWindow = not useTrSess or not na(time(timeframe.period, trSess, tz))
+
+bool longSetup  = allowL and inWindow and trendLongOk  and bullConf and not na(longLvl)
+bool shortSetup = allowS and inWindow and trendShortOk and bearConf and not na(shortLvl)
+
+// ============================================================================
+// 4. Position + risk management (one trade at a time, entry on signal close)
+// ============================================================================
+var int    pos     = 0
+var float  entry   = na
+var float  stop    = na
+var float  target  = na
+var float  risk    = na
+var bool   beDone  = false
+var line   stopLn  = na
+var line   tgtLn   = na
+var line   entLn   = na
+
+var int   trades   = 0
+var int   wins     = 0
+var int   losses   = 0
+var int   bes      = 0
+var float totalR   = 0.0
+var float peakR    = 0.0
+var float maxDDR   = 0.0
+
+bool exitLong   = false
+bool exitShort  = false
+float closedR   = na
+string exitWhy  = ""
+
+// Manage an open trade on bars after entry. Stop is checked before target (conservative).
+if pos == 1
+    if low <= stop
+        closedR := (math.min(open, stop) - entry) / risk
+        exitWhy := beDone ? "BE" : "SL"
+        exitLong := true
+    else if high >= target
+        closedR := (math.max(open, target) - entry) / risk
+        exitWhy := "TP"
+        exitLong := true
+    else if beAt > 0 and not beDone and high >= entry + risk * beAt
+        stop   := entry
+        beDone := true
+else if pos == -1
+    if high >= stop
+        closedR := (entry - math.max(open, stop)) / risk
+        exitWhy := beDone ? "BE" : "SL"
+        exitShort := true
+    else if low <= target
+        closedR := (entry - math.min(open, target)) / risk
+        exitWhy := "TP"
+        exitShort := true
+    else if beAt > 0 and not beDone and low <= entry - risk * beAt
+        stop   := entry
+        beDone := true
+
+if exitLong or exitShort
+    pos    := 0
+    trades += 1
+    totalR += closedR
+    if closedR > 0.05
+        wins += 1
+    else if closedR < -0.05
+        losses += 1
+    else
+        bes += 1
+    peakR  := math.max(peakR, totalR)
+    maxDDR := math.max(maxDDR, peakR - totalR)
+    if showTrade
+        line.set_x2(stopLn, bar_index)
+        line.set_x2(tgtLn,  bar_index)
+        line.set_x2(entLn,  bar_index)
+    label.new(bar_index, exitLong ? high : low, exitWhy + " " + str.tostring(closedR, "+#.##;-#.##") + "R",
+         style=exitLong ? label.style_label_down : label.style_label_up, size=size.tiny,
+         color=color.new(closedR > 0.05 ? color.green : closedR < -0.05 ? color.red : color.gray, 20), textcolor=color.white)
+else if pos != 0 and showTrade
+    line.set_x2(stopLn, bar_index)
+    line.set_y1(stopLn, stop)
+    line.set_y2(stopLn, stop)
+    line.set_x2(tgtLn,  bar_index)
+    line.set_x2(entLn,  bar_index)
+
+bool enterLong  = pos == 0 and longSetup
+bool enterShort = pos == 0 and shortSetup and not enterLong
+
+if enterLong or enterShort
+    pos    := enterLong ? 1 : -1
+    entry  := close
+    stop   := enterLong ? low - atr * stopBuf : high + atr * stopBuf
+    risk   := math.abs(entry - stop)
+    target := enterLong ? entry + risk * rr : entry - risk * rr
+    beDone := false
+    if showTrade
+        stopLn := line.new(bar_index, stop,   bar_index, stop,   color=color.red,   width=2)
+        tgtLn  := line.new(bar_index, target, bar_index, target, color=color.green, width=2)
+        entLn  := line.new(bar_index, entry,  bar_index, entry,  color=color.gray,  style=line.style_dotted)
+    string nm = enterLong ? longName : shortName
+    label.new(bar_index, enterLong ? low : high, (enterLong ? "LONG\n" : "SHORT\n") + nm,
+         style=enterLong ? label.style_label_up : label.style_label_down, size=size.small,
+         color=enterLong ? color.new(color.green, 0) : color.new(color.red, 0), textcolor=color.white)
+    alert((enterLong ? "KLT LONG " : "KLT SHORT ") + syminfo.ticker + " at " + str.tostring(entry, format.mintick)
+         + " | level " + nm + " | SL " + str.tostring(stop, format.mintick) + " | TP " + str.tostring(target, format.mintick),
+         alert.freq_once_per_bar_close)
+
+// ============================================================================
+// Plots
+// ============================================================================
+// Break the line where a level changes so old and new values are not joined.
+lvlPlot(float v, bool on) =>
+    bool same = ta.change(v) == 0
+    showLvls and on and same ? v : na
+
+plot(lvlPlot(pdh, usePD),     "PDH",      color.new(color.orange, 0),  2, plot.style_linebr)
+plot(lvlPlot(pdl, usePD),     "PDL",      color.new(color.orange, 0),  2, plot.style_linebr)
+plot(lvlPlot(pwh, usePW),     "PWH",      color.new(color.purple, 0),  2, plot.style_linebr)
+plot(lvlPlot(pwl, usePW),     "PWL",      color.new(color.purple, 0),  2, plot.style_linebr)
+plot(lvlPlot(asiaH, useAsia), "Asia H",   color.new(color.blue, 30),   1, plot.style_linebr)
+plot(lvlPlot(asiaL, useAsia), "Asia L",   color.new(color.blue, 30),   1, plot.style_linebr)
+plot(lvlPlot(lonH, useLon),   "London H", color.new(color.teal, 30),   1, plot.style_linebr)
+plot(lvlPlot(lonL, useLon),   "London L", color.new(color.teal, 30),   1, plot.style_linebr)
+plot(lvlPlot(swH, useSwing),  "Swing H",  color.new(color.gray, 30),   1, plot.style_linebr)
+plot(lvlPlot(swL, useSwing),  "Swing L",  color.new(color.gray, 30),   1, plot.style_linebr)
+
+bgcolor(showSessBg and inAsia ? color.new(color.blue, 90) : na, title="Asia Session")
+bgcolor(showSessBg and inLon  ? color.new(color.teal, 90) : na, title="London Session")
+bgcolor(showTrBg ? (trend == 1 ? color.new(color.green, 93) : trend == -1 ? color.new(color.red, 93) : na) : na, title="Trend Tint")
+
+// ============================================================================
+// Dashboard
+// ============================================================================
+rate(int w, int n) => n > 0 ? float(w) / n * 100.0 : na
+rColor(float x) => na(x) ? color.gray : x >= 0 ? color.green : color.red
+
+tblPos = switch dashPos
+    "Top Left"     => position.top_left
+    "Bottom Right" => position.bottom_right
+    "Bottom Left"  => position.bottom_left
+    => position.top_right
+txtSize = switch dashSize
+    "Tiny"   => size.tiny
+    "Normal" => size.normal
+    => size.small
+
+var table dash = table.new(tblPos, 2, 11, bgcolor=color.new(color.black, 20), border_color=color.new(color.gray, 60), border_width=1)
+
+addRow(int r, string lbl, string value, color valColor) =>
+    table.cell(dash, 0, r, lbl,   text_color=color.silver, text_size=txtSize, text_halign=text.align_left)
+    table.cell(dash, 1, r, value, text_color=valColor,     text_size=txtSize, text_halign=text.align_right)
+
+if showDash and barstate.islast
+    float  winRate = rate(wins, wins + losses)
+    float  openR   = pos == 1 ? (close - entry) / risk : pos == -1 ? (entry - close) / risk : na
+    string trTxt   = trendMode == "Off" ? "OFF" : trend == 1 ? "UP" : trend == -1 ? "DOWN" : "NEUTRAL"
+    color  trCol   = trend == 1 ? color.green : trend == -1 ? color.red : color.gray
+    string posTxt  = pos == 1 ? "LONG" : pos == -1 ? "SHORT" : "FLAT"
+    color  posCol  = pos == 1 ? color.green : pos == -1 ? color.red : color.gray
+
+    table.cell(dash, 0, 0, "Key Level Trend", text_color=color.white, text_size=txtSize, bgcolor=color.new(color.blue, 40))
+    table.cell(dash, 1, 0, "", bgcolor=color.new(color.blue, 40))
+    table.merge_cells(dash, 0, 0, 1, 0)
+    addRow(1,  "Trend (" + trendMode + ")", trTxt, trCol)
+    addRow(2,  "Trading Window", inWindow ? "OPEN" : "CLOSED", inWindow ? color.green : color.gray)
+    addRow(3,  "Position", posTxt, posCol)
+    addRow(4,  "Stop / Target", pos != 0 ? str.tostring(stop, format.mintick) + " / " + str.tostring(target, format.mintick) : "-", color.white)
+    addRow(5,  "Open R", na(openR) ? "-" : str.tostring(openR, "+#.##;-#.##") + "R", rColor(openR))
+    addRow(6,  "Trades", str.tostring(trades), color.white)
+    addRow(7,  "W / L / BE", str.tostring(wins) + " / " + str.tostring(losses) + " / " + str.tostring(bes), color.white)
+    addRow(8,  "Win Rate (ex BE)", na(winRate) ? "n/a" : str.tostring(winRate, "#.#") + "%", na(winRate) ? color.gray : winRate >= 100 / (1 + rr) ? color.green : color.red)
+    addRow(9,  "Total R", str.tostring(totalR, "+#.##;-#.##") + "R", rColor(totalR))
+    addRow(10, "Max Drawdown", str.tostring(-maxDDR, "#.##") + "R", maxDDR > 0 ? color.red : color.gray)
+
+// ============================================================================
+// Alerts
+// ============================================================================
+alertcondition(enterLong,  "Long Entry",  "KLT: Long entry on {{ticker}} at {{close}}")
+alertcondition(enterShort, "Short Entry", "KLT: Short entry on {{ticker}} at {{close}}")
+alertcondition(exitLong,   "Long Exit",   "KLT: Long exit on {{ticker}}")
+alertcondition(exitShort,  "Short Exit",  "KLT: Short exit on {{ticker}}")
