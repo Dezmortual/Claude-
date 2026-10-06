@@ -2,6 +2,7 @@
 // handoffs, budgets and protected-data scoping. Lane-specific logic lives in lanes.js.
 
 import * as db from "./db.js";
+import { deviceIdleMs, syncing } from "./sync.js";
 import { uuidv7, nowIso, hashObject } from "./util.js";
 import { AGENTS, byId as agentById, SHARED_POLICY } from "./agents.js";
 import { callWithRetry, ModelError, DEFAULT_MODEL } from "./model.js";
@@ -212,11 +213,18 @@ let handlers = {};
 export function registerHandlers(h) { handlers = h; }
 
 export async function enqueue(kind, { campaignId, lane, title, refs = {}, input = {}, deps = [], maxAttempts = 2, status = "QUEUED" }) {
-  const t = { id: uuidv7(), kind, campaignId, lane, title, refs, input, deps, status, attempts: 0, maxAttempts, createdAt: nowIso() };
+  const t = { id: uuidv7(), kind, campaignId, lane, title, refs, input, deps, status, attempts: 0, maxAttempts, device: db.DEVICE, createdAt: nowIso() };
   await db.put("tasks", t);
   pump();
   return t;
 }
+
+// With sync on, the same task list is on every device: each device runs the tasks it queued, and takes over
+// another device's only once that device has been silent long enough to be closed (5 min queued, 12 min running).
+const QUEUED_ADOPT_MS = 5 * 60_000, RUNNING_ADOPT_MS = 12 * 60_000;
+const ownerOf = t => t.device || t._d || db.DEVICE;
+const mine = t => ownerOf(t) === db.DEVICE;
+const adoptable = (t, ms) => !mine(t) && deviceIdleMs(ownerOf(t)) > ms && Date.now() - (t._m || 0) > ms;
 
 let running = new Map(), pumping = false, paused = false;
 const listeners = new Set();
@@ -230,8 +238,10 @@ export async function pump() {
   pumping = true;
   try {
     const conc = (await db.setting("concurrency")) || 2;
+    if (syncing()) for (const t of await db.all("tasks", t => t.status === "RUNNING" && !running.has(t.id) && adoptable(t, RUNNING_ADOPT_MS)))
+      await db.update("tasks", t.id, { status: "QUEUED", device: db.DEVICE, error: { code: "interrupted", message: "The device running this was closed; continued here" } });
     while (running.size < conc) {
-      const tasks = await db.all("tasks", t => t.status === "QUEUED" && !running.has(t.id));
+      const tasks = await db.all("tasks", t => t.status === "QUEUED" && !running.has(t.id) && (mine(t) || adoptable(t, QUEUED_ADOPT_MS)));
       const campaigns = Object.fromEntries((await db.all("campaigns")).map(c => [c.id, c]));
       const done = new Set((await db.all("tasks", t => t.status === "SUCCEEDED")).map(t => t.id));
       const next = tasks.filter(t => (!t.campaignId || campaigns[t.campaignId]?.status === "RUNNING") && t.deps.every(d => done.has(d)))
@@ -245,7 +255,7 @@ export async function pump() {
 async function execute(task) {
   const ctl = new AbortController();
   running.set(task.id, { task, ctl, startedAt: Date.now(), progress: "" });
-  await db.update("tasks", task.id, { status: "RUNNING", startedAt: nowIso(), attempts: (task.attempts || 0) + 1 });
+  await db.update("tasks", task.id, { status: "RUNNING", device: db.DEVICE, startedAt: nowIso(), attempts: (task.attempts || 0) + 1 });
   ping({ type: "task", task });
   try {
     const h = handlers[task.kind];
@@ -276,14 +286,14 @@ export async function cancelTask(id) {
   await db.audit("task.cancelled", { taskId: id }, { type: "human", id: "operator" });
 }
 export async function retryTask(id) {
-  await db.update("tasks", id, t => { t.status = "QUEUED"; t.attempts = 0; t.error = null; });
+  await db.update("tasks", id, t => { t.status = "QUEUED"; t.attempts = 0; t.error = null; t.device = db.DEVICE; });
   await db.audit("task.retried", { taskId: id }, { type: "human", id: "operator" });
   pump();
 }
-// After a reload, anything left RUNNING was interrupted: requeue it (jobs are idempotent).
+// After a reload, anything this device left RUNNING was interrupted: requeue it (jobs are idempotent).
 export async function recover() {
-  for (const t of await db.all("tasks", t => t.status === "RUNNING")) await db.update("tasks", t.id, { status: "QUEUED", error: { code: "interrupted", message: "Page closed while running; requeued" } });
-  for (const r of await db.all("agentRuns", r => r.status === "RUNNING")) await db.update("agentRuns", r.id, { status: "FAILED", error: { code: "interrupted", message: "Interrupted" } });
+  for (const t of await db.all("tasks", t => t.status === "RUNNING" && mine(t))) await db.update("tasks", t.id, { status: "QUEUED", error: { code: "interrupted", message: "Page closed while running; requeued" } });
+  for (const r of await db.all("agentRuns", r => r.status === "RUNNING" && (r._d || db.DEVICE) === db.DEVICE)) await db.update("agentRuns", r.id, { status: "FAILED", error: { code: "interrupted", message: "Interrupted" } });
 }
 
 export { AGENTS };

@@ -5,7 +5,8 @@ import { recover, pump, onActivity, activeTasks, setPaused } from "./workflow.js
 import "./lanes.js";
 import { installChartHover, clearCharts } from "./charts.js";
 import { esc, toast, $, IN_ARTIFACT } from "./ui-util.js";
-import { routes, actions, navCounts } from "./views.js";
+import { routes, actions, navCounts, syncText } from "./views.js";
+import { startSync, onSync } from "./sync.js";
 
 const NAV = [
   ["Operate", [["", "Command Centre"], ["campaigns", "Campaigns"], ["inbox", "Research Inbox", "inbox"], ["committee", "Committee", "committee"]]],
@@ -156,6 +157,14 @@ async function boot() {
   window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (Math.abs(window.innerWidth - lastW) > 60) { lastW = window.innerWidth; render(); } }, 250); });
   await render();
   pump();
+  // Claude app: mirror the workspace to the viewer's private cloud space so every device shows the same work.
+  if (IN_ARTIFACT) {
+    onSync(st => { const el = document.getElementById("syncStatus"); if (el) el.innerHTML = syncText(st); });
+    startSync().then(n => {
+      if (n) { toast(`Synced ${n} item${n === 1 ? "" : "s"} from your other devices`); render(); }
+      pump(); setInterval(pump, 60_000); // picks up tasks left by a device that has since closed
+    });
+  }
   // Forward deployments refresh every 15 minutes while the page is open.
   if (!IN_ARTIFACT) setInterval(async () => { const { autoCheckDeployments } = await import("./views.js"); autoCheckDeployments(); }, 15 * 60_000);
 }
