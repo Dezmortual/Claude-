@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "trading-desk": {
+      "source": {
+        "source": "github",
+        "repo": "aabrole/claude-trading-desk"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "trading-desk@trading-desk": true
+  }
+}
