@@ -40,12 +40,22 @@ function tx(db, store, mode, fn) {
   });
 }
 
-export async function put(store, obj) {
+// Each device has a stable id; every local write is stamped with when (_m) and where (_d) it happened,
+// so cross-device sync (sync.js) can tell newer from older copies of a record.
+export const DEVICE = (() => {
+  try { let d = localStorage.getItem("dq-device"); if (!d) { d = "d" + uuidv7().replace(/-/g, "").slice(-12); localStorage.setItem("dq-device", d); } return d; }
+  catch (_) { return "d" + uuidv7().replace(/-/g, "").slice(-12); }
+})();
+// Strictly increasing on this device (fractions of a millisecond break ties), never below the record's last stamp.
+let lastStamp = 0;
+export const stamp = (after = 0) => (lastStamp = Math.max(Date.now(), lastStamp + 0.001, after + 0.001));
+export async function put(store, obj, { remote = false } = {}) {
   if (!obj.id) obj.id = uuidv7();
+  if (!remote) { obj._m = stamp(obj._m || 0); obj._d = DEVICE; }
   const db = await open();
   if (!db) { memory[store].set(obj.id, structuredClone(obj)); }
   else await tx(db, store, "readwrite", s => s.put(obj));
-  emit(store, obj);
+  emit(store, obj, { remote });
   return obj;
 }
 export async function get(store, id) {
@@ -59,11 +69,11 @@ export async function all(store, filter) {
   const rows = !db ? [...memory[store].values()].map(v => structuredClone(v)) : await tx(db, store, "readonly", s => s.getAll());
   return filter ? rows.filter(filter) : rows;
 }
-export async function del(store, id) {
+export async function del(store, id, { remote = false } = {}) {
   const db = await open();
   if (!db) memory[store].delete(id);
   else await tx(db, store, "readwrite", s => s.delete(id));
-  emit(store, { id, deleted: true });
+  emit(store, { id, deleted: true }, { remote });
 }
 export async function update(store, id, patch) {
   const cur = await get(store, id);
@@ -76,7 +86,7 @@ export async function update(store, id, patch) {
 /* Events */
 const listeners = new Set();
 export function on(fn) { listeners.add(fn); return () => listeners.delete(fn); }
-function emit(store, obj) { for (const fn of listeners) try { fn(store, obj); } catch (_) {} }
+function emit(store, obj, meta = {}) { for (const fn of listeners) try { fn(store, obj, meta); } catch (_) {} }
 
 /* Audit (spec §17.4): append-only — there is no update or delete path for this store in the app. */
 export async function audit(type, data = {}, actor = { type: "system", id: "arf-os" }) {

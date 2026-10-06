@@ -15,6 +15,7 @@ import { SUITES, runPractice, createChallenger, promotionCheck, promote, rollbac
 import { lineChart, barChart, heatmap, fanChart } from "./charts.js";
 import { drawdownSeries, monthlyReturns } from "./metrics.js";
 import { esc, fmt, pct, isoDate, isoMinute, md, timeAgo, toast, download, copyText, readFile, $, IN_ARTIFACT } from "./ui-util.js";
+import { syncState, syncNow, syncing, forgetLocal } from "./sync.js";
 const CSV_HINT = "In TradingView: open the chart, then Export chart data (time, open, high, low, close, volume). Use standard candles.";
 
 /* ---------------- Shared bits ---------------- */
@@ -262,6 +263,18 @@ async function viewInbox(_, q) {
   const statuses = ["AWAITING_TRIAGE", "ACCEPTED", "PARKED", "REJECTED", "MERGED", "ALL"];
   const chips = `<div class="filters">${statuses.map(s => `<a class="chip" href="#/inbox?status=${s}" ${st === s ? 'style="background:var(--accent);color:var(--accent-ink);border-color:var(--accent)"' : ""}>${s.replace(/_/g, " ").toLowerCase()} (${s === "ALL" ? all.length : all.filter(i => i.status === s).length})</a>`).join("")}</div>`;
   return page(header("Research Inbox", "Idea cards from the Idea Scout, with indicator research attached. Accept to send an idea to strategy design."), chips + await ideasList(() => true, st === "ALL" ? null : st));
+}
+
+/* Sync status line (Policies & Admin; updated live by app.js). */
+export function syncText(st) {
+  const when = st.lastSync ? ` · last synced ${timeAgo(st.lastSync)}` : "";
+  const pend = st.pending ? ` · ${st.pending} change${st.pending === 1 ? "" : "s"} waiting to upload` : "";
+  if (st.status === "on") return `<span class="pass">✓</span> On: your work is synced across your devices${when}${pend}.`;
+  if (st.status === "syncing") return `<span class="pend">⟳</span> ${esc(st.detail || "Syncing…")}${pend}`;
+  if (st.status === "waiting") return `<span class="pend">⟳</span> ${esc(st.detail)}${pend}`;
+  if (st.status === "full") return `<span class="fail">!</span> ${esc(st.detail)}`;
+  if (st.status === "unavailable") return `<span class="faint">○</span> Off. ${esc(st.detail)}`;
+  return `<span class="faint">○</span> ${IN_ARTIFACT ? "Starting…" : "Off on the website."}`;
 }
 
 /* ======================= Strategy Library ======================= */
@@ -798,7 +811,8 @@ async function viewAdmin() {
       <dl class="kv section"><dt>Default model</dt><dd>${transport() === "claude" ? "Your Claude plan picks the model; each agent's setting maps to a quick, default or complex tier" : `Claude Opus 5.5 for every lane (change per agent on the <a href="#/agents">Agents</a> page)`}</dd><dt>Refusal fallback</dt><dd>Server-side <code>fallbacks: "default"</code> on Opus/Sonnet</dd><dt>Output contracts</dt><dd>JSON Schema via <code>output_config.format</code>, validated again client-side</dd></dl></div>
     <div class="card"><h2>Job queue</h2><label class="field">Concurrent tasks<input type="number" id="concurrency" min="1" max="6" value="${conc}"></label><div class="row section"><button class="btn" data-act="saveConcurrency">Save</button></div><p class="small muted">Research runner jobs execute in a Web Worker. Storage: ${persistent ? "IndexedDB (persistent in this browser)" : "<span class='fail'>memory only</span>"}.</p></div></div>
     <div class="card section"><h2>Gate policies</h2><p class="small muted">Policies are versioned and chosen per campaign. Thresholds are starting points, not promises of profitability (spec §12.6).</p><div class="table-wrap"><table class="t"><thead><tr><th>Threshold</th>${pol.map(p => `<th class="num">${esc(p.name)} <span class="faint">v${p.version}</span></th>`).join("")}</tr></thead><tbody>${keys.map(k => `<tr><td><code>${k}</code></td>${pol.map(p => `<td class="num">${esc(String(p[k]))}</td>`).join("")}</tr>`).join("")}</tbody></table></div></div>
-    <div class="grid g2 section"><div class="card"><h2>Workspace</h2><p class="small muted">Everything lives in this browser${IN_ARTIFACT ? ", in this artifact's own storage. Clearing site data or using another device starts empty, so export regularly" : ""}. Export to back up or move to another machine (the API key is never exported).</p><div class="row"><button class="btn" data-act="exportWorkspace">Export workspace</button><label class="btn">Import…<input type="file" accept=".json" id="importFile" hidden data-act-change="importWorkspace"></label><button class="btn danger" data-act="resetWorkspace">Reset workspace…</button></div></div>
+    <div class="card section"><h2>Sync across devices</h2><p class="small" id="syncStatus">${syncText(syncState())}</p>${IN_ARTIFACT ? `<p class="small muted">Your work is saved to your private space in your Claude account and appears on every device where you open DezQuant in the Claude app: phone, desktop app or claude.ai. Only you can see it. The API key, theme and queue settings stay on each device.</p><button class="btn small" data-act="syncNow">Sync now</button>` : `<p class="small muted">The website keeps work in this browser only. Open DezQuant in the Claude app to sync across your devices automatically, or use Export and Import below.</p>`}</div>
+    <div class="grid g2 section"><div class="card"><h2>Workspace</h2><p class="small muted">${IN_ARTIFACT ? "This device keeps a full copy, so DezQuant also works offline and catches up when you reconnect" : "Everything lives in this browser"}. Export to back up or move to another machine (the API key is never exported).</p><div class="row"><button class="btn" data-act="exportWorkspace">Export workspace</button><label class="btn">Import…<input type="file" accept=".json" id="importFile" hidden data-act-change="importWorkspace"></label><button class="btn danger" data-act="resetWorkspace">Reset workspace…</button></div></div>
     <div class="card"><h2>Boundaries</h2><ul class="small" style="margin:0;padding-left:18px"><li>No live orders, no exchange keys, no capital movement.</li><li>No agent can grant LIVE_APPROVED; that happens in a human-authorised process outside DezQuant.</li><li>Paper tests need human approval.</li><li>This is a research tool, not a fund, adviser or broker.</li></ul></div></div>`);
 }
 
@@ -1268,9 +1282,10 @@ export const actions = {
       m.querySelector("#imReplace").addEventListener("click", () => go(true));
     });
   },
+  syncNow: async el => { el.disabled = true; try { await syncNow(); toast("Synced"); } finally { el.disabled = false; } },
   resetWorkspace: async (el, d, ui) => {
-    ui.openModal(`<h2>Reset workspace</h2><p>This deletes every campaign, strategy, run and audit record in this browser. Export first if you want a backup.</p><label class="field">Type RESET to confirm<input type="text" id="rsText" autocomplete="off"></label><div class="foot"><button class="btn" data-act="closeModal">Cancel</button><button class="btn danger" id="rsGo">Delete everything</button></div>`, m => {
-      m.querySelector("#rsGo").addEventListener("click", async () => { if (m.querySelector("#rsText").value !== "RESET") return toast('Type RESET to confirm', "bad"); await db.clearAll(); ui.closeModal(); location.hash = "#/"; toast("Workspace reset"); });
+    ui.openModal(`<h2>Reset workspace</h2><p>This deletes every campaign, strategy, run and audit record in this browser.${syncing() ? " Your synced copy is not touched: it downloads again when DezQuant restarts." : ""} Export first if you want a backup.</p><label class="field">Type RESET to confirm<input type="text" id="rsText" autocomplete="off"></label><div class="foot"><button class="btn" data-act="closeModal">Cancel</button><button class="btn danger" id="rsGo">Delete everything</button></div>`, m => {
+      m.querySelector("#rsGo").addEventListener("click", async () => { if (m.querySelector("#rsText").value !== "RESET") return toast('Type RESET to confirm', "bad"); await db.clearAll(); forgetLocal(); ui.closeModal(); location.hash = "#/"; toast("Workspace reset"); });
     });
   }
 };
