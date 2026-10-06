@@ -3,11 +3,12 @@
 // Built from the "simple strategy" video:
 //   1. Identify levels   - previous day/week highs & lows, Asia & London session
 //                          highs & lows, and recent swing highs/lows.
-//   2. Determine trend   - higher-timeframe EMA (default 4H) or market structure.
+//   2. Determine trend   - higher-timeframe EMA (default 12H) or market structure.
 //   3. Enter / exit      - wait for price to hit a KEY LEVEL, watch for a
 //                          confirmation candle, enter only in the trend direction.
-//   4. Risk management   - stop beyond the confirmation candle, fixed R:R target,
-//                          optional move to breakeven.
+//   4. Risk management   - stop beyond the confirmation candle, then a wide ATR
+//                          trailing stop that lets trend moves run (or a fixed R target).
+// Defaults come from a 2022-2026 backtest on BTC/ETH/SOL/BNB/XRP 1h data with fees.
 // Signals fire on bar close and higher-timeframe data uses only closed bars,
 // so nothing repaints.
 indicator("Key Level Trend Indicator", shorttitle="KLT", overlay=true, max_labels_count=500, max_lines_count=500)
@@ -19,7 +20,7 @@ grpLvl   = "1. Key Levels"
 usePD    = input.bool(true,  "Previous Day High / Low",  group=grpLvl, display=display.none)
 usePW    = input.bool(true,  "Previous Week High / Low", group=grpLvl, display=display.none)
 useAsia  = input.bool(false, "Asia Session High / Low",  group=grpLvl, display=display.none)
-useLon   = input.bool(false, "London Session High / Low", group=grpLvl, display=display.none)
+useLon   = input.bool(true,  "London Session High / Low", group=grpLvl, display=display.none)
 useSwing = input.bool(false, "Swing Highs / Lows",       group=grpLvl, display=display.none)
 swingLen = input.int(10, "Swing Strength (bars each side)", minval=2, group=grpLvl, display=display.none)
 tz       = input.string("America/New_York", "Session Time Zone", group=grpLvl, display=display.none)
@@ -28,23 +29,25 @@ lonSess  = input.session("0200-0500", "London Session", group=grpLvl, display=di
 
 grpTr     = "2. Trend"
 trendMode = input.string("HTF EMA", "Trend Method", options=["HTF EMA", "Market Structure", "Off"], group=grpTr, display=display.none)
-htfTf     = input.timeframe("240", "HTF Timeframe", group=grpTr, display=display.none)
+htfTf     = input.timeframe("720", "HTF Timeframe", group=grpTr, display=display.none)
 htfLen    = input.int(50, "HTF EMA Length", minval=1, group=grpTr, display=display.none)
-needSlope = input.bool(true, "Require EMA Slope in Trend Direction", group=grpTr, display=display.none)
 msLen     = input.int(5, "Structure Pivot Strength", minval=2, group=grpTr, display=display.none)
 
 grpConf   = "3. Confirmation"
-confMode  = input.string("Rejection Wick", "Confirmation Candle", options=["Close Back Over Level", "Rejection Wick", "Engulfing"], group=grpConf, display=display.none)
+confMode  = input.string("Engulfing", "Confirmation Candle", options=["Close Back Over Level", "Rejection Wick", "Engulfing"], group=grpConf, display=display.none)
 wickMin   = input.float(0.4, "Min Rejection Wick (% of candle range)", minval=0.0, maxval=1.0, step=0.05, group=grpConf, display=display.none)
 touchBars = input.int(3, "Level Touch Lookback (bars)", minval=1, maxval=20, group=grpConf, display=display.none)
 tolMult   = input.float(0.1, "Level Tolerance (x ATR)", minval=0.0, step=0.05, group=grpConf, display=display.none)
 
 grpRisk   = "4. Risk Management"
-rr        = input.float(1.5, "Target (R multiple)", minval=0.1, step=0.25, group=grpRisk, display=display.none)
+exitMode  = input.string("Trailing Stop", "Exit Method", options=["Trailing Stop", "Fixed Target"], group=grpRisk, display=display.none)
+trailMult = input.float(10.0, "Trailing Stop Distance (x ATR)", minval=0.5, step=0.5, group=grpRisk, display=display.none)
+rr        = input.float(1.5, "Fixed Target (R multiple)", minval=0.1, step=0.25, group=grpRisk, display=display.none)
 stopBuf   = input.float(0.25, "Stop Buffer Beyond Candle (x ATR)", minval=0.0, step=0.05, group=grpRisk, display=display.none)
 beAt      = input.float(0.0, "Move Stop to Breakeven at R (0 = off)", minval=0.0, step=0.25, group=grpRisk, display=display.none)
 atrLen    = input.int(14, "ATR Length", minval=1, group=grpRisk, display=display.none)
-minRisk   = input.float(0.5, "Min Stop Distance (x ATR)", minval=0.0, step=0.1, group=grpRisk, display=display.none)
+feePct    = input.float(0.05, "Fees % per Side (for stats)", minval=0.0, step=0.01, group=grpRisk, display=display.none)
+minRisk   = input.float(1.0, "Min Stop Distance (x ATR)", minval=0.0, step=0.1, group=grpRisk, display=display.none)
 
 grpFlt    = "Filters"
 useTrSess = input.bool(true, "Only Enter During Trading Window", group=grpFlt, display=display.none)
@@ -137,8 +140,8 @@ if not na(msPL)
 
 int trend = 0
 if trendMode == "HTF EMA"
-    bool up = htfClose > htfEma and (not needSlope or htfEma > htfEmaPrev)
-    bool dn = htfClose < htfEma and (not needSlope or htfEma < htfEmaPrev)
+    bool up = htfClose > htfEma and htfEma > htfEmaPrev
+    bool dn = htfClose < htfEma and htfEma < htfEmaPrev
     trend := up ? 1 : dn ? -1 : 0
 else if trendMode == "Market Structure"
     bool up = lastPH > prevPH and lastPL > prevPL
@@ -207,6 +210,8 @@ var float  stop    = na
 var float  target  = na
 var float  risk    = na
 var bool   beDone  = false
+var float  ext     = na     // best price since entry, for the trailing stop
+bool useTrail = exitMode == "Trailing Stop"
 var line   stopLn  = na
 var line   tgtLn   = na
 var line   entLn   = na
@@ -225,12 +230,16 @@ float closedR   = na
 string exitWhy  = ""
 
 // Manage an open trade on bars after entry. Stop is checked before target (conservative).
+// The trail uses the previous bar's extreme and ATR, so it is fixed before this bar trades.
 if pos == 1
+    if useTrail
+        ext  := math.max(ext, high[1])
+        stop := math.max(stop, ext - trailMult * atr[1])
     if low <= stop
         closedR := (math.min(open, stop) - entry) / risk
-        exitWhy := beDone ? "BE" : "SL"
+        exitWhy := stop > entry ? "TS" : beDone ? "BE" : "SL"
         exitLong := true
-    else if high >= target
+    else if not useTrail and high >= target
         closedR := (math.max(open, target) - entry) / risk
         exitWhy := "TP"
         exitLong := true
@@ -238,11 +247,14 @@ if pos == 1
         stop   := entry
         beDone := true
 else if pos == -1
+    if useTrail
+        ext  := math.min(ext, low[1])
+        stop := math.min(stop, ext + trailMult * atr[1])
     if high >= stop
         closedR := (entry - math.max(open, stop)) / risk
-        exitWhy := beDone ? "BE" : "SL"
+        exitWhy := stop < entry ? "TS" : beDone ? "BE" : "SL"
         exitShort := true
-    else if low <= target
+    else if not useTrail and low <= target
         closedR := (entry - math.min(open, target)) / risk
         exitWhy := "TP"
         exitShort := true
@@ -251,6 +263,7 @@ else if pos == -1
         beDone := true
 
 if exitLong or exitShort
+    closedR -= 2 * feePct / 100 * entry / risk
     pos    := 0
     trades += 1
     totalR += closedR
@@ -264,7 +277,8 @@ if exitLong or exitShort
     maxDDR := math.max(maxDDR, peakR - totalR)
     if showTrade
         line.set_x2(stopLn, bar_index)
-        line.set_x2(tgtLn,  bar_index)
+        if not useTrail
+            line.set_x2(tgtLn, bar_index)
         line.set_x2(entLn,  bar_index)
     label.new(bar_index, exitLong ? high : low, exitWhy + " " + str.tostring(closedR, "+#.##;-#.##") + "R",
          style=exitLong ? label.style_label_down : label.style_label_up, size=size.tiny,
@@ -273,7 +287,8 @@ else if pos != 0 and showTrade
     line.set_x2(stopLn, bar_index)
     line.set_y1(stopLn, stop)
     line.set_y2(stopLn, stop)
-    line.set_x2(tgtLn,  bar_index)
+    if not useTrail
+        line.set_x2(tgtLn, bar_index)
     line.set_x2(entLn,  bar_index)
 
 bool enterLong  = pos == 0 and longSetup
@@ -285,11 +300,13 @@ if enterLong or enterShort
     stop   := enterLong ? low - atr * stopBuf : high + atr * stopBuf
     stop   := enterLong ? math.min(stop, entry - atr * minRisk) : math.max(stop, entry + atr * minRisk)
     risk   := math.abs(entry - stop)
-    target := enterLong ? entry + risk * rr : entry - risk * rr
+    target := useTrail ? na : enterLong ? entry + risk * rr : entry - risk * rr
     beDone := false
+    ext    := enterLong ? high : low
     if showTrade
         stopLn := line.new(bar_index, stop,   bar_index, stop,   color=color.red,   width=2)
-        tgtLn  := line.new(bar_index, target, bar_index, target, color=color.green, width=2)
+        if not useTrail
+            tgtLn := line.new(bar_index, target, bar_index, target, color=color.green, width=2)
         entLn  := line.new(bar_index, entry,  bar_index, entry,  color=color.gray,  style=line.style_dotted)
     string nm = enterLong ? longName : shortName
     array.push(usedLvls, enterLong ? longLvl : shortLvl)
@@ -297,7 +314,7 @@ if enterLong or enterShort
          style=enterLong ? label.style_label_up : label.style_label_down, size=size.small,
          color=enterLong ? color.new(color.green, 0) : color.new(color.red, 0), textcolor=color.white)
     alert((enterLong ? "KLT LONG " : "KLT SHORT ") + syminfo.ticker + " at " + str.tostring(entry, format.mintick)
-         + " | level " + nm + " | SL " + str.tostring(stop, format.mintick) + " | TP " + str.tostring(target, format.mintick),
+         + " | level " + nm + " | SL " + str.tostring(stop, format.mintick) + (useTrail ? " | trailing stop" : " | TP " + str.tostring(target, format.mintick)),
          alert.freq_once_per_bar_close)
 
 // ============================================================================
@@ -361,7 +378,7 @@ addRow(int r, string lbl, string value, color valColor) =>
 
 if showDash and barstate.islast
     float  winRate = rate(wins, wins + losses)
-    float  needWin = 100.0 / (1.0 + rr)   // win rate needed to break even at this target
+    float  avgR    = trades > 0 ? totalR / trades : na
     float  openR   = pos == 1 ? (close - entry) / risk : pos == -1 ? (entry - close) / risk : na
     string trTxt   = trendMode == "Off" ? "OFF" : trend == 1 ? "UP" : trend == -1 ? "DOWN" : "NEUTRAL"
     color  trCol   = trend == 1 ? color.green : trend == -1 ? color.red : color.gray
@@ -369,8 +386,8 @@ if showDash and barstate.islast
     if pos != 0
         posTxt += str.tostring(openR, "+#.##;-#.##") + "R"
     color  posCol  = pos == 1 ? color.green : pos == -1 ? color.red : color.gray
-    string wrTxt   = (na(winRate) ? "n/a" : str.tostring(winRate, "#") + "%") + " (need " + str.tostring(needWin, "#") + "%)"
-    color  wrCol   = na(winRate) ? color.gray : winRate >= needWin ? color.green : color.red
+    string wrTxt   = (na(winRate) ? "n/a" : str.tostring(winRate, "#") + "%") + " · avg " + (na(avgR) ? "-" : str.tostring(avgR, "+#.##;-#.##") + "R")
+    color  wrCol   = rColor(avgR)
 
     table.clear(dash, 0, 0, 1, 10)
     addRow(0, "Trend", trTxt, trCol)
@@ -378,7 +395,7 @@ if showDash and barstate.islast
     addRow(2, "Win rate", wrTxt, wrCol)
     addRow(3, "Total", str.tostring(totalR, "+#.##;-#.##") + "R / " + str.tostring(trades) + " trades", rColor(totalR))
     if dashFull
-        addRow(4, "Stop / Target", pos != 0 ? str.tostring(stop, format.mintick) + " / " + str.tostring(target, format.mintick) : "-", color.white)
+        addRow(4, useTrail ? "Trailing Stop" : "Stop / Target", pos == 0 ? "-" : useTrail ? str.tostring(stop, format.mintick) : str.tostring(stop, format.mintick) + " / " + str.tostring(target, format.mintick), color.white)
         addRow(5, "W / L / BE", str.tostring(wins) + " / " + str.tostring(losses) + " / " + str.tostring(bes), color.white)
         addRow(6, "Max Drawdown", str.tostring(-maxDDR, "#.##") + "R", maxDDR > 0 ? color.red : color.gray)
         addRow(7, "Trading Window", inWindow ? "OPEN" : "CLOSED", inWindow ? color.green : color.gray)
