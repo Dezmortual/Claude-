@@ -19,6 +19,9 @@ Run everything from inside `trading-desk/`:
 - `python3 sweep/run_backtest.py` then `python3 sweep/audit.py`: the Sweep port
   of `sweep_indicator.pine` on hourly Binance candles (cached in `core/cache/`,
   never committed); results in `sweep/README.md`
+- `python3 trend/run_backtest.py`, `trend/audit.py`, `trend/robustness.py`: three
+  published strategies (Faber SMA, crypto time-series momentum, dual momentum)
+  tested after their publication dates; results in `trend/README.md`
 - `--arms rules gated ta` adds a TradingAgents filter (`tradingagents_gate/`):
   needs `bash tradingagents_gate/setup.sh` and `ANTHROPIC_API_KEY` in `.env`. It
   costs money per decision: price it with `--ta-estimate` and always pass
