@@ -5,7 +5,7 @@ run_backtest.py  --  the Sweep strategy on hourly crypto.
   python3 sweep/run_backtest.py
   python3 sweep/run_backtest.py --symbols SOLUSDT --trail-mode same_bar
 
-Candles come from Binance's public mirror (sweep/data.py), no key needed. The
+Candles come from Binance's public mirror (core/binance_data.py), no key needed. The
 default coins are ten large Binance USDT pairs chosen today, which flatters any
 result a little: coins that died or shrank since 2020 are not in the list.
 
@@ -25,9 +25,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "core"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-import data                                                       # noqa: E402
+import binance_data as data                                                       # noqa: E402
 from strategy import SweepConfig, costs, simulate                 # noqa: E402
 
 OUT = Path(__file__).resolve().parent / "out"

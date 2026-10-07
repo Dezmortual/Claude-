@@ -47,6 +47,9 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
     p.add_argument("--symbols", nargs="+", default=["BTC-USD", "ETH-USD", "SOL-USD"])
     p.add_argument("--start", default="2014-01-01")
+    p.add_argument("--source", default="yahoo", choices=["yahoo", "binance"],
+                   help="binance: daily USDT-pair candles, symbols like SOLUSDT")
+    p.add_argument("--out", default=None, help="output folder (default donchian/out)")
     p.add_argument("--end", default=None)
     p.add_argument("--split", default="2025-01-01",
                    help="train/test boundary. Both halves are always reported.")
@@ -171,11 +174,30 @@ def estimate_ta(plans, rules_tdf, ta_from) -> None:
     print("  to run it: --arms rules gated ta --ta-max-calls %d" % hi_calls)
 
 
+def fetch_binance(symbols, start, end) -> dict:
+    sys.path.insert(0, str(ROOT / "core"))
+    import binance_data
+    out = {}
+    for sym in symbols:
+        df = binance_data.candles(sym, start, "1d")
+        if end:
+            df = df[df.index < pd.Timestamp(end, tz="UTC")]
+        if len(df):
+            out[sym] = df[["open", "high", "low", "close", "volume"]]
+    return out
+
+
 def main() -> None:
+    global OUT
     args = parse_args()
+    if args.out:
+        OUT = Path(args.out).resolve()
     OUT.mkdir(exist_ok=True)
     print("=== data ===")
-    raw = fetch(args.symbols, args.start, args.end)
+    if args.source == "binance":
+        raw = fetch_binance(args.symbols, args.start, args.end)
+    else:
+        raw = fetch(args.symbols, args.start, args.end)
     if not raw:
         sys.exit("no data fetched")
     # Keep the exact bars used, so audit.py checks trades against the same data.

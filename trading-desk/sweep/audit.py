@@ -25,7 +25,7 @@ from pathlib import Path
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent
-OUT, CACHE = HERE / "out", HERE / "cache"
+OUT, CACHE = HERE / "out", HERE.parent / "core" / "cache"
 ATR_LEN, EMA_LEN, TRAIL, WARMUP = 14, 4, 0.005, 200
 
 

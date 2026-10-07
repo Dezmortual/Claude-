@@ -1,11 +1,11 @@
 """
-data.py  --  hourly spot candles from Binance's public market-data mirror.
+binance_data.py  --  spot candles from Binance's public market-data mirror.
 
 data-api.binance.vision serves the same klines as the exchange API with no key
-and no account. Candles are cached per symbol in sweep/cache/ and only the
-missing tail is fetched on a rerun.
+and no account. Candles are cached per symbol and interval in core/cache/
+and only the missing tail is fetched on a rerun.
 
-Each row is one 1-hour bar, indexed by its OPEN time in UTC. Volume is in the
+Each row is one bar, indexed by its OPEN time in UTC. Volume is in the
 base asset, which is what TradingView's BINANCE:<PAIR> charts use for VWAP.
 """
 
@@ -20,7 +20,7 @@ import pandas as pd
 
 URL = "https://data-api.binance.vision/api/v3/klines?symbol={sym}&interval={iv}&startTime={start}&limit=1000"
 CACHE = Path(__file__).resolve().parent / "cache"
-STEP_MS = {"1h": 3_600_000, "15m": 900_000, "5m": 300_000}
+STEP_MS = {"1d": 86_400_000, "1h": 3_600_000, "15m": 900_000, "5m": 300_000}
 
 
 def _get(url: str) -> list:

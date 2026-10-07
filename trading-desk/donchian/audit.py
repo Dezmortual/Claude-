@@ -129,7 +129,11 @@ def audit_trade(t, bars: pd.DataFrame, ind: pd.DataFrame, gated: bool) -> list:
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--arms", nargs="+", default=["rules", "gated"])
+    p.add_argument("--out", default=None, help="folder run_backtest.py wrote to")
     args = p.parse_args()
+    global OUT
+    if args.out:
+        OUT = Path(args.out).resolve()
 
     bars, ind = {}, {}
     total_fail = 0
