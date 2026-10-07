@@ -7,6 +7,11 @@ and prints them side by side.
 
   python3 run_backtest.py --symbols SPY QQQ --start 2024-01-01 --arms rules gated
   python3 run_backtest.py --arms rules gated jev --max-jev-calls 500
+  python3 run_backtest.py --arms rules gated ta --start 2026-06-01 --ta-estimate
+
+The ta arm is TradingAgents on Anthropic models (tradingagents_gate/README.md).
+It is asked once per symbol per session, about the session before, because an
+ORB entry happens before that day's daily bar exists.
 
 The candidate set is identical across arms by construction: the strategy finds
 the breakouts, and the arms only differ in which ones they agree to take.
@@ -30,6 +35,7 @@ import metrics as M                                    # noqa: E402
 from data import DEFAULT_UNIVERSE, fetch_universe      # noqa: E402
 from decision import GateDecider, JevDecider, RuleDecider  # noqa: E402
 from engine import Engine, EngineConfig                # noqa: E402
+import ta_decider as TA                                 # noqa: E402
 from strategy import ORBConfig, ORBStrategy            # noqa: E402
 
 OUT = Path(__file__).resolve().parent / "out"
@@ -54,7 +60,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--start", default="2023-01-01")
     p.add_argument("--end", default=None)
     p.add_argument("--arms", nargs="+", default=["rules", "gated"],
-                   choices=["rules", "gated", "jev"])
+                   choices=["rules", "gated", "jev", "ta"])
 
     g = p.add_argument_group("strategy")
     g.add_argument("--or-minutes", type=int, default=15)
@@ -93,6 +99,7 @@ def parse_args() -> argparse.Namespace:
                    help="concurrent Jev calls. 0 disables prefetch (sequential). "
                         "Rate limit is 1,200/min, so ~5 workers is the ceiling.")
 
+    TA.add_ta_args(p)
     p.add_argument("--tag", default="", help="suffix for output filenames")
     return p.parse_args()
 
@@ -133,6 +140,10 @@ def main() -> None:
     load_env(ROOT / ".env")
     args = parse_args()
     plans, strat, n_candidates = build_plans(args)
+    if args.trade_from:
+        # --start already bounds every arm; --trade-from narrows them all further.
+        TA.restrict_window(plans, args.trade_from)
+        n_candidates = sum(int((pl["signal"] != "").sum()) for pl in plans.values())
 
     ecfg = EngineConfig(
         starting_equity=args.equity, risk_pct=args.risk_pct,
@@ -146,6 +157,12 @@ def main() -> None:
             decider = RuleDecider()
         elif arm == "gated":
             decider = GateDecider(strat.gates())
+        elif arm == "ta":
+            decider = TA.build_ta_decider(
+                args, intraday=True,
+                log_path=OUT / f"decisions_ta{'_' + args.tag if args.tag else ''}.jsonl")
+            if not TA.prepare_ta(decider, plans, strat, args):
+                continue
         else:
             if n_candidates > args.max_jev_calls and not args.jev_offline:
                 print(f"[jev] {n_candidates} candidates exceeds --max-jev-calls "
@@ -208,6 +225,9 @@ def main() -> None:
     with open(OUT / f"summary{tag}.json", "w") as f:
         json.dump(results, f, indent=2, default=str)
     print(f"\nsummary -> {OUT / f'summary{tag}.json'}")
+    if "ta" in results:
+        print("\ncompare ta to GATED, not to rules: any filter raises a win rate.")
+        print(TA.CONTAMINATION_NOTE)
 
 
 if __name__ == "__main__":

@@ -10,13 +10,19 @@ Data comes from Yahoo via yfinance, so no API key is needed. The default split
 is 2025-01-01 because the TradingView strategy this ports is named
 "OOS 2025-2026": everything before that is the half it was developed on.
 
-The model arm is not wired yet, on purpose. Understand the first two arms first.
+The ta arm asks TradingAgents (Anthropic models) about each candidate. It costs
+real money per run and needs tradingagents_gate/setup.sh plus ANTHROPIC_API_KEY;
+see tradingagents_gate/README.md. With it, every arm trades only from
+--trade-from (default: --split), so all three see the same candidates.
+
+  python3 donchian/run_backtest.py --arms rules gated ta --ta-estimate
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -30,6 +36,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import metrics as M                                              # noqa: E402
 from decision import GateDecider, RuleDecider                     # noqa: E402
 from engine import CRYPTO, Engine, EngineConfig                   # noqa: E402
+import ta_decider as TA                                           # noqa: E402
 
 from strategy import DonchianConfig, DonchianStrategy             # noqa: E402
 
@@ -44,7 +51,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--split", default="2025-01-01",
                    help="train/test boundary. Both halves are always reported.")
     p.add_argument("--arms", nargs="+", default=["rules", "gated"],
-                   choices=["rules", "gated"])
+                   choices=["rules", "gated", "ta"])
     # Pine defaults: $25k, 0.25% risk, 50% max notional, 0.05% commission per side.
     p.add_argument("--equity", type=float, default=25_000)
     p.add_argument("--risk-pct", type=float, default=0.0025)
@@ -53,7 +60,21 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--slippage-bps", type=float, default=2.0)
     p.add_argument("--fill", default="close", choices=["close", "next_open"])
     p.add_argument("--trail-mode", default="causal", choices=["causal", "same_bar"])
-    return p.parse_args()
+    TA.add_ta_args(p)
+    args = p.parse_args()
+    if "ta" in args.arms and not args.trade_from:
+        args.trade_from = args.split
+    return args
+
+
+def load_env(path: Path) -> None:
+    if not path.exists():
+        return
+    for raw in path.read_text().splitlines():
+        raw = raw.strip()
+        if raw and not raw.startswith("#") and "=" in raw:
+            k, v = raw.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
 
 
 def fetch(symbols, start, end) -> dict:
@@ -107,6 +128,7 @@ def line(tag: str, tdf: pd.DataFrame) -> str:
 
 
 def main() -> None:
+    load_env(ROOT / ".env")
     args = parse_args()
     OUT.mkdir(exist_ok=True)
     print("=== data ===")
@@ -119,9 +141,10 @@ def main() -> None:
 
     strat = DonchianStrategy(DonchianConfig())
     plans, n = {}, 0
-    print("\n=== signals ===")
+    print("\n=== signals%s ===" % (" from %s" % args.trade_from if args.trade_from else ""))
     for sym, df in raw.items():
         plan = strat.prepare(df)
+        TA.restrict_window({sym: plan}, args.trade_from)
         longs = int((plan["signal"] == "long").sum())
         shorts = int((plan["signal"] == "short").sum())
         n += longs + shorts
@@ -145,7 +168,15 @@ def main() -> None:
     summary = {}
     cut = pd.Timestamp(args.split, tz="UTC")
     for arm in args.arms:
-        decider = RuleDecider() if arm == "rules" else GateDecider(strat.gates())
+        if arm == "rules":
+            decider = RuleDecider()
+        elif arm == "gated":
+            decider = GateDecider(strat.gates())
+        else:
+            decider = TA.build_ta_decider(args, intraday=False,
+                                          log_path=OUT / "decisions_ta.jsonl")
+            if not TA.prepare_ta(decider, plans, strat, args):
+                continue
         engine = Engine(ecfg)
         engine.set_feature_cols(strat.feature_cols)
         res = engine.run(plans, strat, decider, verbose=False)
@@ -179,6 +210,11 @@ def main() -> None:
                  res.diagnostics["skipped_max_positions"], res.diagnostics["skipped_no_size"]))
         if arm == "gated":
             print("  vetoes %s" % decider.stats()["veto_breakdown"])
+        if arm == "ta":
+            st = decider.stats()
+            print("  ratings %s  runs %d  cached %d  errors %d  cost this run $%.2f"
+                  % (st["ratings"], st["runs"], st["cache_hits"], st["errors"],
+                     st["cost_usd_this_run"]))
 
     hero = "gated" if "gated" in summary else args.arms[0]
     src = OUT / ("equity_%s.csv" % hero)
@@ -190,6 +226,9 @@ def main() -> None:
     print("  - a t-stat under 2 on R/trade is not evidence of an edge.")
     print("  - is the test half as good as the train half? if not, it is fitted.")
     print("  - is gross positive and net negative? then friction kills it.")
+    if "ta" in summary:
+        print("  - compare ta to GATED, not to rules: any filter raises a win rate.")
+        print(TA.CONTAMINATION_NOTE)
 
 
 if __name__ == "__main__":

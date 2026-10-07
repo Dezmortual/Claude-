@@ -15,6 +15,11 @@ Run everything from inside `trading-desk/`:
 - `python3 dashboard/server.py` serves the desk on http://localhost:8080
 - `python3 donchian/run_backtest.py` then `python3 donchian/audit.py`: the SOL
   Donchian port of `sol_donchian_indicator.pine`; results in `donchian/README.md`
+- `--arms rules gated ta` on the donchian, example_sma and orb runners adds
+  TradingAgents on Claude as a gate (`core/ta_decider.py`). Needs
+  `tradingagents_gate/setup.sh` and `ANTHROPIC_API_KEY` in `trading-desk/.env`,
+  and costs money per candidate: run `--ta-estimate` first. Read
+  `tradingagents_gate/README.md` before reporting a ta result.
 
 Keep each strategy one level under `trading-desk/`, because strategies import
 `core/` as `../core`. Never commit `trading-desk/.env`. Read the

@@ -18,12 +18,17 @@ strategy will probably want core/data.py, which reads Alpaca.
   python3 strategies/example_sma/run_backtest.py
   python3 strategies/example_sma/run_backtest.py --arms rules gated
   python3 strategies/example_sma/run_backtest.py --split 2023-01-01
+  python3 example_sma/run_backtest.py --arms rules gated ta --split 2025-01-01
+
+The ta arm is TradingAgents on Anthropic models (tradingagents_gate/README.md).
+With it, every arm trades only from --trade-from (default: --split).
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -36,6 +41,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import metrics as M                                              # noqa: E402
 from decision import GateDecider, JevDecider, RuleDecider         # noqa: E402
 from engine import Engine, EngineConfig                           # noqa: E402
+import ta_decider as TA                                           # noqa: E402
 
 from strategy import SMAConfig, SMACrossover                      # noqa: E402
 
@@ -51,15 +57,33 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--split", default=None,
                    help="train/test boundary, e.g. 2022-01-01. Report BOTH halves.")
     p.add_argument("--arms", nargs="+", default=["rules", "gated"],
-                   choices=["rules", "gated", "jev"],
-                   help="jev needs TYPESAFE_API_KEY and spends money")
+                   choices=["rules", "gated", "jev", "ta"],
+                   help="jev needs TYPESAFE_API_KEY, ta needs ANTHROPIC_API_KEY; "
+                        "both spend money")
     p.add_argument("--equity", type=float, default=10_000)
     p.add_argument("--risk-pct", type=float, default=0.005)
     p.add_argument("--slippage-bps", type=float, default=2.0)
     p.add_argument("--fill", default="next_open", choices=["close", "next_open", "level"])
     p.add_argument("--jev-threshold", type=float, default=0.55)
     p.add_argument("--jev-offline", action="store_true")
-    return p.parse_args()
+    TA.add_ta_args(p)
+    args = p.parse_args()
+    if "ta" in args.arms and not args.trade_from:
+        if not args.split:
+            p.error("the ta arm needs --split or --trade-from: TradingAgents only has "
+                    "about four years of prices and each candidate costs money")
+        args.trade_from = args.split
+    return args
+
+
+def load_env(path: Path) -> None:
+    if not path.exists():
+        return
+    for raw in path.read_text().splitlines():
+        raw = raw.strip()
+        if raw and not raw.startswith("#") and "=" in raw:
+            k, v = raw.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
 
 
 def fetch(symbols, start, end) -> dict:
@@ -113,6 +137,7 @@ def report(tag: str, res, equity: float) -> dict:
 
 
 def main() -> None:
+    load_env(ROOT / ".env")
     args = parse_args()
     print("=== data ===")
     raw = fetch(args.symbols, args.start, args.end)
@@ -124,6 +149,7 @@ def main() -> None:
     print("\n=== signals ===")
     for sym, df in raw.items():
         plan = strat.prepare(df)
+        TA.restrict_window({sym: plan}, args.trade_from)
         k = int((plan["signal"] != "").sum())
         n += k
         plans[sym] = plan
@@ -146,6 +172,11 @@ def main() -> None:
             decider = RuleDecider()
         elif arm == "gated":
             decider = GateDecider(strat.gates())
+        elif arm == "ta":
+            decider = TA.build_ta_decider(args, intraday=False,
+                                          log_path=OUT / "decisions_ta.jsonl")
+            if not TA.prepare_ta(decider, plans, strat, args):
+                continue
         else:
             decider = JevDecider(
                 prompt=strat.jev_prompt(), threshold=args.jev_threshold,
@@ -157,6 +188,8 @@ def main() -> None:
         res = engine.run(plans, strat, decider, verbose=False)
         m = report(arm, res, args.equity)
         summary[arm] = m
+        if arm == "ta":
+            print("          ta: %s" % json.dumps(decider.stats()))
 
         res.equity_curve.rename("equity").to_frame().to_csv(OUT / ("equity_%s.csv" % arm))
         if res.trades:
@@ -190,6 +223,8 @@ def main() -> None:
     print("  - is the gated arm as good as jev? then you did not need jev.")
     print("  - is the test half as good as the train half? if not, it is fitted.")
     print("  - a t-stat under 2 on R/trade is not evidence of an edge.")
+    if "ta" in summary:
+        print(TA.CONTAMINATION_NOTE)
 
 
 if __name__ == "__main__":
