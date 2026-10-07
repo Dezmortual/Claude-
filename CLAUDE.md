@@ -15,6 +15,14 @@ Run everything from inside `trading-desk/`:
 - `python3 dashboard/server.py` serves the desk on http://localhost:8080
 - `python3 donchian/run_backtest.py` then `python3 donchian/audit.py`: the SOL
   Donchian port of `sol_donchian_indicator.pine`; results in `donchian/README.md`
+  (`--source binance --out donchian/out_scanner` reruns it on the scanner's 20 coins)
+- `python3 sweep/run_backtest.py` then `python3 sweep/audit.py`: the Sweep port
+  of `sweep_indicator.pine` on hourly Binance candles (cached in `core/cache/`,
+  never committed); results in `sweep/README.md`
+- `--arms rules gated ta` adds a TradingAgents filter (`tradingagents_gate/`):
+  needs `bash tradingagents_gate/setup.sh` and `ANTHROPIC_API_KEY` in `.env`. It
+  costs money per decision: price it with `--ta-estimate` and always pass
+  `--ta-max-calls`. Never commit `tradingagents_gate/cache/`.
 
 Keep each strategy one level under `trading-desk/`, because strategies import
 `core/` as `../core`. Never commit `trading-desk/.env`. Read the

@@ -53,3 +53,25 @@ rules fit the years before it.
 
 Audit: 335/335 rules-arm and 184/184 gated-arm trades satisfy the rules as
 written.
+
+## The scanner's 20 coins (2026-10-07)
+
+`crypto_donchian_scanner.pine` runs these same rules on 20 Binance coins. The
+rules were left exactly as above and run on Binance daily candles from 2017,
+which tests them on 17 coins they were never looked at on:
+
+```bash
+python3 donchian/run_backtest.py --source binance --start 2017-01-01 --out donchian/out_scanner \
+  --symbols BTCUSDT ETHUSDT SOLUSDT BNBUSDT XRPUSDT DOGEUSDT ADAUSDT AVAXUSDT LINKUSDT DOTUSDT \
+            TRXUSDT LTCUSDT BCHUSDT NEARUSDT SUIUSDT APTUSDT ARBUSDT OPUSDT INJUSDT PEPEUSDT
+python3 donchian/audit.py --out donchian/out_scanner
+```
+
+| Arm | Trades | Win | Net R/trade | t | 2025+ R/trade | 2025+ t |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| rules | 1,251 | 45.0% | +0.017 | +0.84 | −0.013 | −0.36 |
+| gated | 666 | 46.5% | +0.015 | +0.53 | +0.016 | +0.31 |
+
+11 of the 20 coins lose money after costs. BTC from 2017 on Binance gives
+t = 1.87, against 3.31 from 2014 on Yahoo: the early years carried it. The
+rules do not carry over to other coins. Audit: 1,251/1,251 and 666/666.
