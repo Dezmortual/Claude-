@@ -101,7 +101,7 @@ def main() -> None:
         print(line("test", t[t["entry_time"] >= cut]))
         print(line("long", t[t["side"] == "long"]))
         print(line("short", t[t["side"] == "short"]))
-        print("  by coin, net %% per trade (t), before | from split:")
+        print("  by coin, net % per trade (t), before | from split:")
         for s in bars:
             a, b_ = t[(t["symbol"] == s) & (t["entry_time"] < cut)], t[(t["symbol"] == s) & (t["entry_time"] >= cut)]
             print("    %-9s %5d trades  %+.3f%% (t=%+.2f) | %+.3f%% (t=%+.2f)"
