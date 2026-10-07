@@ -64,3 +64,12 @@ Audit: every signal (397, 625, 266) and every daily return (8,287, 4,369,
 5,537) matches an independent recomputation. Daily returns are compared to
 1e-5 because Yahoo's dividend-adjusted ETF prices shift by parts per million
 between downloads.
+
+## Forward test
+
+`trend/paper.py` paper trades crypto momentum from Sunday 2026-10-11, the
+first Sunday after these rules were frozen. Each run appends any new Sunday
+to `trend/paper/ledger.csv`: the 28-day returns, the weights the rule gives
+and the paper account against holding both, written once and never changed.
+A weekly check runs it every Monday after the Sunday UTC close and saves the
+ledger to the `claude/paper-trading` branch. Judge it after about 26 weeks.
