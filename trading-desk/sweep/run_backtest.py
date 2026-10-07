@@ -74,7 +74,7 @@ def portfolio(t: pd.DataFrame, symbols, col: str = "ret_net") -> pd.Series:
         curves.append(pd.Series(g, index=r["exit_time"].to_numpy()).groupby(level=0).last())
     if not curves:
         return pd.Series(dtype=float)
-    df = pd.concat(curves, axis=1).sort_index().ffill().fillna(1.0)
+    df = pd.concat(curves, axis=1, sort=True).ffill().fillna(1.0)
     return df.mean(axis=1)
 
 
