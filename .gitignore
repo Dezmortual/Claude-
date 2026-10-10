@@ -10,3 +10,10 @@ ruvector.db
 *.db-shm
 *.db-wal
 .claude/settings.json.bak-*
+# Ruflo runtime state written by its session hooks
+.claude-flow/daemon-state.json
+.claude-flow/daemon.pid
+.claude-flow/harness-active-policy.json
+.claude-flow/policy/
+.claude/.proven-config-version
+.claude/proven-config.json
