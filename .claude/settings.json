@@ -5,9 +5,16 @@
         "source": "github",
         "repo": "aabrole/claude-trading-desk"
       }
+    },
+    "claudex-loop": {
+      "source": {
+        "source": "github",
+        "repo": "chaseai-yt/claudex-loop"
+      }
     }
   },
   "enabledPlugins": {
-    "trading-desk@trading-desk": true
+    "trading-desk@trading-desk": true,
+    "claudex-loop@claudex-loop": true
   }
 }

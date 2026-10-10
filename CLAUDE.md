@@ -30,3 +30,10 @@ Run everything from inside `trading-desk/`:
 Keep each strategy one level under `trading-desk/`, because strategies import
 `core/` as `../core`. Never commit `trading-desk/.env`. Read the
 `trading-desk-method` skill before reporting any backtest result.
+
+## Claudex Loop
+
+`.claude/settings.json` also enables the claudex-loop plugin
+(chaseai-yt/claudex-loop). `claudex-route` works on its own; the full
+`claudex-loop` plan/build/review workflow and the `codex-review` and
+`codex-build` skills also need the `codex` CLI installed and logged in.
