@@ -44,7 +44,8 @@ trading-desk entries in `settings.json` when you do.
 
 ## Replica
 
-The replica-skill plugin (Jakeschincariol/replica-skill) is enabled in
-`.claude/settings.json`. Its eleven skills load at session start as
-`/replica-skill:replica-recon` through `/replica-skill:replica-deploy`, and they
-write their working files to a `replica/` folder.
+The eleven `replica-*` skills in `.claude/skills/` were copied from
+Jakeschincariol/replica-skill at commit 77c9436 (MIT; a `LICENSE` is in each
+folder). They run as plain `/replica-recon` through `/replica-deploy` and write
+their working files to a `replica/` folder. To update, re-clone the repo and
+copy the `replica-*` folders over these.
