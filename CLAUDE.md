@@ -49,3 +49,8 @@ Jakeschincariol/replica-skill at commit 77c9436 (MIT; a `LICENSE` is in each
 folder). They run as plain `/replica-recon` through `/replica-deploy` and write
 their working files to a `replica/` folder. To update, re-clone the repo and
 copy the `replica-*` folders over these.
+
+`replica/` holds the TradingView charts-and-alerts recon, `architecture.md`,
+`schema.sql`, and `chart-desk.html`, published as the Chart Desk artifact
+(https://claude.ai/artifact/RpQK2VNJvQ9GdNvXW7bvhX). Republish edits to the same
+URL; its alerts live in the artifact's database under `data/users/me/desk/`.
