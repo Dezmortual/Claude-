@@ -41,3 +41,10 @@ It added `.claude/{skills,agents,commands,helpers}`, hooks and a status line in
 config in `.claude-flow/`. Its local databases (`.swarm/`, `ruvector.db`) are
 gitignored. Update with `npx ruflo@latest init upgrade --settings`, and keep the
 trading-desk entries in `settings.json` when you do.
+
+## Replica
+
+The replica-skill plugin (Jakeschincariol/replica-skill) is enabled in
+`.claude/settings.json`. Its eleven skills load at session start as
+`/replica-skill:replica-recon` through `/replica-skill:replica-deploy`, and they
+write their working files to a `replica/` folder.

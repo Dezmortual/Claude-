@@ -11,13 +11,20 @@
         "source": "github",
         "repo": "ruvnet/ruflo"
       }
+    },
+    "replica-skill": {
+      "source": {
+        "source": "github",
+        "repo": "Jakeschincariol/replica-skill"
+      }
     }
   },
   "enabledPlugins": {
     "trading-desk@trading-desk": true,
     "ruflo-mods@ruflo": true,
     "ruflo-swarm@ruflo": true,
-    "ruflo-console@ruflo": true
+    "ruflo-console@ruflo": true,
+    "replica-skill@replica-skill": true
   },
   "hooks": {
     "PreToolUse": [
