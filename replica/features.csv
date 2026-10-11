@@ -1,0 +1,55 @@
+feature,area,priority,original,clone,notes
+Candlestick chart with zoom pan and crosshair,chart,must,yes,no,Lightweight Charts covers it
+Symbol search across crypto and US stocks,chart,must,yes,no,own feeds: Binance + Alpaca
+Interval switcher 1m 5m 15m 1h 4h 1D 1W,chart,must,yes,no,
+Live updating last bar,chart,must,yes,no,websocket from Binance and Alpaca
+Bar line and area chart types,chart,must,yes,no,
+Volume pane,chart,must,yes,no,
+Add built-in indicators (SMA EMA RSI MACD BB ATR VWAP),indicators,must,yes,no,
+Add my own Python indicators (Donchian Sweep),indicators,must,yes,no,reuse trading-desk ports
+Indicator settings dialog (inputs and style),indicators,must,yes,no,
+Oscillators in their own pane overlays on price,indicators,must,yes,no,
+Horizontal line and trendline drawings,drawings,must,yes,no,
+Select move restyle and delete a drawing,drawings,must,yes,no,
+Drawings saved per symbol,drawings,must,yes,no,
+Price alert crossing up down,alerts,must,yes,no,
+Alert on a drawn line,alerts,must,yes,no,alert follows the line if moved
+Alert on an indicator condition,alerts,must,yes,no,
+Trigger frequency only once / once per bar / once per bar close,alerts,must,yes,no,once per bar close is the default
+Alerts evaluated server side when the browser is closed,alerts,must,yes,no,hardest part
+Alert notifications: in-app toast sound and webhook,alerts,must,yes,no,
+Alerts manager: list stop resume edit delete,alerts,must,yes,no,
+Alerts log with message and time,alerts,must,yes,no,
+Watchlist with last price and change %,watchlist,should,yes,no,
+Multi-chart layout 2x2,layouts,should,yes,no,
+Sync symbol and crosshair across charts,layouts,should,yes,no,
+Save and reopen named layouts with autosave,layouts,should,yes,no,
+Heikin Ashi and hollow candles,chart,should,yes,no,
+Log and percent price scale,chart,should,yes,no,
+Rectangle ray and Fibonacci retracement drawings,drawings,should,yes,no,
+Magnet mode snaps drawings to OHLC,drawings,should,yes,no,
+Object tree to hide lock and delete,drawings,should,yes,no,
+Alert expiration date or open-ended,alerts,should,yes,no,
+Alert message placeholders like {{ticker}} {{close}},alerts,should,yes,no,{{close}} and {{plot_0}} confirmed in docs; {{ticker}} not verified
+Email or Telegram notification,alerts,should,yes,no,Telegram is easiest for one user
+Export alerts log to CSV,alerts,should,yes,no,
+Bar replay: pick start bar play step,replay,should,yes,no,alerts must not fire in replay
+Data window with values under crosshair,chart,should,yes,no,
+Multi-condition alerts up to 5 ANDed,alerts,could,yes,no,
+Watchlist alerts one condition across a list,alerts,could,yes,no,fits the 20-coin scanner
+Once per minute trigger,alerts,could,yes,no,
+Layouts up to 4x4 with sync groups,layouts,could,yes,no,
+Synced bar replay across a layout,replay,could,yes,no,
+Renko Line Break Kagi Point and Figure,chart,could,yes,no,
+Compare and overlay a second symbol,chart,could,yes,no,
+Custom intervals and seconds charts,chart,could,yes,no,
+Keyboard shortcuts (type to search Alt+A alert),chart,could,yes,no,Alt+A not verified
+Show trading-desk backtest trades as markers,integrations,could,no,no,not in the original; your edge from the existing repo
+Pine Script language and editor,indicators,could,yes,skip,a language and runtime; your indicators are Python
+Community scripts library,indicators,could,yes,skip,their users' content
+TradingView market data,data,must,yes,skip,licensed for display only; use your own feeds
+Ideas streams chat social,social,could,yes,skip,the network is not the product
+Broker trading panel,trading,could,yes,skip,partner integrations
+Screeners news fundamentals,research,could,yes,skip,licensed data
+Mobile apps,platform,could,yes,skip,web only for now
+Plans and billing,account,could,yes,skip,single user
