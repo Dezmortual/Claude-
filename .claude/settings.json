@@ -189,6 +189,14 @@
       "Bash(npx claude-flow*)",
       "Bash(node .claude/*)",
       "mcp__claude-flow__*"
+    ],
+    "ask": [
+      "mcp__robinhood-trading__place_equity_order",
+      "mcp__robinhood-trading__place_option_order",
+      "mcp__robinhood-trading__place_crypto_order",
+      "mcp__robinhood-trading__cancel_equity_order",
+      "mcp__robinhood-trading__cancel_option_order",
+      "mcp__robinhood-trading__cancel_crypto_order"
     ]
   },
   "statusLine": {

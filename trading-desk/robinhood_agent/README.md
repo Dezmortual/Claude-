@@ -29,6 +29,25 @@ ships in `dry_run` mode.
 3. In Claude Code run `/mcp`, pick `robinhood-trading`, and sign in.
 4. Edit `watchlist.txt`, `STRATEGY.md` and `rules.json`.
 
+## Running a scan
+
+From the repo root, start Claude Code and type:
+
+```
+/robinhood-scan
+```
+
+It reads your rules, checks your positions for exits, scans the watchlist for
+entries, and runs each candidate through `gate.py`. For every approved order
+it shows you the details and waits for your "yes" before doing anything.
+Claude Code itself also asks before any place- or cancel-order tool runs
+(`permissions.ask` in `.claude/settings.json`), so an order cannot go out
+without a click from you. In `dry_run` mode nothing is placed, even on "yes".
+
+Those rules name the tools as `place_equity_order`, `cancel_equity_order`, and
+so on. If Robinhood's server names them differently (check with `/mcp`),
+update the names, or Claude Code won't ask.
+
 ## The gate
 
 ```
