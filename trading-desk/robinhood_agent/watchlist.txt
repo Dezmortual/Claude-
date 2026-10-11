@@ -1,0 +1,15 @@
+# One ticker per line. The agent only trades symbols listed here.
+# Keep it to a few sectors you understand. Lines starting with # are ignored.
+
+# Semiconductors
+NVDA
+AMD
+AVGO
+
+# Megacap software
+MSFT
+GOOGL
+
+# Broad market (for context and lower-volatility entries)
+SPY
+QQQ

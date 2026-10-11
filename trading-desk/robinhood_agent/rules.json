@@ -1,0 +1,16 @@
+{
+  "mode": "dry_run",
+  "max_order_usd": 200,
+  "max_position_pct": 10,
+  "max_open_positions": 5,
+  "max_trades_per_day": 3,
+  "daily_loss_limit_usd": 100,
+  "min_cash_buffer_usd": 100,
+  "symbol_cooldown_hours": 24,
+  "stop_loss_pct": 5,
+  "take_profit_pct": 10,
+  "max_spread_pct": 0.5,
+  "watchlist_only": true,
+  "market_hours_only": true,
+  "allowed_order_types": ["limit"]
+}

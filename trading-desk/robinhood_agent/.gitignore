@@ -1,0 +1,4 @@
+# Your trades and account state stay on your machine
+trade_log.jsonl
+scan_reports/
+logs/
