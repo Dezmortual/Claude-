@@ -44,6 +44,7 @@ trading-desk entries in `settings.json` when you do.
 
 ## Show Me The Money
 
-The `money` plugin from the `show-me-the-money` marketplace (iamzifei/show-me-the-money)
-is enabled in `.claude/settings.json`. It ships only the `money` router skill
-(no hooks or MCP servers); it keeps its state under `~/.smtm/`, outside the repo.
+All 25 plugins from the `show-me-the-money` marketplace (iamzifei/show-me-the-money)
+are enabled in `.claude/settings.json`: the `money` router plus the `money-*`
+skills it routes to. Each plugin ships one skill (no hooks or MCP servers); they
+keep their state under `~/.smtm/`, outside the repo.
