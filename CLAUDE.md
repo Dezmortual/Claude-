@@ -22,6 +22,11 @@ Run everything from inside `trading-desk/`:
 - `python3 trend/run_backtest.py`, `trend/audit.py`, `trend/robustness.py`: three
   published strategies (Faber SMA, crypto time-series momentum, dual momentum)
   tested after their publication dates; results in `trend/README.md`
+- `desk247/`: the 24/7 paper trading system (BTC/ETH momentum, hard risk limits,
+  approval-gated orders). Read `desk247/START_HERE.md` first. Tests:
+  `python3 -m unittest discover -s desk247/tests`; evidence: `python3 desk247/backtest.py`;
+  run: `python3 desk247/run.py once|loop|approve|status|health`. Paper only: no
+  LLM output may place, size or approve an order (`desk247/prompts.md` are reviews).
 - `--arms rules gated ta` adds a TradingAgents filter (`tradingagents_gate/`):
   needs `bash tradingagents_gate/setup.sh` and `ANTHROPIC_API_KEY` in `.env`. It
   costs money per decision: price it with `--ta-estimate` and always pass

@@ -16,6 +16,16 @@
       "jev_mode": "gating",
       "fills": "broker",
       "accent": "#4a9eca"
+    },
+    {
+      "key": "desk247",
+      "agent": "2",
+      "label": "desk247 crypto momentum",
+      "strategy": "BTC/ETH 28-day time-series momentum, weekly, with ATR stops and hard risk limits.",
+      "broker": "Paper (simulated)",
+      "jev_mode": "none",
+      "fills": "simulated",
+      "accent": "#c9a227"
     }
   ]
 }
