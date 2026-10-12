@@ -9,6 +9,7 @@ Work from the Show Me The Money (`money-*`) skills on turning the
 - `track-a/reddit-post.md`: the buyer-side post (draft, not posted).
 - `track-b/before-after.png`: the proof chart for posts and email 1 (SVG too;
   rebuild with `python3 business/track-b/make_chart.py business/track-b/before-after.svg`).
+- `track-b/email-1-first-5.md`: personalised first emails to the first 5 sellers.
 - `track-b/`: the seller-side experiment, with 20 targets (`targets.csv`) and a
   3-email sequence (`messages.md`). Drafts only; nothing has been sent. Never pitch
   through TradingView private chat (House Rules ban solicitation there).

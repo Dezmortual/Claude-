@@ -18,9 +18,10 @@ Hi {name},
 {one line from the hook column, e.g. "You sell {product} as a set of strategies,
 so your backtests are what buyers check first."}
 
-TradingView's strategy tester assumes the best-case intrabar path for trailing
-stops. On my own two strategies, that turned a 38% win rate into 78%, and a 53%
-into 93% ({link to your before/after chart}).
+Without Bar Magnifier, TradingView's strategy tester lets a bar's own high move
+a trailing stop before it checks the low. When I re-ran two of my own
+strategies with and without that assumption, it was the difference between a
+38% and a 78% win rate, and between 53% and 93% ({link to your before/after chart}).
 
 I re-run strategies with honest fills and re-check every trade against the
 rules. A strategy that passes gets a public report you can link from your sales
