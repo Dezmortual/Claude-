@@ -1,0 +1,13 @@
+# Business: strategy backtest audits
+
+Work from the Show Me The Money (`money-*`) skills on turning the
+`trading-desk/` audit method into a paid service.
+
+- `sessions/`: `/money-save` snapshots, oldest first. `~/.smtm/` is wiped when a
+  cloud container resets, so copy them back before running `/money-restore`:
+  `mkdir -p ~/.smtm/sessions/claude- && cp business/sessions/*.md ~/.smtm/sessions/claude-/`
+- `track-b/`: the seller-side experiment, with 20 targets (`targets.csv`) and a
+  3-email sequence (`messages.md`). Drafts only; nothing has been sent. Never pitch
+  through TradingView private chat (House Rules ban solicitation there).
+
+Re-check on day 14 against the pass marks in the latest snapshot.

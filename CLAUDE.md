@@ -48,3 +48,5 @@ All 25 plugins from the `show-me-the-money` marketplace (iamzifei/show-me-the-mo
 are enabled in `.claude/settings.json`: the `money` router plus the `money-*`
 skills it routes to. Each plugin ships one skill (no hooks or MCP servers); they
 keep their state under `~/.smtm/`, outside the repo.
+Their saves in `~/.smtm/` don't survive a container reset, so the business work
+and its snapshots are kept in `business/` (see `business/README.md`).
