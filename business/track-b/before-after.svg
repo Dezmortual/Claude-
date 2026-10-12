@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" font-family="Inter, Helvetica, Arial, sans-serif">
+<rect width="1200" height="675" fill="#fcfcfb"/>
+<text x="60" y="78" font-size="34" font-weight="700" fill="#0b0b0b">Same rules. Only the fill model changed.</text>
+<text x="60" y="116" font-size="20" fill="#52514e">Win rate in TradingView’s strategy tester vs the same strategy re-tested with honest fills</text>
+<rect x="60" y="140" width="14" height="14" rx="3" fill="#eb6834"/>
+<text x="82" y="153" font-size="16" fill="#52514e">TradingView shows (trailing stop filled on the same bar)</text>
+<rect x="582.4000000000001" y="140" width="14" height="14" rx="3" fill="#2a78d6"/>
+<text x="604.4000000000001" y="153" font-size="16" fill="#52514e">Honest fills</text>
+<line x1="360.0" y1="192" x2="360.0" y2="560" stroke="#e4e3df" stroke-width="1"/>
+<text x="360.0" y="584" font-size="14" fill="#7a7974" text-anchor="middle">0%</text>
+<line x1="510.0" y1="192" x2="510.0" y2="560" stroke="#e4e3df" stroke-width="1"/>
+<text x="510.0" y="584" font-size="14" fill="#7a7974" text-anchor="middle">25%</text>
+<line x1="660.0" y1="192" x2="660.0" y2="560" stroke="#e4e3df" stroke-width="1"/>
+<text x="660.0" y="584" font-size="14" fill="#7a7974" text-anchor="middle">50%</text>
+<line x1="810.0" y1="192" x2="810.0" y2="560" stroke="#e4e3df" stroke-width="1"/>
+<text x="810.0" y="584" font-size="14" fill="#7a7974" text-anchor="middle">75%</text>
+<line x1="960.0" y1="192" x2="960.0" y2="560" stroke="#e4e3df" stroke-width="1"/>
+<text x="960.0" y="584" font-size="14" fill="#7a7974" text-anchor="middle">100%</text>
+<text x="60" y="252" font-size="22" font-weight="700" fill="#0b0b0b">Sweep</text>
+<text x="60" y="276" font-size="15" fill="#52514e">hourly crypto, 10 coins</text>
+<path d="M360,210 H824.0 Q828.0,210 828.0,214 V252 Q828.0,256 824.0,256 H360 Z" fill="#eb6834"/>
+<text x="838.0" y="231" font-size="20" font-weight="700" fill="#0b0b0b">78%</text>
+<text x="838.0" y="250" font-size="14" fill="#52514e">+0.52% per trade · 69,442 trades</text>
+<path d="M360,258 H585.8 Q589.8,258 589.8,262 V300 Q589.8,304 585.8,304 H360 Z" fill="#2a78d6"/>
+<text x="599.8" y="279" font-size="20" font-weight="700" fill="#0b0b0b">38%</text>
+<text x="599.8" y="298" font-size="14" fill="#52514e">−0.13% per trade, loses money · 69,442 trades</text>
+<text x="60" y="438" font-size="22" font-weight="700" fill="#0b0b0b">SOL Donchian</text>
+<text x="60" y="462" font-size="15" fill="#52514e">daily crypto, BTC ETH SOL</text>
+<path d="M360,396 H915.2 Q919.2,396 919.2,400 V438 Q919.2,442 915.2,442 H360 Z" fill="#eb6834"/>
+<text x="929.2" y="417" font-size="20" font-weight="700" fill="#0b0b0b">93%</text>
+<text x="929.2" y="436" font-size="14" fill="#52514e">+0.65 R per trade · 381 trades</text>
+<path d="M360,444 H674.6 Q678.6,444 678.6,448 V486 Q678.6,490 674.6,490 H360 Z" fill="#2a78d6"/>
+<text x="688.6" y="465" font-size="20" font-weight="700" fill="#0b0b0b">53%</text>
+<text x="688.6" y="484" font-size="14" fill="#52514e">+0.13 R per trade, no edge after 2025 · 335 trades</text>
+<line x1="360" y1="192" x2="360" y2="560" stroke="#7a7974" stroke-width="1"/>
+<text x="60" y="653" font-size="13" fill="#7a7974">Costs: 0.05% commission + 2 bps slippage per side. Every trade re-checked against the rules as written. Win rate alone is not edge: see the net result under each bar.</text>
+</svg>
