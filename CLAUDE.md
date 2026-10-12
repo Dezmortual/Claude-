@@ -41,3 +41,9 @@ It added `.claude/{skills,agents,commands,helpers}`, hooks and a status line in
 config in `.claude-flow/`. Its local databases (`.swarm/`, `ruvector.db`) are
 gitignored. Update with `npx ruflo@latest init upgrade --settings`, and keep the
 trading-desk entries in `settings.json` when you do.
+
+## Show Me The Money
+
+The `money` plugin from the `show-me-the-money` marketplace (iamzifei/show-me-the-money)
+is enabled in `.claude/settings.json`. It ships only the `money` router skill
+(no hooks or MCP servers); it keeps its state under `~/.smtm/`, outside the repo.

@@ -11,13 +11,20 @@
         "source": "github",
         "repo": "ruvnet/ruflo"
       }
+    },
+    "show-me-the-money": {
+      "source": {
+        "source": "github",
+        "repo": "iamzifei/show-me-the-money"
+      }
     }
   },
   "enabledPlugins": {
     "trading-desk@trading-desk": true,
     "ruflo-mods@ruflo": true,
     "ruflo-swarm@ruflo": true,
-    "ruflo-console@ruflo": true
+    "ruflo-console@ruflo": true,
+    "money@show-me-the-money": true
   },
   "hooks": {
     "PreToolUse": [
