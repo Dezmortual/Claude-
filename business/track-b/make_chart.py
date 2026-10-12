@@ -22,10 +22,10 @@ s = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox=
      f'font-family="Inter, Helvetica, Arial, sans-serif">',
      f'<rect width="{W}" height="{H}" fill="{SURF}"/>',
      f'<text x="60" y="78" font-size="34" font-weight="700" fill="{T1}">Same rules. Only the fill model changed.</text>',
-     f'<text x="60" y="116" font-size="20" fill="{T2}">Win rate in TradingView’s strategy tester vs the same strategy re-tested with honest fills</text>']
+     f'<text x="60" y="116" font-size="20" fill="{T2}">Win rate with the tester’s same-bar trailing-stop fill vs the same strategy re-tested with honest fills</text>']
 # legend
 lx = 60
-for name, c in [("TradingView shows (trailing stop filled on the same bar)", SHOWN), ("Honest fills", REAL)]:
+for name, c in [("TradingView’s same-bar assumption (no Bar Magnifier)", SHOWN), ("Honest fills", REAL)]:
     s.append(f'<rect x="{lx}" y="140" width="14" height="14" rx="3" fill="{c}"/>')
     s.append(f'<text x="{lx+22}" y="153" font-size="16" fill="{T2}">{name}</text>')
     lx += 22 + len(name) * 8.4 + 30
