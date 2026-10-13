@@ -15,3 +15,10 @@ Work from the Show Me The Money (`money-*`) skills on turning the
   through TradingView private chat (House Rules ban solicitation there).
 
 Re-check on day 14 against the pass marks in the latest snapshot.
+
+## Scheduled routines
+
+- **Weekly money retro:** Mondays at 07:58 Africa/Johannesburg (routine
+  `trig_01DTWK5cte1BonhFfSuav81c`). Restores the snapshots, runs `/money-retro`
+  on them and the tracking tables, and commits any updates. It never sends,
+  posts or contacts anyone. Outreach and posting stay manual.
