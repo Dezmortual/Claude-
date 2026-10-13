@@ -1,23 +1,17 @@
 {
-  "extraKnownMarketplaces": {
-    "trading-desk": {
-      "source": {
-        "source": "github",
-        "repo": "aabrole/claude-trading-desk"
-      }
-    },
-    "ruflo": {
-      "source": {
-        "source": "github",
-        "repo": "ruvnet/ruflo"
-      }
-    }
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "CLAUDE_FLOW_V3_ENABLED": "true",
+    "CLAUDE_FLOW_HOOKS_ENABLED": "true",
+    "CLAUDE_CODE_ENABLE_FUNCTION_HOOKS": "1"
   },
-  "enabledPlugins": {
-    "trading-desk@trading-desk": true,
-    "ruflo-mods@ruflo": true,
-    "ruflo-swarm@ruflo": true,
-    "ruflo-console@ruflo": true
+  "permissions": {
+    "allow": [
+      "Bash(npx @claude-flow*)",
+      "Bash(npx claude-flow*)",
+      "Bash(node .claude/*)",
+      "mcp__claude-flow__*"
+    ]
   },
   "hooks": {
     "PreToolUse": [
@@ -177,22 +171,35 @@
       }
     ]
   },
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
-    "CLAUDE_FLOW_V3_ENABLED": "true",
-    "CLAUDE_FLOW_HOOKS_ENABLED": "true",
-    "CLAUDE_CODE_ENABLE_FUNCTION_HOOKS": "1"
-  },
-  "permissions": {
-    "allow": [
-      "Bash(npx @claude-flow*)",
-      "Bash(npx claude-flow*)",
-      "Bash(node .claude/*)",
-      "mcp__claude-flow__*"
-    ]
-  },
   "statusLine": {
     "type": "command",
     "command": "sh -c 'D=\"${CLAUDE_PROJECT_DIR:-.}\"; [ -f \"$D/.claude/helpers/statusline.cjs\" ] || D=\"${HOME}\"; exec node \"$D/.claude/helpers/statusline.cjs\"'"
+  },
+  "enabledPlugins": {
+    "trading-desk@trading-desk": true,
+    "ruflo-mods@ruflo": true,
+    "ruflo-swarm@ruflo": true,
+    "ruflo-console@ruflo": true,
+    "ecc@ecc": true
+  },
+  "extraKnownMarketplaces": {
+    "trading-desk": {
+      "source": {
+        "source": "github",
+        "repo": "aabrole/claude-trading-desk"
+      }
+    },
+    "ruflo": {
+      "source": {
+        "source": "github",
+        "repo": "ruvnet/ruflo"
+      }
+    },
+    "ecc": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/affaan-m/ECC.git"
+      }
+    }
   }
 }
