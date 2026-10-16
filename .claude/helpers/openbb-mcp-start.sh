@@ -1,8 +1,11 @@
 #!/bin/sh
 # SessionStart hook: start the OpenBB MCP server (registered as `openbb` in
 # .mcp.json) on http://127.0.0.1:8001/mcp unless it is already running.
-# The cloud environment's setup script should `pip install openbb-mcp-server`;
-# this installs it as a fallback when that hasn't happened.
+# The cloud environment's setup script should install `openbb` (the data
+# extensions; openbb-mcp-server alone exposes no data tools) and
+# `openbb-mcp-server`; this installs them as a fallback when that hasn't
+# happened. Debian's blinker has no RECORD file, so pip can't upgrade it in
+# place; --ignore-installed sidesteps that.
 
 URL="http://127.0.0.1:8001/mcp"
 LOG="${TMPDIR:-/tmp}/openbb-mcp.log"
@@ -14,8 +17,9 @@ is_up() {
 
 is_up && exit 0
 
-if ! command -v openbb-mcp >/dev/null 2>&1; then
-  pip install -q openbb-mcp-server >>"$LOG" 2>&1 || {
+if ! command -v openbb-mcp >/dev/null 2>&1 || ! pip show -q openbb >/dev/null 2>&1; then
+  { pip install -q --ignore-installed blinker &&
+    pip install -q openbb openbb-mcp-server; } >>"$LOG" 2>&1 || {
     echo "openbb-mcp: install failed, see $LOG" >&2
     exit 0
   }
