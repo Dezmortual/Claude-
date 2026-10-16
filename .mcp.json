@@ -17,6 +17,10 @@
         "CLAUDE_FLOW_MEMORY_BACKEND": "hybrid"
       },
       "autoStart": false
+    },
+    "openbb": {
+      "type": "http",
+      "url": "http://127.0.0.1:8001/mcp"
     }
   }
 }

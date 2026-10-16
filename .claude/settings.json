@@ -87,6 +87,11 @@
             "type": "command",
             "command": "sh -c 'D=\"${CLAUDE_PROJECT_DIR:-.}\"; [ -f \"$D/.claude/helpers/auto-memory-hook.mjs\" ] || D=\"${HOME}\"; exec node \"$D/.claude/helpers/auto-memory-hook.mjs\" import'",
             "timeout": 8000
+          },
+          {
+            "type": "command",
+            "command": "sh -c 'D=\"${CLAUDE_PROJECT_DIR:-.}\"; exec sh \"$D/.claude/helpers/openbb-mcp-start.sh\"'",
+            "timeout": 120000
           }
         ]
       }
@@ -194,5 +199,8 @@
   "statusLine": {
     "type": "command",
     "command": "sh -c 'D=\"${CLAUDE_PROJECT_DIR:-.}\"; [ -f \"$D/.claude/helpers/statusline.cjs\" ] || D=\"${HOME}\"; exec node \"$D/.claude/helpers/statusline.cjs\"'"
-  }
+  },
+  "enabledMcpjsonServers": [
+    "openbb"
+  ]
 }
