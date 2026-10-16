@@ -25,7 +25,9 @@ if ! command -v openbb-mcp >/dev/null 2>&1 || ! pip show -q openbb >/dev/null 2>
   }
 fi
 
-nohup setsid openbb-mcp --tool-discovery >>"$LOG" 2>&1 </dev/null &
+# Through the wrapper so providers' aiohttp sessions use the proxy.
+nohup setsid python3 "$(dirname "$0")/openbb_mcp_proxy.py" --tool-discovery \
+  >>"$LOG" 2>&1 </dev/null &
 
 # Wait so the server is answering when Claude Code connects to it.
 i=0
