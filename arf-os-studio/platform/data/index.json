@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-17T05:37:22.355Z",
+ "updatedAt": "2026-10-18T05:55:33.070Z",
  "sets": [
   {
    "symbol": "XAUUSD",
@@ -9,9 +9,9 @@
    "market": "sessions",
    "timeframe": "60",
    "file": "XAUUSD_60.csv",
-   "bars": 13674,
-   "from": 1716523200000,
-   "to": 1792180800000
+   "bars": 13658,
+   "from": 1716760800000,
+   "to": 1792184399000
   },
   {
    "symbol": "XAUUSD",
@@ -21,8 +21,8 @@
    "market": "sessions",
    "timeframe": "240",
    "file": "XAUUSD_240.csv",
-   "bars": 3702,
-   "from": 1716523200000,
+   "bars": 3697,
+   "from": 1716753600000,
    "to": 1792180800000
   },
   {
@@ -33,8 +33,8 @@
    "market": "sessions",
    "timeframe": "1D",
    "file": "XAUUSD_1D.csv",
-   "bars": 2515,
-   "from": 1476662400000,
+   "bars": 2514,
+   "from": 1476748800000,
    "to": 1792108800000
   },
   {
@@ -45,9 +45,9 @@
    "market": "sessions",
    "timeframe": "60",
    "file": "XAGUSD_60.csv",
-   "bars": 13668,
-   "from": 1716523200000,
-   "to": 1792180800000
+   "bars": 13652,
+   "from": 1716760800000,
+   "to": 1792184397000
   },
   {
    "symbol": "XAGUSD",
@@ -57,8 +57,8 @@
    "market": "sessions",
    "timeframe": "240",
    "file": "XAGUSD_240.csv",
-   "bars": 3702,
-   "from": 1716523200000,
+   "bars": 3697,
+   "from": 1716753600000,
    "to": 1792180800000
   },
   {
@@ -69,8 +69,8 @@
    "market": "sessions",
    "timeframe": "1D",
    "file": "XAGUSD_1D.csv",
-   "bars": 2514,
-   "from": 1476662400000,
+   "bars": 2513,
+   "from": 1476748800000,
    "to": 1792108800000
   },
   {
@@ -81,9 +81,9 @@
    "market": "sessions",
    "timeframe": "60",
    "file": "EURUSD_60.csv",
-   "bars": 17184,
+   "bars": 17185,
    "from": 1704132000000,
-   "to": 1792184400000
+   "to": 1792191540000
   },
   {
    "symbol": "EURUSD",
@@ -107,7 +107,7 @@
    "file": "EURUSD_1D.csv",
    "bars": 2603,
    "from": 1476576000000,
-   "to": 1792108800000
+   "to": 1792195200000
   },
   {
    "symbol": "GBPUSD",
@@ -141,9 +141,9 @@
    "market": "sessions",
    "timeframe": "1D",
    "file": "GBPUSD_1D.csv",
-   "bars": 2603,
+   "bars": 2602,
    "from": 1476576000000,
-   "to": 1792108800000
+   "to": 1792022400000
   },
   {
    "symbol": "USDJPY",
@@ -261,9 +261,9 @@
    "market": "sessions",
    "timeframe": "60",
    "file": "NAS100_60.csv",
-   "bars": 13633,
-   "from": 1716523200000,
-   "to": 1792180800000
+   "bars": 13617,
+   "from": 1716760800000,
+   "to": 1792184399000
   },
   {
    "symbol": "NAS100",
@@ -273,8 +273,8 @@
    "market": "sessions",
    "timeframe": "240",
    "file": "NAS100_240.csv",
-   "bars": 3692,
-   "from": 1716523200000,
+   "bars": 3687,
+   "from": 1716753600000,
    "to": 1792180800000
   },
   {
@@ -285,8 +285,8 @@
    "market": "sessions",
    "timeframe": "1D",
    "file": "NAS100_1D.csv",
-   "bars": 2516,
-   "from": 1476662400000,
+   "bars": 2515,
+   "from": 1476748800000,
    "to": 1792108800000
   },
   {
@@ -297,9 +297,9 @@
    "market": "sessions",
    "timeframe": "60",
    "file": "SPX500_60.csv",
-   "bars": 13635,
-   "from": 1716523200000,
-   "to": 1792180800000
+   "bars": 13619,
+   "from": 1716760800000,
+   "to": 1792184398000
   },
   {
    "symbol": "SPX500",
@@ -309,8 +309,8 @@
    "market": "sessions",
    "timeframe": "240",
    "file": "SPX500_240.csv",
-   "bars": 3695,
-   "from": 1716523200000,
+   "bars": 3690,
+   "from": 1716753600000,
    "to": 1792180800000
   },
   {
@@ -321,8 +321,8 @@
    "market": "sessions",
    "timeframe": "1D",
    "file": "SPX500_1D.csv",
-   "bars": 2516,
-   "from": 1476662400000,
+   "bars": 2515,
+   "from": 1476748800000,
    "to": 1792108800000
   },
   {
@@ -333,9 +333,9 @@
    "market": "sessions",
    "timeframe": "60",
    "file": "US30_60.csv",
-   "bars": 13627,
-   "from": 1716523200000,
-   "to": 1792180800000
+   "bars": 13611,
+   "from": 1716760800000,
+   "to": 1792184396000
   },
   {
    "symbol": "US30",
@@ -345,8 +345,8 @@
    "market": "sessions",
    "timeframe": "240",
    "file": "US30_240.csv",
-   "bars": 3693,
-   "from": 1716523200000,
+   "bars": 3688,
+   "from": 1716753600000,
    "to": 1792180800000
   },
   {
@@ -357,8 +357,8 @@
    "market": "sessions",
    "timeframe": "1D",
    "file": "US30_1D.csv",
-   "bars": 2516,
-   "from": 1476662400000,
+   "bars": 2515,
+   "from": 1476748800000,
    "to": 1792108800000
   },
   {
@@ -369,9 +369,9 @@
    "market": "sessions",
    "timeframe": "60",
    "file": "USOIL_60.csv",
-   "bars": 13497,
-   "from": 1716523200000,
-   "to": 1792180800000
+   "bars": 13481,
+   "from": 1716760800000,
+   "to": 1792184398000
   },
   {
    "symbol": "USOIL",
@@ -381,8 +381,8 @@
    "market": "sessions",
    "timeframe": "240",
    "file": "USOIL_240.csv",
-   "bars": 3673,
-   "from": 1716523200000,
+   "bars": 3668,
+   "from": 1716753600000,
    "to": 1792180800000
   },
   {
@@ -393,8 +393,8 @@
    "market": "sessions",
    "timeframe": "1D",
    "file": "USOIL_1D.csv",
-   "bars": 2513,
-   "from": 1476662400000,
+   "bars": 2512,
+   "from": 1476748800000,
    "to": 1792108800000
   },
   {
@@ -406,8 +406,8 @@
    "timeframe": "60",
    "file": "BTCUSDT_60.csv",
    "bars": 17519,
-   "from": 1729144800000,
-   "to": 1792209600000
+   "from": 1729231200000,
+   "to": 1792296000000
   },
   {
    "symbol": "BTCUSDT",
@@ -418,8 +418,8 @@
    "timeframe": "240",
    "file": "BTCUSDT_240.csv",
    "bars": 6569,
-   "from": 1697616000000,
-   "to": 1792195200000
+   "from": 1697702400000,
+   "to": 1792281600000
   },
   {
    "symbol": "BTCUSDT",
@@ -430,8 +430,8 @@
    "timeframe": "1D",
    "file": "BTCUSDT_1D.csv",
    "bars": 2919,
-   "from": 1539993600000,
-   "to": 1792108800000
+   "from": 1540080000000,
+   "to": 1792195200000
   },
   {
    "symbol": "ETHUSDT",
@@ -442,8 +442,8 @@
    "timeframe": "60",
    "file": "ETHUSDT_60.csv",
    "bars": 17519,
-   "from": 1729144800000,
-   "to": 1792209600000
+   "from": 1729231200000,
+   "to": 1792296000000
   },
   {
    "symbol": "ETHUSDT",
@@ -454,8 +454,8 @@
    "timeframe": "240",
    "file": "ETHUSDT_240.csv",
    "bars": 6569,
-   "from": 1697616000000,
-   "to": 1792195200000
+   "from": 1697702400000,
+   "to": 1792281600000
   },
   {
    "symbol": "ETHUSDT",
@@ -466,8 +466,8 @@
    "timeframe": "1D",
    "file": "ETHUSDT_1D.csv",
    "bars": 2919,
-   "from": 1539993600000,
-   "to": 1792108800000
+   "from": 1540080000000,
+   "to": 1792195200000
   },
   {
    "symbol": "SOLUSDT",
@@ -478,8 +478,8 @@
    "timeframe": "60",
    "file": "SOLUSDT_60.csv",
    "bars": 17519,
-   "from": 1729144800000,
-   "to": 1792209600000
+   "from": 1729231200000,
+   "to": 1792296000000
   },
   {
    "symbol": "SOLUSDT",
@@ -490,8 +490,8 @@
    "timeframe": "240",
    "file": "SOLUSDT_240.csv",
    "bars": 6569,
-   "from": 1697616000000,
-   "to": 1792195200000
+   "from": 1697702400000,
+   "to": 1792281600000
   },
   {
    "symbol": "SOLUSDT",
@@ -501,9 +501,9 @@
    "market": "24x7",
    "timeframe": "1D",
    "file": "SOLUSDT_1D.csv",
-   "bars": 2258,
+   "bars": 2259,
    "from": 1597104000000,
-   "to": 1792108800000
+   "to": 1792195200000
   },
   {
    "symbol": "XRPUSDT",
@@ -514,8 +514,8 @@
    "timeframe": "60",
    "file": "XRPUSDT_60.csv",
    "bars": 17519,
-   "from": 1729144800000,
-   "to": 1792209600000
+   "from": 1729231200000,
+   "to": 1792296000000
   },
   {
    "symbol": "XRPUSDT",
@@ -526,8 +526,8 @@
    "timeframe": "240",
    "file": "XRPUSDT_240.csv",
    "bars": 6569,
-   "from": 1697616000000,
-   "to": 1792195200000
+   "from": 1697702400000,
+   "to": 1792281600000
   },
   {
    "symbol": "XRPUSDT",
@@ -538,8 +538,8 @@
    "timeframe": "1D",
    "file": "XRPUSDT_1D.csv",
    "bars": 2919,
-   "from": 1539993600000,
-   "to": 1792108800000
+   "from": 1540080000000,
+   "to": 1792195200000
   },
   {
    "symbol": "BNBUSDT",
@@ -550,8 +550,8 @@
    "timeframe": "60",
    "file": "BNBUSDT_60.csv",
    "bars": 17519,
-   "from": 1729144800000,
-   "to": 1792209600000
+   "from": 1729231200000,
+   "to": 1792296000000
   },
   {
    "symbol": "BNBUSDT",
@@ -562,8 +562,8 @@
    "timeframe": "240",
    "file": "BNBUSDT_240.csv",
    "bars": 6569,
-   "from": 1697616000000,
-   "to": 1792195200000
+   "from": 1697702400000,
+   "to": 1792281600000
   },
   {
    "symbol": "BNBUSDT",
@@ -574,8 +574,8 @@
    "timeframe": "1D",
    "file": "BNBUSDT_1D.csv",
    "bars": 2919,
-   "from": 1539993600000,
-   "to": 1792108800000
+   "from": 1540080000000,
+   "to": 1792195200000
   },
   {
    "symbol": "DOGEUSDT",
@@ -586,8 +586,8 @@
    "timeframe": "60",
    "file": "DOGEUSDT_60.csv",
    "bars": 17519,
-   "from": 1729144800000,
-   "to": 1792209600000
+   "from": 1729231200000,
+   "to": 1792296000000
   },
   {
    "symbol": "DOGEUSDT",
@@ -598,8 +598,8 @@
    "timeframe": "240",
    "file": "DOGEUSDT_240.csv",
    "bars": 6569,
-   "from": 1697616000000,
-   "to": 1792195200000
+   "from": 1697702400000,
+   "to": 1792281600000
   },
   {
    "symbol": "DOGEUSDT",
@@ -609,9 +609,9 @@
    "market": "24x7",
    "timeframe": "1D",
    "file": "DOGEUSDT_1D.csv",
-   "bars": 2661,
+   "bars": 2662,
    "from": 1562284800000,
-   "to": 1792108800000
+   "to": 1792195200000
   },
   {
    "symbol": "PAXGUSDT",
@@ -622,8 +622,8 @@
    "timeframe": "60",
    "file": "PAXGUSDT_60.csv",
    "bars": 17519,
-   "from": 1729144800000,
-   "to": 1792209600000
+   "from": 1729231200000,
+   "to": 1792296000000
   },
   {
    "symbol": "PAXGUSDT",
@@ -634,8 +634,8 @@
    "timeframe": "240",
    "file": "PAXGUSDT_240.csv",
    "bars": 6569,
-   "from": 1697616000000,
-   "to": 1792195200000
+   "from": 1697702400000,
+   "to": 1792281600000
   },
   {
    "symbol": "PAXGUSDT",
@@ -645,9 +645,9 @@
    "market": "24x7",
    "timeframe": "1D",
    "file": "PAXGUSDT_1D.csv",
-   "bars": 2241,
+   "bars": 2242,
    "from": 1598572800000,
-   "to": 1792108800000
+   "to": 1792195200000
   }
  ],
  "failures": []
