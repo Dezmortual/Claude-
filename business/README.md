@@ -6,6 +6,7 @@ Work from the Show Me The Money (`money-*`) skills on turning the
 - `sessions/`: `/money-save` snapshots, oldest first. `~/.smtm/` is wiped when a
   cloud container resets, so copy them back before running `/money-restore`:
   `mkdir -p ~/.smtm/sessions/claude- && cp business/sessions/*.md ~/.smtm/sessions/claude-/`
+- `retros/`: weekly retros from the scheduled routine.
 - `track-a/reddit-post.md`: the buyer-side post (draft, not posted).
 - `track-b/before-after.png`: the proof chart for posts and email 1 (SVG too;
   rebuild with `python3 business/track-b/make_chart.py business/track-b/before-after.svg`).
