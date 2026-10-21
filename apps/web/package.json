@@ -10,7 +10,8 @@
     "tokens": "python3 ../../replica/design/build_tokens.py && cp ../../replica/design/tokens.css src/styles/tokens.css",
     "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.mts",
     "db:seed": "tsx --env-file-if-exists=.env.local scripts/seed.mts",
-    "db:setup": "npm run db:migrate && npm run db:seed"
+    "db:setup": "npm run db:migrate && npm run db:seed",
+    "test:api": "tsx --env-file-if-exists=.env.local tests/api.test.mts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "1.2.0",

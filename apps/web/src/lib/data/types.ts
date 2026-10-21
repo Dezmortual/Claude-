@@ -151,7 +151,7 @@ export interface Alert {
 export interface TablePrefs { visibleColumns: string[]; rowsPerPage: 10 | 20 | 50 | 100; defaultTab: Tab }
 
 export class DataError extends Error {
-  constructor(public code: "unauthorized" | "forbidden" | "not_found" | "invalid" | "limit" | "conflict", message: string) {
+  constructor(public code: "unauthorized" | "forbidden" | "not_found" | "invalid" | "limit" | "conflict" | "rate_limited", message: string) {
     super(message);
   }
 }

@@ -19,7 +19,7 @@ const crypto: Row[] = [
   ["dogecoin", "DOGE", "Dogecoin", 0.19, true], ["cardano", "ADA", "Cardano", 0.71, true],
   ["tron", "TRX", "TRON", 0.27, true], ["chainlink", "LINK", "Chainlink", 16.8, true],
   ["avalanche", "AVAX", "Avalanche", 24.5, true], ["stellar", "XLM", "Stellar", 0.33], ["sui", "SUI", "Sui", 3.1],
-  ["toncoin", "TON", "Toncoin", 3.4], ["hedera", "HBAR", "Hedera", 0.21], ["polkadot", "DOT", "Polkadot", 4.6],
+  ["shiba-inu", "SHIB", "Shiba Inu", 0.000012], ["hedera", "HBAR", "Hedera", 0.21], ["polkadot", "DOT", "Polkadot", 4.6],
   ["litecoin", "LTC", "Litecoin", 92], ["bitcoin-cash", "BCH", "Bitcoin Cash", 410], ["uniswap", "UNI", "Uniswap", 8.9],
   ["near", "NEAR", "NEAR Protocol", 2.9], ["aptos", "APT", "Aptos", 5.6], ["aave", "AAVE", "Aave", 240],
   ["internet-computer", "ICP", "Internet Computer", 5.9], ["ethereum-classic", "ETC", "Ethereum Classic", 19.4],

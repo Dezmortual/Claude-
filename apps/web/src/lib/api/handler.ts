@@ -4,7 +4,7 @@ import { z } from "zod";
 import { DataError, getViewer, privateMode, type Viewer } from "@/lib/data";
 import { SESSION_COOKIE } from "@/lib/session";
 
-const STATUS: Record<DataError["code"], number> = { unauthorized: 401, forbidden: 403, not_found: 404, invalid: 422, limit: 402, conflict: 409 };
+const STATUS: Record<DataError["code"], number> = { unauthorized: 401, forbidden: 403, not_found: 404, invalid: 422, limit: 402, conflict: 409, rate_limited: 429 };
 
 /** Session from the cookie (web) or "Authorization: Bearer <token>" (mobile). */
 export async function apiViewer(): Promise<Viewer> {
@@ -23,9 +23,10 @@ export function route<P = Record<string, never>>(fn: (req: Request, v: Viewer, p
       if (!opts.public && privateMode() && !v.user) throw new DataError("unauthorized", "Sign in first");
       const body = await fn(req, v, (await ctx?.params) ?? ({} as P));
       if (body instanceof Response) return body;
-      const res = NextResponse.json(body ?? { ok: true }, { status: body === undefined ? 204 : 200 });
+      if (body === undefined) return new NextResponse(null, { status: 204 });
+      const res = NextResponse.json(body);
       res.headers.set("cache-control", cacheSeconds ? `private, max-age=${cacheSeconds}` : "no-store");
-      return body === undefined ? new NextResponse(null, { status: 204 }) : res;
+      return res;
     } catch (e) {
       if (e instanceof DataError) return NextResponse.json({ error: e.code, message: e.message }, { status: STATUS[e.code] });
       if (e instanceof z.ZodError) return NextResponse.json({ error: "invalid", message: e.issues[0]?.message ?? "Invalid input" }, { status: 422 });

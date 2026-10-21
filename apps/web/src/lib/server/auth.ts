@@ -37,7 +37,7 @@ export async function rateLimit(key: string, max: number, windowSec: number) {
   const [r] = await db<{ count: number }[]>`
     insert into rate_limits (key, window_start, count) values (${key}, ${start}, 1)
     on conflict (key, window_start) do update set count = rate_limits.count + 1 returning count`;
-  if (r.count > max) throw new DataError("limit", "Too many attempts. Wait a few minutes and try again.");
+  if (r.count > max) throw new DataError("rate_limited", "Too many attempts. Wait a few minutes and try again.");
   if (Math.random() < 0.02) await db`delete from rate_limits where window_start < now() - interval '1 day'`;
 }
 
