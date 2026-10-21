@@ -1,0 +1,64 @@
+feature,area,priority,original,clone,notes
+Sign up with email and password,auth,must,yes,no,S11; name + email + password x2 + terms checkbox
+Sign in with Google,auth,must,yes,no,S10 S11; add Sign in with Apple on iOS (store rule)
+Forgot password / reset by email,auth,must,yes,no,S12 link seen; page inferred
+Forecast table across all assets,forecast hub,must,yes,no,S02; asset / category / price / horizons / indicators
+Forecast horizons tomorrow 7d 1m 1y 5y 10y,forecast hub,must,yes,no,S02 columns; long horizons as scenarios not point forecasts
+Market switcher (mix + 7 markets),forecast hub,must,yes,no,S01 S02; crypto first if launching on free data
+Signal strength filter (Strong Buy..Strong Sell),forecast hub,must,yes,no,S02; probability bands 50/55/65%
+Search the table,forecast hub,must,yes,no,S02
+Sort by column,forecast hub,must,yes,no,S02 headers; behaviour not observed
+Pagination with rows per page,forecast hub,must,yes,no,S02 10/20/50/100
+Signal badge + trend pills (MACD / MA cross / 200-MA),forecast hub,must,yes,no,S02 S06
+Asset forecast page shell (price banner + stats + byline),asset page,must,yes,no,S06; provenance strip with source + checked-at time
+Price chart with history/forecast toggle and band,asset page,must,yes,no,S06; ranges 1D..All; band + midpoint
+Technical pulse by timeframe (MA + oscillator votes),asset page,must,yes,no,S06 S08; 5m/30m/1h/1d/1w; Unavailable state
+Short-term forecast tables (14 days + 4 weeks),asset page,must,yes,no,S06; low / high / mid / change
+Long-term scenarios (yearly bear/base/bull to 2036),asset page,must,yes,no,S06; fan chart + yearly table
+Methodology section per asset,asset page,must,yes,no,S06; write your own; link to public track record
+Risk disclaimer and not-financial-advice notice,legal,must,yes,no,all pages; also in app store listing
+Pricing page with plans and yearly/monthly toggle,billing,must,yes,no,S09; set own prices in /replica-launch
+Subscription checkout + cancel at period end,billing,must,yes,no,S16 inferred; Stripe on web
+Plan entitlements gate markets and features,billing,must,yes,no,S09 matrix; enforce server-side
+Paywall / unlock prompts on locked content,billing,must,yes,no,S02 S07; F07
+Watchlist add/remove + watchlist page,watchlist,must,yes,no,S13 inferred; login-gated
+Alerts on price and signal change,alerts,must,yes,no,S14 inferred; email channel
+Mobile app: signals feed / asset / watchlist / alerts,mobile,must,no,no,new - BeCoin has no app; M01-M04
+Investing / Day Trading tabs,forecast hub,should,yes,no,S01 S02; day trading = intraday timeframes
+Customize columns modal with persistence,forecast hub,should,yes,no,S03; save per account
+Volatility filter,forecast hub,should,yes,no,S02 High/Medium/Low
+Biggest movers (gainers/losers by horizon),forecast hub,should,yes,no,S02
+Today's market outlook summary,forecast hub,should,yes,no,S02
+Monthly forecast table (12 months),asset page,should,yes,no,S06
+Investment scenario calculator,asset page,should,yes,no,S06 amount + horizon -> upper/mid/lower
+Regular contributions / DCA calculator on asset page,asset page,should,yes,no,S06; label assumptions
+Recent range levels (20d / 90d high-low),asset page,should,yes,no,S06
+Generated technical summary text,asset page,should,yes,no,S06 bias + support/resistance
+Market-specific sections (halving + ATH for crypto; sessions for forex),asset page,should,yes,no,S06 variants
+Asset FAQ (short and long term),asset page,should,yes,no,S06; own questions and answers
+Live price page with candles and converter,asset page,should,yes,no,S07
+Market overview + asset directory pages,navigation,should,yes,no,S04 S05; also SEO landing pages
+Related assets (people also watch),navigation,should,yes,no,S06
+Push notifications for alerts,mobile,should,no,no,new; APNs/FCM; deep link to asset
+In-app subscription (App Store / Play),mobile,should,no,no,new; or reader-app route
+Data-quality quarantine + stale-quote states,data,should,yes,no,S06 notice; cross-check spread threshold
+Public out-of-sample accuracy track record,trust,could,no,no,gap: BeCoin claims 68-72% unexplained; differentiator
+Year-by-year outlook cards,asset page,could,yes,no,S06
+Halving cycles table,asset page,could,yes,no,S06 crypto only
+Asset logos,asset page,could,yes,no,use a licensed icon set; not BeCoin's assets
+Price history page,asset page,could,yes,no,S04 tab
+Converter / calculator page per market,asset page,could,yes,no,S04 tab
+Crypto payments,billing,could,yes,no,S09 mention
+Testimonials / social proof block,marketing,could,yes,no,only real ones from your own users
+Facebook group / community links,marketing,could,yes,no,
+Mobile home-screen widget,mobile,could,no,no,new
+Calculator and tools catalog (27 tools),tools,skip,yes,skip,out of chosen slice
+Paper trading simulator,tools,skip,yes,skip,out of chosen slice
+Trading journal,tools,skip,yes,skip,out of chosen slice
+Standalone Forecast API + API dashboard,api,skip,yes,skip,out of chosen slice; revisit after v1
+Broker reviews and ratings,brokers,skip,yes,skip,out of slice; affiliate deals are partner contracts
+Broker affiliate Trade Now links,brokers,skip,yes,skip,partner deals; several brokers are restricted binary-options platforms
+Blog and video library,content,skip,yes,skip,out of slice; content is theirs
+12 language versions,i18n,skip,yes,skip,out of slice; build i18n-ready
+BeCoin forecasts / tables / text,data,skip,yes,skip,owned by BeCoin per terms; clone generates its own
+Accuracy claim 68-72%,trust,skip,yes,skip,unsubstantiated; only publish what you measure
