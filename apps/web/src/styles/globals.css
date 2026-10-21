@@ -1,0 +1,10 @@
+@import "./tokens.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body { @apply bg-bg text-fg; }
+  a { @apply rounded-sm; }
+  ::selection { background: rgb(var(--c-accent) / 0.2); }
+}

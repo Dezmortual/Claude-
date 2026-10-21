@@ -1,0 +1,34 @@
+import type { Metadata, Viewport } from "next";
+import "@/styles/globals.css";
+import { Footer } from "@/components/Footer";
+import { Header } from "@/components/Header";
+import { themeScript } from "@/components/client/ThemeToggle";
+import { Toaster } from "@/components/client/Toaster";
+import { viewer } from "@/lib/session";
+
+export const metadata: Metadata = {
+  title: { default: "App name: price forecasts with a public track record", template: "%s · App name" },
+  description: "Short-term forecasts, technical signals and long-term scenarios for crypto and other markets, with every forecast scored in public.",
+};
+
+export const viewport: Viewport = { width: "device-width", initialScale: 1 };
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const v = await viewer();
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="min-h-screen font-sans antialiased">
+        <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-toast focus:rounded-md focus:bg-surface focus:p-3">
+          Skip to content
+        </a>
+        <Header viewer={v} />
+        <main id="main" className="mx-auto max-w-content px-4 py-8 lg:px-6">{children}</main>
+        <Footer />
+        <Toaster />
+      </body>
+    </html>
+  );
+}
