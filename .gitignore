@@ -20,3 +20,11 @@ ruvector.db
 .claude/.proven-config-version
 .claude/proven-config.json
 __pycache__/
+
+# Local trading state (holds personal config)
+trader/
+
+# Installed at session start by the Ruflo hooks
+node_modules/
+/package.json
+/package-lock.json
