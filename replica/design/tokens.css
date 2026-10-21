@@ -74,6 +74,8 @@
   --layout-table-row: 48px;
   --layout-table-row-compact: 40px;
   --layout-tap-target: 44px;
+  --layout-chart: 288px;
+  --layout-chart-lg: 384px;
   --z-header: 40;
   --z-dropdown: 50;
   --z-modal: 60;

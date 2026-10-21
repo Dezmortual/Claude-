@@ -24,7 +24,7 @@ export function TabSwitch({ tab, base, current, dayLocked }: { tab: Tab; base: s
 
 export function MarketChips({ markets, active, base, current }: { markets: Market[]; active: string; base: string; current: Record<string, unknown> }) {
   return (
-    <nav aria-label="Market" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
+    <nav aria-label="Market" className="-mx-4 flex gap-2 relative overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:px-0">
       {[{ code: "all", name: "All markets", locked: false } as const, ...markets].map((m) => (
         <Link key={m.code} href={hubHref(base, current, { market: m.code, page: 1 })} scroll={false} aria-current={active === m.code ? "page" : undefined}
           className={cx(chip, active === m.code ? "border-accent bg-accent text-on-accent" : "bg-surface hover:bg-surface-sunken", m.locked && active !== m.code && "text-subtle")}>
@@ -94,7 +94,7 @@ export function Pagination({ page, pages, total, perPage, base, current }: { pag
               <span key={n} className="flex items-center gap-2">
                 {i > 0 && n - nums[i - 1] > 1 && <span aria-hidden className="text-subtle">…</span>}
                 <Link href={hubHref(base, current, { page: n })} scroll={false} aria-current={n === page ? "page" : undefined}
-                  className={cx(btn, n === page && "border-accent bg-accent text-on-accent hover:bg-accent-hover")}>{n}</Link>
+                  className={n === page ? "inline-flex h-10 min-w-tap items-center justify-center rounded-md border border-accent bg-accent px-3 text-sm font-semibold text-on-accent" : btn}>{n}</Link>
               </span>
             ))}
             {page < pages ? <Link className={btn} href={hubHref(base, current, { page: page + 1 })} scroll={false}>Next</Link>

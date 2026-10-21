@@ -37,3 +37,8 @@ export function hubHref(base: string, current: Record<string, unknown>, patch: R
   const s = p.toString();
   return s ? `${base}?${s}` : base;
 }
+
+/** Only same-site paths: "/x" yes, "//host" and "https://host" no. */
+export function safeNext(n: string | undefined | null, fallback = "/forecasts") {
+  return n && n.startsWith("/") && !n.startsWith("//") && !n.startsWith("/\\") ? n : fallback;
+}

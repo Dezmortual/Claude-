@@ -90,7 +90,7 @@ export function ForecastTable({ data, tab, visible, base, current, watchlist, st
   return (
     <>
       {/* md and up: the table */}
-      <div className="hidden overflow-x-auto rounded-lg border bg-surface md:block">
+      <div className="hidden relative overflow-x-auto rounded-lg border bg-surface md:block">
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Forecasts, {data.total} assets, page {data.page} of {data.pages}</caption>
           <thead>

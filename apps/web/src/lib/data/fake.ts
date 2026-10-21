@@ -121,7 +121,7 @@ export function movers(v: Viewer, horizon: Exclude<Horizon, "5y" | "10y">, n = 7
     return { asset: a, changePct: p.changePct, price: quote(a.slug).price };
   });
   all.sort((a, b) => b.changePct - a.changePct);
-  return { gainers: all.slice(0, n).filter((m) => m.changePct > 0), losers: all.slice(-n).reverse().filter((m) => m.changePct < 0) };
+  return { gainers: all.slice(0, n).filter((m) => m.changePct >= 0.005), losers: all.slice(-n).reverse().filter((m) => m.changePct <= -0.005) };
 }
 
 export function outlook(v: Viewer, horizon: "1d" | "7d" | "1m") {
@@ -379,7 +379,7 @@ export function deleteAlert(v: Viewer, id: string) {
 
 // ---------------------------------------------------------------- table preferences
 
-export const DEFAULT_COLUMNS = ["price", "1d", "7d", "1m", "1y", "signal", "macd", "maCross", "ma200", "volatility"];
+export const DEFAULT_COLUMNS = ["price", "1d", "7d", "1m", "signal", "macd", "maCross", "ma200", "volatility"];
 export const ALL_COLUMNS = ["price", "1d", "7d", "1m", "1y", "5y", "10y", "signal", "macd", "maCross", "ma200", "volatility", "sharpe", "dividend"];
 
 export function getPrefs(v: Viewer): TablePrefs {

@@ -43,12 +43,13 @@ export function bars(slug: string, tf: Timeframe, now = Date.now()): Bar[] {
   const n = TF_COUNT[tf];
   const r = rng(hash(`${slug}:${tf}`));
   const sigma = DEMO_VOL[asset.market] * Math.sqrt(step / YEAR_MS);
-  // Slow regime switches so trends and pullbacks both appear.
+  // Built backwards from "now" with a gentle pull towards today's level, so history stays in a believable band
+  // around the current price. Slow regime switches give both trends and pullbacks.
   let drift = 0;
-  const logs: number[] = [0];
-  for (let i = 1; i < n; i++) {
-    if (i % 60 === 0) drift = (r() - 0.5) * sigma * 0.5;
-    logs.push(logs[i - 1] + drift + sigma * gauss(r));
+  const logs: number[] = new Array(n).fill(0);
+  for (let i = n - 2; i >= 0; i--) {
+    if (i % 60 === 0) drift = (r() - 0.5) * sigma * 0.12;
+    logs[i] = logs[i + 1] * (1 - 0.004) - drift - sigma * gauss(r);
   }
   // Day-to-day wobble so prices move between days; identical for every timeframe so they agree.
   const day = Math.floor(now / 86_400_000);

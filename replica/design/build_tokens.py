@@ -85,6 +85,7 @@ preset = {
             "ringColor": {"DEFAULT": "rgb(var(--c-focus) / <alpha-value>)"},
             "maxWidth": {k: "%dpx" % T["layout"][k] for k in ("content", "wide", "prose")},
             "height": {"header": "%dpx" % T["layout"]["header"], "row": "%dpx" % T["layout"]["table-row"],
+                       "chart": "%dpx" % T["layout"]["chart"], "chart-lg": "%dpx" % T["layout"]["chart-lg"],
                        "row-compact": "%dpx" % T["layout"]["table-row-compact"]},
             "minHeight": {"tap": "%dpx" % T["layout"]["tap-target"]},
             "minWidth": {"tap": "%dpx" % T["layout"]["tap-target"]},

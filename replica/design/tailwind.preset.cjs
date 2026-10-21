@@ -164,6 +164,8 @@ module.exports = {
       "height": {
         "header": "64px",
         "row": "48px",
+        "chart": "288px",
+        "chart-lg": "384px",
         "row-compact": "40px"
       },
       "minHeight": {

@@ -1,11 +1,16 @@
 "use client";
+import { useEffect } from "react";
+
 // Progressive enhancement: selects submit their GET form on change. Without JS the Apply button does it.
 export function AutoSubmit({ formId }: { formId: string }) {
-  return (
-    <script
-      dangerouslySetInnerHTML={{
-        __html: `(function(){var f=document.getElementById(${JSON.stringify(formId)});if(!f)return;f.querySelectorAll("select").forEach(function(s){s.addEventListener("change",function(){f.requestSubmit()})});var b=f.querySelector("[data-apply]");if(b)b.classList.add("sr-only")})()`,
-      }}
-    />
-  );
+  useEffect(() => {
+    const f = document.getElementById(formId) as HTMLFormElement | null;
+    if (!f) return;
+    const submit = () => f.requestSubmit();
+    const selects = Array.from(f.querySelectorAll("select"));
+    selects.forEach((s) => s.addEventListener("change", submit));
+    f.querySelector("[data-apply]")?.classList.add("sr-only");
+    return () => selects.forEach((s) => s.removeEventListener("change", submit));
+  }, [formId]);
+  return null;
 }
