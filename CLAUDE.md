@@ -41,3 +41,11 @@ It added `.claude/{skills,agents,commands,helpers}`, hooks and a status line in
 config in `.claude-flow/`. Its local databases (`.swarm/`, `ruvector.db`) are
 gitignored. Update with `npx ruflo@latest init upgrade --settings`, and keep the
 trading-desk entries in `settings.json` when you do.
+
+## Replica skills
+
+The eleven `replica-*` skills in `.claude/skills/` (recon, architect, design,
+build, backend, test, diff, entrepreneur, brand, launch, deploy) were copied
+from Jakeschincariol/replica-skill at commit 77c9436 (v1.0, MIT). Run them in
+that order; each writes to a `replica/` folder in the project. Their Python
+tools need only the standard library.
