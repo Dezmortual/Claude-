@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BarChart3, Bell, ShieldCheck } from "lucide-react";
 import { ForecastTable } from "@/components/ForecastTable";
 import { TabSwitch } from "@/components/HubControls";
-import { ButtonLink, Card, DemoNote, Label, Section } from "@/components/ui";
+import { Banner, ButtonLink, Card, DemoNote, Label, Section } from "@/components/ui";
 import { MARKETS, listAssets, listForecasts, watchlistSlugs } from "@/lib/data";
 import { dateTime } from "@/lib/format";
 import { parseForecastQuery, type SP } from "@/lib/query";
@@ -12,12 +12,14 @@ export const metadata = { title: { absolute: "App name: price forecasts you can 
 
 export default async function Home({ searchParams }: { searchParams: Promise<SP> }) {
   const v = await viewer();
-  const q = parseForecastQuery(await searchParams, { perPage: 10 });
+  const sp = await searchParams;
+  const q = parseForecastQuery(sp, { perPage: 10 });
   const data = listForecasts(v, { ...q, market: "crypto", perPage: 10, page: 1 });
   const starMode = !v.user ? "guest" : v.plan.watchlistAlerts ? "ok" : "no-plan";
 
   return (
     <div className="space-y-16">
+      {sp.deleted && <Banner>Your account and everything in it has been deleted.</Banner>}
       <section className="grid gap-6 py-6 md:py-10">
         <Label>Forecasts with receipts</Label>
         <h1 className="max-w-3xl text-xl md:text-display">See where prices could go, and how often we&apos;ve been right.</h1>
