@@ -7,8 +7,9 @@ import { Badge, DemoNote, PriceChange, cx } from "./ui";
 
 const MARKET_NAME: Record<string, string> = { crypto: "Crypto", forex: "Forex", stocks: "Stocks", commodities: "Commodities", indices: "Indices", etfs: "ETFs", bonds: "Bonds & yields" };
 
-export function AssetHeader({ asset, quote, viewer, current, title }: {
+export function AssetHeader({ asset, quote, viewer, current, title, priceSlot }: {
   asset: Asset; quote: Quote; metrics: Metrics; viewer: Viewer; current: "forecast" | "live" | "signals"; title: string;
+  priceSlot?: React.ReactNode; // replaces the static price, e.g. with a live-updating one
 }) {
   const tabs = [
     { key: "forecast", href: `/assets/${asset.slug}`, label: "Forecast" },
@@ -40,10 +41,12 @@ export function AssetHeader({ asset, quote, viewer, current, title }: {
         <WatchStar slug={asset.slug} name={asset.name} on={watchlistSlugs(viewer).includes(asset.slug)} mode={mode} withLabel />
       </div>
 
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <span className="tabular text-price text-fg">{fmtPrice(quote.price, asset.quoteUnit)}</span>
-        <PriceChange value={quote.change24hPct} suffix="24h" bold className="text-base" />
-      </div>
+      {priceSlot ?? (
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          <span className="tabular text-price text-fg">{fmtPrice(quote.price, asset.quoteUnit)}</span>
+          <PriceChange value={quote.change24hPct} suffix="24h" bold className="text-base" />
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted">
         <span>Source: {quote.source}</span>

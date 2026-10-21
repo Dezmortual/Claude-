@@ -395,3 +395,24 @@ export function setPrefs(v: Viewer, p: TablePrefs) {
   db().prefs[u.id] = { visibleColumns: cols, rowsPerPage: p.rowsPerPage, defaultTab: p.defaultTab === "day_trading" ? "day_trading" : "investing" };
   save();
 }
+
+// ---------------------------------------------------------------- live page stats
+
+export function assetStats(slug: string) {
+  if (!getAsset(slug)) throw new DataError("not_found", "No such asset");
+  const d = closedBars(slug, "1d");
+  const b5 = closedBars(slug, "5m").slice(-288);
+  const last = quote(slug).price;
+  const back = (n: number) => d.at(-1 - n)?.c ?? null;
+  const ch = (p: number | null) => (p ? (last / p - 1) * 100 : null);
+  const yr = d.slice(-365);
+  const month = d.slice(-30);
+  const rets = month.map((x, i) => (i ? Math.log(x.c / month[i - 1].c) : 0)).slice(1);
+  return {
+    day: { lo: Math.min(...b5.map((x) => x.l)), hi: Math.max(...b5.map((x) => x.h)), short: b5.length < 288 },
+    week52: { lo: Math.min(...yr.map((x) => x.l)), hi: Math.max(...yr.map((x) => x.h)) },
+    change: { "7d": ch(back(7)), "30d": ch(back(30)), "1y": ch(back(365)) },
+    upDays30: rets.filter((r) => r > 0).length,
+    days30: rets.length,
+  };
+}
