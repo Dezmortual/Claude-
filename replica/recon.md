@@ -21,9 +21,10 @@ through published APIs. So:
   a time. No BeCoin account was used, and none should be.
 - The clone must produce **its own** forecasts, signals, copy, FAQ and
   methodology text. Never import, cache or display BeCoin numbers or text.
-- No screenshots were captured into `replica/screens/` (no browser tool was
-  connected to the user's own browser). Add them by hand if useful, as
-  reference only.
+- 12 reference screenshots of S01, S02, S06 and S09 (desktop, full-page and
+  mobile) were taken during /replica-design, one headless page load at a
+  time, to measure layout and type. They are in `replica/screens/`, are
+  gitignored, and are never shipped.
 
 ## Sources
 

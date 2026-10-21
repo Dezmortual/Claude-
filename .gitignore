@@ -19,3 +19,6 @@ ruvector.db
 .claude-flow/security/
 .claude/.proven-config-version
 .claude/proven-config.json
+
+# Reference screenshots of the original app (replica-recon/design). Local only, never committed or shipped.
+replica/screens/

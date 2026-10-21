@@ -1,0 +1,68 @@
+  AAA   16.21:1  text                     on bg                   
+  AAA   17.23:1  text                     on surface              
+  AAA   15.10:1  text                     on surface-sunken       
+  AA     6.17:1  text-muted               on bg                   
+  AA     6.56:1  text-muted               on surface              
+  AA     5.75:1  text-muted               on surface-sunken       
+  AA     5.29:1  text-subtle              on surface              
+  AA     4.98:1  text-subtle              on bg                   
+  AA     4.64:1  text-subtle              on surface-sunken       
+  AAA    7.01:1  on-accent                on accent               
+  AAA    9.14:1  on-accent                on accent-hover         
+  AAA    7.01:1  accent                   on surface              
+  AA     6.60:1  accent                   on bg                   
+  AA     5.93:1  accent                   on accent-soft          
+  AA     5.39:1  up                       on surface              
+  AA     4.71:1  up                       on up-soft              
+  AA     5.62:1  down                     on surface              
+  AA     4.69:1  down                     on down-soft            
+  AA     5.97:1  flat                     on surface              
+  AA     5.29:1  warning                  on warning-soft         
+  AA     5.93:1  warning                  on surface              
+  AA     5.62:1  danger                   on surface              
+  AA     5.39:1  success                  on surface              
+  AA     5.76:1  signal-strong-buy        on up-soft              
+  AA     4.71:1  signal-buy               on up-soft              
+  AA     5.75:1  signal-neutral           on surface-sunken       
+  AA     4.69:1  signal-sell              on down-soft            
+  AA     6.26:1  signal-strong-sell       on down-soft            
+  PASS   3.78:1  border-input             on surface              ui
+  PASS   3.56:1  border-input             on bg                   ui
+  PASS   7.01:1  focus                    on surface              ui
+  PASS   6.60:1  focus                    on bg                   ui
+  PASS   7.01:1  chart-line               on surface              ui
+  AAA   16.06:1  dark-text                on dark-bg              
+  AAA   14.72:1  dark-text                on dark-surface         
+  AAA   16.40:1  dark-text                on dark-surface-sunken  
+  AAA    8.39:1  dark-text-muted          on dark-bg              
+  AAA    7.69:1  dark-text-muted          on dark-surface         
+  AAA    8.57:1  dark-text-muted          on dark-surface-sunken  
+  AA     5.69:1  dark-text-subtle         on dark-surface         
+  AA     6.21:1  dark-text-subtle         on dark-bg              
+  AA     6.34:1  dark-text-subtle         on dark-surface-sunken  
+  AAA    8.16:1  dark-on-accent           on dark-accent          
+  AAA    9.98:1  dark-on-accent           on dark-accent-hover    
+  AAA    7.48:1  dark-accent              on dark-surface         
+  AAA    8.16:1  dark-accent              on dark-bg              
+  AA     5.93:1  dark-accent              on dark-accent-soft     
+  AAA    7.43:1  dark-up                  on dark-surface         
+  AA     6.09:1  dark-up                  on dark-up-soft         
+  AA     6.06:1  dark-down                on dark-surface         
+  AA     5.55:1  dark-down                on dark-down-soft       
+  AA     6.92:1  dark-flat                on dark-surface         
+  AAA    7.59:1  dark-warning             on dark-warning-soft    
+  AAA    9.15:1  dark-warning             on dark-surface         
+  AA     6.06:1  dark-danger              on dark-surface         
+  AAA    7.43:1  dark-success             on dark-surface         
+  AAA    7.39:1  dark-signal-strong-buy   on dark-up-soft         
+  AA     6.09:1  dark-signal-buy          on dark-up-soft         
+  AAA    8.57:1  dark-signal-neutral      on dark-surface-sunken  
+  AA     5.55:1  dark-signal-sell         on dark-down-soft       
+  AAA    7.27:1  dark-signal-strong-sell  on dark-down-soft       
+  PASS   3.79:1  dark-border-input        on dark-surface         ui
+  PASS   4.14:1  dark-border-input        on dark-bg              ui
+  PASS   7.48:1  dark-focus               on dark-surface         ui
+  PASS   8.16:1  dark-focus               on dark-bg              ui
+  PASS   7.48:1  dark-chart-line          on dark-surface         ui
+
+  66 pairs, 0 failing AA
