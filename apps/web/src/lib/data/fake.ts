@@ -416,3 +416,8 @@ export function assetStats(slug: string) {
     days30: rets.length,
   };
 }
+
+/** Assets a viewer may set alerts on, with the current price for the form's hint. */
+export function alertableAssets(v: Viewer) {
+  return ASSETS.filter((a) => canSee(v, a)).map((a) => ({ slug: a.slug, name: a.name, ticker: a.ticker, price: quote(a.slug).price }));
+}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Bell } from "lucide-react";
 import type { Asset, Metrics, Quote, Viewer } from "@/lib/data";
 import { watchlistSlugs } from "@/lib/data";
 import { dateTime, pct, price as fmtPrice } from "@/lib/format";
@@ -38,7 +39,13 @@ export function AssetHeader({ asset, quote, viewer, current, title, priceSlot }:
           </div>
           <h1 className="break-words text-xl">{title}</h1>
         </div>
-        <WatchStar slug={asset.slug} name={asset.name} on={watchlistSlugs(viewer).includes(asset.slug)} mode={mode} withLabel />
+        <div className="flex items-center gap-1">
+          <Link href={mode === "guest" ? `/sign-in?next=${encodeURIComponent(`/alerts?asset=${asset.slug}`)}` : mode === "ok" ? `/alerts?asset=${asset.slug}` : "/pricing?need=watchlist"}
+            className="inline-flex h-10 items-center gap-2 rounded-md px-2 text-sm font-semibold hover:bg-surface-sunken">
+            <Bell aria-hidden className="h-4 w-4 text-muted" />Set alert
+          </Link>
+          <WatchStar slug={asset.slug} name={asset.name} on={watchlistSlugs(viewer).includes(asset.slug)} mode={mode} withLabel />
+        </div>
       </div>
 
       {priceSlot ?? (
