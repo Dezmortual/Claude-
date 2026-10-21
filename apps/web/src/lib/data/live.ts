@@ -1,0 +1,411 @@
+import "server-only";
+// The live data layer: Postgres for users and their data, official market-data APIs (cached in price_bars) for prices.
+// Same contract as the demo layer it replaced, now async. Screens and API routes import only from ./index.
+// Authorisation: every user-owned query is scoped by the viewer's user id here; RLS stays on with no policies.
+import { sql } from "@/lib/server/db";
+import { env } from "@/lib/server/env";
+import { endAllSessions, isOwner, sessionUser } from "@/lib/server/auth";
+import { ASSETS, ASSET_BY_SLUG, MARKETS, PLANS, PLAN_BY_CODE } from "./catalogue";
+import { pulse } from "./indicators";
+import { ensure, ensureCrosscheck } from "./marketdata";
+import { closedBars, isDemo, metrics, paths, quote, scenarios, shortTerm } from "./model";
+import {
+  DataError, type Alert, type AlertCondition, type Asset, type Bar, type ForecastPage, type ForecastQuery, type ForecastRow,
+  type Horizon, type Market, type MarketCode, type Mover, type Plan, type Signal, type TablePrefs, type Timeframe, type Viewer,
+} from "./types";
+
+const PULSE_TFS: Timeframe[] = ["5m", "30m", "1h", "1d", "1w"];
+const ROW_TFS: Timeframe[] = ["5m", "30m", "1h", "1d"];
+
+// ---------------------------------------------------------------- entitlements
+
+export function canSee(v: Viewer, a: Asset) {
+  return v.plan.markets.includes(a.market) && (!v.plan.publicOnly || a.isPublic);
+}
+
+/** Which plan unlocks this asset (for paywall copy in a non-private build). */
+export function planFor(a: Asset): Plan {
+  return PLANS.find((p) => p.markets.includes(a.market) && (!p.publicOnly || a.isPublic))!;
+}
+
+export function runAt(): string {
+  return new Date(Math.floor(Date.now() / 60_000) * 60_000).toISOString();
+}
+
+export function privateMode() {
+  return env().PRIVATE_MODE;
+}
+
+export { isDemo };
+
+// ---------------------------------------------------------------- catalogue
+
+export function listMarkets(v: Viewer): Market[] {
+  return MARKETS.map((m) => ({ ...m, locked: !v.plan.markets.includes(m.code) }));
+}
+
+export function getAsset(slug: string): Asset | null {
+  return ASSET_BY_SLUG.get(slug) ?? null;
+}
+
+export function listAssets(market?: MarketCode): Asset[] {
+  return market ? ASSETS.filter((a) => a.market === market) : ASSETS;
+}
+
+export function relatedAssets(slug: string, n = 4): Asset[] {
+  const a = ASSET_BY_SLUG.get(slug);
+  if (!a) return [];
+  return ASSETS.filter((x) => x.market === a.market && x.slug !== slug).slice(0, n);
+}
+
+export function listPlans(): Plan[] {
+  return PLANS;
+}
+
+function requireAsset(slug: string): Asset {
+  const a = getAsset(slug);
+  if (!a) throw new DataError("not_found", "No such asset");
+  return a;
+}
+
+/** Load prices for the assets a call touches (only those the viewer may see). */
+async function load(v: Viewer, assets: Asset[], tfs: Timeframe[] = ROW_TFS) {
+  const seen = assets.filter((a) => canSee(v, a)).map((a) => a.slug);
+  await Promise.all([ensure(seen, tfs), seen.some((s) => ASSET_BY_SLUG.get(s)!.market === "crypto") ? ensureCrosscheck() : null]);
+}
+
+// ---------------------------------------------------------------- forecast table
+
+function row(v: Viewer, a: Asset): ForecastRow {
+  if (!canSee(v, a)) return { asset: a, locked: true, demo: isDemo(a.slug) };
+  if (!closedBars(a.slug, "1d").length) return { asset: a, locked: true }; // no data yet: treated like a locked row
+  const qt = quote(a.slug);
+  const { points } = shortTerm(a.slug);
+  const m = metrics(a.slug);
+  const h7 = points.find((p) => p.horizon === "7d")!;
+  const intraday: ForecastRow["intraday"] = {};
+  for (const tf of ["5m", "30m", "1h"] as const) intraday[tf] = pulse(tf, closedBars(a.slug, tf)).verdict;
+  return {
+    asset: a, locked: false, demo: isDemo(a.slug), price: qt.price, change24hPct: qt.change24hPct,
+    horizons: Object.fromEntries(points.map((p) => [p.horizon, { mid: p.mid, changePct: p.changePct }])),
+    signal: h7.signal!, pUp: h7.pUp!, intraday,
+    metrics: { macd: m.macd, maCross: m.maCross, ma200Trend: m.ma200Trend, pctFromMa200: m.pctFromMa200,
+      volatilityPct: m.volatilityPct, volatilityLabel: m.volatilityLabel, sharpe: m.sharpe, dividendYieldPct: m.dividendYieldPct },
+  };
+}
+
+const SORTS: Record<string, (r: ForecastRow) => number | string> = {
+  asset: (r) => r.asset.name.toLowerCase(),
+  price: (r) => r.price ?? -Infinity,
+  change: (r) => r.change24hPct ?? -Infinity,
+  "1d": (r) => r.horizons?.["1d"]?.changePct ?? -Infinity,
+  "7d": (r) => r.horizons?.["7d"]?.changePct ?? -Infinity,
+  "1m": (r) => r.horizons?.["1m"]?.changePct ?? -Infinity,
+  "1y": (r) => r.horizons?.["1y"]?.changePct ?? -Infinity,
+  "5y": (r) => r.horizons?.["5y"]?.changePct ?? -Infinity,
+  "10y": (r) => r.horizons?.["10y"]?.changePct ?? -Infinity,
+  signal: (r) => r.pUp ?? -Infinity,
+  volatility: (r) => r.metrics?.volatilityPct ?? -Infinity,
+  sharpe: (r) => r.metrics?.sharpe ?? -Infinity,
+  dividend: (r) => r.metrics?.dividendYieldPct ?? -Infinity,
+};
+
+export async function listForecasts(v: Viewer, q: ForecastQuery): Promise<ForecastPage> {
+  const perPage = [10, 20, 50, 100].includes(q.perPage ?? 0) ? q.perPage! : 20;
+  const needle = (q.q ?? "").trim().toLowerCase();
+  const assets = ASSETS
+    .filter((a) => !q.market || q.market === "all" || a.market === q.market)
+    .filter((a) => !needle || a.name.toLowerCase().includes(needle) || a.ticker.toLowerCase().includes(needle) || a.slug.includes(needle));
+  await load(v, assets);
+  let rows = assets.map((a) => row(v, a));
+  if (q.signal && q.signal !== "all") rows = rows.filter((r) => !r.locked && r.signal === q.signal);
+  if (q.volatility && q.volatility !== "all") rows = rows.filter((r) => !r.locked && r.metrics!.volatilityLabel === q.volatility);
+  const key = SORTS[q.sort ?? ""] ?? null;
+  const dir = q.dir ? (q.dir === "asc" ? 1 : -1) : q.sort === "asset" ? 1 : -1;
+  rows.sort((a, b) => {
+    if (a.locked !== b.locked) return a.locked ? 1 : -1;
+    if (!key || a.locked) return 0;
+    const x = key(a), y = key(b);
+    return (x < y ? -1 : x > y ? 1 : 0) * dir;
+  });
+  const total = rows.length;
+  const pages = Math.max(1, Math.ceil(total / perPage));
+  const page = Math.min(Math.max(1, q.page ?? 1), pages);
+  return { rows: rows.slice((page - 1) * perPage, page * perPage), page, pages, total, runAt: runAt(), tabLocked: q.tab === "day_trading" && !v.plan.dayTrading };
+}
+
+async function visibleWithData(v: Viewer, assets: Asset[] = ASSETS) {
+  await load(v, assets, ["5m", "1d"]);
+  return assets.filter((a) => canSee(v, a) && closedBars(a.slug, "1d").length);
+}
+
+export async function movers(v: Viewer, horizon: Exclude<Horizon, "5y" | "10y">, n = 7, market?: MarketCode): Promise<{ gainers: Mover[]; losers: Mover[] }> {
+  const all = (await visibleWithData(v, market ? listAssets(market) : ASSETS)).map((a) => {
+    const p = shortTerm(a.slug).points.find((x) => x.horizon === horizon)!;
+    return { asset: a, changePct: p.changePct, price: quote(a.slug).price };
+  });
+  all.sort((a, b) => b.changePct - a.changePct);
+  return { gainers: all.slice(0, n).filter((m) => m.changePct >= 0.005), losers: all.slice(-n).reverse().filter((m) => m.changePct <= -0.005) };
+}
+
+export async function outlook(v: Viewer, horizon: "1d" | "7d" | "1m", market?: MarketCode) {
+  const pts = (await visibleWithData(v, market ? listAssets(market) : ASSETS)).map((a) => ({ a, p: shortTerm(a.slug).points.find((x) => x.horizon === horizon)! }));
+  const up = pts.filter((x) => x.p.changePct > 0).length;
+  const strongest = pts.reduce<(typeof pts)[number] | null>((best, x) => (!best || Math.abs(x.p.changePct) > Math.abs(best.p.changePct) ? x : best), null);
+  return { total: pts.length, up, down: pts.length - up, strongest: strongest && { asset: strongest.a, changePct: strongest.p.changePct } };
+}
+
+// ---------------------------------------------------------------- asset pages
+
+/** Loads everything an asset page needs in one go. Locked assets still get prices (the daily signal is shown free). */
+async function loadAsset(slug: string, tfs: Timeframe[] = PULSE_TFS) {
+  const a = requireAsset(slug);
+  await Promise.all([ensure([slug], tfs), a.market === "crypto" ? ensureCrosscheck() : null]);
+  if (!closedBars(slug, "1d").length) throw new DataError("not_found", `No price history for ${a.name} yet`);
+  return a;
+}
+
+export async function assetSummary(v: Viewer, slug: string) {
+  const asset = await loadAsset(slug);
+  return { asset, quote: quote(slug), metrics: metrics(slug), locked: !canSee(v, asset), unlockPlan: planFor(asset), demo: isDemo(slug) };
+}
+
+const RANGE_DAYS: Record<string, number> = { "1d": 1, "1w": 7, "1m": 31, "3m": 92, "1y": 366, "5y": 1830, all: 1e9 };
+
+export async function assetBars(v: Viewer, slug: string, range: string): Promise<{ tf: Timeframe; bars: Bar[] }> {
+  const a = await loadAsset(slug, ["5m", "1h", "1d", "1w"]);
+  const days = RANGE_DAYS[range] ?? 92;
+  let tf: Timeframe = days <= 1 ? "5m" : days <= 7 ? "1h" : days <= 366 ? "1d" : "1w";
+  if ((tf === "5m" || tf === "1h") && !canSee(v, a)) throw new DataError("forbidden", "Intraday charts need a plan");
+  if ((tf === "5m" || tf === "1h") && !closedBars(slug, tf).length) tf = "1d"; // daily-only sources
+  const from = Date.now() - days * 86_400_000;
+  return { tf, bars: closedBars(slug, tf).filter((x) => x.ts >= from) };
+}
+
+export async function assetForecast(v: Viewer, slug: string) {
+  const a = await loadAsset(slug);
+  if (!canSee(v, a)) throw new DataError("forbidden", `Forecasts for ${a.name} are on the ${planFor(a).name} plan`);
+  return { runAt: runAt(), basePrice: quote(slug).price, points: shortTerm(slug).points, paths: paths(slug) };
+}
+
+export async function assetSignals(v: Viewer, slug: string) {
+  const a = await loadAsset(slug);
+  const full = canSee(v, a);
+  return PULSE_TFS.map((tf) => {
+    const b = closedBars(slug, tf);
+    const p = pulse(tf, b);
+    if (!b.length) return { ...p, reason: "This source publishes one price per day", locked: false };
+    if (full) return { ...p, locked: false };
+    if (tf === "1d") return { ...p, indicators: [], locked: false };
+    return { timeframe: tf, verdict: "unavailable" as const, ma: { buy: 0, neutral: 0, sell: 0 }, osc: { buy: 0, neutral: 0, sell: 0 },
+      reason: `On the ${planFor(a).name} plan`, indicators: [], locked: true };
+  });
+}
+
+export async function assetScenarios(slug: string) {
+  await loadAsset(slug, ["5m", "1d"]);
+  return scenarios(slug);
+}
+
+export async function assetStats(slug: string) {
+  await loadAsset(slug, ["5m", "1d"]);
+  const d = closedBars(slug, "1d");
+  const b5 = closedBars(slug, "5m").filter((x) => x.ts >= Date.now() - 86_400_000);
+  const day = b5.length ? b5 : d.slice(-1);
+  const last = quote(slug).price;
+  const back = (n: number) => d.at(-1 - n)?.c ?? null;
+  const ch = (p: number | null) => (p ? (last / p - 1) * 100 : null);
+  const yr = d.slice(-365);
+  const month = d.slice(-31);
+  const rets = month.map((x, i) => (i ? Math.log(x.c / month[i - 1].c) : 0)).slice(1);
+  return {
+    day: { lo: Math.min(...day.map((x) => x.l)), hi: Math.max(...day.map((x) => x.h)), short: b5.length < 250 },
+    week52: { lo: Math.min(...yr.map((x) => x.l)), hi: Math.max(...yr.map((x) => x.h)) },
+    change: { "7d": ch(back(7)), "30d": ch(back(30)), "1y": ch(back(365)) },
+    upDays30: rets.filter((r) => r > 0).length,
+    days30: rets.length,
+  };
+}
+
+// ---------------------------------------------------------------- viewer
+
+const GUEST_PLAN = PLAN_BY_CODE.get("free")!;
+const OWNER_PLAN: Plan = { ...PLAN_BY_CODE.get("unlimited")!, name: "Owner" };
+
+/** Private build: the owner gets everything, free; any other session is treated as signed out. */
+export async function getViewer(token: string | undefined): Promise<Viewer> {
+  const u = await sessionUser(token);
+  if (!u || !u.verified) return { user: null, plan: GUEST_PLAN, subscription: null };
+  const owner = isOwner(u.email);
+  if (privateMode() && !owner) return { user: null, plan: GUEST_PLAN, subscription: null };
+  const user = { id: u.id, name: u.name, email: u.email, timezone: u.timezone, createdAt: u.created_at.toISOString() };
+  return { user, plan: owner ? OWNER_PLAN : GUEST_PLAN, subscription: null };
+}
+
+function requireUser(v: Viewer) {
+  if (!v.user) throw new DataError("unauthorized", "Sign in first");
+  return v.user;
+}
+
+export async function updateProfile(v: Viewer, patch: { name?: string; timezone?: string }) {
+  const u = requireUser(v);
+  if (patch.name !== undefined && !patch.name.trim()) throw new DataError("invalid", "Enter your name");
+  if (patch.timezone) {
+    try { new Intl.DateTimeFormat("en-US", { timeZone: patch.timezone }); } catch { throw new DataError("invalid", "Unknown time zone"); }
+  }
+  await sql()`update users set name = coalesce(${patch.name?.trim().slice(0, 80) ?? null}, name), timezone = coalesce(${patch.timezone ?? null}, timezone) where id = ${u.id}`;
+}
+
+export async function deleteAccount(v: Viewer) {
+  const u = requireUser(v);
+  await sql()`delete from users where id = ${u.id}`; // cascades to sessions, tokens, watchlist, alerts, events, prefs
+}
+
+export async function signOutEverywhere(v: Viewer) {
+  await endAllSessions(requireUser(v).id);
+}
+
+// ---------------------------------------------------------------- watchlist
+
+function requireFeature(v: Viewer) {
+  requireUser(v);
+  if (!v.plan.watchlistAlerts) throw new DataError("limit", "Watchlists and alerts aren't on this plan");
+}
+
+export async function watchlistSlugs(v: Viewer): Promise<string[]> {
+  if (!v.user) return [];
+  const rows = await sql()<{ slug: string }[]>`select a.slug from watchlist_items w join assets a on a.id = w.asset_id where w.user_id = ${v.user.id} order by w.sort, w.created_at`;
+  return rows.map((r) => r.slug);
+}
+
+export async function getWatchlist(v: Viewer): Promise<ForecastRow[]> {
+  requireUser(v);
+  const assets = (await watchlistSlugs(v)).map((s) => getAsset(s)).filter((a): a is Asset => !!a);
+  await load(v, assets);
+  return assets.map((a) => row(v, a));
+}
+
+export async function addToWatchlist(v: Viewer, slug: string) {
+  requireFeature(v);
+  requireAsset(slug);
+  const r = await sql()`insert into watchlist_items (user_id, asset_id) select ${v.user!.id}, id from assets where slug = ${slug} on conflict do nothing returning 1`;
+  if (!r.length) throw new DataError("conflict", "Already on your watchlist");
+}
+
+export async function removeFromWatchlist(v: Viewer, slug: string) {
+  const u = requireUser(v);
+  await sql()`delete from watchlist_items where user_id = ${u.id} and asset_id = (select id from assets where slug = ${slug})`;
+}
+
+// ---------------------------------------------------------------- alerts
+
+export interface AlertInput {
+  assetSlug: string; condition: AlertCondition; threshold?: number | null; signal?: Signal | null;
+  timeframe?: Timeframe | null; channels?: ("email" | "push")[]; cooldownMinutes?: number;
+}
+
+type AlertRow = { id: string; slug: string; condition: AlertCondition; threshold: number | null; signal: Signal | null; timeframe: Timeframe | null;
+  channels: ("email" | "push")[]; is_active: boolean; cooldown_minutes: number; last_fired_at: Date | null; created_at: Date };
+
+const toAlert = (r: AlertRow): Alert => ({ id: r.id, assetSlug: r.slug, condition: r.condition, threshold: r.threshold, signal: r.signal,
+  timeframe: r.timeframe, channels: r.channels, isActive: r.is_active, cooldownMinutes: r.cooldown_minutes,
+  lastFiredAt: r.last_fired_at?.toISOString() ?? null, createdAt: r.created_at.toISOString() });
+
+export async function listAlerts(v: Viewer): Promise<Alert[]> {
+  const u = requireUser(v);
+  const rows = await sql()<AlertRow[]>`select al.*, a.slug from alerts al join assets a on a.id = al.asset_id where al.user_id = ${u.id} order by al.created_at desc`;
+  return rows.map(toAlert);
+}
+
+export async function createAlert(v: Viewer, i: AlertInput): Promise<Alert> {
+  requireFeature(v);
+  const a = requireAsset(i.assetSlug);
+  if (!canSee(v, a)) throw new DataError("limit", `Alerts on ${a.name} aren't on this plan`);
+  if (i.condition === "signal_becomes") {
+    if (!i.signal || !i.timeframe) throw new DataError("invalid", "Pick a signal and a timeframe");
+  } else if (!(typeof i.threshold === "number" && Number.isFinite(i.threshold) && i.threshold > 0)) {
+    throw new DataError("invalid", i.condition === "forecast_move_above" ? "Enter a percentage above 0" : "Enter a price above 0");
+  }
+  const channels = (i.channels?.length ? i.channels : ["email"]).filter((c) => c === "email");
+  if (!channels.length) throw new DataError("invalid", "Email is the only channel until the mobile app exists");
+  const db = sql();
+  return db.begin(async (tx) => {
+    // Lock the user's row so two tabs can't both slip under the limit.
+    await tx`select 1 from users where id = ${v.user!.id} for update`;
+    const [{ n }] = await tx<{ n: number }[]>`select count(*)::int as n from alerts where user_id = ${v.user!.id} and is_active`;
+    if (v.plan.maxAlerts !== null && n >= v.plan.maxAlerts) throw new DataError("limit", `Your plan allows ${v.plan.maxAlerts} active alerts`);
+    const sig = i.condition === "signal_becomes";
+    const [r] = await tx<AlertRow[]>`
+      insert into alerts (user_id, asset_id, condition, threshold, signal, timeframe, channels, cooldown_minutes)
+      select ${v.user!.id}, id, ${i.condition}, ${sig ? null : i.threshold!}, ${sig ? i.signal! : null}, ${sig ? i.timeframe! : null},
+        ${channels}, ${Math.max(5, i.cooldownMinutes ?? 60)} from assets where slug = ${i.assetSlug}
+      returning *, ${i.assetSlug}::text as slug`;
+    return toAlert(r);
+  }) as Promise<Alert>;
+}
+
+export async function updateAlert(v: Viewer, id: string, patch: { isActive?: boolean }) {
+  const u = requireUser(v);
+  const [cur] = await sql()<{ is_active: boolean }[]>`select is_active from alerts where id = ${id} and user_id = ${u.id}`;
+  if (!cur) throw new DataError("not_found", "No such alert");
+  if (patch.isActive && !cur.is_active && v.plan.maxAlerts !== null) {
+    const [{ n }] = await sql()<{ n: number }[]>`select count(*)::int as n from alerts where user_id = ${u.id} and is_active`;
+    if (n >= v.plan.maxAlerts) throw new DataError("limit", `Your plan allows ${v.plan.maxAlerts} active alerts`);
+  }
+  // Resuming re-arms the alert so it can fire on the next check.
+  await sql()`update alerts set is_active = coalesce(${patch.isActive ?? null}, is_active), armed = armed or coalesce(${patch.isActive ?? null}, false)
+    where id = ${id} and user_id = ${u.id}`;
+}
+
+export async function deleteAlert(v: Viewer, id: string) {
+  const u = requireUser(v);
+  await sql()`delete from alerts where id = ${id} and user_id = ${u.id}`;
+}
+
+export async function alertEvents(v: Viewer, limit = 20) {
+  const u = requireUser(v);
+  return sql()<{ id: string; fired_at: Date; message: string; email_status: string }[]>`
+    select id, fired_at, message, email_status from alert_events where user_id = ${u.id} order by fired_at desc limit ${limit}`;
+}
+
+/** Assets the viewer may set alerts on, with the current price for the form's hint. */
+export async function alertableAssets(v: Viewer) {
+  const assets = await visibleWithData(v);
+  return assets.map((a) => ({ slug: a.slug, name: a.name, ticker: a.ticker, price: quote(a.slug).price }));
+}
+
+// ---------------------------------------------------------------- table preferences
+
+export const DEFAULT_COLUMNS = ["price", "1d", "7d", "1m", "signal", "macd", "maCross", "ma200", "volatility"];
+export const ALL_COLUMNS = ["price", "1d", "7d", "1m", "1y", "5y", "10y", "signal", "macd", "maCross", "ma200", "volatility", "sharpe", "dividend"];
+
+export async function getPrefs(v: Viewer): Promise<TablePrefs> {
+  const fallback: TablePrefs = { visibleColumns: DEFAULT_COLUMNS, rowsPerPage: 20, defaultTab: "investing" };
+  if (!v.user) return fallback;
+  const [r] = await sql()<{ visible_columns: string[]; rows_per_page: 10 | 20 | 50 | 100; default_tab: TablePrefs["defaultTab"] }[]>`
+    select visible_columns, rows_per_page, default_tab from table_preferences where user_id = ${v.user.id}`;
+  return r ? { visibleColumns: r.visible_columns, rowsPerPage: r.rows_per_page, defaultTab: r.default_tab } : fallback;
+}
+
+export async function setPrefs(v: Viewer, p: TablePrefs) {
+  const u = requireUser(v);
+  const cols = p.visibleColumns.filter((c) => ALL_COLUMNS.includes(c));
+  if (!cols.length) throw new DataError("invalid", "Keep at least one column");
+  if (![10, 20, 50, 100].includes(p.rowsPerPage)) throw new DataError("invalid", "Rows per page must be 10, 20, 50 or 100");
+  await sql()`insert into table_preferences (user_id, visible_columns, rows_per_page, default_tab, updated_at)
+    values (${u.id}, ${cols}, ${p.rowsPerPage}, ${p.defaultTab === "day_trading" ? "day_trading" : "investing"}, now())
+    on conflict (user_id) do update set visible_columns = excluded.visible_columns, rows_per_page = excluded.rows_per_page,
+      default_tab = excluded.default_tab, updated_at = now()`;
+}
+
+// ---------------------------------------------------------------- track record
+
+export async function trackRecord() {
+  return sql()<{ horizon: string; market: string; n: number; hit_rate: number; coverage: number; median_err: number }[]>`
+    select f.horizon, m.code as market, count(*)::int as n,
+      avg(o.direction_hit::int)::float as hit_rate, avg(o.inside_band::int)::float as coverage,
+      percentile_cont(0.5) within group (order by o.abs_pct_error)::float as median_err
+    from forecast_outcomes o join forecasts f on f.id = o.forecast_id
+    join assets a on a.id = f.asset_id join markets m on m.id = a.market_id
+    group by f.horizon, m.code order by m.code, f.horizon`;
+}

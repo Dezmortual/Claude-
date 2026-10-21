@@ -1,11 +1,9 @@
-import { cookies } from "next/headers";
-import { jsonBody, route } from "@/lib/api/handler";
-import { DataError, signUp } from "@/lib/data";
-import { SESSION_COOKIE, cookieOptions } from "@/lib/session";
+import { clientIp, jsonBody, route } from "@/lib/api/handler";
+import { SignUp } from "@/lib/api/schemas";
+import { signUp } from "@/lib/server/auth";
+// No session yet: the account works once the emailed link is opened.
 export const POST = route(async (req) => {
-  const b = await jsonBody<{ name: string; email: string; password: string; acceptTerms: boolean }>(req);
-  if (!b.acceptTerms) throw new DataError("invalid", "Accept the terms to create an account");
-  const token = signUp(b.name ?? "", b.email ?? "", b.password ?? "");
-  (await cookies()).set(SESSION_COOKIE, token, cookieOptions);
-  return { token };
-});
+  const b = await jsonBody(req, SignUp);
+  await signUp(b, await clientIp());
+  return { ok: true, verify: true };
+}, 0, { public: true });

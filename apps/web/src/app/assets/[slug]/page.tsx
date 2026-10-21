@@ -52,11 +52,11 @@ export default async function AssetForecast({ params }: P) {
   const { slug } = await params;
   const v = await viewer();
   if (!getAsset(slug)) notFound();
-  const { asset, quote, metrics, locked, unlockPlan } = assetSummary(v, slug);
-  const forecast = locked ? null : assetForecast(v, slug);
-  const sc = assetScenarios(slug);
-  const chart = assetBars(v, slug, "3m");
-  const pulse = assetSignals(v, slug);
+  const { asset, quote, metrics, locked, unlockPlan } = await assetSummary(v, slug);
+  const forecast = locked ? null : await assetForecast(v, slug);
+  const sc = await assetScenarios(slug);
+  const chart = await assetBars(v, slug, "3m");
+  const pulse = await assetSignals(v, slug);
   const unit = asset.quoteUnit;
   const session = ["forex", "stocks", "commodities", "indices", "etfs", "bonds"].includes(asset.market);
   const step = session ? "session" : "day";

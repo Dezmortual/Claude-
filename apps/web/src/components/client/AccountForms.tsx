@@ -32,7 +32,7 @@ export function DeleteForm({ email }: { email: string }) {
     <details className="rounded-md border border-danger p-4">
       <summary className="cursor-pointer font-semibold text-danger">Delete my account</summary>
       <form action={action} className="mt-3 grid gap-3">
-        <p className="text-sm text-muted">This removes your account, watchlist, alerts and settings straight away. It can&apos;t be undone. Cancel any paid plan first if you were billed through an app store.</p>
+        <p className="text-sm text-muted">This removes your account, watchlist, alerts and settings from the database straight away. It can&apos;t be undone.</p>
         <div className="grid gap-1"><label htmlFor="del-confirm" className="text-sm font-semibold">Type <span className="font-mono">{email}</span> to confirm</label>
           <input id="del-confirm" name="confirm" autoComplete="off" aria-invalid={!!state?.error} aria-describedby={state?.error ? "del-err" : undefined} className={field} /></div>
         {state?.error && <p id="del-err" role="alert" className="text-sm text-danger">{state.error}</p>}

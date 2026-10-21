@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BarChart3, Bell, ShieldCheck } from "lucide-react";
 import { ForecastTable } from "@/components/ForecastTable";
 import { TabSwitch } from "@/components/HubControls";
-import { Banner, ButtonLink, Card, DemoNote, Label, Section } from "@/components/ui";
+import { ButtonLink, Card, Label, Section } from "@/components/ui";
 import { MARKETS, listAssets, listForecasts, watchlistSlugs } from "@/lib/data";
 import { dateTime } from "@/lib/format";
 import { parseForecastQuery, type SP } from "@/lib/query";
@@ -14,12 +14,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
   const v = await viewer();
   const sp = await searchParams;
   const q = parseForecastQuery(sp, { perPage: 10 });
-  const data = listForecasts(v, { ...q, market: "crypto", perPage: 10, page: 1 });
+  const data = await listForecasts(v, { ...q, market: "crypto", perPage: 10, page: 1 });
   const starMode = !v.user ? "guest" : v.plan.watchlistAlerts ? "ok" : "no-plan";
 
   return (
     <div className="space-y-16">
-      {sp.deleted && <Banner>Your account and everything in it has been deleted.</Banner>}
       <section className="grid gap-6 py-6 md:py-10">
         <Label>Forecasts with receipts</Label>
         <h1 className="max-w-3xl text-xl md:text-display">See where prices could go, and how often we&apos;ve been right.</h1>
@@ -41,13 +40,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
       <Section id="today" title="Crypto signals right now" action={<Link href="/forecasts?market=crypto" className="text-sm font-semibold text-accent hover:underline">Full table</Link>}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <TabSwitch tab={q.tab} base="/" current={q} dayLocked={!v.plan.dayTrading} />
-          <span className="flex items-center gap-2 text-xs text-subtle"><DemoNote />Run of {dateTime(data.runAt)}</span>
+          <span className="text-xs text-subtle">As of {dateTime(data.runAt)}</span>
         </div>
         {data.tabLocked ? (
           <Card className="p-6 text-sm text-muted">Intraday signals are on the Crypto plan and up. <Link className="font-semibold text-accent underline" href="/pricing?plan=crypto">See plans</Link></Card>
         ) : (
           <ForecastTable data={data} tab={q.tab} visible={["price", "1d", "7d", "1m", "signal", "volatility"]} base="/" current={q}
-            watchlist={watchlistSlugs(v)} starMode={starMode} />
+            watchlist={await watchlistSlugs(v)} starMode={starMode} />
         )}
       </Section>
 

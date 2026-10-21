@@ -1,5 +1,4 @@
-// The only import screens and routes use. /replica-backend swaps "./fake" for the Supabase implementation
-// with the same exports; nothing else changes.
-export * from "./fake";
+// The only import screens and routes use. Live implementation: Postgres + official market-data APIs.
+export * from "./live";
 export * from "./types";
 export { PLANS, MARKETS } from "./catalogue";

@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { Bell } from "lucide-react";
 import type { Asset, Metrics, Quote, Viewer } from "@/lib/data";
-import { watchlistSlugs } from "@/lib/data";
+import { isDemo, watchlistSlugs } from "@/lib/data";
 import { dateTime, pct, price as fmtPrice } from "@/lib/format";
 import { WatchStar } from "./client/WatchStar";
 import { Badge, DemoNote, PriceChange, cx } from "./ui";
 
 const MARKET_NAME: Record<string, string> = { crypto: "Crypto", forex: "Forex", stocks: "Stocks", commodities: "Commodities", indices: "Indices", etfs: "ETFs", bonds: "Bonds & yields" };
 
-export function AssetHeader({ asset, quote, viewer, current, title, priceSlot }: {
+export async function AssetHeader({ asset, quote, viewer, current, title, priceSlot }: {
   asset: Asset; quote: Quote; metrics: Metrics; viewer: Viewer; current: "forecast" | "live" | "signals"; title: string;
   priceSlot?: React.ReactNode; // replaces the static price, e.g. with a live-updating one
 }) {
@@ -35,7 +35,7 @@ export function AssetHeader({ asset, quote, viewer, current, title, priceSlot }:
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-sm text-subtle">{asset.ticker}</span>
-            <DemoNote />
+            {isDemo(asset.slug) && <DemoNote />}
           </div>
           <h1 className="break-words text-xl">{title}</h1>
         </div>
@@ -44,7 +44,7 @@ export function AssetHeader({ asset, quote, viewer, current, title, priceSlot }:
             className="inline-flex h-10 items-center gap-2 rounded-md px-2 text-sm font-semibold hover:bg-surface-sunken">
             <Bell aria-hidden className="h-4 w-4 text-muted" />Set alert
           </Link>
-          <WatchStar slug={asset.slug} name={asset.name} on={watchlistSlugs(viewer).includes(asset.slug)} mode={mode} withLabel />
+          <WatchStar slug={asset.slug} name={asset.name} on={(await watchlistSlugs(viewer)).includes(asset.slug)} mode={mode} withLabel />
         </div>
       </div>
 

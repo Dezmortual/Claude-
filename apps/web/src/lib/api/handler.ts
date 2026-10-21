@@ -1,6 +1,7 @@
 import { cookies, headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { DataError, getViewer, type Viewer } from "@/lib/data";
+import { z } from "zod";
+import { DataError, getViewer, privateMode, type Viewer } from "@/lib/data";
 import { SESSION_COOKIE } from "@/lib/session";
 
 const STATUS: Record<DataError["code"], number> = { unauthorized: 401, forbidden: 403, not_found: 404, invalid: 422, limit: 402, conflict: 409 };
@@ -14,28 +15,37 @@ export async function apiViewer(): Promise<Viewer> {
 
 type Ctx<P> = { params: Promise<P> };
 
-export function route<P = Record<string, never>>(fn: (req: Request, v: Viewer, params: P) => unknown | Promise<unknown>, cacheSeconds = 0) {
+/** Wraps a route handler: viewer lookup, private-mode gate, DataError -> HTTP status, zod errors -> 422. */
+export function route<P = Record<string, never>>(fn: (req: Request, v: Viewer, params: P) => unknown | Promise<unknown>, cacheSeconds = 0, opts: { public?: boolean } = {}) {
   return async (req: Request, ctx: Ctx<P>) => {
     try {
-      const body = await fn(req, await apiViewer(), (await ctx?.params) ?? ({} as P));
+      const v = opts.public ? await getViewer(undefined) : await apiViewer();
+      if (!opts.public && privateMode() && !v.user) throw new DataError("unauthorized", "Sign in first");
+      const body = await fn(req, v, (await ctx?.params) ?? ({} as P));
       if (body instanceof Response) return body;
       const res = NextResponse.json(body ?? { ok: true }, { status: body === undefined ? 204 : 200 });
       res.headers.set("cache-control", cacheSeconds ? `private, max-age=${cacheSeconds}` : "no-store");
       return body === undefined ? new NextResponse(null, { status: 204 }) : res;
     } catch (e) {
       if (e instanceof DataError) return NextResponse.json({ error: e.code, message: e.message }, { status: STATUS[e.code] });
+      if (e instanceof z.ZodError) return NextResponse.json({ error: "invalid", message: e.issues[0]?.message ?? "Invalid input" }, { status: 422 });
       console.error(e);
       return NextResponse.json({ error: "server", message: "Something went wrong on our side" }, { status: 500 });
     }
   };
 }
 
-export async function jsonBody<T>(req: Request): Promise<T> {
-  try {
-    return (await req.json()) as T;
-  } catch {
-    throw new DataError("invalid", "Send a JSON body");
-  }
+/** Parses and validates a JSON body against a zod schema. */
+export async function jsonBody<S extends z.ZodType>(req: Request, schema: S): Promise<z.infer<S>> {
+  let raw: unknown;
+  try { raw = await req.json(); } catch { throw new DataError("invalid", "Send a JSON body"); }
+  return schema.parse(raw);
+}
+
+/** Best-effort client address for rate limits (first hop the host's proxy reports). */
+export async function clientIp() {
+  const h = await headers();
+  return (h.get("x-forwarded-for")?.split(",")[0] ?? h.get("x-real-ip") ?? "local").trim().slice(0, 64);
 }
 
 export const qs = (req: Request) => new URL(req.url).searchParams;

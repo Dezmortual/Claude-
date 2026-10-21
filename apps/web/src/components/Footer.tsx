@@ -9,7 +9,8 @@ export function Footer() {
           account for your circumstances. Prices can move against any forecast; never risk money you cannot afford to lose.
         </p>
         <p className="max-w-prose">
-          This build runs on generated demo data: prices, forecasts and signals on these pages are not real market data.
+          Crypto prices come from Binance and forex from the European Central Bank. Assets marked Demo (and stocks and ETFs
+          until Alpaca keys are set) run on generated demo data, not real prices.
         </p>
         <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2">
           <Link href="/legal/terms" className="hover:text-fg">Terms</Link>

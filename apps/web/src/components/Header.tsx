@@ -8,7 +8,6 @@ import { ThemeToggle } from "./client/ThemeToggle";
 const LINKS = [
   { href: "/forecasts", label: "Forecasts" },
   { href: "/markets/crypto", label: "Markets" },
-  { href: "/pricing", label: "Pricing" },
   { href: "/track-record", label: "Track record" },
 ];
 
@@ -23,9 +22,9 @@ export function Header({ viewer }: { viewer: Viewer }) {
           <span aria-hidden className="grid h-8 w-8 place-items-center rounded-md bg-accent text-sm text-on-accent">A</span>
           App name
         </Link>
-        <nav aria-label="Main" className="hidden gap-5 text-sm text-muted md:flex">
+        {signedIn && <nav aria-label="Main" className="hidden gap-5 text-sm text-muted md:flex">
           {LINKS.map((l) => <Link key={l.href} href={l.href} className="hover:text-fg">{l.label}</Link>)}
-        </nav>
+        </nav>}
         <div className="flex-1" />
         {signedIn && (
           <>
@@ -39,12 +38,9 @@ export function Header({ viewer }: { viewer: Viewer }) {
             {viewer.user!.name.slice(0, 1).toUpperCase()}
           </Link>
         ) : (
-          <div className="hidden items-center gap-2 md:flex">
-            <ButtonLink href="/sign-in" variant="ghost" size="sm">Sign in</ButtonLink>
-            <ButtonLink href="/sign-up" size="sm">Create account</ButtonLink>
-          </div>
+          <ButtonLink href="/sign-in" variant="ghost" size="sm" className="hidden md:inline-flex">Sign in</ButtonLink>
         )}
-        <MobileNav links={LINKS} signedIn={signedIn} />
+        {signedIn && <MobileNav links={LINKS} signedIn={signedIn} />}
       </div>
     </header>
   );

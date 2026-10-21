@@ -104,7 +104,7 @@ export function ForecastTable({ data, tab, visible, base, current, watchlist, st
             {data.rows.map((r) => (
               <tr key={r.asset.slug} className="group border-t">
                 <th scope="row" className="sticky left-0 z-dropdown max-w-xs bg-surface px-3 py-2 text-left font-normal group-hover:bg-surface-sunken">
-                  <AssetCell name={r.asset.name} ticker={r.asset.ticker} href={`/assets/${r.asset.slug}`} />
+                  <AssetCell name={r.asset.name} ticker={r.asset.ticker} href={`/assets/${r.asset.slug}`} demo={r.demo} />
                 </th>
                 {r.locked ? (
                   <td colSpan={cols.length} className="px-3 py-2 text-left group-hover:bg-surface-sunken">

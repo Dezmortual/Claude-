@@ -85,6 +85,7 @@ export interface Metrics {
 export interface ForecastRow {
   asset: Asset;
   locked: boolean;
+  demo?: boolean; // prices come from the generated demo series, not a market-data source
   price?: number;
   change24hPct?: number;
   horizons?: Partial<Record<Horizon, { mid: number; changePct: number }>>;

@@ -137,13 +137,13 @@ export function AssetMark({ ticker }: { ticker: string }) {
   );
 }
 
-export function AssetCell({ name, ticker, href }: { name: string; ticker: string; href: string }) {
+export function AssetCell({ name, ticker, href, demo }: { name: string; ticker: string; href: string; demo?: boolean }) {
   return (
     <div className="flex min-w-0 items-center gap-2">
       <AssetMark ticker={ticker} />
       <div className="min-w-0">
         <Link href={href} title={name} className="block truncate font-semibold text-fg hover:underline">{name}</Link>
-        <span className="font-mono text-xs text-subtle">{ticker}</span>
+        <span className="font-mono text-xs text-subtle">{ticker}</span>{demo && <Badge tone="warning" className="ml-2">Demo</Badge>}
       </div>
     </div>
   );

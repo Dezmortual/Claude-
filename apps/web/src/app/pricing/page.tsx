@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Check, X } from "lucide-react";
 import { Badge, Banner, ButtonLink, Card, Label, PageTitle, cx } from "@/components/ui";
-import { PLANS, type Plan } from "@/lib/data";
+import { redirect } from "next/navigation";
+import { PLANS, privateMode, type Plan } from "@/lib/data";
 import { money } from "@/lib/format";
 import { viewer } from "@/lib/session";
 
@@ -19,6 +20,7 @@ const FEATURES: [string, (p: Plan) => boolean | string][] = [
 ];
 
 export default async function Pricing({ searchParams }: { searchParams: Promise<{ interval?: string; plan?: string; need?: string }> }) {
+  if (privateMode()) redirect("/account"); // no plans or payments in the private build
   const sp = await searchParams;
   const v = await viewer();
   const yearly = sp.interval !== "month";

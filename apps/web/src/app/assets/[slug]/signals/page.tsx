@@ -17,8 +17,8 @@ export default async function Signals({ params }: P) {
   const { slug } = await params;
   if (!getAsset(slug)) notFound();
   const v = await viewer();
-  const { asset, quote, metrics, unlockPlan } = assetSummary(v, slug);
-  const cards = assetSignals(v, slug);
+  const { asset, quote, metrics, unlockPlan } = await assetSummary(v, slug);
+  const cards = await assetSignals(v, slug);
   return (
     <div className="space-y-10">
       <AssetHeader asset={asset} quote={quote} metrics={metrics} viewer={v} current="signals" title={`${asset.name} technical signals`} />

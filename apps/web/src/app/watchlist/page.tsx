@@ -14,14 +14,14 @@ export default async function Watchlist() {
   if (!v.user) redirect("/sign-in?next=/watchlist");
   const head = (
     <div className="mb-6 space-y-2">
-      <div className="flex items-center gap-2"><Label>Watchlist</Label><DemoNote /></div>
+      <Label>Watchlist</Label>
       <h1 className="text-xl">Your watchlist</h1>
     </div>
   );
   if (!v.plan.watchlistAlerts) {
     return <>{head}<Paywall planName="Crypto" href="/pricing?plan=crypto&need=watchlist">Keep the assets you follow in one place, with live prices and signals. Watchlists start on the <b className="text-fg">Crypto</b> plan.</Paywall></>;
   }
-  const rows = getWatchlist(v);
+  const rows = await getWatchlist(v);
   return (
     <>
       {head}
@@ -33,7 +33,7 @@ export default async function Watchlist() {
           {rows.map((r) => (
             <li key={r.asset.slug}>
               <Card className="flex flex-wrap items-center gap-4 p-4">
-                <div className="min-w-0 flex-1 basis-40"><AssetCell name={r.asset.name} ticker={r.asset.ticker} href={`/assets/${r.asset.slug}`} /></div>
+                <div className="min-w-0 flex-1 basis-40"><AssetCell name={r.asset.name} ticker={r.asset.ticker} href={`/assets/${r.asset.slug}`} demo={r.demo} /></div>
                 {r.locked ? (
                   <p className="flex-1 text-sm text-muted">Not in your current plan. <Link href={`/pricing?plan=${planFor(r.asset).code}`} className="font-semibold text-accent underline">{planFor(r.asset).name} plan</Link></p>
                 ) : (

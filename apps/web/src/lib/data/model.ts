@@ -3,7 +3,8 @@
 // replaces it, and the public track record decides whether anything fancier earns its place.
 import { ASSET_BY_SLUG, MARKETS, SCENARIO_CAGR } from "./catalogue";
 import { macd, sma } from "./indicators";
-import { bars } from "./series";
+import { cachedBars as bars, crosscheck, effectiveSource, loadError } from "./marketdata";
+import { SOURCE_LABEL } from "./sources/map";
 import type { Bar, ForecastPoint, Horizon, Metrics, PathRow, Quote, Scenarios, Signal } from "./types";
 
 const DAY = 86_400_000;
@@ -33,19 +34,28 @@ function trendState(c: number[], i: number) {
 }
 
 export function quote(slug: string): Quote {
+  // Latest closed bar: 5-minute where the source has intraday data, otherwise daily.
   const b5 = bars(slug, "5m");
-  const last = b5.at(-1)!;
-  const prev = b5.at(-289) ?? b5[0]; // 24h of 5m bars
-  const spread = (Math.abs(Math.sin(last.ts / 1e7 + slug.length)) * 0.15);
+  const series = b5.length ? b5 : bars(slug, "1d");
+  const step = b5.length ? 300_000 : 86_400_000;
+  const last = series.at(-1)!;
+  const dayAgo = last.ts - 86_400_000;
+  const prev = b5.length ? (b5.find((x) => x.ts >= dayAgo) ?? b5[0]) : (series.at(-2) ?? last);
+  const observedAt = last.ts + step;
+  const src = effectiveSource(slug);
+  const cross = crosscheck(slug);
+  const spread = cross ? (Math.abs(cross.price - last.c) / last.c) * 100 : 0;
+  const staleAfter = b5.length ? 15 * 60_000 : 4 * 86_400_000; // a weekend plus a holiday for daily-only sources
+  const status: Quote["status"] = loadError(slug) || Date.now() - observedAt > staleAfter ? "stale" : cross && spread > 0.5 ? "diverged" : "ok";
   return {
     price: last.c,
     change24hPct: ((last.c - prev.c) / prev.c) * 100,
-    observedAt: new Date(last.ts + 300_000).toISOString(),
-    checkedAt: new Date(last.ts + 300_000).toISOString(),
+    observedAt: new Date(observedAt).toISOString(),
+    checkedAt: new Date(cross?.checkedAt ?? observedAt).toISOString(),
     crosscheckSpreadPct: spread,
-    status: spread > 0.5 ? "diverged" : "ok",
-    source: "Demo series",
-    crosscheckSource: "Demo cross-check",
+    status,
+    source: SOURCE_LABEL[src],
+    crosscheckSource: cross?.source ?? "",
   };
 }
 
@@ -55,22 +65,28 @@ const stCache = new Map<string, ShortTerm>();
 
 export function shortTerm(slug: string): ShortTerm {
   const d = bars(slug, "1d");
-  const key = `${slug}:${d.at(-1)!.ts}`;
+  const price = quote(slug).price;
+  const key = `${slug}:${d.at(-1)!.ts}:${price}`;
   const hit = stCache.get(key);
   if (hit) return hit;
   const c = d.map((x) => x.c);
   const session = isSessionBased(slug);
-  const price = quote(slug).price;
   const now = Date.now();
   const nowUp = trendState(c, c.length - 1);
   const q = {} as ShortTerm["q"];
   const points: ForecastPoint[] = [];
   for (const h of ["1d", "7d", "1m"] as const) {
     const n = steps(h, session);
-    const rets: number[] = [];
+    let rets: number[] = [];
     // Two years of history, same trend state as today, forward returns fully in the past.
-    for (let i = Math.max(50, c.length - 730); i < c.length - n; i++) {
+    const from = Math.max(50, c.length - 730);
+    for (let i = from; i < c.length - n; i++) {
       if (trendState(c, i) === nowUp) rets.push(Math.log(c[i + n] / c[i]));
+    }
+    // Young assets: too few matching moments to condition on, so use every moment instead.
+    if (rets.length < 60) {
+      rets = [];
+      for (let i = Math.max(0, c.length - 730); i < c.length - n; i++) rets.push(Math.log(c[i + n] / c[i]));
     }
     rets.sort((a, b) => a - b);
     const lo = quantile(rets, 0.1), mid = quantile(rets, 0.5), hi = quantile(rets, 0.9);
@@ -150,9 +166,9 @@ export function metrics(slug: string): Metrics {
   const d = bars(slug, "1d");
   const c = d.map((x) => x.c);
   const last = c.at(-1)!;
-  const m = macd(c)!;
-  const s50 = sma(c, 50)!, s200 = sma(c, 200)!;
-  const prev200 = sma(c.slice(0, -20), 200)!;
+  const m = macd(c) ?? { hist: 0 };
+  const s50 = sma(c, 50) ?? last, s200 = sma(c, Math.min(200, c.length)) ?? last;
+  const prev200 = sma(c.slice(0, -20), Math.min(200, Math.max(1, c.length - 20))) ?? s200;
   const session = isSessionBased(slug);
   const periods = session ? 252 : 365;
   const rets = c.slice(-31).map((x, i, a) => (i ? Math.log(x / a[i - 1]) : 0)).slice(1);
@@ -184,6 +200,10 @@ export function metrics(slug: string): Metrics {
 
 export function closedBars(slug: string, tf: "5m" | "30m" | "1h" | "1d" | "1w"): Bar[] {
   const b = bars(slug, tf);
-  // Markets that close have short intraday history in the demo, so the "not enough data" state is real.
-  return isSessionBased(slug) && tf === "5m" ? b.slice(-150) : b;
+  // Demo series for markets that close keep short intraday history, so the "not enough data" state is real.
+  return effectiveSource(slug) === "demo" && isSessionBased(slug) && tf === "5m" ? b.slice(-150) : b;
+}
+
+export function isDemo(slug: string) {
+  return effectiveSource(slug) === "demo";
 }

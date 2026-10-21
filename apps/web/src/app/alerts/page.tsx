@@ -18,7 +18,7 @@ export default async function Alerts({ searchParams }: { searchParams: Promise<{
   if (!v.plan.watchlistAlerts) {
     return <>{head}<Paywall planName="Crypto" href="/pricing?plan=crypto&need=watchlist">Alerts start on the <b className="text-fg">Crypto</b> plan.</Paywall></>;
   }
-  const alerts = listAlerts(v);
+  const alerts = await listAlerts(v);
   const active = alerts.filter((a) => a.isActive).length;
   const limit = v.plan.maxAlerts;
   const limitText = limit === null ? "Your plan has no alert limit." : `${active} of ${limit} active alerts used.`;
@@ -29,7 +29,7 @@ export default async function Alerts({ searchParams }: { searchParams: Promise<{
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_3fr]">
         <Card className="h-fit space-y-4 p-5">
           <h2 className="text-lg">New alert</h2>
-          <AlertForm options={alertableAssets(v)} preset={asset} limitText={limitText} />
+          <AlertForm options={await alertableAssets(v)} preset={asset} limitText={limitText} />
         </Card>
         <section aria-labelledby="your-alerts" className="space-y-3">
           <h2 id="your-alerts" className="text-lg">Saved ({alerts.length})</h2>

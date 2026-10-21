@@ -27,7 +27,7 @@ const crypto: Row[] = [
   ["optimism", "OP", "Optimism", 0.78], ["injective", "INJ", "Injective", 12.6], ["render", "RENDER", "Render", 4.1],
   ["immutable", "IMX", "Immutable", 0.62], ["the-graph", "GRT", "The Graph", 0.11], ["algorand", "ALGO", "Algorand", 0.24],
   ["vechain", "VET", "VeChain", 0.028], ["sei", "SEI", "Sei", 0.27], ["pepe", "PEPE", "Pepe", 0.0000098],
-  ["kaspa", "KAS", "Kaspa", 0.085],
+  ["ethena", "ENA", "Ethena", 0.55],
 ];
 const forex: Row[] = [
   ["eurusd", "EUR/USD", "Euro / US Dollar", 1.12], ["gbpusd", "GBP/USD", "British Pound / US Dollar", 1.33],

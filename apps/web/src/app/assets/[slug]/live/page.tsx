@@ -20,11 +20,11 @@ export default async function LivePrice({ params }: P) {
   const { slug } = await params;
   if (!getAsset(slug)) notFound();
   const v = await viewer();
-  const { asset, quote, metrics, locked, unlockPlan } = assetSummary(v, slug);
-  const stats = assetStats(slug);
+  const { asset, quote, metrics, locked, unlockPlan } = await assetSummary(v, slug);
+  const stats = await assetStats(slug);
   const range = locked ? "1m" : "1d";
-  const chart = assetBars(v, slug, range);
-  const daily = assetSignals(v, slug).find((c) => c.timeframe === "1d")!;
+  const chart = await assetBars(v, slug, range);
+  const daily = (await assetSignals(v, slug)).find((c) => c.timeframe === "1d")!;
   const unit = asset.quoteUnit;
 
   return (

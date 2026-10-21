@@ -19,15 +19,15 @@ const HORIZONS = { "1d": "next day", "7d": "7 days", "1m": "1 month" } as const;
 export default async function ForecastHub({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
   const v = await viewer();
-  const prefs = getPrefs(v);
+  const prefs = await getPrefs(v);
   const q = parseForecastQuery(sp, { perPage: prefs.rowsPerPage, tab: prefs.defaultTab });
   const guestCols = (await cookies()).get("cols")?.value?.split(",").filter((c) => ALL_COLUMNS.includes(c));
   const visible = v.user ? prefs.visibleColumns : guestCols?.length ? guestCols : DEFAULT_COLUMNS;
-  const data = listForecasts(v, q);
+  const data = await listForecasts(v, q);
   const markets = listMarkets(v);
   const mh = (["1d", "7d", "1m"].includes(String(sp.mh)) ? sp.mh : "7d") as keyof typeof HORIZONS;
-  const mv = movers(v, mh);
-  const ol = outlook(v, mh);
+  const mv = await movers(v, mh);
+  const ol = await outlook(v, mh);
   const current = { ...q };
   const base = "/forecasts";
   const starMode = !v.user ? "guest" : v.plan.watchlistAlerts ? "ok" : "no-plan";
@@ -36,7 +36,7 @@ export default async function ForecastHub({ searchParams }: { searchParams: Prom
   return (
     <div className="space-y-10">
       <header className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2"><Label>Forecasts</Label><DemoNote /></div>
+        <Label>Forecasts</Label>
         <h1 className="text-xl md:text-display">Where each market could be next</h1>
         <p className="max-w-prose text-muted">
           Next-day, 7-day and 1-month ranges for every asset, with the chance of a rise behind each signal. Long-term columns are
@@ -67,7 +67,7 @@ export default async function ForecastHub({ searchParams }: { searchParams: Prom
               <p className="text-xs text-subtle">* Scenario: today&apos;s price grown at a fixed base-case rate for the market. Not a forecast.</p>
             )}
             <ForecastTable data={data} tab={q.tab} visible={visible} base={base} current={current}
-              watchlist={watchlistSlugs(v)} starMode={starMode} />
+              watchlist={await watchlistSlugs(v)} starMode={starMode} />
             <Pagination page={data.page} pages={data.pages} total={data.total} perPage={q.perPage} base={base} current={current} />
           </>
         )}
