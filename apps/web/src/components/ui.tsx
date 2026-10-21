@@ -142,7 +142,7 @@ export function AssetCell({ name, ticker, href }: { name: string; ticker: string
     <div className="flex min-w-0 items-center gap-2">
       <AssetMark ticker={ticker} />
       <div className="min-w-0">
-        <Link href={href} className="block truncate font-semibold text-fg hover:underline">{name}</Link>
+        <Link href={href} title={name} className="block truncate font-semibold text-fg hover:underline">{name}</Link>
         <span className="font-mono text-xs text-subtle">{ticker}</span>
       </div>
     </div>
