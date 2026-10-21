@@ -2,8 +2,9 @@
 export function price(n: number | null | undefined, unit = "USD"): string {
   if (n === null || n === undefined || !Number.isFinite(n)) return "—";
   const abs = Math.abs(n);
-  const digits = abs >= 1000 ? 0 : abs >= 1 ? 2 : abs >= 0.01 ? 4 : 8;
-  const s = n.toLocaleString("en-US", { minimumFractionDigits: Math.min(digits, 2), maximumFractionDigits: digits });
+  // Currency pairs move in pips: 4-5 decimals for ~1.0 quotes, 3 for yen-style quotes above 50.
+  const digits = unit === "quote currency" ? (abs >= 50 ? 3 : 5) : abs >= 1000 ? 0 : abs >= 1 ? 2 : abs >= 0.01 ? 4 : 8;
+  const s = n.toLocaleString("en-US", { minimumFractionDigits: unit === "quote currency" ? digits : Math.min(digits, 2), maximumFractionDigits: digits });
   if (unit === "USD" || unit === "USD per share") return "$" + s;
   if (unit === "% yield") return n.toFixed(3) + "%";
   return s;
