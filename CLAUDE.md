@@ -49,3 +49,10 @@ build, backend, test, diff, entrepreneur, brand, launch, deploy) were copied
 from Jakeschincariol/replica-skill at commit 77c9436 (v1.0, MIT). Run them in
 that order; each writes to a `replica/` folder in the project. Their Python
 tools need only the standard library.
+
+## Forecast app (replica clone)
+
+`apps/web` is the Next.js rebuild planned in `replica/` (recon, architecture, design, build log). Run it from
+inside `apps/web` with `npm run dev`. It runs on demo data until `/replica-backend`; keep screens importing only from
+`@/lib/data` so the data layer can be swapped. Never use raw hex or non-token sizes in components: change
+`replica/design/tokens.json`, then `npm run tokens`.
