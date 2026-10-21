@@ -19,3 +19,4 @@ ruvector.db
 .claude-flow/security/
 .claude/.proven-config-version
 .claude/proven-config.json
+__pycache__/
