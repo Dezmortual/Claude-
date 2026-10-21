@@ -1,3 +1,5 @@
+-- Design-time schema from /replica-architect. The live schema is apps/web/db/migrations/ (adapted for an
+-- owner-only build with its own users and sessions); change that, not this file.
 -- replica/schema.sql : first migration for the forecast-signals clone.
 -- Postgres 15+ on Supabase. All times timestamptz in UTC. Money in integer cents.
 -- Access: RLS on every table. User-owned tables: owner-only policies.

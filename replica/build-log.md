@@ -36,3 +36,20 @@ Decisions worth knowing:
 - Locked data is filtered on the server and never sent blurred.
 - The pricing FAQ originally promised a 14-day refund; removed, since refunds are a business decision for the terms.
 - Plan prices are drafts ($15 / $39 / $79 a month, 20% off yearly), set in `src/lib/data/catalogue.ts`.
+
+## Backend (2026-10-21)
+
+Private, owner-only build on free tiers; details and setup in `replica/backend.md`.
+
+| area | status | notes |
+| --- | --- | --- |
+| database + migrations | done | `apps/web/db/migrations`; replaced the JSON-file store |
+| live market data | done | Binance (crypto), ECB via Frankfurter (forex, daily), Alpaca optional (stocks/ETFs), CoinPaprika cross-check; commodities/indices/bonds stay demo. Toncoin swapped for Shiba Inu (its Binance pair stopped in June 2026); Kaspa for Ethena (not on Binance) |
+| auth (owner-only) | done | verification, reset, sessions, rate limits; Google sign-in skipped |
+| alerts | done | scheduled evaluation + email |
+| track record | done | hourly publish and scoring; fills over time |
+| payments | skipped | private build takes no payments |
+| mobile app | not started | unchanged |
+
+Harder than expected: the data layer had to become async, which touched every screen (mechanical, type-checked);
+every DELETE route had been returning 500 since the build step (204 with a JSON body), found by the API tests.

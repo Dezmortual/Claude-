@@ -8,6 +8,7 @@ const Env = z.object({
   OWNER_EMAILS: z.string().default("").transform((s) => s.split(",").map((e) => e.trim().toLowerCase()).filter(Boolean)),
   PRIVATE_MODE: z.enum(["true", "false"]).default("true").transform((v) => v === "true"),
   RESEND_API_KEY: z.string().optional(),
+  EMAIL_OUTBOX: z.enum(["true", "false"]).default("false").transform((v) => v === "true"),
   EMAIL_FROM: z.string().default("Forecasts <onboarding@resend.dev>"),
   CRON_SECRET: z.string().min(24).optional(),
   ALPACA_KEY_ID: z.string().optional(),

@@ -1,8 +1,8 @@
 feature,area,priority,original,clone,notes
-Sign up with email and password,auth,must,yes,yes,S11; name + email + password x2 + terms checkbox; S11; demo user store until /replica-backend (Supabase Auth)
-Sign in with Google,auth,must,yes,partial,S10 S11; add Sign in with Apple on iOS (store rule); button present but disabled; OAuth needs the backend. Apple sign-in not started (needed with the iOS app)
-Forgot password / reset by email,auth,must,yes,partial,S12 link seen; page inferred; S12 form + non-revealing confirmation; no email sent and no reset page until the backend
-Forecast table across all assets,forecast hub,must,yes,yes,S02; asset / category / price / horizons / indicators; S02; 60 demo assets across 7 markets
+Sign up with email and password,auth,must,yes,yes,owner-only in the private build; email verification; Postgres
+Sign in with Google,auth,must,yes,skip,not needed for an owner-only build; would need your own Google OAuth app
+Forgot password / reset by email,auth,must,yes,yes,single-use 1 h link via Resend; ends every session
+Forecast table across all assets,forecast hub,must,yes,yes,"42 assets on live data, 18 on labelled demo series (commodities, indices, bonds; stocks/ETFs until Alpaca keys)"
 Forecast horizons tomorrow 7d 1m 1y 5y 10y,forecast hub,must,yes,yes,S02 columns; long horizons as scenarios not point forecasts; 1y/5y/10y labelled as scenarios
 Market switcher (mix + 7 markets),forecast hub,must,yes,yes,"S01 S02; crypto first if launching on free data; S02 chips, locked state per plan"
 Signal strength filter (Strong Buy..Strong Sell),forecast hub,must,yes,yes,"S02; probability bands 50/55/65%; applies in place, keeps focus"
@@ -11,18 +11,18 @@ Sort by column,forecast hub,must,yes,yes,S02 headers; behaviour not observed; so
 Pagination with rows per page,forecast hub,must,yes,yes,S02 10/20/50/100; 10/20/50/100
 Signal badge + trend pills (MACD / MA cross / 200-MA),forecast hub,must,yes,yes,S02 S06
 Asset forecast page shell (price banner + stats + byline),asset page,must,yes,yes,S06; provenance strip with source + checked-at time; S06; provenance strip instead of author byline
-Price chart with history/forecast toggle and band,asset page,must,yes,yes,"S06; ranges 1D..All; band + midpoint; band overlay 1D/1W/1M/off, line/candles, 7 ranges"
+Price chart with history/forecast toggle and band,asset page,must,yes,yes,real Binance/ECB data
 Technical pulse by timeframe (MA + oscillator votes),asset page,must,yes,yes,S06 S08; 5m/30m/1h/1d/1w; Unavailable state; 20 indicators on closed bars; unavailable + locked states
 Short-term forecast tables (14 days + 4 weeks),asset page,must,yes,yes,S06; low / high / mid / change; sessions for markets that close
 Long-term scenarios (yearly bear/base/bull to 2036),asset page,must,yes,yes,"S06; fan chart + yearly table; fan chart + table, assumptions shown"
 Methodology section per asset,asset page,must,yes,yes,S06; write your own; link to public track record; own text; describes the baseline model
 Risk disclaimer and not-financial-advice notice,legal,must,yes,yes,all pages; also in app store listing; footer on every page + FAQ; app store copy pending
-Pricing page with plans and yearly/monthly toggle,billing,must,yes,yes,S09; set own prices in /replica-launch; S09; draft prices
-Subscription checkout + cancel at period end,billing,must,yes,partial,"S16 inferred; Stripe on web; demo checkout and cancel/resume work; Stripe not connected, nothing charged"
-Plan entitlements gate markets and features,billing,must,yes,yes,"S09 matrix; enforce server-side; enforced in the data layer, never sent to the client; DB rules in schema.sql"
-Paywall / unlock prompts on locked content,billing,must,yes,yes,"S02 S07; F07; rows, chips, sections, day-trading tab"
+Pricing page with plans and yearly/monthly toggle,billing,must,yes,skip,hidden in the private build (redirects to /account)
+Subscription checkout + cancel at period end,billing,must,yes,skip,private build takes no payments; schema keeps plans/subscriptions for later
+Plan entitlements gate markets and features,billing,must,yes,yes,owner gets every market; gating code kept for a public build
+Paywall / unlock prompts on locked content,billing,must,yes,partial,built; never shown to the owner in the private build
 Watchlist add/remove + watchlist page,watchlist,must,yes,yes,S13 inferred; login-gated; S13; empty and no-plan states
-Alerts on price and signal change,alerts,must,yes,partial,S14 inferred; email channel; S14 create/pause/delete with limits; evaluation and email delivery need the worker
+Alerts on price and signal change,alerts,must,yes,yes,"evaluated every 30 min by the scheduled job, emailed via Resend, fire once per episode"
 Mobile app: signals feed / asset / watchlist / alerts,mobile,must,no,no,new - BeCoin has no app; M01-M04; not started: Expo app is the next build step; API routes it needs are in place
 Investing / Day Trading tabs,forecast hub,should,yes,yes,S01 S02; day trading = intraday timeframes; day trading = 5m/30m/1h verdicts; locked on Free
 Customize columns modal with persistence,forecast hub,should,yes,yes,"S03; save per account; S03; account for users, cookie for guests"
@@ -36,13 +36,13 @@ Recent range levels (20d / 90d high-low),asset page,should,yes,yes,S06; stat car
 Generated technical summary text,asset page,should,yes,partial,S06 bias + support/resistance; one-line read on S07; no support/resistance levels yet
 Market-specific sections (halving + ATH for crypto; sessions for forex),asset page,should,yes,partial,"S06 variants; ATH, max supply and session wording done; halving section not built"
 Asset FAQ (short and long term),asset page,should,yes,yes,S06; own questions and answers
-Live price page with candles and converter,asset page,should,yes,yes,"S07; S07; polls every 30s, stale state"
+Live price page with candles and converter,asset page,should,yes,yes,live crypto via Binance; forex daily (ECB)
 Market overview + asset directory pages,navigation,should,yes,yes,"S04 S05; also SEO landing pages; S04, S05"
 Related assets (people also watch),navigation,should,yes,yes,S06
 Push notifications for alerts,mobile,should,no,no,new; APNs/FCM; deep link to asset; needs the mobile app and backend
 In-app subscription (App Store / Play),mobile,should,no,no,new; or reader-app route; needs the mobile app
-Data-quality quarantine + stale-quote states,data,should,yes,partial,S06 notice; cross-check spread threshold; diverged/stale UI states built; quarantine logic belongs to the worker
-Public out-of-sample accuracy track record,trust,could,no,partial,gap: BeCoin claims 68-72% unexplained; differentiator; page and method built; no scored forecasts until live data
+Data-quality quarantine + stale-quote states,data,should,yes,partial,"stale detection live (old bars or failed refresh); quarantine flag in schema, no automatic quarantine rule yet"
+Public out-of-sample accuracy track record,trust,could,no,yes,hourly forecasts locked and scored; page reads the scores (needs time to fill)
 Year-by-year outlook cards,asset page,could,yes,no,S06; yearly table covers the numbers; narrative cards not built
 Halving cycles table,asset page,could,yes,no,S06 crypto only
 Asset logos,asset page,could,yes,no,use a licensed icon set; not BeCoin's assets; letter monograms; licensed icon set still to choose

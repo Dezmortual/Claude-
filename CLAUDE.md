@@ -52,7 +52,9 @@ tools need only the standard library.
 
 ## Forecast app (replica clone)
 
-`apps/web` is the Next.js rebuild planned in `replica/` (recon, architecture, design, build log). Run it from
-inside `apps/web` with `npm run dev`. It runs on demo data until `/replica-backend`; keep screens importing only from
-`@/lib/data` so the data layer can be swapped. Never use raw hex or non-token sizes in components: change
+`apps/web` is the Next.js app planned in `replica/` (recon, architecture, design, build log, `backend.md`). It is a
+private, owner-only build: only `OWNER_EMAILS` can sign in, every feature is free, no payments. Run from inside
+`apps/web`: `npm run db:setup` (migrations + seed), `npm run dev`, `npm run test:api` (see `replica/backend.md`).
+Screens import only from `@/lib/data`; server-only code lives in `src/lib/server` and must never be imported by a
+client component. Never commit `apps/web/.env.local`. Never use raw hex or non-token sizes in components: change
 `replica/design/tokens.json`, then `npm run tokens`.

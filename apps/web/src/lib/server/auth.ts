@@ -140,7 +140,13 @@ export async function signUp(input: { name: string; email: string; password: str
   const [u] = await db<{ id: string; email: string; name: string }[]>`
     insert into users (email, name, password_hash) values (${email}, ${input.name.trim()}, ${await hashPassword(input.password)})
     returning id, email, name`;
-  await sendVerification(u);
+  try {
+    await sendVerification(u);
+  } catch (e) {
+    // No email means no way to verify: undo, so the owner can simply try again once email works.
+    await db`delete from users where id = ${u.id}`;
+    throw e;
+  }
   return u;
 }
 

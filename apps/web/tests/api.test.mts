@@ -53,7 +53,7 @@ function latestLink(kind: "verify-email" | "reset-password") {
 console.log("authorisation and auth checks against", BASE);
 // Start from clean counters for the test accounts (keys hold a hash of the email, never the address).
 const h = (e: string) => crypto.createHash("sha256").update(e).digest("hex");
-await sql`delete from rate_limits where key like any(${[A, B].flatMap((e) => [`%${h(e)}`])})`;
+await sql`delete from rate_limits where key like any(${[A, B, "nobody@test.example"].map((e) => `%${h(e)}`)})`;
 const ip = () => `10.1.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`;
 const a = await makeUser(A, ip());
 const b = await makeUser(B, ip());

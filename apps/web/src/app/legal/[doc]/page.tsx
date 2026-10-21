@@ -18,9 +18,9 @@ const DOCS: Record<string, { title: string; sections: [string, string][] }> = {
   privacy: {
     title: "Privacy policy",
     sections: [
-      ["What we collect", "Name, email, password hash, plan, watchlist, alerts, settings, and basic usage logs."],
+      ["What we collect", "Name, email, a password hash, sessions (with the browser's user agent), watchlist, alerts, settings, and job logs. IP addresses are used for rate limiting and stored only as part of short-lived counters."],
       ["Why", "To run your account, send the alerts you ask for, bill you, and keep the service secure."],
-      ["Who we share it with", "Our hosting, email and payment processors, each named here, and nobody else. We don't sell personal data."],
+      ["Who processes it", "Hosting: Vercel. Database: the Postgres provider set in DATABASE_URL (Supabase or Neon). Email: Resend, which receives your address and the message. No payment processor: this build takes no payments. Market-data providers (Binance, the ECB via Frankfurter, CoinPaprika and, if configured, Alpaca) receive no personal data. We don't sell personal data."],
       ["How long we keep it", "While your account is open. Deleting your account removes it straight away, except records we must keep by law."],
       ["Your rights", "Access, correction, export and deletion, and how to contact us or your data protection authority."],
     ],

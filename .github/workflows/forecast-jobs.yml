@@ -1,0 +1,37 @@
+# Scheduled jobs for apps/web. Free on GitHub Actions: one run every 30 minutes (~1,440 minutes a month, inside the
+# 2,000 free minutes private repositories get). Needs repository secrets APP_URL (e.g. https://your-app.vercel.app)
+# and CRON_SECRET (same value as the app's env). Without them every run exits early and does nothing.
+name: forecast-jobs
+
+on:
+  schedule:
+    - cron: "4,34 * * * *"
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Run one job now (ingest, publish, alerts, cleanup)"
+        required: false
+        default: ""
+
+permissions: {}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call the app's job endpoints
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          ONE_JOB: ${{ github.event.inputs.job }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$CRON_SECRET" ]; then echo "APP_URL or CRON_SECRET not set; skipping"; exit 0; fi
+          call() {
+            echo "== $1"
+            curl -sS --fail-with-body -m 90 -X POST -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/cron/$1"; echo
+          }
+          if [ -n "$ONE_JOB" ]; then call "$ONE_JOB"; exit 0; fi
+          # Every run: check alerts. Once an hour (the :04 run): publish new forecasts and score matured ones.
+          call alerts
+          if [ "$(date -u +%M)" -lt 30 ]; then call publish; fi
