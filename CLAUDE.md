@@ -41,3 +41,12 @@ It added `.claude/{skills,agents,commands,helpers}`, hooks and a status line in
 config in `.claude-flow/`. Its local databases (`.swarm/`, `ruvector.db`) are
 gitignored. Update with `npx ruflo@latest init upgrade --settings`, and keep the
 trading-desk entries in `settings.json` when you do.
+
+## Day Trader skills
+
+`.claude/skills/trader-*` are the eleven skills from
+github.com/Jakeschincariol/day-trader-skill (MIT, copied at commit 3d0f4ef;
+LICENSE in each folder). Their tools are stdlib Python that read Yahoo, Nasdaq
+Trader, SEC EDGAR and the House Clerk, and write state to a `trader/` folder.
+Only `/trader-broker` can lead to an order, after `/trader-risk` passes it and
+the user types yes. Update by re-copying the `trader-*` folders from the repo.
