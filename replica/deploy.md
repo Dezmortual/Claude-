@@ -254,5 +254,40 @@ there is one.
 
 ## Live URL
 
-Not live yet. It goes live when you've done the steps above and given the go. Then add the URL here and
-in `APP_URL`.
+**https://proofcastd.netlify.app**: live since 2026-10-22, Netlify project `proofcastd`, Neon project
+`proofcast-prod` (`ancient-breeze-37357590`, AWS US East 2).
+
+How it got there:
+- The owner connected the Netlify and Neon connectors.
+- Through those connectors, Claude:
+  - created the Neon project
+  - replaced the placeholder env values (`DATABASE_URL`, `DATABASE_URL_DIRECT`, `APP_URL`, `CRON_SECRET`)
+  - uploaded a clean clone of the branch with Netlify's own deploy tool
+- The first upload published static files only, because Netlify hadn't added its Next.js adapter.
+  `@netlify/plugin-nextjs` is now pinned and declared in `netlify.toml`.
+- Netlify refuses `NETLIFY` as a variable name (it's reserved), so rate limits share one bucket. That's
+  fine for an owner-only app.
+
+Checked on the live site, 2026-10-22:
+
+| check | result |
+| --- | --- |
+| `/` and `/forecasts` as a guest | 307 to sign-in |
+| `/sign-in`, `/legal/privacy`, `/icon.svg` | 200 |
+| guest API | 401 |
+| `/api/cron/*` without the secret | 401 |
+| `alerts` job | 200, 0.3 s |
+| `ingest` job | 200, 42 live assets, 10.1 s |
+| `publish` job | 200, 126 forecasts |
+| database | migration `0001_init.sql` applied; 60 assets, 97,094 bars, newest 5-minute bar 02:55 UTC (Binance answers from Netlify's region) |
+| scheduled function `jobs` | registered (`4,34 * * * *`) |
+
+Still to do:
+- **`RESEND_API_KEY` is still the placeholder text.** Sign-up emails can't be sent until the owner
+  pastes a real key, and after that a redeploy is needed.
+- Turn deploy previews off.
+- The database password and the cron secret passed through the Claude session. Rotate them when
+  convenient: in Neon, Roles, then reset password; in Netlify, update the variables and redeploy.
+- `ingest` took 10.1 s. It finished, but sits right at the reported 10-second function limit. The
+  scheduled runs don't call `ingest` (pages and `publish` load prices as needed). If timeouts appear in
+  the function logs, splitting it is the fix.
