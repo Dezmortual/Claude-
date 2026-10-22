@@ -24,3 +24,6 @@ ruvector.db
 replica/screens/
 # Layout diff images contain (dimmed) pixels of the original app: local only, like replica/screens/.
 replica/diffs/*.png
+
+# Ruflo session state when a hook runs from a subfolder
+apps/web/.claude-flow/
