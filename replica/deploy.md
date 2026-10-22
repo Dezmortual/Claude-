@@ -252,6 +252,33 @@ Checklist once a domain exists:
 Not applicable: there's no phone app yet. The store listing is ready in `launch/listing.json` for when
 there is one.
 
+## Moved to Vercel (2026-10-22)
+
+**Live URL: https://proofcast100.vercel.app** (Vercel Hobby, project `proofcast100`, root directory `apps/web`,
+production branch `claude/install-replica-skills-4jsrht`). Same Neon database, so the account, forecasts and
+history carried over.
+
+Why: Netlify's free plan ran out of monthly credits. About 15 production deploys at 15 credits each used up the
+300. After that it skips deploys, and it pauses every site once the balance hits zero.
+
+Fixed on the way:
+- `vercel.json` pins the Next.js preset, because Vercel guessed Python from the repo root.
+- The setup scripts ignore a `DATABASE_URL_DIRECT` that isn't a connection string.
+- `appUrl()` ignores a malformed `APP_URL` and uses Vercel's production domain.
+
+Checked on the live site:
+- `/sign-in` returns 200, the guest API returns 401, and the cron endpoints without the secret return 401.
+- Every per-market price load returns 200 in under 2 s.
+- `publish` returned 132 live forecasts and 132 challenger forecasts.
+
+Jobs: Vercel Hobby runs crons once a day (`vercel.json`): publish at 00:05, alerts at 12:10, cleanup at 03:17
+UTC. Pages load fresh prices when opened. For 30-minute runs, use an outside scheduler (cron-job.org) calling
+`/api/cron/<job>` with `Authorization: Bearer $CRON_SECRET`.
+
+To do:
+- Delete the Netlify project `proofcastd`, so its scheduled function stops writing to the same database.
+- Rotate the Neon password and `CRON_SECRET`, then update Vercel's variables.
+
 ## Live URL
 
 **https://proofcastd.netlify.app**: live since 2026-10-22, Netlify project `proofcastd`, Neon project
