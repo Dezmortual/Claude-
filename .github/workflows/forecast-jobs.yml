@@ -1,4 +1,5 @@
-# Scheduled jobs for apps/web. Free on GitHub Actions: one run every 30 minutes (~1,440 minutes a month, inside the
+# Scheduled jobs for apps/web (alternative to the Netlify scheduled function apps/web/netlify/functions/jobs.mts;
+# GitHub runs schedules only from the default branch). Free on GitHub Actions: one run every 30 minutes (~1,440 minutes a month, inside the
 # 2,000 free minutes private repositories get). Needs repository secrets APP_URL (e.g. https://your-site.netlify.app)
 # and CRON_SECRET (same value as the app's env). Without them every run exits early and does nothing.
 name: forecast-jobs

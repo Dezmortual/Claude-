@@ -60,5 +60,6 @@ Screens import only from `@/lib/data`; server-only code lives in `src/lib/server
 client component. Never commit `apps/web/.env.local`. Never use raw hex or non-token sizes in components: change
 `replica/design/tokens.json`, then `npm run tokens`.
 Hosting is Netlify (`netlify.toml` at the repo root, env vars set in the Netlify UI with scope Functions, plus
-`NETLIFY=true`); scheduled jobs run from `.github/workflows/forecast-jobs.yml`. The landing page `/welcome` is
+`NETLIFY=true`); scheduled jobs run from the Netlify scheduled function `apps/web/netlify/functions/jobs.mts` (the GitHub workflow
+`.github/workflows/forecast-jobs.yml` is the alternative and only runs from the default branch). The landing page `/welcome` is
 public only with `PUBLIC_LANDING=true`, and every claim on it must be true of the running app.

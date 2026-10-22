@@ -49,8 +49,9 @@ Result: **preflight passes.**
 - [x] **Migrations run in the deploy, not by hand.** In `netlify.toml`, `[context.production]` runs
   `npm run db:setup` (migrations, then the idempotent seed) on `DATABASE_URL_DIRECT` before
   `npm run build`. Deploy previews and branch deploys only build.
-- [ ] **Env vars set in Netlify.** You do this. Go to Site configuration, then Environment variables. Set
-  the **scopes** as below, because variables in `netlify.toml` reach the build only.
+- [ ] **Env vars set in Netlify.** You do this. The phone steps below use default scopes, which is fine
+  with previews off. The table shows the tighter setup if you want it. Variables in `netlify.toml` reach
+  the build only.
 
   | name | value | scopes | deploy contexts |
   | --- | --- | --- | --- |
@@ -76,23 +77,56 @@ Result: **preflight passes.**
 - [ ] **Email.** Without a domain, Resend sends only to the address that owns the Resend account. Use
   your owner email there, and the owner-only app works as is. Add a domain later (see below).
 
-## Host
+## Host: step by step from a phone
 
-You do these steps:
-1. Netlify, then **Add new site**, then **Import an existing project**, then GitHub, then this repo.
-2. Pick the branch to deploy: `main` once this branch is merged, or `claude/install-replica-skills-4jsrht`
-   to try it first. The base directory, build command and Node version come from `netlify.toml`, so leave
-   those fields as they are.
-3. Add the env vars above **before** the first deploy, so the production build can run its migrations.
-4. Deploy. In the deploy log, look for "applied 0001_init.sql" (first time) or "migrations up to date",
-   then the Next.js build. Netlify's Next.js adapter is added for you.
-5. GitHub repo, then Settings, then Secrets and variables, then Actions. Add `APP_URL` (the site URL) and
-   `CRON_SECRET` (the same value as in Netlify).
-6. Actions, then **forecast-jobs**, then **Run workflow**, with job `ingest`. That fills the price history
-   once, so the first page loads don't hit Netlify's function time limit. Then run it again with an empty
-   job to check health, alerts and publish.
-7. Open `https://<your-site>.netlify.app`. Choose "Set up the owner account", confirm the emailed link,
-   and sign in.
+All of this works in a phone browser. If a Netlify page looks cramped, use the browser's "Request desktop site".
+
+1. **Neon** (neon.tech, sign in with GitHub).
+   - New project: name it `proofcast-prod`, region **AWS US East 2 (Ohio)**. That's next to Netlify's default
+     functions region.
+   - Open **Connect**. Copy the connection string with **Connection pooling on**: that's `DATABASE_URL`.
+   - Turn pooling **off** and copy again: that's `DATABASE_URL_DIRECT`.
+   - Keep both in your phone's notes for a few minutes, then delete the note.
+2. **Resend** (resend.com).
+   - Sign up **with the email you'll use as the owner**.
+   - API Keys, then Create, with permission "Sending access". Copy the key.
+3. **A cron secret.** Any random string of 32 or more characters. A phone password generator works:
+   iPhone's Passwords app, Google Password Manager, or 1Password.
+4. **Netlify** (app.netlify.com, sign up with GitHub).
+   - Add new project, then Import an existing project, then GitHub. Authorise, then pick
+     `dezmortual/Claude-`.
+   - **Branch to deploy:** `claude/install-replica-skills-4jsrht`.
+   - **Project name:** pick one, for example `proofcast-yourname`. Your URL becomes
+     `https://proofcast-yourname.netlify.app`.
+   - Leave the base directory, build command and publish directory as they are. They come from
+     `netlify.toml`.
+   - **Add environment variables** on the same screen, before deploying (default scopes are fine):
+
+     | key | value |
+     | --- | --- |
+     | `DATABASE_URL` | Neon pooled string |
+     | `DATABASE_URL_DIRECT` | Neon direct string |
+     | `OWNER_EMAILS` | your email (the one Resend is under) |
+     | `RESEND_API_KEY` | the Resend key |
+     | `CRON_SECRET` | the random string |
+     | `APP_URL` | `https://<project-name>.netlify.app` |
+     | `PRIVATE_MODE` | `true` |
+     | `NETLIFY` | `true` |
+     | `EMAIL_FROM` | `Proofcast <onboarding@resend.dev>` |
+
+   - Tap **Deploy**. It takes about 3 to 5 minutes. The deploy log should show "applied 0001_init.sql",
+     then the Next.js build.
+5. **Turn previews off**, so a branch can never write to the production database. Go to Project
+   configuration, then Build & deploy, then Branches and deploy contexts, then Configure:
+   - Deploy previews: **Don't deploy**
+   - Branch deploys: **Deploy only the production branch**
+6. **Fill the prices once.** Go to Logs, then Functions, then **jobs**, then **Run now**. The function also
+   runs by itself every 30 minutes (alerts every run, forecasts hourly, cleanup daily). You don't need
+   GitHub secrets, and the GitHub workflow is an alternative that stays idle without them.
+7. **Sign in.**
+   - Open your URL and choose "Set up the owner account".
+   - Open the confirmation email on the same phone, then sign in.
+   - Do the core flow (below, under Watch).
 
 ## Domain (optional for a private app)
 
@@ -133,9 +167,10 @@ Checklist once a domain exists:
 
 ## Watch
 
-- [x] **Uptime.** Every 30-minute run of the `forecast-jobs` workflow now checks the sign-in page first,
-  then the job endpoints. Any failure fails the run, and GitHub emails the repo owner by default. Check
-  that Settings, then Notifications, then Actions says "failed workflows only".
+- [ ] **Uptime.** The jobs run inside Netlify, so they can't watch Netlify itself. For an outside check,
+  add a free monitor on `https://<project-name>.netlify.app/sign-in`. UptimeRobot and Better Stack both
+  have phone apps. (The GitHub workflow's health check only runs if you use the workflow, which needs it
+  on the repo's default branch plus the `APP_URL` and `CRON_SECRET` secrets.)
 - [ ] **Errors.**
   - Netlify, then Logs, then Functions, shows server errors. The free plan keeps them for a short time.
   - The `job_runs` table records every scheduled run with its error.
@@ -154,7 +189,7 @@ Checklist once a domain exists:
 
 1. **Day 1.**
    - Check the deploy log shows the migrations ran.
-   - Check the first `forecast-jobs` runs are green (Actions tab).
+   - Check the first runs of the `jobs` function are green (Netlify: Logs, then Functions, then jobs).
    - Check the asset page's source line isn't stale.
 2. **Days 1 and 2.** Look for function timeouts in Netlify's function logs ("Task timed out after 10
    seconds"). If the `ingest` or `publish` job shows them, tell me. Splitting the job is the fix.
@@ -164,7 +199,7 @@ Checklist once a domain exists:
    count per series, so growth should come from the scored forecasts only.
 5. **End of the week.**
    - Take a `pg_dump`.
-   - Check GitHub Actions minutes: about 1,440 a month at this schedule, within the 2,000 free.
+   - Check Netlify usage (Functions invocations): about 1,440 scheduled runs a month, well inside the free plan.
 
 ## Mobile
 
