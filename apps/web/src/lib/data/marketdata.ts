@@ -7,6 +7,7 @@ import { alpacaBars, alpacaConfigured } from "./sources/alpaca";
 import { binanceBars } from "./sources/binance";
 import { paprikaPrices } from "./sources/coinpaprika";
 import { frankfurterDaily } from "./sources/frankfurter";
+import { TWELVE_DATA_REFRESH, twelveDataBars, twelveDataConfigured } from "./sources/twelvedata";
 import { yieldDaily, type YieldSeries } from "./sources/yields";
 import { sourceFor, type SourceName } from "./sources/map";
 import { bars as demoBars } from "./series";
@@ -26,6 +27,7 @@ const mem = (g.__bars ??= new Map());
 export function effectiveSource(slug: string): SourceName {
   if (process.env.MARKET_DATA === "demo") return "demo"; // deterministic, offline: used by the e2e suite
   const s = sourceFor(ASSET_BY_SLUG.get(slug)!).source;
+  if (s === "twelvedata" && !twelveDataConfigured()) return "frankfurter";
   return s === "alpaca" && !alpacaConfigured() ? "demo" : s;
 }
 
@@ -43,6 +45,7 @@ async function fetchFromSource(slug: string, tf: Timeframe, since: number | null
   switch (effectiveSource(slug)) {
     case "binance": return binanceBars(symbol!, tf, since, KEEP[tf]);
     case "alpaca": return alpacaBars(symbol!, tf, since, KEEP[tf]);
+    case "twelvedata": return twelveDataBars(symbol!, tf);
     case "frankfurter": {
       if (tf !== "1d" && tf !== "1w") return []; // one rate per day: no intraday series exists
       const daily = await frankfurterDaily(symbol!, since, Math.ceil(KEEP["1d"] * 1.45));
@@ -81,7 +84,8 @@ async function load(slug: string, tf: Timeframe): Promise<Entry> {
     select bf.fetched_at, (select max(ts) from price_bars where asset_id = ${id} and timeframe = ${tf}) as last
     from bar_fetches bf where bf.asset_id = ${id} and bf.timeframe = ${tf}`;
   let error: string | undefined;
-  if (!f || Date.now() - f.fetched_at.getTime() > REFRESH[tf]) {
+  const refresh = effectiveSource(slug) === "twelvedata" ? TWELVE_DATA_REFRESH[tf] : REFRESH[tf]; // free-plan credits
+  if (!f || Date.now() - f.fetched_at.getTime() > refresh) {
     try {
       const since = f?.last ? f.last.getTime() + STEP[tf] : null;
       const fresh = (await fetchFromSource(slug, tf, since)).filter((b) => b.h >= b.l && b.o > 0 && b.c > 0);

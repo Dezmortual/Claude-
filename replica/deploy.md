@@ -286,6 +286,12 @@ UTC. Pages load fresh prices when opened. For 30-minute runs, cron-job.org calls
 alerts, the hourly publish and the daily cleanup. Live check on 2026-10-22: 200, with every market loaded and
 132 + 132 forecasts published.
 
+Forex candles (2026-10-22): with `TWELVE_DATA_API_KEY` set in Vercel (free key from twelvedata.com), forex comes
+from Twelve Data with real highs and lows, 5-minute to weekly. The app makes two requests per pair (5-minute and
+daily bars; 30-minute, 1-hour and weekly are built from them), refreshing intraday every 25 minutes and daily
+every 6 hours: about 312 of the 800 free credits a day. Without the key, forex falls back to the ECB's daily
+rates, which have no highs or lows, so those charts show a line only.
+
 To do:
 - Delete the Netlify project `proofcastd`, so its scheduled function stops writing to the same database.
 - Rotate the Neon password and `CRON_SECRET`, then update Vercel's variables.

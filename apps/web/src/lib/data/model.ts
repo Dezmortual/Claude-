@@ -56,7 +56,8 @@ export function quote(slug: string): Quote {
   const cross = crosscheck(slug);
   const spread = cross ? (Math.abs(cross.price - last.c) / last.c) * 100 : 0;
   // Daily-only sources: a weekend plus a holiday; official yields can also lag two working days (Bank of England).
-  const staleAfter = b5.length ? 15 * 60_000 : (src === "yields" ? 6 : 4) * 86_400_000;
+  // Twelve Data forex is asked every 25 minutes to stay inside the free plan.
+  const staleAfter = b5.length ? (src === "twelvedata" ? 40 : 15) * 60_000 : (src === "yields" ? 6 : 4) * 86_400_000;
   const status: Quote["status"] = loadError(slug) || Date.now() - observedAt > staleAfter ? "stale" : cross && spread > 0.5 ? "diverged" : "ok";
   return {
     price: last.c,
