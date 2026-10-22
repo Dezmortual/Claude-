@@ -6,6 +6,7 @@ import { ContributionCalc, ScenarioCalc } from "@/components/client/Calculators"
 import { PriceChart } from "@/components/client/PriceChart";
 import { LedgerTable } from "@/components/LedgerTable";
 import { Pulse } from "@/components/client/Pulse";
+import { OutlookCards } from "@/components/OutlookCards";
 import { ScenarioChart } from "@/components/ScenarioChart";
 import { Banner, Card, Label, Paywall, PriceChange, Section, StatCard } from "@/components/ui";
 import { forecastLedger, listIndicators, assetBars, assetForecast, assetScenarios, assetSignals, assetSummary, getAsset, relatedAssets, type PathRow } from "@/lib/data";
@@ -154,6 +155,11 @@ export default async function AssetForecast({ params }: P) {
 
       <Section id="long-term" title="Long-term scenarios">
         <p className="max-w-prose text-sm text-muted">{sc.assumptions.note}</p>
+        <OutlookCards cards={sc.cards} unit={unit} name={asset.name} />
+        <p className="max-w-prose text-xs text-muted">
+          Past moves come from overlapping windows of the stored daily prices, so they lean heavily on the same few years. They show how
+          wide the real outcomes have been, not what comes next.
+        </p>
         <Card className="p-4 md:p-6 text-muted"><ScenarioChart s={sc} now={quote.price} unit={unit} name={asset.name} /></Card>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <div tabIndex={0} role="region" aria-label="Scrollable table" className="relative overflow-x-auto rounded-lg border bg-surface">

@@ -214,7 +214,29 @@ export function scenarios(slug: string): Scenarios {
   const [bear, base, bull] = SCENARIO_CAGR[a.market];
   const price = quote(slug).price;
   const y0 = new Date().getUTCFullYear();
+  // Rolling n-year moves in the asset's own daily history, to set each scenario against what really happened.
+  const d = bars(slug, "1d"), per = isSessionBased(slug) ? 252 : 365;
+  const ath = d.reduce((m, b) => Math.max(m, b.h), 0);
+  let athPassed = price >= ath;
+  const cards = [1, 2, 3, 5, 10].map((n) => {
+    const w = n * per, moves: number[] = [];
+    for (let i = w; i < d.length; i++) moves.push((d[i].c / d[i - w].c - 1) * 100);
+    const basePct = ((1 + base) ** n - 1) * 100;
+    const sorted = [...moves].sort((x, y) => x - y);
+    const passesAth = !athPassed && price * (1 + base) ** n >= ath;
+    if (passesAth) athPassed = true;
+    return {
+      years: n, year: y0 + n, bear: price * (1 + bear) ** n, base: price * (1 + base) ** n, bull: price * (1 + bull) ** n,
+      bearPct: ((1 + bear) ** n - 1) * 100, basePct, bullPct: ((1 + bull) ** n - 1) * 100, passesAth,
+      history: moves.length < 60 ? null : {
+        since: new Date(d[0].ts).toISOString(), windows: moves.length, worstPct: sorted[0], bestPct: sorted.at(-1)!,
+        medianPct: sorted[sorted.length >> 1], upShare: moves.filter((m) => m > 0).length / moves.length,
+        baseBeats: moves.filter((m) => m < basePct).length / moves.length,
+      },
+    };
+  });
   return {
+    cards,
     years: Array.from({ length: 10 }, (_, i) => {
       const n = i + 1;
       return { year: y0 + n, bear: price * (1 + bear) ** n, base: price * (1 + base) ** n, bull: price * (1 + bull) ** n,

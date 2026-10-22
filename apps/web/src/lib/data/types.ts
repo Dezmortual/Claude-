@@ -54,7 +54,19 @@ export interface PathRow { periodStart: string; label: string; low: number; mid:
 
 export interface ScenarioYear { year: number; bear: number; base: number; bull: number; baseRoiPct: number }
 
+/** One year of the long-term outlook, with how the asset's own past moves of the same length compare. */
+export interface OutlookCard {
+  years: number; year: number;
+  bear: number; base: number; bull: number;
+  bearPct: number; basePct: number; bullPct: number;
+  /** Rolling windows of this length in the stored daily history (they overlap); null when there are too few. */
+  history: null | { since: string; windows: number; worstPct: number; medianPct: number; bestPct: number; upShare: number; baseBeats: number };
+  /** True on the first card whose base case is above the all-time high. */
+  passesAth: boolean;
+}
+
 export interface Scenarios {
+  cards: OutlookCard[];
   years: ScenarioYear[];
   assumptions: { bearCagrPct: number; baseCagrPct: number; bullCagrPct: number; note: string };
 }

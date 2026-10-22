@@ -43,7 +43,7 @@ Push notifications for alerts,mobile,should,no,no,new; APNs/FCM; deep link to as
 In-app subscription (App Store / Play),mobile,should,no,no,new; or reader-app route; needs the mobile app
 Data-quality quarantine + stale-quote states,data,should,yes,partial,"stale detection live (old bars or failed refresh); quarantine flag in schema, no automatic quarantine rule yet"
 Public out-of-sample accuracy track record,trust,could,no,yes,hourly forecasts locked and scored; page reads the scores (needs time to fill)
-Year-by-year outlook cards,asset page,could,yes,no,S06; yearly table covers the numbers; narrative cards not built
+Year-by-year outlook cards,asset page,could,yes,yes,S06; 1/2/3/5/10-year cards with bear/base/bull set against the asset's own rolling past moves of the same length
 Halving cycles table,asset page,could,yes,no,S06 crypto only
 Asset logos,asset page,could,yes,partial,open-licence sets (web3icons MIT; Simple Icons CC0; flag-icons MIT) plus our own metal and oil marks; Ethena; Microsoft and Amazon keep the letter mark (no open logo); sources in apps/web/public/icons/assets/LICENSES.md
 Price history page,asset page,could,yes,no,S04 tab; chart ranges cover it
