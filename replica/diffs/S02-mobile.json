@@ -1,0 +1,96 @@
+{
+  "mode": "layout",
+  "original": {
+    "width": 390,
+    "height": 844
+  },
+  "clone": {
+    "width": 390,
+    "height": 844
+  },
+  "compared_at": {
+    "width": 390,
+    "height": 844
+  },
+  "height_delta_pct": 0.0,
+  "score": 29.0,
+  "verdict": "different",
+  "regions": [
+    {
+      "x": 0,
+      "y": 512,
+      "w": 384,
+      "h": 332,
+      "cells": 102,
+      "where": "bottom centre"
+    },
+    {
+      "x": 0,
+      "y": 96,
+      "w": 384,
+      "h": 384,
+      "cells": 80,
+      "where": "top centre"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 128,
+      "h": 64,
+      "cells": 6,
+      "where": "top left"
+    },
+    {
+      "x": 160,
+      "y": 32,
+      "w": 128,
+      "h": 32,
+      "cells": 4,
+      "where": "top centre"
+    },
+    {
+      "x": 320,
+      "y": 0,
+      "w": 64,
+      "h": 64,
+      "cells": 3,
+      "where": "top right"
+    },
+    {
+      "x": 320,
+      "y": 128,
+      "w": 64,
+      "h": 32,
+      "cells": 2,
+      "where": "top right"
+    },
+    {
+      "x": 128,
+      "y": 0,
+      "w": 32,
+      "h": 32,
+      "cells": 1,
+      "where": "top centre"
+    },
+    {
+      "x": 128,
+      "y": 128,
+      "w": 32,
+      "h": 32,
+      "cells": 1,
+      "where": "top centre"
+    },
+    {
+      "x": 256,
+      "y": 128,
+      "w": 32,
+      "h": 32,
+      "cells": 1,
+      "where": "top right"
+    }
+  ],
+  "files": {
+    "original": "replica/screens/S02-forecast-hub-mobile.png",
+    "clone": "replica/clone-screens/viewport/S02-mobile.png"
+  }
+}

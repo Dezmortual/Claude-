@@ -1,0 +1,56 @@
+{
+  "mode": "layout",
+  "original": {
+    "width": 1440,
+    "height": 900
+  },
+  "clone": {
+    "width": 1440,
+    "height": 900
+  },
+  "compared_at": {
+    "width": 480,
+    "height": 300
+  },
+  "height_delta_pct": 0.0,
+  "score": 28.5,
+  "verdict": "different",
+  "regions": [
+    {
+      "x": 120,
+      "y": 0,
+      "w": 1320,
+      "h": 900,
+      "cells": 62,
+      "where": "middle centre"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 120,
+      "h": 120,
+      "cells": 1,
+      "where": "top left"
+    },
+    {
+      "x": 1200,
+      "y": 600,
+      "w": 120,
+      "h": 120,
+      "cells": 1,
+      "where": "bottom right"
+    },
+    {
+      "x": 0,
+      "y": 840,
+      "w": 120,
+      "h": 60,
+      "cells": 1,
+      "where": "bottom left"
+    }
+  ],
+  "files": {
+    "original": "replica/screens/S06-asset-forecast-desktop.png",
+    "clone": "replica/clone-screens/viewport/S06-desktop.png"
+  }
+}

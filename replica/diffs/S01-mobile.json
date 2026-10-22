@@ -1,0 +1,80 @@
+{
+  "mode": "layout",
+  "original": {
+    "width": 390,
+    "height": 844
+  },
+  "clone": {
+    "width": 390,
+    "height": 844
+  },
+  "compared_at": {
+    "width": 390,
+    "height": 844
+  },
+  "height_delta_pct": 0.0,
+  "score": 24.6,
+  "verdict": "different",
+  "regions": [
+    {
+      "x": 0,
+      "y": 512,
+      "w": 384,
+      "h": 332,
+      "cells": 81,
+      "where": "bottom centre"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 384,
+      "h": 320,
+      "cells": 75,
+      "where": "top centre"
+    },
+    {
+      "x": 0,
+      "y": 288,
+      "w": 384,
+      "h": 192,
+      "cells": 42,
+      "where": "middle centre"
+    },
+    {
+      "x": 0,
+      "y": 800,
+      "w": 96,
+      "h": 44,
+      "cells": 4,
+      "where": "bottom left"
+    },
+    {
+      "x": 0,
+      "y": 736,
+      "w": 64,
+      "h": 32,
+      "cells": 2,
+      "where": "bottom left"
+    },
+    {
+      "x": 352,
+      "y": 0,
+      "w": 32,
+      "h": 32,
+      "cells": 1,
+      "where": "top right"
+    },
+    {
+      "x": 320,
+      "y": 448,
+      "w": 32,
+      "h": 32,
+      "cells": 1,
+      "where": "middle right"
+    }
+  ],
+  "files": {
+    "original": "replica/screens/S01-home-mobile.png",
+    "clone": "replica/clone-screens/viewport/S01-mobile.png"
+  }
+}

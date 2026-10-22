@@ -22,3 +22,5 @@ ruvector.db
 
 # Reference screenshots of the original app (replica-recon/design). Local only, never committed or shipped.
 replica/screens/
+# Layout diff images contain (dimmed) pixels of the original app: local only, like replica/screens/.
+replica/diffs/*.png

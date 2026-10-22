@@ -20,7 +20,7 @@ Risk disclaimer and not-financial-advice notice,legal,must,yes,yes,all pages; al
 Pricing page with plans and yearly/monthly toggle,billing,must,yes,skip,hidden in the private build (redirects to /account)
 Subscription checkout + cancel at period end,billing,must,yes,skip,private build takes no payments; schema keeps plans/subscriptions for later
 Plan entitlements gate markets and features,billing,must,yes,yes,owner gets every market; gating code kept for a public build
-Paywall / unlock prompts on locked content,billing,must,yes,partial,built; never shown to the owner in the private build
+Paywall / unlock prompts on locked content,billing,must,yes,skip,"private build has no paid plans, so nothing is ever locked; component built and kept for a public build"
 Watchlist add/remove + watchlist page,watchlist,must,yes,yes,S13 inferred; login-gated; S13; empty and no-plan states
 Alerts on price and signal change,alerts,must,yes,yes,"evaluated every 30 min by the scheduled job, emailed via Resend, fire once per episode"
 Mobile app: signals feed / asset / watchlist / alerts,mobile,must,no,no,new - BeCoin has no app; M01-M04; not started: Expo app is the next build step; API routes it needs are in place

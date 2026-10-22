@@ -1,0 +1,56 @@
+{
+  "mode": "layout",
+  "original": {
+    "width": 1440,
+    "height": 4006
+  },
+  "clone": {
+    "width": 1440,
+    "height": 1691
+  },
+  "compared_at": {
+    "width": 480,
+    "height": 564
+  },
+  "height_delta_pct": -57.8,
+  "score": 29.2,
+  "verdict": "different",
+  "regions": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1680,
+      "cells": 96,
+      "where": "middle centre"
+    },
+    {
+      "x": 1080,
+      "y": 0,
+      "w": 360,
+      "h": 120,
+      "cells": 3,
+      "where": "top right"
+    },
+    {
+      "x": 120,
+      "y": 840,
+      "w": 120,
+      "h": 240,
+      "cells": 2,
+      "where": "middle left"
+    },
+    {
+      "x": 240,
+      "y": 1560,
+      "w": 120,
+      "h": 120,
+      "cells": 1,
+      "where": "bottom left"
+    }
+  ],
+  "files": {
+    "original": "replica/screens/S09-pricing-desktop-full.png",
+    "clone": "replica/clone-screens/S09-desktop.png"
+  }
+}

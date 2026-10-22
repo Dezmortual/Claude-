@@ -1,0 +1,56 @@
+{
+  "mode": "layout",
+  "original": {
+    "width": 1440,
+    "height": 5953
+  },
+  "clone": {
+    "width": 1440,
+    "height": 2925
+  },
+  "compared_at": {
+    "width": 480,
+    "height": 975
+  },
+  "height_delta_pct": -50.9,
+  "score": 18.3,
+  "verdict": "different",
+  "regions": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 3000,
+      "cells": 209,
+      "where": "middle centre"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 120,
+      "h": 120,
+      "cells": 1,
+      "where": "top left"
+    },
+    {
+      "x": 1320,
+      "y": 1800,
+      "w": 120,
+      "h": 120,
+      "cells": 1,
+      "where": "middle right"
+    },
+    {
+      "x": 1080,
+      "y": 2760,
+      "w": 120,
+      "h": 120,
+      "cells": 1,
+      "where": "bottom right"
+    }
+  ],
+  "files": {
+    "original": "replica/screens/S02-forecast-hub-desktop-full.png",
+    "clone": "replica/clone-screens/viewport/S02-desktop-full.png"
+  }
+}

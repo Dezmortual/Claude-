@@ -1,0 +1,40 @@
+{
+  "mode": "layout",
+  "original": {
+    "width": 1440,
+    "height": 6765
+  },
+  "clone": {
+    "width": 1440,
+    "height": 2155
+  },
+  "compared_at": {
+    "width": 480,
+    "height": 718
+  },
+  "height_delta_pct": -68.2,
+  "score": 33.0,
+  "verdict": "different",
+  "regions": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 2160,
+      "cells": 146,
+      "where": "middle centre"
+    },
+    {
+      "x": 120,
+      "y": 2040,
+      "w": 120,
+      "h": 120,
+      "cells": 1,
+      "where": "bottom left"
+    }
+  ],
+  "files": {
+    "original": "replica/screens/S01-home-desktop-full.png",
+    "clone": "replica/clone-screens/viewport/S01-desktop-full.png"
+  }
+}
