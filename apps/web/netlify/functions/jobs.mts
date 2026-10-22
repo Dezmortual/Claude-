@@ -11,7 +11,8 @@ export default async () => {
   }
   const now = new Date();
   // Prices first, one market per request, so the jobs after them read fresh bars without fetching.
-  const jobs = ["crypto", "forex", "stocks", "commodities", "indices", "etfs", "bonds"].map((m) => `ingest-${m}`);
+  // Crypto, the largest market, comes in three parts (CRYPTO_PARTS in src/lib/server/jobs.ts).
+  const jobs = ["crypto-1", "crypto-2", "crypto-3", "forex", "stocks", "commodities", "indices", "etfs", "bonds"].map((m) => `ingest-${m}`);
   jobs.push("alerts");
   if (now.getUTCMinutes() < 30) jobs.push("publish");
   if (now.getUTCHours() === 3 && now.getUTCMinutes() < 30) jobs.push("cleanup");

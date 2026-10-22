@@ -36,11 +36,14 @@ export async function ingest() {
 
 /** One market's live series. The scheduled run calls these in turn, so no single request carries every asset
  *  (Netlify's synchronous functions stop at about 10 s). */
-export async function ingestMarket(market: MarketCode) {
-  const slugs = liveSlugs().filter((s) => ASSET_BY_SLUG.get(s)!.market === market);
-  await Promise.all([ensure(slugs, ["5m", "30m", "1h", "1d", "1w"]), market === "crypto" ? ensureCrosscheck() : null]);
-  return { market, assets: slugs.length };
+export async function ingestMarket(market: MarketCode, part = 1, parts = 1) {
+  const slugs = liveSlugs().filter((s) => ASSET_BY_SLUG.get(s)!.market === market).filter((_, i) => i % parts === part - 1);
+  await Promise.all([ensure(slugs, ["5m", "30m", "1h", "1d", "1w"]), market === "crypto" && part === 1 ? ensureCrosscheck() : null]);
+  return { market, part: `${part}/${parts}`, assets: slugs.length };
 }
+
+/** Crypto has the most assets, so its price loading is cut into this many requests. */
+export const CRYPTO_PARTS = 3;
 
 // ---------------------------------------------------------------- publish + score
 
@@ -200,6 +203,7 @@ export async function cleanup() {
 export const JOBS: Record<string, () => Promise<unknown>> = {
   ingest,
   ...Object.fromEntries(MARKETS.map((m) => [`ingest-${m.code}`, () => ingestMarket(m.code)])),
+  ...Object.fromEntries(Array.from({ length: CRYPTO_PARTS }, (_, i) => [`ingest-crypto-${i + 1}`, () => ingestMarket("crypto", i + 1, CRYPTO_PARTS)])),
   publish: async () => ({ ...(await publishForecasts()), ...(await scoreForecasts()) }),
   alerts: async () => ({ ...(await evaluateAlerts()), ...(await deliverAlerts()) }),
   cleanup,

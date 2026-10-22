@@ -292,6 +292,16 @@ Still to do:
   from about $70 to about $160 between February and October 2026 with no single jump, so it's a price move in the
   feed, not a split artifact. Only the bonds and the DAX stay on demo data.
 - Dashboard redesign deployed (premium home, see commit 8761cda).
+- Accuracy work (2026-10-22, see `replica/model.md`):
+  - **Scorecard:** compares each forecast with "always up" and "no change", and adds the Brier score and the
+    calibration view.
+  - **Challenger:** `volscaled-momentum-v2` publishes hidden forecasts in every run. Earliest decision
+    2026-11-19, with `npm run models:compare`.
+  - **Bond yields:** now official (US Treasury, Bundesbank, Bank of England). Migration `0002` ran in the
+    production build.
+  - **Price loading:** one market per request, with crypto in three parts of 12.
+  - **Watch:** forecasts now grow about twice as fast (two models, about 6,500 rows a day). Check Neon's
+    storage in a month.
 - Turn deploy previews off.
 - The database password and the cron secret passed through the Claude session. Rotate them when
   convenient: in Neon, Roles, then reset password; in Netlify, update the variables and redeploy.
