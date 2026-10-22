@@ -16,7 +16,7 @@ const iconLink = "grid h-10 w-10 place-items-center rounded-md text-muted hover:
 export function Header({ viewer }: { viewer: Viewer }) {
   const signedIn = !!viewer.user;
   return (
-    <header className="sticky top-0 z-header h-header border-b bg-surface">
+    <header className="sticky top-0 z-header h-header border-b bg-surface/85 backdrop-blur-md">
       <div className="mx-auto flex h-full max-w-wide items-center gap-4 px-4 lg:gap-6 lg:px-6">
         <Link href="/" className="flex items-center gap-2 whitespace-nowrap font-bold text-fg">
           {/* The mark draws itself once on load (still under prefers-reduced-motion); dark mode uses the light variant. */}

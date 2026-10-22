@@ -31,6 +31,13 @@
   --c-chart-band: 236 210 226;
   --c-chart-grid: 229 225 230;
   --c-overlay: 16 12 18;
+  --c-panel: 42 11 34;
+  --c-panel-2: 107 35 83;
+  --c-on-panel: 255 255 255;
+  --c-on-panel-muted: 234 214 228;
+  --c-highlight: 255 201 163;
+  --c-panel-up: 134 227 174;
+  --c-panel-down: 255 168 164;
   --font-sans: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   --font-mono: IBM Plex Mono, ui-monospace, SFMono-Regular, Menlo, monospace;
   --text-2xs: 11px; --leading-2xs: 14px; --weight-2xs: 600;
@@ -61,6 +68,7 @@
   --shadow-card: 0 1px 2px rgba(11,15,23,.05), 0 1px 3px rgba(11,15,23,.06);
   --shadow-raised: 0 6px 20px rgba(11,15,23,.08);
   --shadow-pop: 0 16px 40px rgba(11,15,23,.16);
+  --shadow-premium: 0 1px 2px rgba(42,11,34,.06), 0 12px 32px -14px rgba(42,11,34,.30);
   --motion-fast: 120ms;
   --motion-base: 180ms;
   --motion-slow: 280ms;
@@ -117,6 +125,13 @@
     --c-chart-band: 61 31 51;
     --c-chart-grid: 47 40 50;
     --c-overlay: 0 0 0;
+    --c-panel: 42 11 34;
+    --c-panel-2: 107 35 83;
+    --c-on-panel: 255 255 255;
+    --c-on-panel-muted: 234 214 228;
+    --c-highlight: 255 201 163;
+    --c-panel-up: 134 227 174;
+    --c-panel-down: 255 168 164;
     color-scheme: dark;
   }
 }
@@ -152,6 +167,13 @@
   --c-chart-band: 61 31 51;
   --c-chart-grid: 47 40 50;
   --c-overlay: 0 0 0;
+  --c-panel: 42 11 34;
+  --c-panel-2: 107 35 83;
+  --c-on-panel: 255 255 255;
+  --c-on-panel-muted: 234 214 228;
+  --c-highlight: 255 201 163;
+  --c-panel-up: 134 227 174;
+  --c-panel-down: 255 168 164;
   color-scheme: dark;
 }
 

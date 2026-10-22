@@ -51,10 +51,12 @@ const UNITS: Record<MarketCode, string> = {
 
 // Markets with no free official feed, shown through a US-listed fund that tracks them (Alpaca, IEX). Their price is the
 // fund's, in USD per share, never the index level or the metal's spot price, and the asset page says so.
-export const PROXIES: Record<string, { ticker: string; fund: string; anchor: number }> = {
-  sp500: { ticker: "SPY", fund: "SPDR S&P 500 ETF", anchor: 645 },
-  nasdaq100: { ticker: "QQQ", fund: "Invesco QQQ", anchor: 572 },
-  gold: { ticker: "GLD", fund: "SPDR Gold Shares", anchor: 336 },
+export const PROXIES: Record<string, { ticker: string; fund: string; tracks: string; anchor: number }> = {
+  sp500: { ticker: "SPY", fund: "SPDR S&P 500 ETF", tracks: "the S&P 500", anchor: 645 },
+  nasdaq100: { ticker: "QQQ", fund: "Invesco QQQ", tracks: "the Nasdaq 100", anchor: 572 },
+  gold: { ticker: "GLD", fund: "SPDR Gold Shares", tracks: "gold", anchor: 336 },
+  silver: { ticker: "SLV", fund: "iShares Silver Trust", tracks: "silver", anchor: 38 },
+  wti: { ticker: "USO", fund: "United States Oil Fund", tracks: "WTI crude oil futures", anchor: 72 },
 };
 
 export const ANCHORS: Record<string, number> = {};

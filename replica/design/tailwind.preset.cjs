@@ -38,6 +38,13 @@ module.exports = {
       "chart-band": "rgb(var(--c-chart-band) / <alpha-value>)",
       "chart-grid": "rgb(var(--c-chart-grid) / <alpha-value>)",
       "overlay": "rgb(var(--c-overlay) / <alpha-value>)",
+      "panel": "rgb(var(--c-panel) / <alpha-value>)",
+      "panel-2": "rgb(var(--c-panel-2) / <alpha-value>)",
+      "on-panel": "rgb(var(--c-on-panel) / <alpha-value>)",
+      "on-panel-muted": "rgb(var(--c-on-panel-muted) / <alpha-value>)",
+      "highlight": "rgb(var(--c-highlight) / <alpha-value>)",
+      "panel-up": "rgb(var(--c-panel-up) / <alpha-value>)",
+      "panel-down": "rgb(var(--c-panel-down) / <alpha-value>)",
       "transparent": "transparent",
       "current": "currentColor",
       "white": "#ffffff"
@@ -135,7 +142,8 @@ module.exports = {
       "none": "none",
       "card": "0 1px 2px rgba(11,15,23,.05), 0 1px 3px rgba(11,15,23,.06)",
       "raised": "0 6px 20px rgba(11,15,23,.08)",
-      "pop": "0 16px 40px rgba(11,15,23,.16)"
+      "pop": "0 16px 40px rgba(11,15,23,.16)",
+      "premium": "0 1px 2px rgba(42,11,34,.06), 0 12px 32px -14px rgba(42,11,34,.30)"
     },
     "screens": {
       "sm": "640px",

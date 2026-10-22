@@ -155,6 +155,41 @@ export async function outlook(v: Viewer, horizon: "1d" | "7d" | "1m", market?: M
   return { total: pts.length, up, down: pts.length - up, strongest: strongest && { asset: strongest.a, changePct: strongest.p.changePct } };
 }
 
+// ---------------------------------------------------------------- dashboard
+
+/** The asset that stands for each market on the dashboard. */
+const HEADLINE: Record<MarketCode, string> = {
+  crypto: "bitcoin", forex: "eurusd", stocks: "nvda", commodities: "gold", indices: "sp500", etfs: "qqq", bonds: "us-10y",
+};
+
+export interface DashboardCard { market: Market; row: ForecastRow; spark: number[] }
+
+/** Everything the home dashboard shows, from one load: a card per market, the strongest live signals, signal counts
+ *  and the scored track record so far. Demo-data assets never count towards the totals or the signal list. */
+export async function dashboard(v: Viewer) {
+  await load(v, ASSETS);
+  const rows = ASSETS.map((a) => row(v, a));
+  const live = rows.filter((r) => !r.locked && !r.demo);
+  const bySlug = new Map(rows.map((r) => [r.asset.slug, r]));
+  const cards: DashboardCard[] = MARKETS.map((m) => {
+    const r = bySlug.get(HEADLINE[m.code])!;
+    return { market: m, row: r, spark: r.locked ? [] : closedBars(r.asset.slug, "1d").slice(-30).map((b) => b.c) };
+  });
+  const strongest = [...live].sort((a, b) => Math.abs(b.pUp! - 0.5) - Math.abs(a.pUp! - 0.5)).slice(0, 6);
+  const scored = await trackRecord();
+  const n = scored.reduce((s, r) => s + r.n, 0);
+  const hitRate = n ? scored.reduce((s, r) => s + r.hit_rate * r.n, 0) / n : null;
+  return {
+    cards, strongest, runAt: runAt(),
+    counts: {
+      live: live.length,
+      bullish: live.filter((r) => r.signal === "buy" || r.signal === "strong_buy").length,
+      bearish: live.filter((r) => r.signal === "sell" || r.signal === "strong_sell").length,
+    },
+    record: { scored: n, hitRate },
+  };
+}
+
 // ---------------------------------------------------------------- asset pages
 
 /** Loads everything an asset page needs in one go. Locked assets still get prices (the daily signal is shown free). */

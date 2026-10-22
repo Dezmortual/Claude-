@@ -14,9 +14,8 @@ function proxyNote(slug: string, src: string) {
   const a = ASSET_BY_SLUG.get(slug)!;
   const p = a.meta.proxy && PROXIES[slug];
   if (!p || src !== "alpaca") return null;
-  const index = a.market === "indices";
-  const what = index ? `the ${a.name}` : a.name.toLowerCase();
-  return `${SOURCE_LABEL.alpaca}, via ${p.ticker} (${p.fund}), a fund that tracks ${what}: its price per share, not ${index ? "the index level" : "the spot price"}`;
+  const not = a.market === "indices" ? "the index level" : a.slug === "wti" ? "the price of a barrel" : "the spot price";
+  return `${SOURCE_LABEL.alpaca}, via ${p.ticker} (${p.fund}), a fund that tracks ${p.tracks}: its price per share, not ${not}`;
 }
 
 export function isSessionBased(slug: string) {
