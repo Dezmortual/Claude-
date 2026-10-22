@@ -21,7 +21,7 @@ export function MobileNav({ links, signedIn }: { links: { href: string; label: s
             </Dialog.Close>
           </div>
           <nav aria-label="Main" className="grid gap-1">
-            {[...links, ...(signedIn ? [{ href: "/watchlist", label: "Watchlist" }, { href: "/alerts", label: "Alerts" }, { href: "/account", label: "Account" }]
+            {[...links, ...(signedIn ? [{ href: "/glance", label: "Glance" }, { href: "/watchlist", label: "Watchlist" }, { href: "/alerts", label: "Alerts" }, { href: "/account", label: "Account" }]
               : [{ href: "/sign-in", label: "Sign in" }, { href: "/sign-up", label: "Create account" }])].map((l) => (
               <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="flex min-h-tap items-center rounded-md px-3 text-base hover:bg-surface-sunken">
                 {l.label}

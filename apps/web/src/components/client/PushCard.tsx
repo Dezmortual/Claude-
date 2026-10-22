@@ -93,6 +93,10 @@ export function PushCard() {
             : <p className="text-sm text-muted">Use your browser&apos;s menu and choose <span className="font-semibold">Install app</span> or <span className="font-semibold">Add to Home screen</span>.</p>}
         </div>
         {!installed && prompt && <Button onClick={install} disabled={busy} variant="secondary"><Download aria-hidden className="h-4 w-4" />Install</Button>}
+        <p className="basis-full text-xs text-muted">
+          Once installed, long-press the Proofcast icon for shortcuts to Glance, Watchlist, Alerts and Indicators. On Android you can drag
+          Glance out onto the home screen as its own icon: your watchlist and latest alerts in one tap.
+        </p>
       </div>
 
       <div className="flex flex-wrap items-start gap-3 border-t pt-5">

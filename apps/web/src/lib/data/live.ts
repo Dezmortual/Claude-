@@ -726,3 +726,20 @@ export async function assetSignalHistory(v: Viewer, slug: string) {
       changes: hit.changes, buy: stats(1), sell: stats(-1) };
   });
 }
+
+// ---------------------------------------------------------------- glance (home-screen view)
+
+/** One screen to check at a glance: the watchlist (or one asset per market while it's empty) with the last day's
+ *  hourly closes, and the latest alerts. */
+export async function glance(v: Viewer) {
+  const u = requireUser(v);
+  const mine = (await watchlistSlugs(v)).map((s) => getAsset(s)).filter((a): a is Asset => !!a);
+  const assets = mine.length ? mine : MARKETS.map((m) => ASSET_BY_SLUG.get(HEADLINE[m.code])!).filter(Boolean);
+  await load(v, assets);
+  await ensure(assets.map((a) => a.slug), ["1h"]);
+  const rows = assets.map((a) => {
+    const r = row(v, a);
+    return { ...r, spark: r.locked ? [] : closedBars(a.slug, "1h").slice(-24).map((b) => b.c) };
+  });
+  return { fromWatchlist: mine.length > 0, rows, alerts: (await alertEvents(v, 3)), at: new Date().toISOString(), tz: u.timezone };
+}

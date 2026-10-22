@@ -51,7 +51,7 @@ Converter / calculator page per market,asset page,could,yes,partial,S04 tab; con
 Crypto payments,billing,could,yes,no,S09 mention
 Testimonials / social proof block,marketing,could,yes,no,only real ones from your own users; deliberately none until there are real users
 Facebook group / community links,marketing,could,yes,no,
-Mobile home-screen widget,mobile,could,no,no,new
+Mobile home-screen widget,mobile,could,no,partial,web apps can't place OS widgets; /glance screen + app-icon shortcuts (draggable to the home screen on Android) instead
 Calculator and tools catalog (27 tools),tools,skip,yes,skip,out of chosen slice
 Paper trading simulator,tools,skip,yes,skip,out of chosen slice
 Trading journal,tools,skip,yes,skip,out of chosen slice
