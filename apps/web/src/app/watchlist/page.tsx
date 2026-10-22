@@ -33,7 +33,7 @@ export default async function Watchlist() {
           {rows.map((r) => (
             <li key={r.asset.slug}>
               <Card className="flex flex-wrap items-center gap-4 p-4">
-                <div className="min-w-0 flex-1"><AssetCell name={r.asset.name} ticker={r.asset.ticker} href={`/assets/${r.asset.slug}`} demo={r.demo} via={r.demo ? undefined : r.asset.meta.proxy} /></div>
+                <div className="min-w-0 flex-1"><AssetCell name={r.asset.name} ticker={r.asset.ticker} slug={r.asset.slug} href={`/assets/${r.asset.slug}`} demo={r.demo} via={r.demo ? undefined : r.asset.meta.proxy} /></div>
                 {r.locked ? (
                   <p className="flex-1 text-sm text-muted">Not in your current plan. <Link prefetch={false} href={`/pricing?plan=${planFor(r.asset).code}`} className="font-semibold text-accent underline">{planFor(r.asset).name} plan</Link></p>
                 ) : (

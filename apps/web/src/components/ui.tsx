@@ -4,6 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { AlertTriangle, ChevronsDown, ChevronsUp, Info, Lock, SearchX } from "lucide-react";
 import { SIGNAL_LABEL, pct } from "@/lib/format";
 import type { Verdict } from "@/lib/data";
+import { assetIcon } from "@/lib/assetIcons";
 
 export const cx = (...xs: (string | false | null | undefined)[]) => xs.filter(Boolean).join(" ");
 
@@ -129,19 +130,37 @@ export function PriceChange({ value, suffix, className, bold }: { value: number 
   );
 }
 
-export function AssetMark({ ticker }: { ticker: string }) {
+/** The asset's logo (both flags for a forex pair), or its first letter when there's no openly licensed logo. */
+export function AssetMark({ ticker, slug, size = "md" }: { ticker: string; slug?: string; size?: "md" | "lg" }) {
+  const icon = slug ? assetIcon(slug) : null;
+  const box = size === "lg" ? "h-10 w-10" : "h-6 w-6";
+  if (icon?.length === 2) {
+    const flag = size === "lg" ? "h-6 w-6" : "h-4 w-4";
+    return (
+      <span aria-hidden className={cx("relative flex-none", box)}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVGs, no resizing needed */}
+        <img src={icon[0]} alt="" className={cx("absolute left-0 top-0 rounded-pill ring-1 ring-border", flag)} />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={icon[1]} alt="" className={cx("absolute bottom-0 right-0 rounded-pill ring-2 ring-surface", flag)} />
+      </span>
+    );
+  }
+  if (icon) {
+    // eslint-disable-next-line @next/next/no-img-element -- tiny static SVGs, no resizing needed
+    return <img src={icon[0]} alt="" aria-hidden className={cx("flex-none rounded-pill ring-1 ring-border", box)} />;
+  }
   return (
-    <span aria-hidden className="grid h-6 w-6 flex-none place-items-center rounded-pill bg-accent-soft text-2xs font-bold text-accent">
+    <span aria-hidden className={cx("grid flex-none place-items-center rounded-pill bg-accent-soft font-bold text-accent", box, size === "lg" ? "text-base" : "text-2xs")}>
       {ticker.replace(/[^A-Z0-9]/gi, "").slice(0, 1)}
     </span>
   );
 }
 
 /** `via`: the tracking fund whose price is shown (catalogue PROXIES). */
-export function AssetCell({ name, ticker, href, demo, via }: { name: string; ticker: string; href: string; demo?: boolean; via?: string }) {
+export function AssetCell({ name, ticker, slug, href, demo, via }: { name: string; ticker: string; slug?: string; href: string; demo?: boolean; via?: string }) {
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <AssetMark ticker={ticker} />
+      <AssetMark ticker={ticker} slug={slug} />
       <div className="min-w-0">
         <Link href={href} prefetch={false} title={name} className="block truncate font-semibold text-fg hover:underline">{name}</Link>
         <span className="font-mono text-xs text-subtle">{ticker}{via && ` · via ${via}`}</span>{demo && <Badge tone="warning" className="ml-2">Demo</Badge>}

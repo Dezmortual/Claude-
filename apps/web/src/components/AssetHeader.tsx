@@ -4,7 +4,7 @@ import type { Asset, Metrics, Quote, Viewer } from "@/lib/data";
 import { isDemo, watchlistSlugs } from "@/lib/data";
 import { dateTime, pct, price as fmtPrice } from "@/lib/format";
 import { WatchStar } from "./client/WatchStar";
-import { Badge, DemoNote, PriceChange, cx } from "./ui";
+import { AssetMark, Badge, DemoNote, PriceChange, cx } from "./ui";
 
 const MARKET_NAME: Record<string, string> = { crypto: "Crypto", forex: "Forex", stocks: "Stocks", commodities: "Commodities", indices: "Indices", etfs: "ETFs", bonds: "Bonds & yields" };
 
@@ -32,12 +32,15 @@ export async function AssetHeader({ asset, quote, viewer, current, title, priceS
       </nav>
 
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-sm text-subtle">{asset.ticker}</span>
-            {isDemo(asset.slug) ? <DemoNote /> : asset.meta.proxy && <Badge>Price of {asset.meta.proxy}, a tracking fund</Badge>}
+        <div className="flex min-w-0 items-center gap-3">
+          <AssetMark ticker={asset.ticker} slug={asset.slug} size="lg" />
+          <div className="min-w-0 space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-sm text-subtle">{asset.ticker}</span>
+              {isDemo(asset.slug) ? <DemoNote /> : asset.meta.proxy && <Badge>Price of {asset.meta.proxy}, a tracking fund</Badge>}
+            </div>
+            <h1 className="break-words text-xl">{title}</h1>
           </div>
-          <h1 className="break-words text-xl">{title}</h1>
         </div>
         <div className="flex items-center gap-1">
           <Link href={mode === "guest" ? `/sign-in?next=${encodeURIComponent(`/alerts?asset=${asset.slug}`)}` : mode === "ok" ? `/alerts?asset=${asset.slug}` : "/pricing?need=watchlist"}

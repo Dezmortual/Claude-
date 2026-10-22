@@ -94,9 +94,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
                   <span className="text-2xs uppercase tracking-wide text-subtle">{market.name}</span>
                   {r.demo ? <DemoNote /> : r.signal && <SignalBadge signal={r.signal} />}
                 </span>
-                <span className="min-w-0">
-                  <span className="block truncate font-semibold text-fg group-hover:underline">{r.asset.name}</span>
-                  <span className="font-mono text-xs text-subtle">{r.asset.ticker}{!r.demo && r.asset.meta.proxy && ` · via ${r.asset.meta.proxy}`}</span>
+                <span className="flex min-w-0 items-center gap-2">
+                  <AssetMark ticker={r.asset.ticker} slug={r.asset.slug} size="lg" />
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold text-fg group-hover:underline">{r.asset.name}</span>
+                    <span className="font-mono text-xs text-subtle">{r.asset.ticker}{!r.demo && r.asset.meta.proxy && ` · via ${r.asset.meta.proxy}`}</span>
+                  </span>
                 </span>
                 {r.locked ? <span className="text-sm text-muted">No prices yet</span> : (
                   <>
@@ -129,7 +132,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
             ) : d.strongest.map((r) => (
               <Link key={r.asset.slug} href={`/assets/${r.asset.slug}/signals`} prefetch={false}
                 className="flex flex-wrap items-center gap-x-4 gap-y-2 p-4 hover:bg-surface-sunken">
-                <AssetMark ticker={r.asset.ticker} />
+                <AssetMark ticker={r.asset.ticker} slug={r.asset.slug} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold">{r.asset.name}</span>
                   <span className="font-mono text-xs text-subtle">{r.asset.ticker} · {listMarkets(v).find((m) => m.code === r.asset.market)?.name}</span>
@@ -151,7 +154,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
                 action={<ButtonLink href="/forecasts" variant="secondary">Find assets</ButtonLink>}>Star any asset to keep it here.</EmptyState>
             ) : watch.slice(0, 6).map((r) => (
               <Link key={r.asset.slug} href={`/assets/${r.asset.slug}`} prefetch={false} className="flex items-center gap-3 p-4 hover:bg-surface-sunken">
-                <AssetMark ticker={r.asset.ticker} />
+                <AssetMark ticker={r.asset.ticker} slug={r.asset.slug} />
                 <span className="min-w-0 flex-1 truncate font-semibold">{r.asset.name}</span>
                 {r.locked ? <Badge>No data</Badge> : (
                   <span className="grid justify-items-end">
