@@ -35,7 +35,7 @@ export default async function Watchlist() {
               <Card className="flex flex-wrap items-center gap-4 p-4">
                 <div className="min-w-0 flex-1 basis-40"><AssetCell name={r.asset.name} ticker={r.asset.ticker} href={`/assets/${r.asset.slug}`} demo={r.demo} /></div>
                 {r.locked ? (
-                  <p className="flex-1 text-sm text-muted">Not in your current plan. <Link href={`/pricing?plan=${planFor(r.asset).code}`} className="font-semibold text-accent underline">{planFor(r.asset).name} plan</Link></p>
+                  <p className="flex-1 text-sm text-muted">Not in your current plan. <Link prefetch={false} href={`/pricing?plan=${planFor(r.asset).code}`} className="font-semibold text-accent underline">{planFor(r.asset).name} plan</Link></p>
                 ) : (
                   <>
                     <div className="grid justify-items-start sm:justify-items-end">

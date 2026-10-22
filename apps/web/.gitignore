@@ -4,3 +4,6 @@ next-env.d.ts
 *.tsbuildinfo
 .env*.local
 .data/
+e2e/.auth/
+e2e/report/
+e2e/results/

@@ -61,8 +61,8 @@ export default async function LivePrice({ params }: P) {
             {daily.verdict === "unavailable" ? daily.reason : `${daily.ma.buy + daily.osc.buy} of 20 indicators lean buy, ${daily.ma.sell + daily.osc.sell} lean sell.`}
           </p>
           <div className="flex flex-wrap gap-3 text-sm">
-            <Link href={`/assets/${slug}`} className="font-semibold text-accent hover:underline">See the forecast</Link>
-            <Link href={`/assets/${slug}/signals`} className="font-semibold text-accent hover:underline">All signals</Link>
+            <Link prefetch={false} href={`/assets/${slug}`} className="font-semibold text-accent hover:underline">See the forecast</Link>
+            <Link prefetch={false} href={`/assets/${slug}/signals`} className="font-semibold text-accent hover:underline">All signals</Link>
           </div>
         </Card>
         <Card className="space-y-3 p-5">

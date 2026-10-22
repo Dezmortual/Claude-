@@ -44,7 +44,7 @@ export function Pulse({ cards, upgradeHref }: { cards: Card[]; upgradeHref: stri
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {(["ma", "oscillator"] as const).map((k) => (
-              <div key={k} className="relative overflow-x-auto rounded-lg border bg-surface">
+              <div key={k} tabIndex={0} role="region" aria-label={k === "ma" ? "Moving averages table" : "Oscillators table"} className="relative overflow-x-auto rounded-lg border bg-surface">
                 <table className="w-full text-sm">
                   <caption className="px-3 pt-3 text-left text-sm font-semibold">{k === "ma" ? "Moving averages" : "Oscillators"} · {TF_LABEL[card.timeframe]}</caption>
                   <thead><tr className="text-2xs uppercase tracking-wide text-subtle"><th scope="col" className="px-3 py-2 text-left">Indicator</th><th scope="col" className="px-3 py-2 text-right">Value</th><th scope="col" className="px-3 py-2 text-right">Reads</th></tr></thead>

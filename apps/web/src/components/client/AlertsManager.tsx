@@ -98,23 +98,29 @@ export function AlertForm({ options, preset, limitText }: { options: Opt[]; pres
 export function AlertRow({ alert, name }: { alert: Alert; name: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-  async function call(method: "PATCH" | "DELETE", body?: object) {
+  const [active, setActive] = useState(alert.isActive); // optimistic: the switch moves when pressed
+  async function call(method: "PATCH" | "DELETE", body?: { isActive: boolean }) {
     setBusy(true);
+    if (body) setActive(body.isActive);
     const r = await fetch(`/api/v1/me/alerts/${alert.id}`, { method, headers: { "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
     setBusy(false);
-    if (!r.ok) { toast((await r.json().catch(() => null))?.message ?? "Couldn't update the alert", "error"); return; }
-    toast(method === "DELETE" ? "Alert deleted" : alert.isActive ? "Alert paused" : "Alert resumed");
+    if (!r.ok) {
+      if (body) setActive(!body.isActive);
+      toast((await r.json().catch(() => null))?.message ?? "Couldn't update the alert", "error");
+      return;
+    }
+    toast(method === "DELETE" ? "Alert deleted" : body!.isActive ? "Alert resumed" : "Alert paused");
     router.refresh();
   }
   return (
     <li className="flex flex-wrap items-center gap-3 rounded-lg border bg-surface p-4">
-      <BellRing aria-hidden className={`h-5 w-5 ${alert.isActive ? "text-accent" : "text-subtle"}`} />
+      <BellRing aria-hidden className={`h-5 w-5 ${active ? "text-accent" : "text-subtle"}`} />
       <div className="min-w-0 flex-1">
-        <p className={`text-sm font-semibold ${alert.isActive ? "" : "text-muted"}`}>{describe(alert, name)}</p>
-        <p className="text-xs text-muted">{alert.channels.join(" and ")} · {alert.lastFiredAt ? `last fired ${new Date(alert.lastFiredAt).toLocaleString()}` : "hasn't fired yet"}{alert.isActive ? "" : " · paused"}</p>
+        <p className={`text-sm font-semibold ${active ? "" : "text-muted"}`}>{describe(alert, name)}</p>
+        <p className="text-xs text-muted">{alert.channels.join(" and ")} · {alert.lastFiredAt ? `last fired ${new Date(alert.lastFiredAt).toLocaleString()}` : "hasn't fired yet"}{active ? "" : " · paused"}</p>
       </div>
       <label className="flex min-h-tap items-center gap-2 text-sm">
-        <input type="checkbox" role="switch" checked={alert.isActive} disabled={busy} onChange={() => call("PATCH", { isActive: !alert.isActive })} className="h-5 w-5 accent-accent" />
+        <input type="checkbox" role="switch" checked={active} disabled={busy} onChange={() => call("PATCH", { isActive: !active })} className="h-5 w-5 accent-accent" />
         Active
       </label>
       <button type="button" disabled={busy} onClick={() => call("DELETE")} aria-label={`Delete alert: ${describe(alert, name)}`}

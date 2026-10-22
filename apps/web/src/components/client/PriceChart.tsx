@@ -126,15 +126,16 @@ export function PriceChart({ slug, name, unit, initial, initialRange = "3m", for
           </div>
         </div>
       </div>
-      <div className="relative">
-        <div ref={box} role="img" aria-label={summary} className="h-chart w-full md:h-chart-lg" />
+      <figure className="relative" aria-describedby={`${slug}-chart-summary`}>
+        {/* Not role="img": the chart library puts a focusable attribution link inside this box. */}
+        <div ref={box} className="h-chart w-full md:h-chart-lg" />
         {state === "loading" && <div className="absolute inset-0 animate-pulse rounded-md bg-surface-sunken/60" aria-hidden />}
         {state === "error" && (
           <div role="alert" className="absolute inset-0 grid place-items-center rounded-md bg-surface/90 text-sm">
             <span>Couldn&apos;t load this range. <button type="button" className="font-semibold text-accent underline" onClick={() => load(range)}>Try again</button></span>
           </div>
         )}
-      </div>
+      </figure>
       {f && (
         <p className="flex flex-wrap items-center gap-3 text-xs text-muted">
           <span className="inline-flex items-center gap-1"><span aria-hidden className="inline-block h-3 w-4 rounded-sm bg-chart-band" />80% range: {fmtPrice(f.low, unit)} – {fmtPrice(f.high, unit)}</span>
@@ -142,7 +143,7 @@ export function PriceChart({ slug, name, unit, initial, initialRange = "3m", for
           <span>The range is the 10th to 90th percentile of past moves in the same trend state; it is not a guarantee.</span>
         </p>
       )}
-      <p className="sr-only">{summary}</p>
+      <p id={`${slug}-chart-summary`} className="sr-only">{summary}</p>
     </div>
   );
 }

@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: P): Promise<Metadata> {
 
 function RangeTable({ rows, unit, caption, first }: { rows: PathRow[]; unit: string; caption: string; first: string }) {
   return (
-    <div className="relative overflow-x-auto rounded-lg border bg-surface">
+    <div tabIndex={0} role="region" aria-label="Scrollable table" className="relative overflow-x-auto rounded-lg border bg-surface">
       <table className="w-full text-sm">
         <caption className="px-4 pt-4 text-left text-sm font-semibold">{caption}</caption>
         <thead>
@@ -127,7 +127,7 @@ export default async function AssetForecast({ params }: P) {
         )}
       </Section>
 
-      <Section id="signals" title="Technical pulse" action={<Link href={`/assets/${slug}/signals`} className="text-sm font-semibold text-accent hover:underline">All signals</Link>}>
+      <Section id="signals" title="Technical pulse" action={<Link prefetch={false} href={`/assets/${slug}/signals`} className="text-sm font-semibold text-accent hover:underline">All signals</Link>}>
         <p className="max-w-prose text-sm text-muted">Ten moving averages and ten oscillators, each read as buy, neutral or sell on closed bars only. The verdict is the balance of the twenty.</p>
         <Pulse cards={pulse} upgradeHref={upgrade} />
       </Section>
@@ -136,7 +136,7 @@ export default async function AssetForecast({ params }: P) {
         <p className="max-w-prose text-sm text-muted">{sc.assumptions.note}</p>
         <Card className="p-4 md:p-6 text-muted"><ScenarioChart s={sc} now={quote.price} unit={unit} name={asset.name} /></Card>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <div className="relative overflow-x-auto rounded-lg border bg-surface">
+          <div tabIndex={0} role="region" aria-label="Scrollable table" className="relative overflow-x-auto rounded-lg border bg-surface">
             <table className="w-full text-sm">
               <caption className="px-4 pt-4 text-left text-sm font-semibold">By year</caption>
               <thead><tr className="text-2xs uppercase tracking-wide text-subtle">
@@ -204,7 +204,7 @@ export default async function AssetForecast({ params }: P) {
       <Section id="related" title={`More ${asset.market === "crypto" ? "crypto" : "in this market"}`}>
         <ul className="grid grid-cols-2 gap-2 md:grid-cols-4">
           {relatedAssets(slug).map((a) => (
-            <li key={a.slug}><Link href={`/assets/${a.slug}`} className="flex min-h-tap items-center justify-between rounded-md border bg-surface px-3 py-2 text-sm font-semibold hover:bg-surface-sunken">
+            <li key={a.slug}><Link prefetch={false} href={`/assets/${a.slug}`} className="flex min-h-tap items-center justify-between rounded-md border bg-surface px-3 py-2 text-sm font-semibold hover:bg-surface-sunken">
               <span className="truncate">{a.name}</span><span className="font-mono text-xs text-subtle">{a.ticker}</span></Link></li>
           ))}
         </ul>

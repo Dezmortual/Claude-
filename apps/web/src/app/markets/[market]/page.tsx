@@ -47,7 +47,7 @@ export default async function MarketOverview({ params }: P) {
             <Card key={t} className="p-4">
               <Label>{t}</Label>
               {list.length ? <ul className="mt-2 grid gap-1">{list.map((x) => (
-                <li key={x.asset.slug} className="flex justify-between gap-2 text-sm"><Link href={`/assets/${x.asset.slug}`} className="truncate font-semibold hover:underline">{x.asset.name}</Link><PriceChange value={x.changePct} /></li>
+                <li key={x.asset.slug} className="flex justify-between gap-2 text-sm"><Link prefetch={false} href={`/assets/${x.asset.slug}`} className="truncate font-semibold hover:underline">{x.asset.name}</Link><PriceChange value={x.changePct} /></li>
               ))}</ul> : <p className="mt-2 text-sm text-muted">None this week.</p>}
             </Card>
           ))}

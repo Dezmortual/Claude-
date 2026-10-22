@@ -15,7 +15,7 @@ export function WatchStar({ slug, name, on: initial, mode, withLabel }: { slug: 
   const label = on ? `Remove ${name} from watchlist` : `Add ${name} to watchlist`;
   const icon = <Star aria-hidden className={`h-4 w-4 ${on ? "fill-current text-accent" : "text-muted"}`} />;
 
-  if (mode === "guest") return <Link href={`/sign-in?next=/assets/${slug}`} className={cls} aria-label={`Sign in to watch ${name}`}>{icon}{withLabel && "Watch"}</Link>;
+  if (mode === "guest") return <Link prefetch={false} href={`/sign-in?next=/assets/${slug}`} className={cls} aria-label={`Sign in to watch ${name}`}>{icon}{withLabel && "Watch"}</Link>;
   if (mode === "no-plan") return <Link href="/pricing?need=watchlist" className={cls} aria-label={`Watchlists start on the Crypto plan`}>{icon}{withLabel && "Watch"}</Link>;
 
   async function flip() {

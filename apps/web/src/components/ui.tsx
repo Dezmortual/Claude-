@@ -104,7 +104,7 @@ export function SignalBadge({ signal, pUp, className }: { signal: Verdict; pUp?:
       {signal === "strong_buy" && <ChevronsUp aria-hidden className="h-4 w-4" />}
       {signal === "strong_sell" && <ChevronsDown aria-hidden className="h-4 w-4" />}
       {SIGNAL_LABEL[signal]}
-      {pUp != null && <span className="font-medium opacity-90">· {Math.round(pUp * 100)}% up</span>}
+      {pUp != null && <span className="font-medium">· {Math.round(pUp * 100)}% up</span>}
     </span>
   );
 }
@@ -142,7 +142,7 @@ export function AssetCell({ name, ticker, href, demo }: { name: string; ticker: 
     <div className="flex min-w-0 items-center gap-2">
       <AssetMark ticker={ticker} />
       <div className="min-w-0">
-        <Link href={href} title={name} className="block truncate font-semibold text-fg hover:underline">{name}</Link>
+        <Link href={href} prefetch={false} title={name} className="block truncate font-semibold text-fg hover:underline">{name}</Link>
         <span className="font-mono text-xs text-subtle">{ticker}</span>{demo && <Badge tone="warning" className="ml-2">Demo</Badge>}
       </div>
     </div>

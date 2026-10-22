@@ -90,7 +90,7 @@ export function ForecastTable({ data, tab, visible, base, current, watchlist, st
   return (
     <>
       {/* md and up: the table */}
-      <div className="hidden relative overflow-x-auto rounded-lg border bg-surface md:block">
+      <div tabIndex={0} role="region" aria-label="Forecast table, scrolls sideways" className="hidden relative overflow-x-auto rounded-lg border bg-surface md:block">
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Forecasts, {data.total} assets, page {data.page} of {data.pages}</caption>
           <thead>
@@ -108,7 +108,7 @@ export function ForecastTable({ data, tab, visible, base, current, watchlist, st
                 </th>
                 {r.locked ? (
                   <td colSpan={cols.length} className="px-3 py-2 text-left group-hover:bg-surface-sunken">
-                    <Link href={`/pricing?plan=${planFor(r.asset).code}`} className="inline-flex items-center gap-2 text-sm text-muted hover:text-fg">
+                    <Link prefetch={false} href={`/pricing?plan=${planFor(r.asset).code}`} className="inline-flex items-center gap-2 text-sm text-muted hover:text-fg">
                       <Lock aria-hidden className="h-4 w-4" />
                       <span><span className="sr-only">Locked. </span>{r.asset.name} forecasts are on the <b className="text-accent">{planFor(r.asset).name}</b> plan</span>
                     </Link>
@@ -131,7 +131,7 @@ export function ForecastTable({ data, tab, visible, base, current, watchlist, st
           const h = r.horizons?.[tab === "day_trading" ? "1d" : "7d"];
           return (
             <li key={r.asset.slug}>
-              <Link href={r.locked ? `/pricing?plan=${planFor(r.asset).code}` : `/assets/${r.asset.slug}`}
+              <Link prefetch={false} href={r.locked ? `/pricing?plan=${planFor(r.asset).code}` : `/assets/${r.asset.slug}`}
                 className="flex items-center justify-between gap-3 rounded-lg border bg-surface p-3 hover:bg-surface-sunken">
                 <span className="flex min-w-0 items-center gap-2">
                   <AssetMark ticker={r.asset.ticker} />

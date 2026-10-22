@@ -30,7 +30,7 @@ export default async function TrackRecord() {
       ) : (
         <>
           {total < 300 && <Banner tone="warning">Only {total} forecasts scored so far. Small samples swing a lot; treat these as early numbers.</Banner>}
-          <div className="relative overflow-x-auto rounded-lg border bg-surface">
+          <div tabIndex={0} role="region" aria-label="Scrollable table" className="relative overflow-x-auto rounded-lg border bg-surface">
             <table className="w-full text-sm">
               <caption className="px-4 pt-4 text-left text-sm font-semibold">By market and horizon</caption>
               <thead><tr className="text-2xs uppercase tracking-wide text-subtle">

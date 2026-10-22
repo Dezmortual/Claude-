@@ -54,6 +54,8 @@ console.log("authorisation and auth checks against", BASE);
 // Start from clean counters for the test accounts (keys hold a hash of the email, never the address).
 const h = (e: string) => crypto.createHash("sha256").update(e).digest("hex");
 await sql`delete from rate_limits where key like any(${[A, B, "nobody@test.example"].map((e) => `%${h(e)}`)})`;
+const TRUST = process.env.TRUST_PROXY_HEADERS === "true";
+if (!TRUST) await sql`delete from rate_limits where key like '%:ip:%'`; // all requests share one address bucket then
 const ip = () => `10.1.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`;
 const a = await makeUser(A, ip());
 const b = await makeUser(B, ip());
@@ -109,6 +111,16 @@ await check("sign-in is rate limited per email", async () => {
   let last = 0;
   for (let i = 0; i < 10; i++) last = (await call("POST", "/api/auth/sign-in", { email: B, password: "wrong password" }, undefined, addr)).status;
   assert.equal(last, 429);
+});
+
+await check("a forged X-Forwarded-For can't dodge the per-IP sign-up limit (proxy headers not trusted)", async () => {
+  if (TRUST) return console.log("    (skipped: server trusts proxy headers)");
+  const statuses = [];
+  for (let i = 0; i < 7; i++) {
+    statuses.push((await call("POST", "/api/auth/sign-up", { name: "X", email: `spoof${i}@test.example`, password: PW, acceptTerms: true }, undefined, `203.0.113.${i}`)).status);
+  }
+  assert.equal(statuses.at(-1), 429, `statuses: ${statuses.join(",")}`);
+  await sql`delete from rate_limits where key like '%:ip:%'`;
 });
 
 await check("email verification link works once", async () => {

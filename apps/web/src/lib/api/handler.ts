@@ -43,10 +43,14 @@ export async function jsonBody<S extends z.ZodType>(req: Request, schema: S): Pr
   return schema.parse(raw);
 }
 
-/** Best-effort client address for rate limits (first hop the host's proxy reports). */
+/** Client address for rate limits. Forwarding headers are only trusted behind a proxy that sets them (Vercel, or
+ *  TRUST_PROXY_HEADERS=true); otherwise any client could invent a new address per request, so all requests share
+ *  one bucket, which is fine for an owner-only app. */
 export async function clientIp() {
   const h = await headers();
-  return (h.get("x-forwarded-for")?.split(",")[0] ?? h.get("x-real-ip") ?? "local").trim().slice(0, 64);
+  if (process.env.VERCEL) return (h.get("x-real-ip") ?? h.get("x-forwarded-for")?.split(",")[0] ?? "unknown").trim().slice(0, 64);
+  if (process.env.TRUST_PROXY_HEADERS === "true") return (h.get("x-forwarded-for")?.split(",")[0] ?? h.get("x-real-ip") ?? "unknown").trim().slice(0, 64);
+  return "direct";
 }
 
 export const qs = (req: Request) => new URL(req.url).searchParams;

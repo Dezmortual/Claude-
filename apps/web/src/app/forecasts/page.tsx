@@ -101,7 +101,7 @@ export default async function ForecastHub({ searchParams }: { searchParams: Prom
                 <ol className="mt-2 grid gap-1">
                   {list.map((m) => (
                     <li key={m.asset.slug} className="flex min-h-tap items-center justify-between gap-2 border-b last:border-0">
-                      <Link href={`/assets/${m.asset.slug}`} className="truncate text-sm font-semibold hover:underline">{m.asset.name}</Link>
+                      <Link prefetch={false} href={`/assets/${m.asset.slug}`} className="truncate text-sm font-semibold hover:underline">{m.asset.name}</Link>
                       <PriceChange value={m.changePct} className="text-sm" />
                     </li>
                   ))}

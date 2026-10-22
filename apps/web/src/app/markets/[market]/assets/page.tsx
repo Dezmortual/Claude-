@@ -33,7 +33,7 @@ export default async function AssetDirectory({ params }: { params: Promise<{ mar
         {assets.map((a) => {
           return (
             <li key={a.slug}>
-              <Link href={`/assets/${a.slug}`} className="grid h-full gap-3 rounded-lg border bg-surface p-4 shadow-card hover:bg-surface-sunken">
+              <Link prefetch={false} href={`/assets/${a.slug}`} className="grid h-full gap-3 rounded-lg border bg-surface p-4 shadow-card hover:bg-surface-sunken">
                 <span className="flex min-w-0 items-center gap-3">
                   <AssetMark ticker={a.ticker} />
                   <span className="min-w-0"><span className="block font-semibold">{a.name}</span><span className="font-mono text-xs text-subtle">{a.ticker}</span>{isDemo(a.slug) && <span className="ml-2 text-xs text-warning">Demo</span>}</span>

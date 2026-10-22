@@ -23,6 +23,7 @@ const g = globalThis as unknown as { __bars?: Map<string, Entry>; __ids?: Map<st
 const mem = (g.__bars ??= new Map());
 
 export function effectiveSource(slug: string): SourceName {
+  if (process.env.MARKET_DATA === "demo") return "demo"; // deterministic, offline: used by the e2e suite
   const s = sourceFor(ASSET_BY_SLUG.get(slug)!).source;
   return s === "alpaca" && !alpacaConfigured() ? "demo" : s;
 }
