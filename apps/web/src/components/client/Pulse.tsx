@@ -3,6 +3,7 @@ import { Lock } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import type { IndicatorRow, PulseCard } from "@/lib/data";
+import { SignalGauge } from "../SignalGauge";
 import { SignalBadge } from "../ui";
 
 type Card = PulseCard & { indicators: IndicatorRow[]; locked: boolean };
@@ -43,6 +44,7 @@ export function Pulse({ cards, upgradeHref }: { cards: Card[]; upgradeHref: stri
           </p>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
+            <div className="md:col-span-2"><SignalGauge verdict={card.verdict} ma={card.ma} osc={card.osc} label={TF_LABEL[card.timeframe]} /></div>
             {(["ma", "oscillator"] as const).map((k) => (
               <div key={k} tabIndex={0} role="region" aria-label={k === "ma" ? "Moving averages table" : "Oscillators table"} className="relative overflow-x-auto rounded-lg border bg-surface">
                 <table className="w-full text-sm">
