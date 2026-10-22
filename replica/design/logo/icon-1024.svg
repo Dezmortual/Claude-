@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a2f68"/><stop offset=".5" stop-color="#4f163d"/><stop offset="1" stop-color="#1f0718"/></linearGradient>
+  <radialGradient id="lt" cx="270" cy="200" r="720" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#d4558f" stop-opacity=".42"/><stop offset="1" stop-color="#e0689f" stop-opacity="0"/></radialGradient>
+  <radialGradient id="warm" cx="800" cy="170" r="420" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffb08a" stop-opacity=".10"/><stop offset="1" stop-color="#ffd3a8" stop-opacity="0"/></radialGradient>
+  <radialGradient id="vig" cx="512" cy="470" r="760" gradientUnits="userSpaceOnUse"><stop offset=".6" stop-color="#14030e" stop-opacity="0"/><stop offset="1" stop-color="#14030e" stop-opacity=".45"/></radialGradient>
+  <pattern id="grid" width="64" height="64" patternUnits="userSpaceOnUse"><path d="M64 0H0V64" fill="none" stroke="#fff" stroke-opacity=".06" stroke-width="2"/></pattern>
+  <radialGradient id="gf" cx="560" cy="470" r="520" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  <mask id="gm"><rect width="1024" height="1024" fill="url(#gf)"/></mask>
+  <radialGradient id="gloss"><stop offset="0" stop-color="#fff" stop-opacity=".13"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+  <linearGradient id="fan" gradientUnits="userSpaceOnUse" x1="374" y1="749" x2="1000" y2="120"><stop offset="0" stop-color="#ff9cc6" stop-opacity="0"/><stop offset=".45" stop-color="#ff8fbf" stop-opacity=".30"/><stop offset="1" stop-color="#ffc9a8" stop-opacity=".12"/></linearGradient>
+  <filter id="fanb" x="-.2" y="-.2" width="1.4" height="1.4"><feGaussianBlur stdDeviation="24"/></filter>
+  <pattern id="grid2" width="64" height="64" patternUnits="userSpaceOnUse"><path d="M64 0H0V64" fill="none" stroke="#ffd9e8" stroke-opacity=".22" stroke-width="2"/></pattern>
+  <linearGradient id="fanmg" gradientUnits="userSpaceOnUse" x1="374" y1="749" x2="1000" y2="120"><stop offset=".1" stop-color="#fff" stop-opacity="0"/><stop offset=".6" stop-color="#fff"/><stop offset="1" stop-color="#fff" stop-opacity=".3"/></linearGradient>
+  <mask id="fanm"><path d="M374 749L1010 -10L1040 420Z" fill="url(#fanmg)" filter="url(#fanb)"/></mask>
+  
+  <linearGradient id="ig" gradientUnits="userSpaceOnUse" x1="8" y1="26" x2="22" y2="5"><stop offset="0" stop-color="#ffa77f"/><stop offset="0.4" stop-color="#ffd3c2"/><stop offset="1" stop-color="#fff8f3"/></linearGradient>
+  <linearGradient id="ibg" gradientUnits="userSpaceOnUse" x1="10.5" y1="25" x2="30" y2="8">
+    <stop offset="0" stop-color="#ff9cc6" stop-opacity="0"/><stop offset=".55" stop-color="#ff9cc6" stop-opacity="0.42"/><stop offset="1" stop-color="#ff9cc6" stop-opacity="0.147"/></linearGradient>
+  <filter id="iglow" filterUnits="userSpaceOnUse" x="-6" y="-6" width="44" height="44"><feGaussianBlur stdDeviation="1.2"/></filter>
+  <filter id="ibandf" filterUnits="userSpaceOnUse" x="-6" y="-6" width="44" height="44"><feGaussianBlur stdDeviation=".7"/></filter>
+  <linearGradient id="ieg" gradientUnits="userSpaceOnUse" x1="10.5" y1="25" x2="30" y2="8"><stop offset=".15" stop-color="#ff9cc6" stop-opacity="0"/><stop offset="1" stop-color="#ff9cc6" stop-opacity=".75"/></linearGradient>
+  <filter id="ilit" filterUnits="userSpaceOnUse" x="-6" y="-6" width="44" height="44" color-interpolation-filters="sRGB">
+    <feOffset in="SourceAlpha" dx=".55" dy=".8" result="ho"/>
+    <feComposite in="SourceAlpha" in2="ho" operator="out" result="hrim"/>
+    <feGaussianBlur in="hrim" stdDeviation=".35" result="hb"/>
+    <feFlood flood-color="#ffffff" flood-opacity="0.85"/>
+    <feComposite in2="hb" operator="in"/>
+    <feComposite in2="SourceAlpha" operator="in" result="si"/>
+    <feOffset in="SourceAlpha" dx="-.8" dy="-1.1" result="o"/>
+    <feComposite in="SourceAlpha" in2="o" operator="out" result="rim"/>
+    <feGaussianBlur in="rim" stdDeviation=".45" result="rb"/>
+    <feFlood flood-color="#a02d63" flood-opacity="0.6"/>
+    <feComposite in2="rb" operator="in"/>
+    <feComposite in2="SourceAlpha" operator="in" result="sh"/>
+    <feGaussianBlur in="SourceAlpha" stdDeviation=".9" result="db"/>
+    <feOffset in="db" dy="1" result="dbo"/>
+    <feFlood flood-color="#12030d" flood-opacity="0.55"/>
+    <feComposite in2="dbo" operator="in" result="ds"/>
+    <feMerge result="lit"><feMergeNode in="SourceGraphic"/><feMergeNode in="sh"/><feMergeNode in="si"/></feMerge>
+    <feMerge><feMergeNode in="ds"/><feMergeNode in="lit"/></feMerge>
+  </filter>
+</defs>
+<rect width="1024" height="1024" fill="url(#bg)"/>
+<rect width="1024" height="1024" fill="url(#lt)"/>
+<rect width="1024" height="1024" fill="url(#warm)"/>
+<rect width="1024" height="1024" fill="url(#grid)" mask="url(#gm)"/>
+<path d="M374 749L1010 -10L1040 420Z" fill="url(#fan)" filter="url(#fanb)"/>
+<rect width="1024" height="1024" fill="url(#grid2)" mask="url(#fanm)"/>
+<rect width="1024" height="1024" fill="url(#vig)"/>
+<ellipse cx="512" cy="-60" rx="760" ry="430" fill="url(#gloss)"/>
+<g transform="translate(112 124.5) scale(25)">
+  <path class="glow" d="M6 19.5L10.5 25L14.5 6H20A6 6 0 0 1 20 18H12" stroke="#ff6fa8" stroke-opacity="0.28" stroke-width="6.0" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#iglow)"/>
+  <g filter="url(#ilit)"><path class="line" d="M6 19.5L10.5 25L14.5 6H20A6 6 0 0 1 20 18H12" stroke="url(#ig)" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+</g>
+</svg>

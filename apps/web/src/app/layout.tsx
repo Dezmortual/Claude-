@@ -11,6 +11,7 @@ import { viewer } from "@/lib/session";
 import { guestHome, isPublicPath } from "@/lib/paths";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"), // absolute URL for the social image
   title: { default: "Proofcast: price forecasts with every result kept", template: "%s · Proofcast" },
   robots: { index: false, follow: false }, // private build: keep it out of search engines
   description: "Short-term forecasts, technical signals and long-term scenarios for crypto and other markets, with every forecast scored in public.",

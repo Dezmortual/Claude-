@@ -19,7 +19,9 @@ export function Header({ viewer }: { viewer: Viewer }) {
     <header className="sticky top-0 z-header h-header border-b bg-surface">
       <div className="mx-auto flex h-full max-w-wide items-center gap-4 px-4 lg:gap-6 lg:px-6">
         <Link href="/" className="flex items-center gap-2 whitespace-nowrap font-bold text-fg">
-          <span aria-hidden className="grid h-8 w-8 place-items-center rounded-md bg-accent text-sm text-on-accent">P</span>
+          {/* The mark draws itself once on load (still under prefers-reduced-motion); dark mode uses the light variant. */}
+          <img src="/brand/mark-animated.svg" alt="" width={32} height={32} className="h-8 w-8 dark:hidden" />
+          <img src="/brand/mark-light.svg" alt="" width={32} height={32} className="hidden h-8 w-8 dark:block" />
           Proofcast
         </Link>
         {signedIn && <nav aria-label="Main" className="hidden gap-5 text-sm text-muted md:flex">

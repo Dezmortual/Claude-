@@ -101,8 +101,7 @@ How it was checked:
 
 - **The idea.** A forecast with its result attached: a short line ending in a check-shaped tick. One stroke
   says "we called it, and here's how it went". Tie it to the "P" only if that reads at small sizes.
-- **Mark type.** A symbol plus a wordmark. The symbol must work alone as the app icon. For now the app
-  shows a temporary "P" monogram on a plum square.
+- **Mark type.** A symbol plus a wordmark. The symbol must work alone as the app icon.
 - **Wordmark.** Inter, semibold, sentence case: "Proofcast". No custom letterform tricks.
 - **Colour.** Plum `#7a2a5e` on white, or white on plum. One colour, no gradient.
 - **Sizes.** It must work at 16px as a favicon (check it at that size) and as a 1024px app icon.
@@ -118,8 +117,23 @@ How it was checked:
   - Put the original's logo next to every draft and check for any shared shape, colour pair or
     letterform trick.
   - Also avoid the generic crypto clichés: rockets, moons, candlestick bars.
-- **Today.** The app has no favicon, OG image or app icon. Nothing of the original's is in it, but these
-  are to make from this brief before any public launch.
+- **The logo (2026-10-22), files in `design/logo/`.** The "Proof P": one thick rounded stroke where a tick's
+  short arm runs into the slanted stem of a P. It's dimensional, warm peach where the tick lands (the result)
+  rising to ivory, on a deep aubergine-to-plum tile with a soft forecast fan and a faint grid. The owner asked
+  for a "more alive" look than the first flat draft, so the one-colour, no-gradient rule above was lifted.
+  No blue, indigo or violet, no coin, no B.
+
+  | file | used for |
+  | --- | --- |
+  | `apps/web/src/app/icon.svg` | browser tab, a simplified tile that reads at 16px |
+  | `apps/web/src/app/apple-icon.png` | phone home screen, 180px |
+  | `apps/web/src/app/opengraph-image.png` | link previews, 1200x630, with the tagline only |
+  | `apps/web/public/brand/mark-animated.svg` | header in light mode: draws itself once in about 2.7 s, static under reduced motion |
+  | `apps/web/public/brand/mark-light.svg` | header in dark mode |
+  | `design/logo/icon-1024.png` | the master app icon (RGB, no alpha) for the stores |
+  | `design/logo/lockup-*.svg` | mark plus the wordmark outlined from Inter SemiBold |
+
+  Still to make before a store launch: an Android adaptive icon.
 
 ## 4. Voice
 
