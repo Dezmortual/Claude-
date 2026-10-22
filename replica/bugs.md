@@ -208,7 +208,7 @@ Status: fixed in b6405c7
 
 ## To check (not reproduced, can't be from here)
 
-- Binance's market-data host from Vercel's default region. If it's refused, set `"regions": ["fra1"]` (backend.md).
+- Binance's market-data host from Netlify's (or Vercel's) default region (backend.md).
 - Real email delivery through Resend with the owner's key (manual case M-3).
 - The pooled Supabase/Neon connection string with `prepare: false`; tested only against local Postgres 16.
 - The first page load on a fresh database fetches all live history (about 7 s) with no skeleton now that the loading

@@ -10,11 +10,11 @@ free tiers.
 | --- | --- |
 | database | Postgres via `DATABASE_URL`; `db/migrations/0001_init.sql`, `npm run db:migrate`, `npm run db:seed` (asset catalogue and plans, safe to rerun) |
 | access rules | RLS enabled on every table with **no policies** (also closes Supabase's auto REST API); the app connects as table owner and every user-owned query is scoped by user id in `src/lib/data/live.ts`. Tested with a second user (below) |
-| client address | rate limits key on `x-real-ip` on Vercel; elsewhere forwarding headers are ignored unless `TRUST_PROXY_HEADERS=true` (set it only behind your own proxy) |
+| client address | rate limits key on `x-nf-client-connection-ip` on Netlify (`NETLIFY=true`) and `x-real-ip` on Vercel; elsewhere forwarding headers are ignored unless `TRUST_PROXY_HEADERS=true` (set it only behind your own proxy) |
 | auth | email + password (scrypt), email verification (single-use link, 24 h), password reset (single-use, 1 h, signs out every device), http-only `secure` `SameSite=Lax` session cookie holding a random token; only its SHA-256 is stored. Sign out, sign out everywhere, account deletion that cascades |
 | owner-only | `PRIVATE_MODE=true`: middleware + root layout redirect anyone who isn't the signed-in owner to `/sign-in`; every `/api/v1` route returns 401 without the owner's session; sign-up and sign-in refuse other emails |
 | market data | Binance public market data (crypto, every timeframe), ECB reference rates via Frankfurter (forex, daily only), Alpaca with your own keys (stocks/ETFs, optional), CoinPaprika as the crypto cross-check. All official public APIs; no keys except Alpaca. Bars cached in `price_bars`, tails refreshed on demand. Commodities, indices and bonds have no free official source and stay on the demo series, marked **Demo** |
-| jobs | `/api/cron/{ingest,publish,alerts,cleanup}` behind `CRON_SECRET`. GitHub Actions (`.github/workflows/forecast-jobs.yml`) every 30 min: alerts every run, publish + score hourly. Vercel Cron: daily cleanup. Every run is logged in `job_runs`; failures stay there (dead-letter log) and alert emails retry up to 5 times |
+| jobs | `/api/cron/{ingest,publish,alerts,cleanup}` behind `CRON_SECRET`. GitHub Actions (`.github/workflows/forecast-jobs.yml`) every 30 min: alerts every run, publish + score hourly, cleanup daily at 03:04 UTC. No host-specific cron, so it works the same on Netlify or Vercel. Every run is logged in `job_runs`; failures stay there (dead-letter log) and alert emails retry up to 5 times |
 | forecasts | each hourly publish locks the next-day/7-day/1-month forecasts of every live asset; scoring compares them with the bar that closes at the target time. `/track-record` shows hit rate, range coverage and median error by market and horizon. Demo assets are never published or scored |
 | email | Resend (plain text, templates written fresh). Without a key in development, mail goes to `apps/web/.data/outbox/` |
 | payments | **none**: the private build takes no payments, so no Stripe. Plans and the subscriptions table are kept in the schema for a future public build |
@@ -31,16 +31,22 @@ You create every account and key; nothing here signs up for anything on your beh
 4. **Local run.** In `apps/web`: copy `.env.example` to `.env.local`, fill in `DATABASE_URL`, `OWNER_EMAILS`
    (your email), `RESEND_API_KEY`, `CRON_SECRET`, then `npm install && npm run db:setup && npm run dev`.
    Open http://localhost:3000, choose "Set up the owner account", confirm the emailed link, sign in.
-5. **Deploy.** Vercel (Hobby) → import the repo → root directory `apps/web` → add the same env vars, with
-   `APP_URL` set to the deployment URL. Run `npm run db:setup` once against the production `DATABASE_URL`.
+5. **Deploy (Netlify).** Netlify → Add new site → import the repo. `netlify.toml` at the repo root sets the base
+   directory (`apps/web`), the build command and Node 22; Netlify adds its Next.js adapter. Under Site configuration →
+   Environment variables add the same variables with scope **Functions** (variables in `netlify.toml` reach the build
+   only), plus `NETLIFY=true`, with `APP_URL` set to the site URL. Run `npm run db:setup` once against the production
+   `DATABASE_URL`. Vercel also works (import with root `apps/web`); skip `NETLIFY=true` there.
 6. **Schedule.** GitHub repo → Settings → Secrets and variables → Actions → add `APP_URL` and `CRON_SECRET`.
    Run the `forecast-jobs` workflow once by hand to check it.
 7. **Optional.** Free Alpaca account → paper-trading API keys → `ALPACA_KEY_ID` / `ALPACA_SECRET_KEY` for real
    stock and ETF prices, then `npm run db:seed` again.
 
 Watch-outs:
-- If Vercel's region can't reach Binance's market-data host, pin functions to a European region
-  (`"regions": ["fra1"]` in `vercel.json`).
+- Netlify functions run in one US region by default; check Binance's market-data host answers from there (the asset
+  page's source line). On Vercel, pin functions to a European region if it doesn't.
+- Netlify's synchronous functions are reported to stop at 10 s by default (26 s on paid plans, on request). The jobs take
+  0.1-2.7 s once history is stored; on an empty database run the `ingest` job once by hand before opening pages. See
+  `replica/launch/launch-plan.md`.
 - GitHub's free minutes for private repos (2,000 a month) cover the 30-minute schedule, about 1,440 a month.
   Don't make it more frequent without checking.
 - **Backups:** free tiers keep little or no history. Check your provider's backup page, and keep your own copy
@@ -81,7 +87,7 @@ publish stored 126 forecasts; scoring graded matured ones (test rows were delete
 - [x] uploads: none
 - [x] no user data in URLs or logs: emails are hashed in rate-limit keys and masked in dev logs; the only URL tokens are single-use, expiring email links
 - [x] dependencies audited: `npm audit` 0 vulnerabilities (Next's bundled PostCSS pinned to 8.5.29 with an override)
-- [x] privacy policy lists every processor (Vercel, the Postgres provider, Resend; market-data providers receive no personal data)
+- [x] privacy policy lists every processor (Netlify, the Postgres provider, Resend; market-data providers receive no personal data)
 - [ ] **you:** confirm backups with your Postgres provider (see above)
 
 Not done, by choice for a private build: Google/Apple sign-in, Stripe, push notifications (with the mobile app).

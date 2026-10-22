@@ -1,0 +1,20 @@
+{
+  "avoid": [
+    "BeCoin",
+    "Be Coin",
+    "becoin.net"
+  ],
+  "app_store": {
+    "name": "Proofcast: Scored Forecasts",
+    "subtitle": "Price ranges that keep score",
+    "promotional_text": "Every forecast is locked when it's made and scored when it's due. See the hit rate, misses included, before you trust a signal.",
+    "description": "Proofcast shows where a price could be tomorrow, in a week and in a month, and keeps score.\n\nEvery forecast is locked the hour it's published. When its date passes, it's compared with the real closing price, and the result goes on the track record: hit rate, how often the price landed inside the range, and the typical error. Misses count the same as hits.\n\nWhat you get:\n- Ranges covering 80% of past outcomes, and how often the price ended higher\n- Buy, neutral or sell signals from 20 indicators, with every reading shown\n- Signals on closed bars only, from 5 minutes to a week\n- A watchlist, and alerts that fire once and then wait\n- Crypto prices from official public market data, cross-checked against a second source\n\nForecasts and signals are statistics about past price behaviour. They are not financial advice and they can be wrong.",
+    "keywords": "forecast,crypto,bitcoin,signals,prediction,indicators,alerts,technical analysis,accuracy,trend,rsi",
+    "whats_new": "First release."
+  },
+  "google_play": {
+    "title": "Proofcast: Scored Forecasts",
+    "short_description": "Price forecasts and signals, each one scored when it's due. Misses included.",
+    "full_description": "Proofcast shows where a price could be tomorrow, in a week and in a month, and keeps score.\n\nEvery forecast is locked the hour it's published. When its date passes, it's compared with the real closing price, and the result goes on the track record: hit rate, how often the price landed inside the range, and the typical error. Misses count the same as hits.\n\nWhat you get:\n- Ranges covering 80% of past outcomes, and how often the price ended higher\n- Buy, neutral or sell signals from 20 indicators, with every reading shown\n- Signals on closed bars only, from 5 minutes to a week\n- A watchlist, and alerts that fire once and then wait\n\nForecasts and signals are statistics about past price behaviour. They are not financial advice and they can be wrong."
+  }
+}

@@ -8,7 +8,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { privateMode } from "@/lib/data";
 import { viewer } from "@/lib/session";
-import { isPublicPath } from "@/lib/paths";
+import { guestHome, isPublicPath } from "@/lib/paths";
 
 export const metadata: Metadata = {
   title: { default: "Proofcast: price forecasts with every result kept", template: "%s · Proofcast" },
@@ -22,7 +22,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const v = await viewer();
   const path = (await headers()).get("x-pathname") ?? "/";
   const isPublic = isPublicPath(path);
-  if (privateMode() && !v.user && !isPublic) redirect(path === "/" ? "/sign-in" : `/sign-in?next=${encodeURIComponent(path)}`);
+  if (privateMode() && !v.user && !isPublic) redirect(path === "/" ? guestHome() : `/sign-in?next=${encodeURIComponent(path)}`);
   return (
     <html lang="en" suppressHydrationWarning>
       <head>

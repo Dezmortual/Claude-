@@ -1,0 +1,11 @@
+# Netlify: the app lives in apps/web. Netlify detects Next.js and adds its Next.js adapter itself.
+# Environment variables go in the Netlify UI (Site configuration -> Environment variables), scope "Functions":
+# variables set in this file reach the build only, not the running app. See replica/backend.md.
+[build]
+  base = "apps/web"
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NEXT_TELEMETRY_DISABLED = "1"

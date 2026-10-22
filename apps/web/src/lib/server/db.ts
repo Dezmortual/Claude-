@@ -8,7 +8,7 @@ const g = globalThis as unknown as { __sql?: postgres.Sql };
 export function sql() {
   if (!g.__sql) {
     g.__sql = postgres(env().DATABASE_URL, {
-      max: process.env.VERCEL ? 3 : 10,
+      max: process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME ? 3 : 10, // Netlify functions run on Lambda
       idle_timeout: 20,
       prepare: !/pooler|pgbouncer|:6543/.test(env().DATABASE_URL), // transaction poolers can't use prepared statements
       transform: { undefined: null },

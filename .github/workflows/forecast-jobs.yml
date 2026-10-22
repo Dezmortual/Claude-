@@ -1,5 +1,5 @@
 # Scheduled jobs for apps/web. Free on GitHub Actions: one run every 30 minutes (~1,440 minutes a month, inside the
-# 2,000 free minutes private repositories get). Needs repository secrets APP_URL (e.g. https://your-app.vercel.app)
+# 2,000 free minutes private repositories get). Needs repository secrets APP_URL (e.g. https://your-site.netlify.app)
 # and CRON_SECRET (same value as the app's env). Without them every run exits early and does nothing.
 name: forecast-jobs
 
@@ -35,3 +35,5 @@ jobs:
           # Every run: check alerts. Once an hour (the :04 run): publish new forecasts and score matured ones.
           call alerts
           if [ "$(date -u +%M)" -lt 30 ]; then call publish; fi
+          # Once a day (the 03:04 run): expire sessions, tokens and old rate-limit rows. Works on any host.
+          if [ "$(date -u +%H)" = "03" ] && [ "$(date -u +%M)" -lt 30 ]; then call cleanup; fi

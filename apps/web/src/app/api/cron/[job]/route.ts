@@ -5,7 +5,7 @@ import { JOBS, runJob } from "@/lib/server/jobs";
 
 export const maxDuration = 60;
 
-// Called by the scheduler (GitHub Actions or Vercel Cron) with "Authorization: Bearer $CRON_SECRET".
+// Called by the scheduler (the GitHub Actions workflow; Vercel Cron would also work) with "Authorization: Bearer $CRON_SECRET".
 async function handle(req: Request, { params }: { params: Promise<{ job: string }> }) {
   const secret = env().CRON_SECRET;
   const given = req.headers.get("authorization")?.replace(/^Bearer /, "") ?? "";

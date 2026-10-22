@@ -64,6 +64,10 @@ re-runs the specs tagged `@mobile` at 390px.
 | A-E1 | | edge: sign out everywhere | two browser contexts signed in, sign out everywhere in one | the other is signed out on next request | e2e || pass |
 | A-N1 | | negative: delete with wrong confirmation | type a different email | error, account kept | e2e || pass |
 | A-H2 | | delete account | type own email, delete | signed out, cannot sign in, data gone | e2e + api || pass |
+| L-N1 | landing page | negative: private build | guest opens /welcome | redirected to sign-in | e2e || pass |
+| L-H1 | | happy: owner preview | owner opens /welcome | preview note, every section, screenshot loads, axe clean | e2e || pass |
+| L-E1 | | edge: mobile width | /welcome at 390px | no sideways scroll, axe clean | e2e @mobile || pass |
+| L-E2 | | edge: public mode | PUBLIC_LANDING=true: guest opens /, /welcome, /forecasts | / → /welcome, 200, /forecasts → sign-in, robots index | manual || pass |
 | X-1 | all screens | accessibility | axe on every screen visited | 0 violations | e2e || pass (after BUG-003/004/005) |
 | X-2 | all screens | dark mode | toggle theme on each main screen | readable, no contrast failures (axe) | e2e || pass |
 
