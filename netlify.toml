@@ -14,3 +14,8 @@
 # is set. Deploy previews and branch deploys only build: they must never touch the production database.
 [context.production]
   command = "npm run db:setup && npm run build"
+
+# Declared explicitly (Netlify normally adds it on its own, but didn't for this site): the adapter that turns the
+# Next.js build into Netlify functions. Without it only static files are published and every page is a 404.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
