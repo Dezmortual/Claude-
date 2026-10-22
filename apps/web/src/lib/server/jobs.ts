@@ -9,6 +9,7 @@ import type { MarketCode, Signal, Timeframe } from "@/lib/data/types";
 import { SIGNAL_LABEL } from "@/lib/format";
 import { sql } from "./db";
 import { sendEmail } from "./email";
+import { pushConfigured, sendPush } from "./push";
 import { env } from "./env";
 
 const liveSlugs = () => ASSETS.filter((a) => effectiveSource(a.slug) !== "demo").map((a) => a.slug);
@@ -129,12 +130,12 @@ export async function scoreForecasts() {
 // ---------------------------------------------------------------- alerts
 
 type AlertDue = { id: string; user_id: string; slug: string; name: string; email: string; condition: string; threshold: number | null;
-  signal: Signal | null; timeframe: Timeframe | null; armed: boolean; cooldown_minutes: number; last_fired_at: Date | null };
+  signal: Signal | null; timeframe: Timeframe | null; armed: boolean; cooldown_minutes: number; last_fired_at: Date | null; channels: string[] };
 
 export async function evaluateAlerts() {
   const db = sql();
   const alerts = await db<AlertDue[]>`
-    select al.id, al.user_id, a.slug, a.name, u.email, al.condition, al.threshold, al.signal, al.timeframe, al.armed, al.cooldown_minutes, al.last_fired_at
+    select al.id, al.user_id, a.slug, a.name, u.email, al.condition, al.threshold, al.signal, al.timeframe, al.armed, al.cooldown_minutes, al.last_fired_at, al.channels
     from alerts al join assets a on a.id = al.asset_id join users u on u.id = al.user_id
     where al.is_active and a.is_active and u.email_verified_at is not null`;
   if (!alerts.length) return { checked: 0, fired: 0 };
@@ -167,14 +168,16 @@ export async function evaluateAlerts() {
     // Compare-and-set: only one evaluator can fire this alert for this condition episode.
     const won = await db`update alerts set armed = false, last_fired_at = now() where id = ${al.id} and armed returning 1`;
     if (!won.length) continue;
-    await db`insert into alert_events (alert_id, user_id, message, dedupe_key)
-      values (${al.id}, ${al.user_id}, ${message}, ${`${al.id}:${Math.floor(Date.now() / 60_000)}`}) on conflict (dedupe_key) do nothing`;
+    const email = al.channels.includes("email") ? "pending" : "skipped", push = al.channels.includes("push") ? "pending" : "skipped";
+    await db`insert into alert_events (alert_id, user_id, message, dedupe_key, email_status, push_status)
+      values (${al.id}, ${al.user_id}, ${message}, ${`${al.id}:${Math.floor(Date.now() / 60_000)}`}, ${email}, ${push}) on conflict (dedupe_key) do nothing`;
     fired++;
   }
   return { checked: alerts.length, fired, rearmed };
 }
 
-/** Sends pending alert emails; failures retry on later runs, up to 5 attempts, then stay as failed. */
+/** Sends pending alert emails (failures retry on later runs, up to 5 attempts, then stay as failed) and pushes
+ *  (one try: a push that arrives an hour late is worse than none). */
 export async function deliverAlerts() {
   const db = sql();
   const events = await db<{ id: string; email: string; message: string; slug: string; attempts: number }[]>`
@@ -192,7 +195,22 @@ export async function deliverAlerts() {
       failed++;
     }
   }
-  return { sent, failed };
+  const pushes = await db<{ id: string; user_id: string; message: string; slug: string }[]>`
+    select e.id, e.user_id, e.message, a.slug from alert_events e join alerts al on al.id = e.alert_id join assets a on a.id = al.asset_id
+    where e.push_status = 'pending' order by e.fired_at limit 100`;
+  let pushed = 0, pushFailed = 0;
+  for (const e of pushes) {
+    try {
+      if (!pushConfigured()) throw new Error("push is not configured (VAPID keys missing)");
+      const r = await sendPush(e.user_id, { title: `Alert: ${ASSET_BY_SLUG.get(e.slug)?.name ?? e.slug}`, body: e.message, url: `/assets/${e.slug}`, tag: `alert-${e.id}` });
+      await db`update alert_events set push_status = ${r.sent ? "sent" : "skipped"} where id = ${e.id}`;
+      if (r.sent) pushed++;
+    } catch (err) {
+      await db`update alert_events set push_status = 'failed', last_error = ${String(err).slice(0, 300)} where id = ${e.id}`;
+      pushFailed++;
+    }
+  }
+  return { sent, failed, pushed, pushFailed };
 }
 
 /** Housekeeping: expired sessions and tokens, old rate-limit windows, old job logs. */

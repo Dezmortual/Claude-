@@ -4,6 +4,7 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { themeScript } from "@/components/client/ThemeToggle";
 import { Toaster } from "@/components/client/Toaster";
+import { ServiceWorker } from "@/components/client/ServiceWorker";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { privateMode } from "@/lib/data";
@@ -15,10 +16,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(appUrl()), // absolute URL for the social image
   title: { default: "Proofcast: price forecasts with every result kept", template: "%s · Proofcast" },
   robots: { index: false, follow: false }, // private build: keep it out of search engines
+  appleWebApp: { capable: true, title: "Proofcast", statusBarStyle: "black-translucent" },
   description: "Short-term forecasts, technical signals and long-term scenarios for crypto and other markets, with every forecast scored in public.",
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#2a0b22" };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const v = await viewer();
@@ -38,6 +40,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <main id="main" className="mx-auto max-w-content px-4 py-8 lg:px-6">{children}</main>
         <Footer />
         <Toaster />
+        <ServiceWorker />
       </body>
     </html>
   );

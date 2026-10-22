@@ -27,3 +27,10 @@ export const Prefs = z.object({
   defaultTab: z.enum(["investing", "day_trading"]),
 });
 export const Uuid = z.string().uuid();
+
+/** A browser PushSubscription as sent by the client (subscription.toJSON()). */
+export const PushSubscriptionBody = z.object({
+  endpoint: z.string().url().max(1000).refine((u) => u.startsWith("https://"), "Push endpoints are https"),
+  keys: z.object({ p256dh: z.string().min(20).max(200), auth: z.string().min(8).max(100) }),
+});
+export const PushUnsubscribeBody = z.object({ endpoint: z.string().url().max(1000) });

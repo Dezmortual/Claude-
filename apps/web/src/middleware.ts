@@ -20,5 +20,5 @@ export function middleware(req: NextRequest) {
 }
 
 // Pages only: API routes enforce access themselves, static files need none.
-// Public images (the landing page screenshot) need no session either.
-export const config = { matcher: ["/((?!api/|_next/|favicon.ico|robots.txt|.*\\.(?:webp|png|svg)$).*)"] };
+// Public images (the landing page screenshot), the service worker and the app manifest need no session either.
+export const config = { matcher: ["/((?!api/|_next/|favicon.ico|robots.txt|sw.js|manifest.webmanifest|.*\\.(?:webp|png|svg)$).*)"] };

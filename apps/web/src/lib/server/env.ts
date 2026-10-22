@@ -14,6 +14,8 @@ const Env = z.object({
   CRON_SECRET: z.string().min(24).optional(),
   ALPACA_KEY_ID: z.string().optional(),
   ALPACA_SECRET_KEY: z.string().optional(),
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
   NODE_ENV: z.string().default("development"),
 });
 

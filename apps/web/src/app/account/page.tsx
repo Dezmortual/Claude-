@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { DeleteForm, ProfileForm } from "@/components/client/AccountForms";
+import { PushCard } from "@/components/client/PushCard";
 import { Button, Card, Label, Section } from "@/components/ui";
 import { listAlerts, watchlistSlugs } from "@/lib/data";
 import { viewer } from "@/lib/session";
@@ -27,6 +28,10 @@ export default async function Account() {
           <Card className="p-4"><Label>Watchlist</Label><p className="mt-1 text-lg">{watch.length} assets</p></Card>
           <Card className="p-4"><Label>Alerts</Label><p className="mt-1 text-lg">{alerts.filter((a) => a.isActive).length} active</p></Card>
         </div>
+      </Section>
+
+      <Section id="app" title="App and notifications">
+        <Card className="max-w-xl"><PushCard /></Card>
       </Section>
 
       <Section id="profile" title="Profile">

@@ -249,8 +249,17 @@ Checklist once a domain exists:
 
 ## Mobile
 
-Not applicable: there's no phone app yet. The store listing is ready in `launch/listing.json` for when
-there is one.
+The site is an installable web app (2026-10-22): a manifest (`src/app/manifest.ts`), icons in `public/icons/`,
+and a service worker (`public/sw.js`) that shows alert notifications and caches nothing. There is no store app;
+the listing in `launch/listing.json` waits for one.
+
+- **Install:** Android Chrome shows Install under Account → App and notifications. iPhone: Safari → Share →
+  Add to Home Screen. iOS delivers web push only to the installed app (iOS 16.4 or later).
+- **Push:** set `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` in Vercel (all environments), redeploy, then tap Turn
+  on under Account on each phone. Alerts with "Push notification" ticked arrive within one tick (30 minutes).
+  Never change the pair once phones are subscribed: every subscription is tied to the public key.
+- A failed push isn't retried, because a late price alert is worse than none. Devices the push service reports
+  gone are removed.
 
 ## Moved to Vercel (2026-10-22)
 

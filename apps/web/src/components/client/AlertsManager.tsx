@@ -86,7 +86,8 @@ export function AlertForm({ options, preset, limitText }: { options: Opt[]; pres
       <fieldset className="grid gap-2">
         <legend className="text-sm font-semibold">Tell me by</legend>
         <label className="flex items-center gap-3 text-sm"><input type="checkbox" name="email" defaultChecked className="h-5 w-5 accent-accent" />Email</label>
-        <label className="flex items-center gap-3 text-sm text-muted"><input type="checkbox" name="push" disabled className="h-5 w-5" />Push notification (with the mobile app)</label>
+        <label className="flex items-center gap-3 text-sm"><input type="checkbox" name="push" className="h-5 w-5 accent-accent" />Push notification</label>
+        <p className="text-xs text-muted">Turn notifications on for each phone or computer under <a href="/account#app" className="font-semibold text-accent underline">Account</a>.</p>
       </fieldset>
       {err && <p role="alert" className="rounded-md bg-down-soft p-3 text-sm text-down">{err}</p>}
       <button type="submit" disabled={busy || !options.length} aria-busy={busy} className="h-10 rounded-md bg-accent text-sm font-semibold text-on-accent hover:bg-accent-hover disabled:opacity-50">Save alert</button>

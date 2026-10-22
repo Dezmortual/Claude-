@@ -5,6 +5,7 @@ import "server-only";
 import { sql } from "@/lib/server/db";
 import { env } from "@/lib/server/env";
 import { endAllSessions, isOwner, sessionUser } from "@/lib/server/auth";
+import { pushConfigured, sendPush } from "@/lib/server/push";
 import { ASSETS, ASSET_BY_SLUG, MARKETS, PLANS, PLAN_BY_CODE } from "./catalogue";
 import { pulse } from "./indicators";
 import { ensure, ensureCrosscheck } from "./marketdata";
@@ -361,8 +362,8 @@ export async function createAlert(v: Viewer, i: AlertInput): Promise<Alert> {
   } else if (!(typeof i.threshold === "number" && Number.isFinite(i.threshold) && i.threshold > 0)) {
     throw new DataError("invalid", i.condition === "forecast_move_above" ? "Enter a percentage above 0" : "Enter a price above 0");
   }
-  const channels = (i.channels?.length ? i.channels : ["email"]).filter((c) => c === "email");
-  if (!channels.length) throw new DataError("invalid", "Email is the only channel until the mobile app exists");
+  const channels = [...new Set(i.channels?.length ? i.channels : ["email" as const])];
+  if (channels.includes("push") && !pushConfigured()) throw new DataError("invalid", "Push isn't set up on this server yet");
   const db = sql();
   return db.begin(async (tx) => {
     // Lock the user's row so two tabs can't both slip under the limit.
@@ -480,3 +481,38 @@ export async function modelComparison() {
     group by r.model_version, f.horizon order by f.horizon, r.model_version`;
 }
 
+
+// ---------------------------------------------------------------- push notifications
+
+/** Whether this server can send push, its public key for subscribing, and how many of the user's devices are on. */
+export async function pushStatus(v: Viewer) {
+  const u = requireUser(v);
+  const [r] = await sql()<{ n: number }[]>`select count(*)::int as n from push_subscriptions where user_id = ${u.id}`;
+  return { configured: pushConfigured(), publicKey: env().VAPID_PUBLIC_KEY ?? null, devices: r.n };
+}
+
+export async function savePushSubscription(v: Viewer, s: { endpoint: string; keys: { p256dh: string; auth: string } }, userAgent: string | null) {
+  const u = requireUser(v);
+  if (!pushConfigured()) throw new DataError("invalid", "Push isn't set up on this server yet");
+  // An endpoint belongs to one browser; re-subscribing (or a new owner on a shared device) takes it over.
+  await sql()`insert into push_subscriptions (user_id, endpoint, p256dh, auth, user_agent)
+    values (${u.id}, ${s.endpoint}, ${s.keys.p256dh}, ${s.keys.auth}, ${userAgent?.slice(0, 300) ?? null})
+    on conflict (endpoint) do update set user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth,
+      user_agent = excluded.user_agent, created_at = now()`;
+  return pushStatus(v);
+}
+
+export async function removePushSubscription(v: Viewer, endpoint: string) {
+  const u = requireUser(v);
+  await sql()`delete from push_subscriptions where user_id = ${u.id} and endpoint = ${endpoint}`;
+  return pushStatus(v);
+}
+
+export async function sendTestPush(v: Viewer) {
+  const u = requireUser(v);
+  if (!pushConfigured()) throw new DataError("invalid", "Push isn't set up on this server yet");
+  const r = await sendPush(u.id, { title: "Proofcast", body: "Notifications are on. Alerts you set will arrive here.", url: "/alerts", tag: "test" })
+    .catch(() => { throw new DataError("invalid", "The push service didn't accept the test. Turn notifications off and on again."); });
+  if (!r.sent) throw new DataError("invalid", "No device is turned on for notifications");
+  return r;
+}
