@@ -10,6 +10,7 @@ npm run dev                  # http://localhost:3000
 npm run build && npm start
 npm run typecheck
 npm run test:api             # against a running server, see replica/backend.md
+npx playwright test          # e2e + axe, builds into .next-e2e, resets forecast_test (replica/test-plan.md)
 npm run tokens               # after editing replica/design/tokens.json
 ```
 

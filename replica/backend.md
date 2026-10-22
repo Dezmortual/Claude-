@@ -10,6 +10,7 @@ free tiers.
 | --- | --- |
 | database | Postgres via `DATABASE_URL`; `db/migrations/0001_init.sql`, `npm run db:migrate`, `npm run db:seed` (asset catalogue and plans, safe to rerun) |
 | access rules | RLS enabled on every table with **no policies** (also closes Supabase's auto REST API); the app connects as table owner and every user-owned query is scoped by user id in `src/lib/data/live.ts`. Tested with a second user (below) |
+| client address | rate limits key on `x-real-ip` on Vercel; elsewhere forwarding headers are ignored unless `TRUST_PROXY_HEADERS=true` (set it only behind your own proxy) |
 | auth | email + password (scrypt), email verification (single-use link, 24 h), password reset (single-use, 1 h, signs out every device), http-only `secure` `SameSite=Lax` session cookie holding a random token; only its SHA-256 is stored. Sign out, sign out everywhere, account deletion that cascades |
 | owner-only | `PRIVATE_MODE=true`: middleware + root layout redirect anyone who isn't the signed-in owner to `/sign-in`; every `/api/v1` route returns 401 without the owner's session; sign-up and sign-in refuse other emails |
 | market data | Binance public market data (crypto, every timeframe), ECB reference rates via Frankfurter (forex, daily only), Alpaca with your own keys (stocks/ETFs, optional), CoinPaprika as the crypto cross-check. All official public APIs; no keys except Alpaca. Bars cached in `price_bars`, tails refreshed on demand. Commodities, indices and bonds have no free official source and stay on the demo series, marked **Demo** |
@@ -52,8 +53,9 @@ Watch-outs:
 second user sees none of the first's watchlist, alerts, events or preferences; cannot change or delete the
 first user's alert or watchlist; guests get 401 everywhere; invalid input gets 422; strangers can't sign up;
 sign-in rate limit returns 429; verification and reset links work once; a reset ends every session; forgot-password
-gives the same answer for unknown emails; account deletion removes every row. Last run: 12 of 12 passing, twice, on
-the production build.
+gives the same answer for unknown emails; account deletion removes every row; a forged X-Forwarded-For can't dodge the
+per-IP limits. Last run: 13 of 13. The Playwright e2e suite (63 tests, axe on every screen) is described in
+`replica/test-plan.md`; bugs found and fixed are in `replica/bugs.md`.
 
 The jobs were run by hand against live data: an alert fired once, emailed once, and stayed quiet on the next run;
 publish stored 126 forecasts; scoring graded matured ones (test rows were deleted afterwards).
