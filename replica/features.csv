@@ -64,8 +64,8 @@ BeCoin forecasts / tables / text,data,skip,yes,skip,owned by BeCoin per terms; c
 Accuracy claim 68-72%,trust,skip,yes,skip,unsubstantiated; only publish what you measure
 F1 Forecast ledger: every locked forecast with hits and misses,trust,should,no,no,fixes.md; track record 14 reviews/3 sources + hidden losses 12; never sum returns across assets
 F2 Signal history incl. worst move against each signal,trust,should,no,no,fixes.md; wrong signals 51 reviews/6 apps (one platform)
-F3 Why line on every signal (indicator votes + bar close time),asset page,should,no,no,fixes.md; explanations 4 (thin); pulse tables already exist
-F4 Fired-at and sent-at timestamps on alerts,alerts,should,no,no,fixes.md; late signals 11 reviews/4 apps (thin)
-F5 Signal-change damping (holds 2 closed bars) + changes-in-24h,alerts,could,no,no,fixes.md; flip-flop 2 (thin)
+F3 Why line on every signal (indicator votes + bar close time),asset page,should,no,yes,fixes.md; explanations 4 (thin); pulse tables already exist
+F4 Fired-at and sent-at timestamps on alerts,alerts,should,no,yes,fixes.md; late signals 11 reviews/4 apps (thin)
+F5 Signal-change damping (holds 2 closed bars) + changes-in-24h,alerts,could,no,yes,fixes.md; flip-flop 2 (thin)
 F6 Notification controls: global mute + quiet hours + daily digest + one-click stop link,alerts,should,no,no,fixes.md; notifications 22 reviews/4 apps (thin)
 Indicator library: presets; own formulas; chart overlay; signal backtest; indicator alerts,indicators,should,no,yes,/indicators; formula language in apps/web/src/lib/indicators (no eval); npm run test:unit

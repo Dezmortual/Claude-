@@ -15,7 +15,22 @@ function fmt(v: number | null) {
   return v.toLocaleString("en-US", { maximumFractionDigits: a >= 100 ? 2 : a >= 1 ? 3 : 6 });
 }
 
-export function Pulse({ cards, upgradeHref }: { cards: Card[]; upgradeHref: string }) {
+/** F3: why the reading is what it is, and which bar it was read on. */
+export function whyLine(c: PulseCard, tz: string) {
+  const buy = c.ma.buy + c.osc.buy, sell = c.ma.sell + c.osc.sell;
+  const side = c.verdict.endsWith("buy") ? "buy" : c.verdict.endsWith("sell") ? "sell" : null;
+  const counts = side
+    ? `${side === "buy" ? buy : sell} of 20 indicators say ${side} (${side === "buy" ? c.ma.buy : c.ma.sell} of 10 averages, ${side === "buy" ? c.osc.buy : c.osc.sell} of 10 oscillators)`
+    : `${buy} indicators say buy and ${sell} say sell, too close to call`;
+  const daily = c.timeframe === "1d" || c.timeframe === "1w";
+  // Intraday bars: the time, with the zone's short name; daily and weekly bars: the date.
+  const when = c.closedAt ? `, on the ${TF_LABEL[c.timeframe]} bar that closed ${new Date(c.closedAt).toLocaleString("en-GB", daily
+    ? { timeZone: tz, day: "numeric", month: "short" }
+    : { timeZone: tz, hour: "2-digit", minute: "2-digit", timeZoneName: "short" })}` : "";
+  return `${counts}${when}.`;
+}
+
+export function Pulse({ cards, upgradeHref, tz = "UTC" }: { cards: Card[]; upgradeHref: string; tz?: string }) {
   const firstReady = cards.find((c) => c.timeframe === "1d" && c.verdict !== "unavailable") ?? cards.find((c) => c.indicators.length) ?? cards[3];
   const [sel, setSel] = useState(firstReady.timeframe);
   const card = cards.find((c) => c.timeframe === sel)!;
@@ -45,6 +60,17 @@ export function Pulse({ cards, upgradeHref }: { cards: Card[]; upgradeHref: stri
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2"><SignalGauge verdict={card.verdict} ma={card.ma} osc={card.osc} label={TF_LABEL[card.timeframe]} /></div>
+            <div className="space-y-1 rounded-md bg-surface-sunken p-3 text-sm md:col-span-2">
+              <p><span className="font-semibold">Why: </span>{whyLine(card, tz)} The readings are in the tables below.</p>
+              {card.history && (
+                <p className="text-muted">
+                  Held for {card.history.heldBars === 1 ? "1 closed bar" : `${card.history.heldBars} closed bars`}
+                  {" · "}changed {card.history.changes === 1 ? "once" : `${card.history.changes} times`} in the last {card.history.window}
+                  {card.history.changes >= 4 && <span className="font-semibold text-warning"> · flipping often, treat it with care</span>}
+                  {". "}Signal alerts wait for a reading to hold for 2 closed bars.
+                </p>
+              )}
+            </div>
             {(["ma", "oscillator"] as const).map((k) => (
               <div key={k} tabIndex={0} role="region" aria-label={k === "ma" ? "Moving averages table" : "Oscillators table"} className="relative overflow-x-auto rounded-lg border bg-surface">
                 <table className="w-full text-sm">

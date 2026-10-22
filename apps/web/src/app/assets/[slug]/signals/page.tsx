@@ -24,7 +24,7 @@ export default async function Signals({ params }: P) {
       <AssetHeader asset={asset} quote={quote} metrics={metrics} viewer={v} current="signals" title={`${asset.name} technical signals`} />
       <Section id="pulse" title="By timeframe">
         <p className="max-w-prose text-sm text-muted">Pick a timeframe to see how each of the twenty indicators reads it. Every reading uses bars that have already closed.</p>
-        <Pulse cards={cards} upgradeHref={`/pricing?plan=${unlockPlan.code}`} />
+        <Pulse cards={cards} upgradeHref={`/pricing?plan=${unlockPlan.code}`} tz={v.user?.timezone ?? "UTC"} />
       </Section>
       <Section id="trend" title="Trend at a glance">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

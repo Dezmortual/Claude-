@@ -7,7 +7,7 @@ import { env } from "@/lib/server/env";
 import { endAllSessions, isOwner, sessionUser } from "@/lib/server/auth";
 import { pushConfigured, sendPush } from "@/lib/server/push";
 import { ASSETS, ASSET_BY_SLUG, MARKETS, PLANS, PLAN_BY_CODE } from "./catalogue";
-import { pulse } from "./indicators";
+import { pulse, signalHistory } from "./indicators";
 import { check as checkFormula } from "../indicators/formula";
 import { ensure, ensureCrosscheck } from "./marketdata";
 import { MODELS, closedBars, isDemo, metrics, paths, quote, scenarios, shortTerm } from "./model";
@@ -235,7 +235,7 @@ export async function assetSignals(v: Viewer, slug: string) {
     const b = closedBars(slug, tf);
     const p = pulse(tf, b);
     if (!b.length) return { ...p, reason: "This source publishes one price per day", locked: false };
-    if (full) return { ...p, locked: false };
+    if (full) return { ...p, history: p.verdict === "unavailable" ? undefined : signalHistory(tf, b), locked: false };
     if (tf === "1d") return { ...p, indicators: [], locked: false };
     return { timeframe: tf, verdict: "unavailable" as const, ma: { buy: 0, neutral: 0, sell: 0 }, osc: { buy: 0, neutral: 0, sell: 0 },
       reason: `On the ${planFor(a).name} plan`, indicators: [], locked: true };
@@ -412,10 +412,19 @@ export async function deleteAlert(v: Viewer, id: string) {
   await sql()`delete from alerts where id = ${id} and user_id = ${u.id}`;
 }
 
-export async function alertEvents(v: Viewer, limit = 20) {
+export type AlertEvent = { id: string; slug: string; message: string; firedAt: string; observedAt: string | null;
+  email: { status: string; sentAt: string | null }; push: { status: string; sentAt: string | null } };
+
+/** Recently fired alerts with their timing: the data they were judged on, when they fired, when each channel sent. */
+export async function alertEvents(v: Viewer, limit = 20): Promise<AlertEvent[]> {
   const u = requireUser(v);
-  return sql()<{ id: string; fired_at: Date; message: string; email_status: string }[]>`
-    select id, fired_at, message, email_status from alert_events where user_id = ${u.id} order by fired_at desc limit ${limit}`;
+  const rows = await sql()<{ id: string; slug: string; message: string; fired_at: Date; observed_at: Date | null; email_status: string;
+    email_sent_at: Date | null; push_status: string; push_sent_at: Date | null }[]>`
+    select e.id, a.slug, e.message, e.fired_at, e.observed_at, e.email_status, e.email_sent_at, e.push_status, e.push_sent_at
+    from alert_events e join alerts al on al.id = e.alert_id join assets a on a.id = al.asset_id
+    where e.user_id = ${u.id} order by e.fired_at desc limit ${limit}`;
+  return rows.map((r) => ({ id: r.id, slug: r.slug, message: r.message, firedAt: r.fired_at.toISOString(), observedAt: r.observed_at?.toISOString() ?? null,
+    email: { status: r.email_status, sentAt: r.email_sent_at?.toISOString() ?? null }, push: { status: r.push_status, sentAt: r.push_sent_at?.toISOString() ?? null } }));
 }
 
 /** Assets the viewer may set alerts on, with the current price for the form's hint. */

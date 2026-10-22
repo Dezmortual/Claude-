@@ -2,7 +2,7 @@ import "server-only";
 // Scheduled jobs, triggered by /api/cron/[job]. Each run is recorded in job_runs; failed runs stay there as the
 // dead-letter log. Every job is safe to run twice: inserts are keyed, alert firing is a compare-and-set.
 import { ASSETS, ASSET_BY_SLUG, MARKETS } from "@/lib/data/catalogue";
-import { pulse } from "@/lib/data/indicators";
+import { heldTwoBars } from "@/lib/data/indicators";
 import { evaluate, holdsNow } from "@/lib/indicators/formula";
 import { ensure, ensureCrosscheck, effectiveSource, warmAll } from "@/lib/data/marketdata";
 import { MODELS, challenger, closedBars, quote, shortTerm, signalFromP } from "@/lib/data/model";
@@ -13,6 +13,7 @@ import { sendEmail } from "./email";
 import { pushConfigured, sendPush } from "./push";
 import { env } from "./env";
 
+const STEP: Record<Timeframe, number> = { "5m": 300_000, "30m": 1_800_000, "1h": 3_600_000, "1d": 86_400_000, "1w": 604_800_000 };
 const liveSlugs = () => ASSETS.filter((a) => effectiveSource(a.slug) !== "demo").map((a) => a.slug);
 
 export async function runJob<T>(job: string, fn: () => Promise<T>) {
@@ -149,18 +150,22 @@ export async function evaluateAlerts() {
     const q = quote(al.slug);
     if (q.status === "stale") continue; // never alert on old prices
     let hit = false, message = "";
+    let observedAt: Date | null = new Date(q.observedAt); // the price or bar the alert is judged on
     const asset = ASSET_BY_SLUG.get(al.slug)!;
     if (al.condition === "price_above" || al.condition === "price_below") {
       hit = al.condition === "price_above" ? q.price > al.threshold! : q.price < al.threshold!;
       message = `${asset.name} is at ${q.price.toPrecision(6)}, ${al.condition === "price_above" ? "above" : "below"} your level of ${al.threshold}.`;
     } else if (al.condition === "signal_becomes") {
-      const verdict = pulse(al.timeframe!, closedBars(al.slug, al.timeframe!)).verdict;
-      hit = verdict === al.signal;
-      message = `${asset.name}'s ${al.timeframe} signal is now ${SIGNAL_LABEL[al.signal!].toLowerCase()}.`;
+      // Damped: the new reading must hold on the last two closed bars, so one bar's flicker doesn't fire an alert.
+      const bars = closedBars(al.slug, al.timeframe!);
+      hit = heldTwoBars(al.timeframe!, bars, al.signal!);
+      observedAt = bars.length ? new Date(bars.at(-1)!.ts + STEP[al.timeframe!]) : null;
+      message = `${asset.name}'s ${al.timeframe} signal is now ${SIGNAL_LABEL[al.signal!].toLowerCase()}, held for two closed bars.`;
     } else if (al.condition === "indicator_signal") {
       // The rule as it stands on the last closed bar of the chosen chart. A formula that no longer parses never fires.
       const rule = al.signal === "buy" ? al.buy_rule : al.sell_rule, bars = closedBars(al.slug, al.timeframe!);
       try { hit = !!rule && bars.length > 0 && holdsNow(evaluate(rule, bars)); } catch { hit = false; }
+      observedAt = bars.length ? new Date(bars.at(-1)!.ts + STEP[al.timeframe!]) : null;
       message = `${asset.name}: your indicator "${al.indicator_name}" gives a ${al.signal} signal on the ${al.timeframe} chart, at ${q.price.toPrecision(6)}.`;
     } else {
       const p7 = shortTerm(al.slug).points.find((p) => p.horizon === "7d")!;
@@ -177,41 +182,48 @@ export async function evaluateAlerts() {
     const won = await db`update alerts set armed = false, last_fired_at = now() where id = ${al.id} and armed returning 1`;
     if (!won.length) continue;
     const email = al.channels.includes("email") ? "pending" : "skipped", push = al.channels.includes("push") ? "pending" : "skipped";
-    await db`insert into alert_events (alert_id, user_id, message, dedupe_key, email_status, push_status)
-      values (${al.id}, ${al.user_id}, ${message}, ${`${al.id}:${Math.floor(Date.now() / 60_000)}`}, ${email}, ${push}) on conflict (dedupe_key) do nothing`;
+    await db`insert into alert_events (alert_id, user_id, message, dedupe_key, email_status, push_status, observed_at)
+      values (${al.id}, ${al.user_id}, ${message}, ${`${al.id}:${Math.floor(Date.now() / 60_000)}`}, ${email}, ${push}, ${observedAt})
+      on conflict (dedupe_key) do nothing`;
     fired++;
   }
   return { checked: alerts.length, fired, rearmed };
+}
+
+const utc = (d: Date) => `${d.toISOString().slice(0, 16).replace("T", " ")} UTC`;
+/** Says how old the data was, so a late alert is visibly late. */
+function timing(observed: Date | null, fired: Date) {
+  return `${observed ? `Based on data up to ${utc(observed)}. ` : ""}Fired ${utc(fired)}, sent ${utc(new Date())}.`;
 }
 
 /** Sends pending alert emails (failures retry on later runs, up to 5 attempts, then stay as failed) and pushes
  *  (one try: a push that arrives an hour late is worse than none). */
 export async function deliverAlerts() {
   const db = sql();
-  const events = await db<{ id: string; email: string; message: string; slug: string; attempts: number }[]>`
-    select e.id, u.email, e.message, a.slug, e.attempts from alert_events e join users u on u.id = e.user_id
+  const events = await db<{ id: string; email: string; message: string; slug: string; attempts: number; fired_at: Date; observed_at: Date | null }[]>`
+    select e.id, u.email, e.message, a.slug, e.attempts, e.fired_at, e.observed_at from alert_events e join users u on u.id = e.user_id
     join alerts al on al.id = e.alert_id join assets a on a.id = al.asset_id
     where e.email_status in ('pending', 'failed') and e.attempts < 5 order by e.fired_at limit 100`;
   let sent = 0, failed = 0;
   for (const e of events) {
     try {
-      await sendEmail(e.email, `Alert: ${ASSET_BY_SLUG.get(e.slug)?.name ?? e.slug}`, `${e.message}\n\nSee it: ${env().APP_URL}/assets/${e.slug}\nManage alerts: ${env().APP_URL}/alerts\n\nForecasts and signals are statistics, not financial advice.`);
-      await db`update alert_events set email_status = 'sent', attempts = attempts + 1, last_error = null where id = ${e.id}`;
+      await sendEmail(e.email, `Alert: ${ASSET_BY_SLUG.get(e.slug)?.name ?? e.slug}`, `${e.message}\n\n${timing(e.observed_at, e.fired_at)}\n\nSee it: ${env().APP_URL}/assets/${e.slug}\nManage alerts: ${env().APP_URL}/alerts\n\nForecasts and signals are statistics, not financial advice.`);
+      await db`update alert_events set email_status = 'sent', email_sent_at = now(), attempts = attempts + 1, last_error = null where id = ${e.id}`;
       sent++;
     } catch (err) {
       await db`update alert_events set email_status = 'failed', attempts = attempts + 1, last_error = ${String(err).slice(0, 300)} where id = ${e.id}`;
       failed++;
     }
   }
-  const pushes = await db<{ id: string; user_id: string; message: string; slug: string }[]>`
-    select e.id, e.user_id, e.message, a.slug from alert_events e join alerts al on al.id = e.alert_id join assets a on a.id = al.asset_id
+  const pushes = await db<{ id: string; user_id: string; message: string; slug: string; observed_at: Date | null }[]>`
+    select e.id, e.user_id, e.message, a.slug, e.observed_at from alert_events e join alerts al on al.id = e.alert_id join assets a on a.id = al.asset_id
     where e.push_status = 'pending' order by e.fired_at limit 100`;
   let pushed = 0, pushFailed = 0;
   for (const e of pushes) {
     try {
       if (!pushConfigured()) throw new Error("push is not configured (VAPID keys missing)");
-      const r = await sendPush(e.user_id, { title: `Alert: ${ASSET_BY_SLUG.get(e.slug)?.name ?? e.slug}`, body: e.message, url: `/assets/${e.slug}`, tag: `alert-${e.id}` });
-      await db`update alert_events set push_status = ${r.sent ? "sent" : "skipped"} where id = ${e.id}`;
+      const r = await sendPush(e.user_id, { title: `Alert: ${ASSET_BY_SLUG.get(e.slug)?.name ?? e.slug}`, body: e.observed_at ? `${e.message} Data to ${utc(e.observed_at)}.` : e.message, url: `/assets/${e.slug}`, tag: `alert-${e.id}` });
+      await db`update alert_events set push_status = ${r.sent ? "sent" : "skipped"}, push_sent_at = ${r.sent ? new Date() : null} where id = ${e.id}`;
       if (r.sent) pushed++;
     } catch (err) {
       await db`update alert_events set push_status = 'failed', last_error = ${String(err).slice(0, 300)} where id = ${e.id}`;

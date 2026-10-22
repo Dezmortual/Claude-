@@ -119,5 +119,32 @@ export function pulse(tf: Timeframe, b: Bar[]): PulseCard & { indicators: Indica
   const ma = count(rows.filter((r) => r.kind === "ma")), osc = count(rows.filter((r) => r.kind === "oscillator"));
   const score = (ma.buy + osc.buy - ma.sell - osc.sell) / 20;
   const verdict: Verdict = score > 0.5 ? "strong_buy" : score > 0.1 ? "buy" : score < -0.5 ? "strong_sell" : score < -0.1 ? "sell" : "neutral";
-  return { timeframe: tf, verdict, ma, osc, indicators: rows };
+  return { timeframe: tf, verdict, ma, osc, indicators: rows, closedAt: new Date(b.at(-1)!.ts + STEP[tf]).toISOString() };
+}
+
+const STEP: Record<Timeframe, number> = { "5m": 300_000, "30m": 1_800_000, "1h": 3_600_000, "1d": 86_400_000, "1w": 604_800_000 };
+// How far back "changed n times" looks: a day for intraday charts, a month of daily bars, half a year of weekly ones.
+const HISTORY: Record<Timeframe, [number, string]> = {
+  "5m": [288, "24 hours"], "30m": [48, "24 hours"], "1h": [24, "24 hours"], "1d": [30, "30 daily bars"], "1w": [26, "26 weeks"],
+};
+
+/** The verdict on each of the last `n` closed bars, oldest first (as it read when that bar closed). */
+export function recentVerdicts(tf: Timeframe, b: Bar[], n: number): Verdict[] {
+  const out: Verdict[] = [];
+  for (let k = Math.min(n, b.length) - 1; k >= 0; k--) out.push(pulse(tf, k ? b.slice(0, -k) : b).verdict);
+  return out;
+}
+
+/** F5: a signal alert's condition. The reading must be `target` on each of the last two closed bars. */
+export const heldTwoBars = (tf: Timeframe, b: Bar[], target: Verdict) => recentVerdicts(tf, b, 2).filter((x) => x === target).length === 2;
+
+/** How long the current reading has held and how often it changed in the history window. */
+export function signalHistory(tf: Timeframe, b: Bar[]): NonNullable<PulseCard["history"]> {
+  const [n, window] = HISTORY[tf];
+  const v = recentVerdicts(tf, b, n + 1).filter((x) => x !== "unavailable");
+  let held = 0;
+  while (held < v.length && v[v.length - 1 - held] === v.at(-1)) held++;
+  let changes = 0;
+  for (let i = 1; i < v.length; i++) if (v[i] !== v[i - 1]) changes++;
+  return { heldBars: held, changes, window };
 }

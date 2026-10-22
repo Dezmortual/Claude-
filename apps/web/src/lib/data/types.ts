@@ -67,6 +67,9 @@ export interface PulseCard {
   ma: { buy: number; neutral: number; sell: number };
   osc: { buy: number; neutral: number; sell: number };
   reason?: string; // set when unavailable
+  closedAt?: string; // when the bar this reading is based on closed (ISO, UTC)
+  /** Over the history window: how many closed bars the current reading has held, and how often it changed. */
+  history?: { heldBars: number; changes: number; window: string };
 }
 
 export interface Metrics {

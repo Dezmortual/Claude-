@@ -129,7 +129,7 @@ export default async function AssetForecast({ params }: P) {
 
       <Section id="signals" title="Technical pulse" action={<Link prefetch={false} href={`/assets/${slug}/signals`} className="text-sm font-semibold text-accent hover:underline">All signals</Link>}>
         <p className="max-w-prose text-sm text-muted">Ten moving averages and ten oscillators, each read as buy, neutral or sell on closed bars only. The verdict is the balance of the twenty.</p>
-        <Pulse cards={pulse} upgradeHref={upgrade} />
+        <Pulse cards={pulse} upgradeHref={upgrade} tz={v.user?.timezone ?? "UTC"} />
       </Section>
 
       <Section id="long-term" title="Long-term scenarios">
