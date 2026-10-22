@@ -4,11 +4,14 @@ import path from "node:path";
 import postgres from "postgres";
 import { dbUrl } from "../src/lib/dburl";
 
-// The direct (unpooled) string when there is one: schema changes shouldn't go through a transaction pooler.
-const url = process.env.DATABASE_URL_DIRECT || process.env.DATABASE_URL;
-if (!url) throw new Error("Set DATABASE_URL (see .env.example)");
-console.log(`${path.basename(import.meta.filename)}: connecting to ${new URL(url).host}`);
-const sql = postgres(dbUrl(url), { max: 1, onnotice: () => {} });
+// The direct (unpooled) string when there is one: schema changes shouldn't go through a transaction pooler. A value that
+// isn't a connection string (a placeholder pasted by mistake) is ignored rather than crashing the deploy.
+const isPg = (v?: string) => !!v && /^postgres(ql)?:\/\/\S+$/.test(v.trim());
+if (process.env.DATABASE_URL_DIRECT && !isPg(process.env.DATABASE_URL_DIRECT)) console.warn("DATABASE_URL_DIRECT isn't a postgres:// connection string; using DATABASE_URL");
+const url = isPg(process.env.DATABASE_URL_DIRECT) ? process.env.DATABASE_URL_DIRECT!.trim() : process.env.DATABASE_URL?.trim();
+if (!isPg(url)) throw new Error("DATABASE_URL must be a postgres:// or postgresql:// connection string (see .env.example)");
+console.log(`${path.basename(import.meta.filename)}: connecting to ${new URL(url!).host}`);
+const sql = postgres(dbUrl(url!), { max: 1, onnotice: () => {} });
 const dir = path.join(process.cwd(), "db", "migrations");
 
 await sql`create table if not exists schema_migrations (name text primary key, applied_at timestamptz not null default now())`;
