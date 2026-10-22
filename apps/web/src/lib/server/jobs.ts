@@ -51,6 +51,11 @@ export const CRYPTO_PARTS = 3;
 export async function publishForecasts() {
   const db = sql();
   const slugs = liveSlugs();
+  // At most one publish per UTC hour, however often the scheduler calls: forecasts are hourly by design, and
+  // duplicates would weight the track record towards whichever hour got called most.
+  const [done] = await db`select 1 from forecast_runs where model_version = ${MODELS.live} and status = 'published'
+    and published_at >= date_trunc('hour', now())`;
+  if (done) return { skipped: "already published this hour" };
   await ensure(slugs, ["5m", "1d"]);
   let runId: string;
   try {
