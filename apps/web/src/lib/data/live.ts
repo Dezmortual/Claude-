@@ -6,10 +6,12 @@ import { sql } from "@/lib/server/db";
 import { env } from "@/lib/server/env";
 import { endAllSessions, isOwner, sessionUser } from "@/lib/server/auth";
 import { pushConfigured, sendPush } from "@/lib/server/push";
-import { ASSETS, ASSET_BY_SLUG, MARKETS, PLANS, PLAN_BY_CODE } from "./catalogue";
+import { ASSETS, ASSET_BY_SLUG, MARKETS, PLANS, PLAN_BY_CODE, SCENARIO_CAGR } from "./catalogue";
 import { MIN_BARS, pulse, signalChanges, signalHistory, type SignalChange } from "./indicators";
-import { check as checkFormula } from "../indicators/formula";
-import { ensure, ensureCrosscheck } from "./marketdata";
+import { check as checkFormula, evaluate as evalFormula, holdsNow, signalBars } from "../indicators/formula";
+import { backtest } from "../indicators/backtest";
+import { effectiveSource, ensure, ensureCrosscheck } from "./marketdata";
+import { SOURCE_LABEL, type SourceName } from "./sources/map";
 import { MODELS, closedBars, isDemo, metrics, paths, quote, scenarios, shortTerm } from "./model";
 import {
   DataError, type Alert, type AlertCondition, type Asset, type Bar, type ForecastPage, type ForecastQuery, type ForecastRow,
@@ -742,4 +744,160 @@ export async function glance(v: Viewer) {
     return { ...r, spark: r.locked ? [] : closedBars(a.slug, "1h").slice(-24).map((b) => b.c) };
   });
   return { fromWatchlist: mine.length > 0, rows, alerts: (await alertEvents(v, 3)), at: new Date().toISOString(), tz: u.timezone };
+}
+
+// ---------------------------------------------------------------- indicator screener
+
+export type ScreenRow = {
+  slug: string; name: string; ticker: string; market: MarketCode; price: number; unit: string;
+  buyNow: boolean; sellNow: boolean;
+  last: null | { side: "buy" | "sell"; at: string; barsAgo: number };
+  /** Over the test window: signals, share right 5 bars later, and the same share from any bar (the bar to beat). */
+  buy: null | { signals: number; scored: number; right: number; anyBar: number };
+  sell: null | { signals: number; scored: number; right: number; anyBar: number };
+  error?: string;
+};
+const SCREEN_WINDOW: Record<"1d" | "1h", number> = { "1d": 365, "1h": 400 };
+
+/** Runs one of your indicators on every asset you can see: where its rule holds now, its latest signal, and how
+ *  its past signals did on that asset (in-sample, before costs). */
+export async function screenIndicator(v: Viewer, id: string, tf: "1d" | "1h") {
+  const ind = await getIndicator(v, id);
+  const assets = await visibleWithData(v);
+  await ensure(assets.map((a) => a.slug), [tf]);
+  const STEP = tf === "1d" ? 86_400_000 : 3_600_000;
+  const rows: ScreenRow[] = assets.map((a) => {
+    const b = closedBars(a.slug, tf);
+    const base = { slug: a.slug, name: a.name, ticker: a.ticker, market: a.market, price: quote(a.slug).price, unit: a.quoteUnit, buyNow: false, sellNow: false, last: null, buy: null, sell: null };
+    if (b.length < 30) return { ...base, error: "Not enough bars on this chart" };
+    try {
+      const buyS = ind.buyRule ? evalFormula(ind.buyRule, b) : null, sellS = ind.sellRule ? evalFormula(ind.sellRule, b) : null;
+      const from = Math.max(0, b.length - SCREEN_WINDOW[tf]);
+      const bt = backtest(b, { buy: ind.buyRule, sell: ind.sellRule }, from);
+      const lastOf = (s: (number | null)[] | null) => (s ? signalBars(s).at(-1) ?? -1 : -1);
+      const lb = lastOf(buyS), ls = lastOf(sellS), li = Math.max(lb, ls);
+      const side = (st: typeof bt.buy, dir: 1 | -1) => st && { signals: st.signals, scored: st.after[1].n, right: st.after[1].right,
+        anyBar: dir === 1 ? bt.base[1].up : 1 - bt.base[1].up };
+      return { ...base, buyNow: !!buyS && holdsNow(buyS), sellNow: !!sellS && holdsNow(sellS),
+        last: li < 0 ? null : { side: li === lb ? "buy" : "sell", at: new Date(b[li].ts + STEP).toISOString(), barsAgo: b.length - 1 - li },
+        buy: side(bt.buy, 1), sell: side(bt.sell, -1) };
+    } catch {
+      return { ...base, error: "The formula couldn't run here" };
+    }
+  });
+  // Firing now first, then the rule's best record (buy edge over any bar, needing a few signals to count).
+  const edge = (r: ScreenRow) => (r.buy && r.buy.scored >= 3 ? r.buy.right - r.buy.anyBar : -1);
+  rows.sort((x, y) => +(y.buyNow || y.sellNow) - +(x.buyNow || x.sellNow) || edge(y) - edge(x) || x.name.localeCompare(y.name));
+  return { indicator: ind, timeframe: tf, rows };
+}
+
+// ---------------------------------------------------------------- portfolio
+
+export type HoldingInput = { assetSlug: string; quantity: number; costPrice?: number | null; boughtOn?: string | null; note?: string | null };
+export type Lot = { id: string; quantity: number; costPrice: number | null; boughtOn: string | null; note: string | null };
+export type Position = {
+  asset: Asset; lots: Lot[]; quantity: number; price: number; value: number; change24hValue: number; change24hPct: number;
+  /** Over the lots with a purchase price; `costCovered` is the share of the quantity that has one. */
+  cost: number | null; pnl: number | null; pnlPct: number | null; costCovered: number;
+  weight: number; signal: Signal | null; pUp: number | null; alerts: number; stale: boolean;
+};
+const MAX_LOTS = 200;
+/** Only assets priced in US dollars can be added up: currency pairs and bond yields have no dollar value per unit. */
+export const holdable = (a: Asset) => a.quoteUnit === "USD" || a.quoteUnit === "USD per share";
+
+export async function addHolding(v: Viewer, i: HoldingInput) {
+  const u = requireUser(v);
+  const a = requireAsset(i.assetSlug);
+  if (!holdable(a)) throw new DataError("invalid", `${a.name} isn't priced in dollars, so it can't be added up in a portfolio`);
+  if (i.boughtOn && Date.parse(i.boughtOn) > Date.now() + 86_400_000) throw new DataError("invalid", "The purchase date is in the future");
+  return sql().begin(async (tx) => {
+    await tx`select 1 from users where id = ${u.id} for update`;
+    const [{ n }] = await tx<{ n: number }[]>`select count(*)::int as n from holdings where user_id = ${u.id}`;
+    if (n >= MAX_LOTS) throw new DataError("limit", `Up to ${MAX_LOTS} purchases can be tracked`);
+    const [r] = await tx<{ id: string }[]>`insert into holdings (user_id, asset_id, quantity, cost_price, bought_on, note)
+      select ${u.id}, id, ${i.quantity}, ${i.costPrice ?? null}, ${i.boughtOn ?? null}, ${i.note?.trim() || null} from assets where slug = ${a.slug} returning id`;
+    return { id: r.id };
+  });
+}
+
+export async function deleteHolding(v: Viewer, id: string) {
+  const u = requireUser(v);
+  const r = await sql()`delete from holdings where id = ${id} and user_id = ${u.id} returning 1`;
+  if (!r.length) throw new DataError("not_found", "No such holding");
+}
+
+export async function portfolio(v: Viewer) {
+  const u = requireUser(v);
+  const db = sql();
+  const [lots, alertCounts] = await Promise.all([
+    db<{ id: string; slug: string; quantity: number; cost_price: number | null; bought_on: Date | null; note: string | null }[]>`
+      select h.id, a.slug, h.quantity, h.cost_price, h.bought_on, h.note from holdings h join assets a on a.id = h.asset_id
+      where h.user_id = ${u.id} order by h.bought_on nulls last, h.created_at`,
+    db<{ slug: string; n: number }[]>`select a.slug, count(*)::int as n from alerts al join assets a on a.id = al.asset_id
+      where al.user_id = ${u.id} and al.is_active group by a.slug`,
+  ]);
+  const assets = [...new Set(lots.map((l) => l.slug))].map((s) => getAsset(s)).filter((a): a is Asset => !!a);
+  await load(v, assets);
+  const nAlerts = new Map(alertCounts.map((x) => [x.slug, x.n]));
+  const positions: Position[] = assets.filter((a) => closedBars(a.slug, "1d").length).map((a) => {
+    const mine = lots.filter((l) => l.slug === a.slug);
+    const r = row(v, a), q = quote(a.slug);
+    const quantity = mine.reduce((t, l) => t + l.quantity, 0), value = quantity * q.price;
+    const priced = mine.filter((l) => l.cost_price !== null);
+    const pq = priced.reduce((t, l) => t + l.quantity, 0);
+    const cost = pq ? priced.reduce((t, l) => t + l.quantity * l.cost_price!, 0) : null;
+    const pricedValue = pq * q.price;
+    return {
+      asset: a, quantity, price: q.price, value,
+      change24hPct: q.change24hPct, change24hValue: value - value / (1 + q.change24hPct / 100),
+      cost, pnl: cost === null ? null : pricedValue - cost, pnlPct: cost ? (pricedValue / cost - 1) * 100 : null, costCovered: quantity ? pq / quantity : 0,
+      weight: 0, signal: r.signal ?? null, pUp: r.pUp ?? null, alerts: nAlerts.get(a.slug) ?? 0, stale: q.status === "stale",
+      lots: mine.map((l) => ({ id: l.id, quantity: l.quantity, costPrice: l.cost_price, boughtOn: l.bought_on?.toISOString().slice(0, 10) ?? null, note: l.note })),
+    };
+  });
+  const total = positions.reduce((t, x) => t + x.value, 0);
+  for (const x of positions) x.weight = total ? x.value / total : 0;
+  positions.sort((x, y) => y.value - x.value);
+  const cost = positions.reduce((t, x) => t + (x.cost ?? 0), 0), pricedValue = positions.reduce((t, x) => t + x.price * x.quantity * x.costCovered, 0);
+  const change24h = positions.reduce((t, x) => t + x.change24hValue, 0);
+  // The long-term scenario rates for each holding's market, applied to its value today.
+  const scenario = (n: number) => {
+    const at = (k: 0 | 1 | 2) => positions.reduce((t, x) => t + x.value * (1 + SCENARIO_CAGR[x.asset.market][k]) ** n, 0);
+    return { years: n, bear: at(0), base: at(1), bull: at(2) };
+  };
+  return {
+    positions, total, cost: cost || null, pnl: cost ? pricedValue - cost : null, pnlPct: cost ? (pricedValue / cost - 1) * 100 : null,
+    change24h, change24hPct: total - change24h ? (change24h / (total - change24h)) * 100 : 0,
+    scenarios: [scenario(1), scenario(5)],
+    holdableAssets: ASSETS.filter(holdable).map((a) => ({ slug: a.slug, name: a.name, ticker: a.ticker, unit: a.meta.proxy ? `${a.meta.proxy} shares` : a.market === "crypto" ? a.ticker : "shares" })),
+  };
+}
+
+// ---------------------------------------------------------------- data health
+
+/** For the status page: each price source's last refresh, open and recent problems, and the latest scheduled runs. */
+export async function dataStatus(v: Viewer) {
+  requireUser(v);
+  const db = sql();
+  const [fetches, incidents, runs] = await Promise.all([
+    db<{ slug: string; at: Date }[]>`select a.slug, max(bf.fetched_at) as at from bar_fetches bf join assets a on a.id = bf.asset_id group by a.slug`,
+    db<{ id: string; key: string; detail: string; started_at: Date; resolved_at: Date | null }[]>`
+      select id, key, detail, started_at, resolved_at from health_incidents order by started_at desc limit 20`,
+    db<{ job: string; started_at: Date; finished_at: Date | null; status: string }[]>`
+      select job, started_at, finished_at, status from job_runs order by started_at desc limit 12`,
+  ]);
+  const last = new Map(fetches.map((f) => [f.slug, f.at]));
+  const groups = new Map<SourceName, string[]>();
+  for (const a of ASSETS) { const s = effectiveSource(a.slug); groups.set(s, [...(groups.get(s) ?? []), a.slug]); }
+  const sources = [...groups].filter(([s]) => s !== "demo").map(([s, slugs]) => {
+    const times = slugs.map((x) => last.get(x)?.getTime() ?? 0).filter(Boolean);
+    return { source: s, label: SOURCE_LABEL[s], assets: slugs.length, lastRefresh: times.length ? new Date(Math.max(...times)).toISOString() : null,
+      open: incidents.find((i) => i.key === `source:${s}` && !i.resolved_at)?.detail ?? null };
+  });
+  return {
+    sources, demoAssets: groups.get("demo")?.length ?? 0,
+    scheduler: incidents.find((i) => i.key === "scheduler" && !i.resolved_at)?.detail ?? null,
+    incidents: incidents.map((i) => ({ id: i.id, key: i.key, detail: i.detail, startedAt: i.started_at.toISOString(), resolvedAt: i.resolved_at?.toISOString() ?? null })),
+    runs: runs.map((r) => ({ job: r.job, startedAt: r.started_at.toISOString(), seconds: r.finished_at ? (r.finished_at.getTime() - r.started_at.getTime()) / 1000 : null, status: r.status })),
+  };
 }

@@ -12,6 +12,7 @@ import { sql } from "./db";
 import { sendEmail } from "./email";
 import { pushConfigured, sendPush } from "./push";
 import { env } from "./env";
+import { recordHealth, schedulerProblem, sourceProblems } from "./health";
 
 const STEP: Record<Timeframe, number> = { "5m": 300_000, "30m": 1_800_000, "1h": 3_600_000, "1d": 86_400_000, "1w": 604_800_000 };
 const liveSlugs = () => ASSETS.filter((a) => effectiveSource(a.slug) !== "demo").map((a) => a.slug);
@@ -315,6 +316,8 @@ async function tick() {
   const now = new Date();
   const out: Record<string, unknown> = {};
   for (const m of MARKETS) out[`ingest-${m.code}`] = await ingestMarket(m.code);
+  out.health = await recordHealth(sourceProblems(now)); // this run is itself proof the scheduler works
+  await recordHealth({ checked: ["scheduler"], problems: [] });
   out.alerts = { ...(await evaluateAlerts()), ...(await deliverAlerts()) };
   if (now.getUTCMinutes() < 30) out.publish = { ...(await publishForecasts()), ...(await scoreForecasts()) };
   if (now.getUTCHours() === 3 && now.getUTCMinutes() < 30) out.cleanup = await cleanup();
@@ -325,8 +328,9 @@ export const JOBS: Record<string, () => Promise<unknown>> = {
   ingest,
   ...Object.fromEntries(MARKETS.map((m) => [`ingest-${m.code}`, () => ingestMarket(m.code)])),
   ...Object.fromEntries(Array.from({ length: CRYPTO_PARTS }, (_, i) => [`ingest-crypto-${i + 1}`, () => ingestMarket("crypto", i + 1, CRYPTO_PARTS)])),
-  publish: async () => ({ ...(await publishForecasts()), ...(await scoreForecasts()) }),
-  alerts: async () => ({ ...(await evaluateAlerts()), ...(await deliverAlerts()) }),
+  // The host's own daily runs double as a watchdog for the outside scheduler.
+  publish: async () => ({ ...(await publishForecasts()), ...(await scoreForecasts()), health: await recordHealth(await schedulerProblem()) }),
+  alerts: async () => ({ ...(await evaluateAlerts()), ...(await deliverAlerts()), health: await recordHealth(await schedulerProblem()) }),
   cleanup,
   tick,
 };

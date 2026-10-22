@@ -69,3 +69,6 @@ F4 Fired-at and sent-at timestamps on alerts,alerts,should,no,yes,fixes.md; late
 F5 Signal-change damping (holds 2 closed bars) + changes-in-24h,alerts,could,no,yes,fixes.md; flip-flop 2 (thin)
 F6 Notification controls: global mute + quiet hours + daily digest + one-click stop link,alerts,should,no,yes,fixes.md; notifications 22 reviews/4 apps (thin)
 Indicator library: presets; own formulas; chart overlay; signal backtest; indicator alerts,indicators,should,no,yes,/indicators; formula language in apps/web/src/lib/indicators (no eval); npm run test:unit
+Indicator screener: an indicator's rule across every asset with its per-asset record,indicators,should,no,yes,/indicators/[id]/screen; firing now first; daily (last year) or hourly
+Portfolio tracker: lots; value; P&L; today; signals and alerts per holding; scenario totals,portfolio,should,no,yes,/portfolio; USD-priced assets only (pairs and yields can't be added up)
+Data-health alerts and status page,operations,should,no,yes,/status; incidents per source and for the scheduler; push + email to owners on start and on recovery

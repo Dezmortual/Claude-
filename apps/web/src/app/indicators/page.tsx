@@ -46,6 +46,7 @@ export default async function Indicators() {
                 </p>
                 <div className="mt-auto flex flex-wrap gap-3 pt-1 text-sm font-semibold">
                   <Link href={`/indicators/${i.id}`} className="text-accent underline">Edit and test<span className="sr-only"> {i.name}</span></Link>
+                  {(i.buyRule || i.sellRule) && <Link href={`/indicators/${i.id}/screen`} className="text-accent underline">Screen all assets<span className="sr-only"> with {i.name}</span></Link>}
                   {(i.buyRule || i.sellRule) && <Link href="/alerts" className="text-accent underline">Set an alert<span className="sr-only"> on {i.name}</span></Link>}
                 </div>
               </Card></li>

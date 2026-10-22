@@ -1,4 +1,5 @@
 import "server-only";
+import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { env } from "./env";
@@ -11,7 +12,9 @@ export async function sendEmail(to: string, subject: string, text: string, heade
     if (NODE_ENV === "production" && !EMAIL_OUTBOX) throw new Error("RESEND_API_KEY is not set");
     const dir = path.join(process.cwd(), ".data", "outbox");
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, `${Date.now()}-${subject.replace(/\W+/g, "-").toLowerCase()}.txt`), `To: ${to}\nSubject: ${subject}\n\n${text}\n`);
+    // A random part too: several emails can go out in the same millisecond (one per owner) and must not overwrite each other.
+    const name = `${Date.now()}-${randomUUID().slice(0, 8)}-${subject.replace(/\W+/g, "-").toLowerCase()}.txt`;
+    fs.writeFileSync(path.join(dir, name), `To: ${to}\nSubject: ${subject}\n\n${text}\n`);
     console.log(`[email to ${to.replace(/(.).*@/, "$1…@")}] ${subject}`);
     return;
   }

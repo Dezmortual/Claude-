@@ -35,7 +35,10 @@ test.describe("F04 watch an asset", () => {
     await expect(page.getByRole("link", { name: "Bitcoin" })).toBeVisible();
     const tab2 = await context.newPage();
     await tab2.goto("/assets/bitcoin");
+    // The star flips at once; wait for the server to have saved the removal before looking from the other tab.
+    const saved = tab2.waitForResponse((r) => r.url().includes("/api/v1/me/watchlist") && r.request().method() === "DELETE");
     await tab2.getByRole("button", { name: "Watching" }).click();
+    expect((await saved).ok()).toBe(true);
     await expect(tab2.getByRole("button", { name: "Watch", exact: true })).toBeVisible();
     await page.reload();
     await expect(page.getByRole("link", { name: "Bitcoin" })).toHaveCount(0);

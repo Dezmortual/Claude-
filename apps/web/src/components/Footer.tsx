@@ -14,6 +14,7 @@ export function Footer() {
           once its keys are set. Assets marked Demo run on generated data, not real prices. Each asset page names its source.
         </p>
         <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2">
+          <Link href="/status" className="hover:text-fg">Data status</Link>
           <Link href="/legal/terms" className="hover:text-fg">Terms</Link>
           <Link href="/legal/privacy" className="hover:text-fg">Privacy</Link>
           <Link href="/legal/risk" className="hover:text-fg">Risk disclosure</Link>

@@ -50,3 +50,11 @@ export const DeliveryBody = z.object({
   emailMode: z.enum(["instant", "digest"]).optional(),
   digestHour: z.number().int().min(0).max(23).optional(),
 });
+
+export const HoldingBody = z.object({
+  assetSlug: z.string().regex(/^[a-z0-9-]{1,40}$/),
+  quantity: z.number({ error: "Enter how many you hold" }).positive("Enter a quantity above 0").finite().max(1e15),
+  costPrice: z.number().positive("Enter a price above 0").finite().max(1e12).nullish(),
+  boughtOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a date like 2026-01-31").nullish(),
+  note: z.string().max(120, "Keep the note under 120 characters").nullish(),
+});
