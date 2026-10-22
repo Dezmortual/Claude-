@@ -284,6 +284,7 @@ Checked on the live site, 2026-10-22:
 
 Still to do:
 - `RESEND_API_KEY` was set by the owner for production and redeployed (2026-10-22). Next: set up the owner account.
+- Alpaca keys set by the owner (2026-10-22) and redeployed: `ingest` now loads 51 live assets (42 crypto and forex, plus 9 US stocks and ETFs from Alpaca's IEX feed, about 2,400 bars each). Indices, commodities and bonds stay on the labelled demo series.
 - Turn deploy previews off.
 - The database password and the cron secret passed through the Claude session. Rotate them when
   convenient: in Neon, Roles, then reset password; in Netlify, update the variables and redeploy.
