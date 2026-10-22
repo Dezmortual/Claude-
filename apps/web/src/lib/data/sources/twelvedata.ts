@@ -41,7 +41,9 @@ async function series(pair: string, interval: "5min" | "1day"): Promise<Bar[]> {
   const step = interval === "5min" ? STEP["5m"] : STEP["1d"];
   return r.values
     .map((v) => ({ ts: Date.parse(`${v.datetime.length === 10 ? `${v.datetime}T00:00:00` : v.datetime.replace(" ", "T")}Z`), o: +v.open, h: +v.high, l: +v.low, c: +v.close, v: 0 }))
-    .filter((b) => Number.isFinite(b.ts) && b.c > 0 && b.ts + step <= Date.now()); // drop the bar still forming
+    .filter((b) => Number.isFinite(b.ts) && b.c > 0 && b.ts + step <= Date.now()) // drop the bar still forming
+    // Forex is shut on Saturdays; the odd Saturday bar Twelve Data sends is a single flat quote, not a trading day.
+    .filter((b) => interval !== "1day" || new Date(b.ts).getUTCDay() !== 6);
 }
 
 // The three intraday timeframes share one request, the two daily ones another.
