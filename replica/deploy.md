@@ -272,8 +272,10 @@ Checked on the live site:
 - `publish` returned 132 live forecasts and 132 challenger forecasts.
 
 Jobs: Vercel Hobby runs crons once a day (`vercel.json`): publish at 00:05, alerts at 12:10, cleanup at 03:17
-UTC. Pages load fresh prices when opened. For 30-minute runs, use an outside scheduler (cron-job.org) calling
-`/api/cron/<job>` with `Authorization: Bearer $CRON_SECRET`.
+UTC. Pages load fresh prices when opened. For 30-minute runs, cron-job.org calls one URL,
+`/api/cron/tick`, at minutes 4 and 34 with `Authorization: Bearer $CRON_SECRET`. That one request does prices,
+alerts, the hourly publish and the daily cleanup. Live check on 2026-10-22: 200, with every market loaded and
+132 + 132 forecasts published.
 
 To do:
 - Delete the Netlify project `proofcastd`, so its scheduled function stops writing to the same database.
