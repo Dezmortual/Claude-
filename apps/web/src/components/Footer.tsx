@@ -9,8 +9,9 @@ export function Footer() {
           account for your circumstances. Prices can move against any forecast; never risk money you cannot afford to lose.
         </p>
         <p className="max-w-prose">
-          Crypto prices come from Binance and forex from the European Central Bank. Assets marked Demo (and stocks and ETFs
-          until Alpaca keys are set) run on generated demo data, not real prices.
+          Crypto prices come from Binance, forex from the European Central Bank, bond yields from the US Treasury, the
+          Bundesbank and the Bank of England, and stocks and funds from Alpaca once its keys are set. Assets marked Demo
+          run on generated data, not real prices.
         </p>
         <nav aria-label="Footer" className="flex flex-wrap gap-x-5 gap-y-2">
           <Link href="/legal/terms" className="hover:text-fg">Terms</Link>

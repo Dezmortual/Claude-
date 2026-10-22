@@ -1,17 +1,16 @@
 import "server-only";
 // Scheduled jobs, triggered by /api/cron/[job]. Each run is recorded in job_runs; failed runs stay there as the
 // dead-letter log. Every job is safe to run twice: inserts are keyed, alert firing is a compare-and-set.
-import { ASSETS, ASSET_BY_SLUG } from "@/lib/data/catalogue";
+import { ASSETS, ASSET_BY_SLUG, MARKETS } from "@/lib/data/catalogue";
 import { pulse } from "@/lib/data/indicators";
 import { ensure, ensureCrosscheck, effectiveSource, warmAll } from "@/lib/data/marketdata";
-import { closedBars, quote, shortTerm } from "@/lib/data/model";
-import type { Signal, Timeframe } from "@/lib/data/types";
+import { MODELS, challenger, closedBars, quote, shortTerm, signalFromP } from "@/lib/data/model";
+import type { MarketCode, Signal, Timeframe } from "@/lib/data/types";
 import { SIGNAL_LABEL } from "@/lib/format";
 import { sql } from "./db";
 import { sendEmail } from "./email";
 import { env } from "./env";
 
-const MODEL_VERSION = "baseline-quantile-v1";
 const liveSlugs = () => ASSETS.filter((a) => effectiveSource(a.slug) !== "demo").map((a) => a.slug);
 
 export async function runJob<T>(job: string, fn: () => Promise<T>) {
@@ -35,6 +34,14 @@ export async function ingest() {
   return { assets: liveSlugs().length };
 }
 
+/** One market's live series. The scheduled run calls these in turn, so no single request carries every asset
+ *  (Netlify's synchronous functions stop at about 10 s). */
+export async function ingestMarket(market: MarketCode) {
+  const slugs = liveSlugs().filter((s) => ASSET_BY_SLUG.get(s)!.market === market);
+  await Promise.all([ensure(slugs, ["5m", "30m", "1h", "1d", "1w"]), market === "crypto" ? ensureCrosscheck() : null]);
+  return { market, assets: slugs.length };
+}
+
 // ---------------------------------------------------------------- publish + score
 
 /** Locks in the current forecasts for live assets. Demo-series assets are never published or scored. */
@@ -44,26 +51,39 @@ export async function publishForecasts() {
   await ensure(slugs, ["5m", "1d"]);
   let runId: string;
   try {
-    [{ id: runId }] = await db<{ id: string }[]>`insert into forecast_runs (model_version) values (${MODEL_VERSION}) returning id`;
+    [{ id: runId }] = await db<{ id: string }[]>`insert into forecast_runs (model_version) values (${MODELS.live}) returning id`;
   } catch {
     return { skipped: "another run is in progress" };
   }
   try {
     const ids = new Map((await db<{ id: string; slug: string }[]>`select id, slug from assets`).map((r) => [r.slug, r.id]));
-    const rows = [];
+    type Row = { asset_id: string; horizon: string; base_price: number; generated_at: Date; target_at: Date;
+      low: number; mid: number; high: number; p_up: number; signal: Signal };
+    const rows: (Row & { run_id: string })[] = [];
+    const shadow: Row[] = [];
     const now = new Date();
     for (const slug of slugs) {
       if (!closedBars(slug, "1d").length || quote(slug).status === "stale") continue;
       const base = quote(slug).price;
+      const ch = challenger(slug);
       for (const p of shortTerm(slug).points) {
         if (p.kind !== "forecast") continue;
-        rows.push({ run_id: runId, asset_id: ids.get(slug)!, horizon: p.horizon, base_price: base, generated_at: now, target_at: new Date(p.targetAt),
-          low: p.low, mid: p.mid, high: p.high, p_up: p.pUp!, signal: p.signal! });
+        const common = { asset_id: ids.get(slug)!, horizon: p.horizon, base_price: base, generated_at: now, target_at: new Date(p.targetAt) };
+        rows.push({ run_id: runId, ...common, low: p.low, mid: p.mid, high: p.high, p_up: p.pUp!, signal: p.signal! });
+        const c = ch?.[p.horizon as "1d" | "7d" | "1m"];
+        // Same asset, base price and target time as the live forecast, so the two can be compared pair by pair.
+        if (c) shadow.push({ ...common, low: base * Math.exp(c.lo), mid: base * Math.exp(c.mid), high: base * Math.exp(c.hi), p_up: c.pUp, signal: signalFromP(c.pUp) });
       }
     }
     if (rows.length) await db`insert into forecasts ${db(rows)}`;
     await db`update forecast_runs set status = 'published', published_at = now() where id = ${runId}`;
-    return { published: rows.length };
+    // The challenger's run: hidden from every screen, scored like any other (see replica/model.md).
+    if (shadow.length) {
+      const [{ id: chId }] = await db<{ id: string }[]>`insert into forecast_runs (model_version) values (${MODELS.challenger}) returning id`;
+      await db`insert into forecasts ${db(shadow.map((r) => ({ run_id: chId, ...r })))}`;
+      await db`update forecast_runs set status = 'published', published_at = now() where id = ${chId}`;
+    }
+    return { published: rows.length, challenger: shadow.length };
   } catch (e) {
     await db`update forecast_runs set status = 'failed', notes = ${String(e).slice(0, 500)} where id = ${runId}`;
     throw e;
@@ -179,6 +199,7 @@ export async function cleanup() {
 
 export const JOBS: Record<string, () => Promise<unknown>> = {
   ingest,
+  ...Object.fromEntries(MARKETS.map((m) => [`ingest-${m.code}`, () => ingestMarket(m.code)])),
   publish: async () => ({ ...(await publishForecasts()), ...(await scoreForecasts()) }),
   alerts: async () => ({ ...(await evaluateAlerts()), ...(await deliverAlerts()) }),
   cleanup,

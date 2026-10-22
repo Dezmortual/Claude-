@@ -10,12 +10,16 @@ async function slot<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 export async function getJson<T>(url: string, headers: Record<string, string> = {}): Promise<T> {
+  return JSON.parse(await getText(url, headers)) as T;
+}
+
+export async function getText(url: string, headers: Record<string, string> = {}): Promise<string> {
   return slot(async () => {
     let last: unknown;
     for (let attempt = 0; attempt < 4; attempt++) {
       try {
         const r = await fetch(url, { headers, signal: AbortSignal.timeout(15_000), cache: "no-store" });
-        if (r.ok) return (await r.json()) as T;
+        if (r.ok) return await r.text();
         if (r.status !== 429 && r.status < 500) throw new Error(`${new URL(url).host} ${r.status}`);
         last = new Error(`${new URL(url).host} ${r.status}`);
       } catch (e) {

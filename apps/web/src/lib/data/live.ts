@@ -8,7 +8,7 @@ import { endAllSessions, isOwner, sessionUser } from "@/lib/server/auth";
 import { ASSETS, ASSET_BY_SLUG, MARKETS, PLANS, PLAN_BY_CODE } from "./catalogue";
 import { pulse } from "./indicators";
 import { ensure, ensureCrosscheck } from "./marketdata";
-import { closedBars, isDemo, metrics, paths, quote, scenarios, shortTerm } from "./model";
+import { MODELS, closedBars, isDemo, metrics, paths, quote, scenarios, shortTerm } from "./model";
 import {
   DataError, type Alert, type AlertCondition, type Asset, type Bar, type ForecastPage, type ForecastQuery, type ForecastRow,
   type Horizon, type Market, type MarketCode, type Mover, type Plan, type Signal, type TablePrefs, type Timeframe, type Viewer,
@@ -435,12 +435,48 @@ export async function setPrefs(v: Viewer, p: TablePrefs) {
 
 // ---------------------------------------------------------------- track record
 
-export async function trackRecord() {
-  return sql()<{ horizon: string; market: string; n: number; hit_rate: number; coverage: number; median_err: number }[]>`
-    select f.horizon, m.code as market, count(*)::int as n,
-      avg(o.direction_hit::int)::float as hit_rate, avg(o.inside_band::int)::float as coverage,
-      percentile_cont(0.5) within group (order by o.abs_pct_error)::float as median_err
-    from forecast_outcomes o join forecasts f on f.id = o.forecast_id
+type ScoreRow = { n: number; hit_rate: number; coverage: number; median_err: number; brier: number; up_rate: number; naive_err: number };
+
+/** One model's scored forecasts by market and horizon. Two naive baselines are scored on the very same forecasts:
+ *  "always up" (its hit rate is the share that ended higher) and "no change" (its error is the actual move). The Brier
+ *  score grades the up-probability: lower is better, and a flat 50% scores 0.25. */
+export async function trackRecord(model: string = MODELS.live) {
+  return sql()<(ScoreRow & { horizon: string; market: string })[]>`
+    select f.horizon, m.code as market, ${scoreCols()}
+    from forecast_outcomes o join forecasts f on f.id = o.forecast_id join forecast_runs r on r.id = f.run_id
     join assets a on a.id = f.asset_id join markets m on m.id = a.market_id
+    where r.model_version = ${model}
     group by f.horizon, m.code order by m.code, f.horizon`;
 }
+
+function scoreCols() {
+  return sql()`count(*)::int as n,
+      avg(o.direction_hit::int)::float as hit_rate, avg(o.inside_band::int)::float as coverage,
+      percentile_cont(0.5) within group (order by o.abs_pct_error)::float as median_err,
+      avg(power(f.p_up - (o.realized_price >= f.base_price)::int, 2))::float as brier,
+      avg((o.realized_price >= f.base_price)::int)::float as up_rate,
+      percentile_cont(0.5) within group (order by abs(o.realized_price / f.base_price - 1) * 100)::float as naive_err`;
+}
+
+/** Does "61% up" come true about 61% of the time? Scored forecasts grouped by their stated up-probability. */
+export async function calibration(model: string = MODELS.live) {
+  return sql()<{ bucket: number; label: string; n: number; stated: number; actual: number }[]>`
+    with b as (
+      select case when f.p_up < 0.35 then 0 when f.p_up < 0.45 then 1 when f.p_up <= 0.55 then 2 when f.p_up < 0.65 then 3 else 4 end as bucket,
+        f.p_up, (o.realized_price >= f.base_price)::int as up
+      from forecast_outcomes o join forecasts f on f.id = o.forecast_id join forecast_runs r on r.id = f.run_id
+      where r.model_version = ${model})
+    select bucket, (array['under 35%','35–45%','45–55%','55–65%','65% and over'])[bucket + 1] as label,
+      count(*)::int as n, avg(p_up)::float as stated, avg(up)::float as actual
+    from b group by bucket order by bucket`;
+}
+
+/** The live model and the challenger by horizon, over the same hours (both publish in every run). */
+export async function modelComparison() {
+  return sql()<(ScoreRow & { model: string; horizon: string })[]>`
+    select r.model_version as model, f.horizon, ${scoreCols()}
+    from forecast_outcomes o join forecasts f on f.id = o.forecast_id join forecast_runs r on r.id = f.run_id
+    where r.model_version in (${MODELS.live}, ${MODELS.challenger})
+    group by r.model_version, f.horizon order by f.horizon, r.model_version`;
+}
+

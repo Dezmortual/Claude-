@@ -7,6 +7,7 @@ import { alpacaBars, alpacaConfigured } from "./sources/alpaca";
 import { binanceBars } from "./sources/binance";
 import { paprikaPrices } from "./sources/coinpaprika";
 import { frankfurterDaily } from "./sources/frankfurter";
+import { yieldDaily, type YieldSeries } from "./sources/yields";
 import { sourceFor, type SourceName } from "./sources/map";
 import { bars as demoBars } from "./series";
 import type { Bar, Timeframe } from "./types";
@@ -45,6 +46,11 @@ async function fetchFromSource(slug: string, tf: Timeframe, since: number | null
     case "frankfurter": {
       if (tf !== "1d" && tf !== "1w") return []; // one rate per day: no intraday series exists
       const daily = await frankfurterDaily(symbol!, since, Math.ceil(KEEP["1d"] * 1.45));
+      return tf === "1d" ? daily : toWeekly(daily);
+    }
+    case "yields": {
+      if (tf !== "1d" && tf !== "1w") return []; // one official value per working day
+      const daily = await yieldDaily(symbol as YieldSeries, since, Math.ceil(KEEP["1d"] * 1.45));
       return tf === "1d" ? daily : toWeekly(daily);
     }
     default: return [];

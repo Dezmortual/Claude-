@@ -5,6 +5,7 @@ import { ASSET_BY_SLUG, MARKETS, PROXIES, SCENARIO_CAGR } from "./catalogue";
 import { macd, sma } from "./indicators";
 import { cachedBars as bars, crosscheck, effectiveSource, loadError } from "./marketdata";
 import { SOURCE_LABEL } from "./sources/map";
+import { YIELD_LABEL, type YieldSeries } from "./sources/yields";
 import type { Bar, ForecastPoint, Horizon, Metrics, PathRow, Quote, Scenarios, Signal } from "./types";
 
 const DAY = 86_400_000;
@@ -54,7 +55,8 @@ export function quote(slug: string): Quote {
   const src = effectiveSource(slug);
   const cross = crosscheck(slug);
   const spread = cross ? (Math.abs(cross.price - last.c) / last.c) * 100 : 0;
-  const staleAfter = b5.length ? 15 * 60_000 : 4 * 86_400_000; // a weekend plus a holiday for daily-only sources
+  // Daily-only sources: a weekend plus a holiday; official yields can also lag two working days (Bank of England).
+  const staleAfter = b5.length ? 15 * 60_000 : (src === "yields" ? 6 : 4) * 86_400_000;
   const status: Quote["status"] = loadError(slug) || Date.now() - observedAt > staleAfter ? "stale" : cross && spread > 0.5 ? "diverged" : "ok";
   return {
     price: last.c,
@@ -63,7 +65,7 @@ export function quote(slug: string): Quote {
     checkedAt: new Date(cross?.checkedAt ?? observedAt).toISOString(),
     crosscheckSpreadPct: spread,
     status,
-    source: proxyNote(slug, src) ?? SOURCE_LABEL[src],
+    source: proxyNote(slug, src) ?? (src === "yields" ? YIELD_LABEL[ASSET_BY_SLUG.get(slug)!.ticker as YieldSeries] : SOURCE_LABEL[src]),
     crosscheckSource: cross?.source ?? "",
   };
 }
@@ -117,6 +119,59 @@ export function shortTerm(slug: string): ShortTerm {
   const out = { points, q };
   if (stCache.size > 500) stCache.clear();
   stCache.set(key, out);
+  return out;
+}
+
+// ---------------------------------------------------------------- models
+
+/** The model whose forecasts the app shows, and the challenger published hidden beside it (replica/model.md). */
+export const MODELS = { live: "baseline-quantile-v1", challenger: "volscaled-momentum-v2" } as const;
+
+/** Standard deviation of the 20 daily log returns ending at bar i. */
+function vol20(c: number[], i: number) {
+  if (i < 21) return NaN;
+  let s = 0, s2 = 0;
+  for (let k = i - 19; k <= i; k++) { const r = Math.log(c[k] / c[k - 1]); s += r; s2 += r * r; }
+  const m = s / 20;
+  return Math.sqrt(Math.max(s2 / 20 - m * m, 0));
+}
+
+/** Challenger forecasts for the short horizons. Fixed before any of its results were seen (replica/model.md):
+ *  1. each past forward return is divided by the volatility at its start and multiplied by today's, so ranges widen
+ *     when markets get rough instead of reflecting two calm years;
+ *  2. the matching condition adds momentum (the sign of the last 28 days, 20 sessions where markets close) to the
+ *     50-day trend, falling back to trend only, then to every moment, below 60 matches;
+ *  3. the median move is shrunk halfway to zero and the up-probability halfway to 50%.
+ *  Returns null when the series is too short or flat to measure volatility. */
+export function challenger(slug: string) {
+  const c = closedBars(slug, "1d").map((x) => x.c);
+  const session = isSessionBased(slug);
+  const last = c.length - 1;
+  const vNow = vol20(c, last);
+  if (c.length < 120 || !(vNow > 0)) return null;
+  const mLen = session ? 20 : 28;
+  const mom = (i: number) => c[i] >= c[i - mLen];
+  const out = {} as Record<"1d" | "7d" | "1m", { lo: number; mid: number; hi: number; pUp: number }>;
+  for (const h of ["1d", "7d", "1m"] as const) {
+    const n = steps(h, session);
+    const pick = (match: (i: number) => boolean) => {
+      const r: number[] = [];
+      for (let i = Math.max(50, c.length - 730); i < c.length - n; i++) {
+        const v = vol20(c, i);
+        if (v > 0 && match(i)) r.push(Math.log(c[i + n] / c[i]) / v);
+      }
+      return r;
+    };
+    let z = pick((i) => trendState(c, i) === trendState(c, last) && mom(i) === mom(last));
+    if (z.length < 60) z = pick((i) => trendState(c, i) === trendState(c, last));
+    if (z.length < 60) z = pick(() => true);
+    if (!z.length) return null;
+    z.sort((a, b) => a - b);
+    const lo = quantile(z, 0.1) * vNow, hi = quantile(z, 0.9) * vNow;
+    const mid = Math.min(hi, Math.max(lo, 0.5 * quantile(z, 0.5) * vNow));
+    const pUp = 0.5 + 0.5 * (z.filter((x) => x > 0).length / z.length - 0.5);
+    out[h] = { lo, mid, hi, pUp };
+  }
   return out;
 }
 

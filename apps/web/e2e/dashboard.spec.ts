@@ -9,7 +9,7 @@ test.describe("D-H1 owner dashboard", () => {
       await expect(page.getByRole("heading", { level: 2, name: h })).toBeVisible();
     }
     await expect(page.getByRole("link", { name: /Bitcoin/ }).first()).toHaveAttribute("href", "/assets/bitcoin");
-    await expect(page.getByText("Live assets")).toBeVisible();
+    await expect(page.getByText("Live assets", { exact: true })).toBeVisible();
     await a11y(page, "/ dashboard");
   });
 

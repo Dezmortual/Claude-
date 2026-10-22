@@ -13,7 +13,8 @@
     "db:setup": "npm run db:migrate && npm run db:seed",
     "test:api": "tsx --env-file-if-exists=.env.local tests/api.test.mts",
     "e2e:db": "tsx scripts/reset-test-db.mts",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "models:compare": "tsx --env-file-if-exists=.env.local scripts/compare-models.mts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "1.2.0",
