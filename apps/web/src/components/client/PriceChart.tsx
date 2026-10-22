@@ -25,7 +25,11 @@ export function PriceChart({ slug, name, unit, initial, initialRange = "3m", for
   const chart = useRef<IChartApi | null>(null);
   const [range, setRange] = useState(initialRange);
   const [bars, setBars] = useState(initial);
-  const [kind, setKind] = useState<"line" | "candles">("line");
+  const [picked, setKind] = useState<"line" | "candles">("line");
+  // Sources with one price a day and no highs or lows (ECB forex rates, official yields) would draw flat dashes as
+  // candles, so those series are always a line.
+  const closeOnly = bars.length > 0 && bars.every((b) => b.h === b.l);
+  const kind = closeOnly ? "line" : picked;
   const [horizon, setHorizon] = useState<"1d" | "7d" | "1m" | null>(forecast ? "1m" : null);
   const [state, setState] = useState<"ok" | "loading" | "error">("ok");
   const [theme, setTheme] = useState(0);
@@ -120,10 +124,14 @@ export function PriceChart({ slug, name, unit, initial, initialRange = "3m", for
               ))}
             </div>
           )}
-          <div role="radiogroup" aria-label="Chart type" className="flex gap-1">
-            <button type="button" role="radio" aria-checked={kind === "line"} onClick={() => setKind("line")} className={seg(kind === "line")}>Line</button>
-            <button type="button" role="radio" aria-checked={kind === "candles"} onClick={() => setKind("candles")} className={seg(kind === "candles")}>Candles</button>
-          </div>
+          {closeOnly ? (
+            <p className="text-xs text-muted">Line only: this source publishes one price a day, with no highs or lows to draw candles from.</p>
+          ) : (
+            <div role="radiogroup" aria-label="Chart type" className="flex gap-1">
+              <button type="button" role="radio" aria-checked={kind === "line"} onClick={() => setKind("line")} className={seg(kind === "line")}>Line</button>
+              <button type="button" role="radio" aria-checked={kind === "candles"} onClick={() => setKind("candles")} className={seg(kind === "candles")}>Candles</button>
+            </div>
+          )}
         </div>
       </div>
       <figure className="relative" aria-label={`${name} price chart`} aria-describedby={`${slug}-chart-summary`}>
