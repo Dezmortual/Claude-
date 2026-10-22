@@ -49,14 +49,23 @@ const UNITS: Record<MarketCode, string> = {
   crypto: "USD", forex: "quote currency", stocks: "USD per share", commodities: "USD", indices: "index points", etfs: "USD per share", bonds: "% yield",
 };
 
+// Markets with no free official feed, shown through a US-listed fund that tracks them (Alpaca, IEX). Their price is the
+// fund's, in USD per share, never the index level or the metal's spot price, and the asset page says so.
+export const PROXIES: Record<string, { ticker: string; fund: string; anchor: number }> = {
+  sp500: { ticker: "SPY", fund: "SPDR S&P 500 ETF", anchor: 645 },
+  nasdaq100: { ticker: "QQQ", fund: "Invesco QQQ", anchor: 572 },
+  gold: { ticker: "GLD", fund: "SPDR Gold Shares", anchor: 336 },
+};
+
 export const ANCHORS: Record<string, number> = {};
 
 function build(market: MarketCode, rows: Row[]): Asset[] {
   return rows.map(([slug, ticker, name, anchor, pub]) => {
-    ANCHORS[slug] = anchor;
+    const proxy = PROXIES[slug];
+    ANCHORS[slug] = proxy?.anchor ?? anchor;
     return {
-      slug, ticker, name, market, quoteUnit: UNITS[market], isPublic: !!pub,
-      meta: { maxSupply: MAX_SUPPLY[slug], dividendYieldPct: DIVIDENDS[slug] ?? 0 },
+      slug, ticker, name, market, quoteUnit: proxy ? "USD per share" : UNITS[market], isPublic: !!pub,
+      meta: { maxSupply: MAX_SUPPLY[slug], dividendYieldPct: DIVIDENDS[slug] ?? 0, proxy: proxy?.ticker },
     };
   });
 }

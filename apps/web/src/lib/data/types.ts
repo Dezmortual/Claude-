@@ -22,7 +22,7 @@ export interface Asset {
   market: MarketCode;
   quoteUnit: string;
   isPublic: boolean;
-  meta: { maxSupply?: number; dividendYieldPct?: number; about?: string };
+  meta: { maxSupply?: number; dividendYieldPct?: number; about?: string; proxy?: string };
 }
 
 export interface Bar { ts: number; o: number; h: number; l: number; c: number; v: number }

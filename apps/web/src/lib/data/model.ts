@@ -1,13 +1,23 @@
 // Baseline forecast model: empirical quantiles of past forward returns, conditioned on the current
 // trend state (close above or below its 50-day average). Deliberately simple; the worker's model
 // replaces it, and the public track record decides whether anything fancier earns its place.
-import { ASSET_BY_SLUG, MARKETS, SCENARIO_CAGR } from "./catalogue";
+import { ASSET_BY_SLUG, MARKETS, PROXIES, SCENARIO_CAGR } from "./catalogue";
 import { macd, sma } from "./indicators";
 import { cachedBars as bars, crosscheck, effectiveSource, loadError } from "./marketdata";
 import { SOURCE_LABEL } from "./sources/map";
 import type { Bar, ForecastPoint, Horizon, Metrics, PathRow, Quote, Scenarios, Signal } from "./types";
 
 const DAY = 86_400_000;
+
+/** Source line for an asset shown through a tracking fund: whose price it is and what it is not. */
+function proxyNote(slug: string, src: string) {
+  const a = ASSET_BY_SLUG.get(slug)!;
+  const p = a.meta.proxy && PROXIES[slug];
+  if (!p || src !== "alpaca") return null;
+  const index = a.market === "indices";
+  const what = index ? `the ${a.name}` : a.name.toLowerCase();
+  return `${SOURCE_LABEL.alpaca}, via ${p.ticker} (${p.fund}), a fund that tracks ${what}: its price per share, not ${index ? "the index level" : "the spot price"}`;
+}
 
 export function isSessionBased(slug: string) {
   const a = ASSET_BY_SLUG.get(slug)!;
@@ -54,7 +64,7 @@ export function quote(slug: string): Quote {
     checkedAt: new Date(cross?.checkedAt ?? observedAt).toISOString(),
     crosscheckSpreadPct: spread,
     status,
-    source: SOURCE_LABEL[src],
+    source: proxyNote(slug, src) ?? SOURCE_LABEL[src],
     crosscheckSource: cross?.source ?? "",
   };
 }

@@ -35,7 +35,7 @@ export async function AssetHeader({ asset, quote, viewer, current, title, priceS
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-sm text-subtle">{asset.ticker}</span>
-            {isDemo(asset.slug) && <DemoNote />}
+            {isDemo(asset.slug) ? <DemoNote /> : asset.meta.proxy && <Badge>Price of {asset.meta.proxy}, a tracking fund</Badge>}
           </div>
           <h1 className="break-words text-xl">{title}</h1>
         </div>

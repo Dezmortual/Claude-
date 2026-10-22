@@ -104,7 +104,7 @@ export function ForecastTable({ data, tab, visible, base, current, watchlist, st
             {data.rows.map((r) => (
               <tr key={r.asset.slug} className="group border-t">
                 <th scope="row" className="sticky left-0 z-dropdown max-w-xs bg-surface px-3 py-2 text-left font-normal group-hover:bg-surface-sunken">
-                  <AssetCell name={r.asset.name} ticker={r.asset.ticker} href={`/assets/${r.asset.slug}`} demo={r.demo} />
+                  <AssetCell name={r.asset.name} ticker={r.asset.ticker} href={`/assets/${r.asset.slug}`} demo={r.demo} via={r.demo ? undefined : r.asset.meta.proxy} />
                 </th>
                 {r.locked ? (
                   <td colSpan={cols.length} className="px-3 py-2 text-left group-hover:bg-surface-sunken">
@@ -137,7 +137,7 @@ export function ForecastTable({ data, tab, visible, base, current, watchlist, st
                   <AssetMark ticker={r.asset.ticker} />
                   <span className="min-w-0">
                     <span className="block truncate font-semibold">{r.asset.name}</span>
-                    <span className="block font-mono text-xs text-subtle">{r.asset.ticker}{!r.locked && ` · ${fmtPrice(r.price, r.asset.quoteUnit)}`}</span>
+                    <span className="block font-mono text-xs text-subtle">{r.asset.ticker}{!r.demo && r.asset.meta.proxy && ` via ${r.asset.meta.proxy}`}{!r.locked && ` · ${fmtPrice(r.price, r.asset.quoteUnit)}`}</span>
                   </span>
                 </span>
                 {r.locked ? (
