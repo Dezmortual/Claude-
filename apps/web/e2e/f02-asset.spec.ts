@@ -70,3 +70,18 @@ test.describe("F02 read an outlook and size a position", () => {
     await a11y(page, "/");
   });
 });
+
+test.describe("bugs found in the manual pass", () => {
+  test.use({ storageState: ownerState("a") });
+
+  test("BUG-009 no cross-check claim where there is no second source", async ({ page }) => {
+    await page.goto("/assets/gold"); // demo series: no second source exists
+    await expect(page.getByText("Cross-check: none for this source")).toBeVisible();
+    await expect(page.getByText(/Cross-check:\s*agrees within/)).toHaveCount(0);
+  });
+
+  test("BUG-011 the price chart has an accessible name", async ({ page }) => {
+    await page.goto("/assets/bitcoin");
+    await expect(page.getByRole("figure", { name: "Bitcoin price chart" })).toBeVisible();
+  });
+});

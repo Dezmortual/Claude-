@@ -65,7 +65,7 @@ export function PageTitle({ eyebrow, title, children }: { eyebrow?: string; titl
 
 export function Section({ id, title, action, children, className }: { id?: string; title: string; action?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section id={id} aria-labelledby={id ? `${id}-h` : undefined} className={cx("scroll-mt-20 space-y-4", className)}>
+    <section id={id} aria-labelledby={id ? `${id}-h` : undefined} className={cx("scroll-mt-16 space-y-4", className)}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h2 id={id ? `${id}-h` : undefined} className="text-lg text-fg">{title}</h2>
         {action}

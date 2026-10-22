@@ -27,7 +27,7 @@ export default defineConfig({
     env: {
       DATABASE_URL: TEST_DB, APP_URL: `http://localhost:${PORT}`, OWNER_EMAILS: OWNERS.join(","), PRIVATE_MODE: "true",
       EMAIL_OUTBOX: "true", MARKET_DATA: "demo", CRON_SECRET: "e2e-cron-secret-0123456789abcdef", TRUST_PROXY_HEADERS: "true",
-      RESEND_API_KEY: "", NEXT_TELEMETRY_DISABLED: "1",
+      RESEND_API_KEY: "", NEXT_TELEMETRY_DISABLED: "1", NEXT_DIST_DIR: ".next-e2e",
     },
   },
 });

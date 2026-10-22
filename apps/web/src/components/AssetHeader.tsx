@@ -59,7 +59,9 @@ export async function AssetHeader({ asset, quote, viewer, current, title, priceS
         <span>Source: {quote.source}</span>
         <span className="inline-flex items-center gap-1">
           Cross-check:{" "}
-          {quote.status === "diverged" ? <Badge tone="warning">differs by {pct(quote.crosscheckSpreadPct)}</Badge> : <>agrees within {quote.crosscheckSpreadPct.toFixed(2)}%</>}
+          {!quote.crosscheckSource ? <>none for this source</>
+            : quote.status === "diverged" ? <Badge tone="warning">differs by {pct(quote.crosscheckSpreadPct)}</Badge>
+            : <>{quote.crosscheckSource} agrees within {quote.crosscheckSpreadPct.toFixed(2)}%</>}
         </span>
         <span>Checked {dateTime(quote.checkedAt, tz)}</span>
         <Link prefetch={false} href={`/assets/${asset.slug}#method`} className="font-semibold text-accent hover:underline">How this is calculated</Link>

@@ -126,7 +126,7 @@ export function PriceChart({ slug, name, unit, initial, initialRange = "3m", for
           </div>
         </div>
       </div>
-      <figure className="relative" aria-describedby={`${slug}-chart-summary`}>
+      <figure className="relative" aria-label={`${name} price chart`} aria-describedby={`${slug}-chart-summary`}>
         {/* Not role="img": the chart library puts a focusable attribution link inside this box. */}
         <div ref={box} className="h-chart w-full md:h-chart-lg" />
         {state === "loading" && <div className="absolute inset-0 animate-pulse rounded-md bg-surface-sunken/60" aria-hidden />}

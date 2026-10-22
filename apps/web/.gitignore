@@ -7,3 +7,4 @@ next-env.d.ts
 e2e/.auth/
 e2e/report/
 e2e/results/
+.next-e2e/

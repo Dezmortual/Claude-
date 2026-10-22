@@ -76,3 +76,12 @@ test.describe("F01 find a strong signal", () => {
     await a11y(page, "/forecasts mobile");
   });
 });
+
+test("BUG-010 search box is usable at phone width @mobile", async ({ page }) => {
+  await page.goto("/forecasts");
+  const search = await page.getByRole("searchbox", { name: "Search assets" }).boundingBox();
+  const signal = await page.getByLabel("Signal").boundingBox();
+  expect(search!.width).toBeGreaterThan(300);
+  const overlaps = !(search!.x + search!.width <= signal!.x || signal!.x + signal!.width <= search!.x || search!.y + search!.height <= signal!.y || signal!.y + signal!.height <= search!.y);
+  expect(overlaps).toBe(false);
+});

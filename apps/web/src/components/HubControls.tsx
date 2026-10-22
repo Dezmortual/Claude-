@@ -40,7 +40,7 @@ export function Filters({ q, signal, volatility, keep, action }: { q: string; si
   return (
     <form id="hub-filters" action={action} method="get" role="search" className="flex flex-wrap items-end gap-3">
       {Object.entries(keep).map(([k, v]) => v && <input key={k} type="hidden" name={k} value={v} />)}
-      <label className="grid min-w-0 flex-1 basis-56 gap-1 text-sm">
+      <label className="grid w-full min-w-0 gap-1 text-sm md:w-auto md:flex-1">
         <span className="sr-only">Search assets</span>
         <span className="relative">
           <Search aria-hidden className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-subtle" />
