@@ -283,8 +283,7 @@ Checked on the live site, 2026-10-22:
 | scheduled function `jobs` | registered (`4,34 * * * *`) |
 
 Still to do:
-- **`RESEND_API_KEY` is still the placeholder text.** Sign-up emails can't be sent until the owner
-  pastes a real key, and after that a redeploy is needed.
+- `RESEND_API_KEY` was set by the owner for production and redeployed (2026-10-22). Next: set up the owner account.
 - Turn deploy previews off.
 - The database password and the cron secret passed through the Claude session. Rotate them when
   convenient: in Neon, Roles, then reset password; in Netlify, update the variables and redeploy.
