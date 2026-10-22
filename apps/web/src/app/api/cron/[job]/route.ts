@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { env } from "@/lib/server/env";
 import { JOBS, runJob } from "@/lib/server/jobs";
 
-export const maxDuration = 60;
+export const maxDuration = 300; // the tick job runs every step in one request (Vercel Hobby allows up to 300 s)
 
 // Called by the scheduler (the GitHub Actions workflow; Vercel Cron would also work) with "Authorization: Bearer $CRON_SECRET".
 async function handle(req: Request, { params }: { params: Promise<{ job: string }> }) {

@@ -200,6 +200,19 @@ export async function cleanup() {
   return { sessionsRemoved: s.n };
 }
 
+/** Everything a scheduled run does, in one request, for an outside scheduler hitting a single URL every 30 minutes
+ *  (cron-job.org on Vercel's free plan, where a function may run for minutes): prices market by market and alerts
+ *  every run, publish and score on the run in the first half of the hour, cleanup on the 03:00 UTC run. */
+async function tick() {
+  const now = new Date();
+  const out: Record<string, unknown> = {};
+  for (const m of MARKETS) out[`ingest-${m.code}`] = await ingestMarket(m.code);
+  out.alerts = { ...(await evaluateAlerts()), ...(await deliverAlerts()) };
+  if (now.getUTCMinutes() < 30) out.publish = { ...(await publishForecasts()), ...(await scoreForecasts()) };
+  if (now.getUTCHours() === 3 && now.getUTCMinutes() < 30) out.cleanup = await cleanup();
+  return out;
+}
+
 export const JOBS: Record<string, () => Promise<unknown>> = {
   ingest,
   ...Object.fromEntries(MARKETS.map((m) => [`ingest-${m.code}`, () => ingestMarket(m.code)])),
@@ -207,4 +220,5 @@ export const JOBS: Record<string, () => Promise<unknown>> = {
   publish: async () => ({ ...(await publishForecasts()), ...(await scoreForecasts()) }),
   alerts: async () => ({ ...(await evaluateAlerts()), ...(await deliverAlerts()) }),
   cleanup,
+  tick,
 };
