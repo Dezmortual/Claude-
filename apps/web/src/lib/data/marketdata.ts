@@ -88,7 +88,10 @@ async function load(slug: string, tf: Timeframe): Promise<Entry> {
   if (!f || Date.now() - f.fetched_at.getTime() > refresh) {
     try {
       const since = f?.last ? f.last.getTime() + STEP[tf] : null;
-      const fresh = (await fetchFromSource(slug, tf, since)).filter((b) => b.h >= b.l && b.o > 0 && b.c > 0);
+      // One bar per time: a source that repeats a bar (Twelve Data does for some forex days) would make the
+      // upsert below fail, since one statement can't update the same row twice. The later copy wins.
+      const fresh = [...new Map((await fetchFromSource(slug, tf, since))
+        .filter((b) => b.h >= b.l && b.o > 0 && b.c > 0).map((b) => [b.ts, b] as const)).values()];
       if (fresh.length) {
         const rows = fresh.map((b) => ({ asset_id: id, timeframe: tf, ts: new Date(b.ts), open: b.o, high: b.h, low: b.l, close: b.c, volume: b.v }));
         for (let i = 0; i < rows.length; i += 1000) {
