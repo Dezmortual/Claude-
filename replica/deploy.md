@@ -288,6 +288,10 @@ Still to do:
 - Stand-in funds (2026-10-22): the S&P 500, Nasdaq 100 and gold read SPY, QQQ and GLD from Alpaca, labelled as fund
   prices per share. `ingest` now loads 54 live assets. Stocks, funds and stand-ins publish forecasts and check alerts
   only while the US market is open, because a quote older than 15 minutes counts as stale and is skipped.
+- Silver and oil (2026-10-22): SLV and USO through Alpaca; `ingest` loads 56 live assets. USO's weekly closes run
+  from about $70 to about $160 between February and October 2026 with no single jump, so it's a price move in the
+  feed, not a split artifact. Only the bonds and the DAX stay on demo data.
+- Dashboard redesign deployed (premium home, see commit 8761cda).
 - Turn deploy previews off.
 - The database password and the cron secret passed through the Claude session. Rotate them when
   convenient: in Neon, Roles, then reset password; in Netlify, update the variables and redeploy.
