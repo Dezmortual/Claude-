@@ -4,8 +4,10 @@ import path from "node:path";
 import postgres from "postgres";
 import { dbUrl } from "../src/lib/dburl";
 
-const url = process.env.DATABASE_URL;
+// The direct (unpooled) string when there is one: schema changes shouldn't go through a transaction pooler.
+const url = process.env.DATABASE_URL_DIRECT || process.env.DATABASE_URL;
 if (!url) throw new Error("Set DATABASE_URL (see .env.example)");
+console.log(`${path.basename(import.meta.filename)}: connecting to ${new URL(url).host}`);
 const sql = postgres(dbUrl(url), { max: 1, onnotice: () => {} });
 const dir = path.join(process.cwd(), "db", "migrations");
 

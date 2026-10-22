@@ -10,7 +10,7 @@
   NODE_VERSION = "22"
   NEXT_TELEMETRY_DISABLED = "1"
 
-# Production deploys run the migrations and the (idempotent) seed first, on the direct (unpooled) connection string
-# when one is set. Deploy previews and branch deploys only build: they must never touch the production database.
+# Production deploys run the migrations and the (idempotent) seed first; the scripts use DATABASE_URL_DIRECT when it
+# is set. Deploy previews and branch deploys only build: they must never touch the production database.
 [context.production]
-  command = "DATABASE_URL=\"${DATABASE_URL_DIRECT:-$DATABASE_URL}\" npm run db:setup && npm run build"
+  command = "npm run db:setup && npm run build"
