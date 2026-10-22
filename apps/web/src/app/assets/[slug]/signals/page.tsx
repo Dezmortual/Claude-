@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import { AssetHeader } from "@/components/AssetHeader";
 import { Pulse } from "@/components/client/Pulse";
+import { SignalHistory } from "@/components/client/SignalHistory";
 import { Card, Section } from "@/components/ui";
-import { assetSignals, assetSummary, getAsset } from "@/lib/data";
+import { DataError, assetSignalHistory, assetSignals, assetSummary, getAsset } from "@/lib/data";
 import { pct } from "@/lib/format";
 import { viewer } from "@/lib/session";
 
@@ -19,6 +20,8 @@ export default async function Signals({ params }: P) {
   const v = await viewer();
   const { asset, quote, metrics, unlockPlan } = await assetSummary(v, slug);
   const cards = await assetSignals(v, slug);
+  // A plan without this asset sees no history; any other failure is a real error.
+  const history = await assetSignalHistory(v, slug).catch((e) => { if (e instanceof DataError && e.code === "forbidden") return null; throw e; });
   return (
     <div className="space-y-10">
       <AssetHeader asset={asset} quote={quote} metrics={metrics} viewer={v} current="signals" title={`${asset.name} technical signals`} />
@@ -26,6 +29,11 @@ export default async function Signals({ params }: P) {
         <p className="max-w-prose text-sm text-muted">Pick a timeframe to see how each of the twenty indicators reads it. Every reading uses bars that have already closed.</p>
         <Pulse cards={cards} upgradeHref={`/pricing?plan=${unlockPlan.code}`} tz={v.user?.timezone ?? "UTC"} />
       </Section>
+      {history && (
+        <Section id="history" title="Signal history">
+          <SignalHistory history={history} unit={asset.quoteUnit} tz={v.user?.timezone ?? "UTC"} />
+        </Section>
+      )}
       <Section id="trend" title="Trend at a glance">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Card className="p-4 text-sm"><p className="text-muted">MACD</p><p className="text-lg">{metrics.macd === "bullish" ? "Above its signal line" : metrics.macd === "bearish" ? "Below its signal line" : "On its signal line"}</p></Card>

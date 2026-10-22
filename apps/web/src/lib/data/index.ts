@@ -2,3 +2,4 @@
 export * from "./live";
 export * from "./types";
 export { PLANS, MARKETS } from "./catalogue";
+export type { SignalChange } from "./indicators";

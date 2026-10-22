@@ -148,3 +148,38 @@ export function signalHistory(tf: Timeframe, b: Bar[]): NonNullable<PulseCard["h
   for (let i = 1; i < v.length; i++) if (v[i] !== v[i - 1]) changes++;
   return { heldBars: held, changes, window };
 }
+
+// ---------------------------------------------------------------- signal history (F2)
+
+export type SignalChange = {
+  at: string; // close time of the bar where the reading changed
+  verdict: Verdict; from: Verdict; price: number;
+  /** % move after 1 and 7 days (null while that time hasn't come yet), signed so that positive means the signal was right. */
+  after1d: number | null; after7d: number | null;
+  /** The worst move against the signal within 7 days, in % (zero or negative); null for neutral or too recent. */
+  worst7d: number | null;
+};
+
+const side = (v: Verdict) => (v === "buy" || v === "strong_buy" ? 1 : v === "sell" || v === "strong_sell" ? -1 : 0);
+
+/** Every change of reading over the last `lookback` closed bars, newest first, with what the price did afterwards. */
+export function signalChanges(tf: Timeframe, b: Bar[], lookback: number): SignalChange[] {
+  const n = Math.min(lookback, b.length);
+  const v = recentVerdicts(tf, b, n), first = b.length - n, step = STEP[tf];
+  const out: SignalChange[] = [];
+  for (let k = 1; k < v.length; k++) {
+    if (v[k] === v[k - 1] || v[k] === "unavailable" || v[k - 1] === "unavailable") continue;
+    const i = first + k, close = b[i].ts + step, price = b[i].c, dir = side(v[k]);
+    // The bar whose close is at least `ms` after this one's: the price that far on, if it has happened yet.
+    const later = (ms: number) => { for (let j = i + 1; j < b.length; j++) if (b[j].ts + step >= close + ms) return j; return -1; };
+    const j1 = later(86_400_000), j7 = later(7 * 86_400_000);
+    const move = (j: number) => (j === -1 ? null : ((b[j].c / price - 1) * 100) * (dir || 1));
+    let worst: number | null = null;
+    if (dir && j7 !== -1) {
+      const w = b.slice(i + 1, j7 + 1);
+      worst = Math.min(0, dir === 1 ? (Math.min(...w.map((x) => x.l)) / price - 1) * 100 : -(Math.max(...w.map((x) => x.h)) / price - 1) * 100);
+    }
+    out.push({ at: new Date(close).toISOString(), verdict: v[k], from: v[k - 1], price, after1d: move(j1), after7d: move(j7), worst7d: worst });
+  }
+  return out.reverse();
+}

@@ -35,6 +35,7 @@ export default async function TrackRecord() {
           time passes. Wins and misses alike, for every live asset, each one also scored against two naive forecasts that
           take no skill at all. Demo-data assets are never scored.
         </p>
+        <p className="text-sm"><Link href="/track-record/ledger" className="font-semibold text-accent underline">See every forecast in the ledger</Link>, one by one, with what actually happened.</p>
       </div>
 
       {!t ? (

@@ -4,10 +4,11 @@ import { notFound } from "next/navigation";
 import { AssetHeader } from "@/components/AssetHeader";
 import { ContributionCalc, ScenarioCalc } from "@/components/client/Calculators";
 import { PriceChart } from "@/components/client/PriceChart";
+import { LedgerTable } from "@/components/LedgerTable";
 import { Pulse } from "@/components/client/Pulse";
 import { ScenarioChart } from "@/components/ScenarioChart";
 import { Banner, Card, Label, Paywall, PriceChange, Section, StatCard } from "@/components/ui";
-import { listIndicators, assetBars, assetForecast, assetScenarios, assetSignals, assetSummary, getAsset, relatedAssets, type PathRow } from "@/lib/data";
+import { forecastLedger, listIndicators, assetBars, assetForecast, assetScenarios, assetSignals, assetSummary, getAsset, relatedAssets, type PathRow } from "@/lib/data";
 import { compact, dateTime, pct, price as fmtPrice } from "@/lib/format";
 import { viewer } from "@/lib/session";
 
@@ -57,6 +58,7 @@ export default async function AssetForecast({ params }: P) {
   const sc = await assetScenarios(slug);
   const chart = await assetBars(v, slug, "3m", 250);
   const pulse = await assetSignals(v, slug);
+  const ledger = v.user && !locked ? await forecastLedger(v, { asset: slug }) : null;
   const unit = asset.quoteUnit;
   const session = ["forex", "stocks", "commodities", "indices", "etfs", "bonds"].includes(asset.market);
   const step = session ? "session" : "day";
@@ -126,6 +128,24 @@ export default async function AssetForecast({ params }: P) {
           </Paywall>
         )}
       </Section>
+
+      {ledger && (
+        <Section id="record" title="This asset's forecast record"
+          action={<Link prefetch={false} href={`/track-record/ledger?asset=${slug}`} className="text-sm font-semibold text-accent hover:underline">All {ledger.total.toLocaleString("en-US")} forecasts</Link>}>
+          {!ledger.rows.length ? (
+            <p className="text-sm text-muted">No forecasts published for {asset.name} yet. Live assets get new ones every hour.</p>
+          ) : (
+            <>
+              <p className="max-w-prose text-sm text-muted">
+                The latest forecasts for {asset.name}, as they were published. {ledger.scored
+                  ? `Of ${ledger.scored.toLocaleString("en-US")} scored so far, ${Math.round((ledger.hits / ledger.scored) * 100)}% got the direction right and ${Math.round((ledger.inside / ledger.scored) * 100)}% landed inside the range.`
+                  : "None has reached its date yet."}
+              </p>
+              <LedgerTable rows={ledger.rows.slice(0, 9)} tz={v.user!.timezone} caption={`Latest forecasts for ${asset.name}`} showAsset={false} />
+            </>
+          )}
+        </Section>
+      )}
 
       <Section id="signals" title="Technical pulse" action={<Link prefetch={false} href={`/assets/${slug}/signals`} className="text-sm font-semibold text-accent hover:underline">All signals</Link>}>
         <p className="max-w-prose text-sm text-muted">Ten moving averages and ten oscillators, each read as buy, neutral or sell on closed bars only. The verdict is the balance of the twenty.</p>

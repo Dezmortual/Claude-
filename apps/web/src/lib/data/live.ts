@@ -7,7 +7,7 @@ import { env } from "@/lib/server/env";
 import { endAllSessions, isOwner, sessionUser } from "@/lib/server/auth";
 import { pushConfigured, sendPush } from "@/lib/server/push";
 import { ASSETS, ASSET_BY_SLUG, MARKETS, PLANS, PLAN_BY_CODE } from "./catalogue";
-import { pulse, signalHistory } from "./indicators";
+import { MIN_BARS, pulse, signalChanges, signalHistory, type SignalChange } from "./indicators";
 import { check as checkFormula } from "../indicators/formula";
 import { ensure, ensureCrosscheck } from "./marketdata";
 import { MODELS, closedBars, isDemo, metrics, paths, quote, scenarios, shortTerm } from "./model";
@@ -652,4 +652,77 @@ export async function stopAlertByToken(token: string) {
   const r = await sql()`update alerts set is_active = false, updated_at = now() where stop_token = ${token} returning 1`;
   if (!r.length) throw new DataError("not_found", "This stop link isn't valid");
   return { stopped: true };
+}
+
+// ---------------------------------------------------------------- forecast ledger (F1)
+
+export type LedgerQuery = { asset?: string; horizon?: Horizon; status?: "all" | "scored" | "pending" | "hits" | "misses"; page?: number };
+export type LedgerRow = {
+  id: string; slug: string; horizon: Horizon; generatedAt: string; targetAt: string; base: number; low: number; mid: number; high: number;
+  pUp: number; signal: Signal;
+  outcome: null | { realized: number; realizedAt: string; directionHit: boolean; inside: boolean; errPct: number };
+};
+export const LEDGER_PAGE = 50;
+
+/** Every published forecast of the live model, newest first, hits and misses alike. Rates only, never summed
+ *  returns: adding percentage moves across different assets means nothing. */
+export async function forecastLedger(v: Viewer, q: LedgerQuery) {
+  requireUser(v);
+  const db = sql();
+  const page = Math.max(1, Math.min(q.page ?? 1, 10_000));
+  const asset = q.asset ? requireAsset(q.asset) : null;
+  const where = db`r.model_version = ${MODELS.live} and r.status = 'published'
+    ${asset ? db`and a.slug = ${asset.slug}` : db``}
+    ${q.horizon ? db`and f.horizon = ${q.horizon}` : db``}
+    ${q.status === "scored" ? db`and o.forecast_id is not null` : q.status === "pending" ? db`and o.forecast_id is null`
+      : q.status === "hits" ? db`and o.direction_hit` : q.status === "misses" ? db`and not o.direction_hit` : db``}`;
+  const from = db`forecasts f join forecast_runs r on r.id = f.run_id join assets a on a.id = f.asset_id
+    left join forecast_outcomes o on o.forecast_id = f.id`;
+  const [rows, [sum]] = await Promise.all([
+    db<{ id: string; slug: string; horizon: Horizon; generated_at: Date; target_at: Date; base_price: number; low: number; mid: number; high: number;
+      p_up: number; signal: Signal; realized_price: number | null; realized_at: Date | null; direction_hit: boolean | null; inside_band: boolean | null; abs_pct_error: number | null }[]>`
+      select f.id, a.slug, f.horizon, f.generated_at, f.target_at, f.base_price, f.low, f.mid, f.high, f.p_up, f.signal,
+        o.realized_price, o.realized_at, o.direction_hit, o.inside_band, o.abs_pct_error
+      from ${from} where ${where} order by f.generated_at desc, a.slug, f.horizon limit ${LEDGER_PAGE} offset ${(page - 1) * LEDGER_PAGE}`,
+    db<{ total: number; scored: number; hits: number; inside: number }[]>`
+      select count(*)::int as total, count(o.forecast_id)::int as scored,
+        count(*) filter (where o.direction_hit)::int as hits, count(*) filter (where o.inside_band)::int as inside
+      from ${from} where ${where}`,
+  ]);
+  return {
+    page, pages: Math.max(1, Math.ceil(sum.total / LEDGER_PAGE)), total: sum.total, scored: sum.scored, hits: sum.hits, inside: sum.inside,
+    rows: rows.map((r): LedgerRow => ({ id: r.id, slug: r.slug, horizon: r.horizon, generatedAt: r.generated_at.toISOString(), targetAt: r.target_at.toISOString(),
+      base: r.base_price, low: r.low, mid: r.mid, high: r.high, pUp: r.p_up, signal: r.signal,
+      outcome: r.realized_price === null ? null : { realized: r.realized_price, realizedAt: r.realized_at!.toISOString(), directionHit: !!r.direction_hit,
+        inside: !!r.inside_band, errPct: r.abs_pct_error! } })),
+  };
+}
+
+// ---------------------------------------------------------------- signal history (F2)
+
+export type SignalSideStats = { n: number; scored: number; right: number; medianAfter7d: number | null; medianWorst7d: number | null };
+const HISTORY_TFS = [["1h", 400], ["1d", 366]] as const; // the closed bars looked at; the first ~210 only warm the indicators up
+const historyMemo = new Map<string, { last: number; changes: SignalChange[] }>();
+const med = (xs: number[]) => { if (!xs.length) return null; const s = [...xs].sort((a, b) => a - b), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+
+/** Each past change of an asset's indicator reading, on the hourly and daily charts, with what happened next. */
+export async function assetSignalHistory(v: Viewer, slug: string) {
+  const a = await loadAsset(slug, ["1h", "1d"]);
+  if (!canSee(v, a)) throw new DataError("forbidden", `Signals for ${a.name} are on the ${planFor(a).name} plan`);
+  return HISTORY_TFS.map(([tf, lookback]) => {
+    const b = closedBars(slug, tf);
+    const key = `${slug}:${tf}`, last = b.at(-1)?.ts ?? 0;
+    let hit = historyMemo.get(key);
+    if (!hit || hit.last !== last) { hit = { last, changes: b.length ? signalChanges(tf, b, lookback) : [] }; historyMemo.set(key, hit); }
+    const stats = (dir: 1 | -1): SignalSideStats => {
+      const c = hit!.changes.filter((x) => (dir === 1 ? x.verdict === "buy" || x.verdict === "strong_buy" : x.verdict === "sell" || x.verdict === "strong_sell"));
+      const done = c.filter((x) => x.after7d !== null);
+      return { n: c.length, scored: done.length, right: done.filter((x) => x.after7d! > 0).length,
+        medianAfter7d: med(done.map((x) => x.after7d!)), medianWorst7d: med(done.filter((x) => x.worst7d !== null).map((x) => x.worst7d!)) };
+    };
+    // The first bar with a reading: the window start, or later where there isn't enough history to warm up.
+    const first = Math.max(b.length - lookback, MIN_BARS - 1);
+    return { timeframe: tf as Timeframe, since: first < b.length ? new Date(b[first].ts).toISOString() : null,
+      changes: hit.changes, buy: stats(1), sell: stats(-1) };
+  });
 }
