@@ -19,8 +19,8 @@ export function Header({ viewer }: { viewer: Viewer }) {
     <header className="sticky top-0 z-header h-header border-b bg-surface">
       <div className="mx-auto flex h-full max-w-wide items-center gap-4 px-4 lg:gap-6 lg:px-6">
         <Link href="/" className="flex items-center gap-2 whitespace-nowrap font-bold text-fg">
-          <span aria-hidden className="grid h-8 w-8 place-items-center rounded-md bg-accent text-sm text-on-accent">A</span>
-          App name
+          <span aria-hidden className="grid h-8 w-8 place-items-center rounded-md bg-accent text-sm text-on-accent">P</span>
+          Proofcast
         </Link>
         {signedIn && <nav aria-label="Main" className="hidden gap-5 text-sm text-muted md:flex">
           {LINKS.map((l) => <Link key={l.href} href={l.href} className="hover:text-fg">{l.label}</Link>)}

@@ -26,8 +26,8 @@ export default async function Watchlist() {
     <>
       {head}
       {!rows.length ? (
-        <Card><EmptyState icon={<Star aria-hidden className="h-6 w-6" />} title="Nothing on your watchlist yet"
-          action={<ButtonLink href="/forecasts">Browse forecasts</ButtonLink>}>Tap the star next to any asset to follow it here.</EmptyState></Card>
+        <Card><EmptyState icon={<Star aria-hidden className="h-6 w-6" />} title="Your watchlist is empty"
+          action={<ButtonLink href="/forecasts">Browse forecasts</ButtonLink>}>Star any asset to keep it here.</EmptyState></Card>
       ) : (
         <ul className="grid gap-2">
           {rows.map((r) => (

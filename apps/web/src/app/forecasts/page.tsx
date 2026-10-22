@@ -37,7 +37,7 @@ export default async function ForecastHub({ searchParams }: { searchParams: Prom
     <div className="space-y-10">
       <header className="space-y-3">
         <Label>Forecasts</Label>
-        <h1 className="text-xl md:text-display">Where each market could be next</h1>
+        <h1 className="text-xl md:text-display">Where each market could go next</h1>
         <p className="max-w-prose text-muted">
           Next-day, 7-day and 1-month ranges for every asset, with the chance of a rise behind each signal. Long-term columns are
           scenarios built from stated growth rates, not predictions. Every published forecast is scored once its date passes.

@@ -11,7 +11,7 @@ import { viewer } from "@/lib/session";
 import { isPublicPath } from "@/lib/paths";
 
 export const metadata: Metadata = {
-  title: { default: "App name: price forecasts with a public track record", template: "%s · App name" },
+  title: { default: "Proofcast: price forecasts with every result kept", template: "%s · Proofcast" },
   robots: { index: false, follow: false }, // private build: keep it out of search engines
   description: "Short-term forecasts, technical signals and long-term scenarios for crypto and other markets, with every forecast scored in public.",
 };

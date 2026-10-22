@@ -1,0 +1,7 @@
+{
+  "name": "Proofcast",
+  "avoid": ["BeCoin", "Be Coin"],
+  "domains": ["becoin.net"],
+  "colors": ["#5363df", "#5262de", "#5464e0", "#5161dd", "#5a6ae5", "#5b6be6", "#5060dc", "#5969e4", "#6272e8", "#5e6ee7", "#5565e1", "#1a1f36"],
+  "_colors_note": "Measured 2026-10-22 from the original's reference screenshots (replica/screens/, gitignored): an indigo gradient at hue ~233 plus its navy text. Exact matches only; replica/brand.md says how to check for near misses."
+}

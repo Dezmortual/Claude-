@@ -18,7 +18,7 @@ test.describe("F01 find a strong signal", () => {
 
   test("F01-E1 no results shows an empty state that clears", async ({ page }) => {
     await page.goto("/forecasts?q=zzzz");
-    await expect(page.getByRole("heading", { name: "Nothing matches these filters" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "No assets match these filters" })).toBeVisible();
     await a11y(page, "/forecasts empty");
     await page.getByRole("link", { name: "Clear filters" }).click();
     await expect(page.getByRole("table")).toBeVisible();
@@ -29,11 +29,11 @@ test.describe("F01 find a strong signal", () => {
     const box = page.getByRole("searchbox", { name: "Search assets" });
     await box.fill("₿ Ünïcødé 🚀");
     await box.press("Enter");
-    await expect(page.getByRole("heading", { name: "Nothing matches these filters" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "No assets match these filters" })).toBeVisible();
     await box.fill("x".repeat(200));
     expect((await box.inputValue()).length).toBe(60);
     await box.press("Enter");
-    await expect(page.getByRole("heading", { name: "Nothing matches these filters" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "No assets match these filters" })).toBeVisible();
   });
 
   test("F01-E3 sort, rows per page, paginate, back button", async ({ page }) => {

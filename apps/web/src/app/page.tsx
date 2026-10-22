@@ -8,7 +8,7 @@ import { dateTime } from "@/lib/format";
 import { parseForecastQuery, type SP } from "@/lib/query";
 import { viewer } from "@/lib/session";
 
-export const metadata = { title: { absolute: "App name: price forecasts you can check" } };
+export const metadata = { title: { absolute: "Proofcast: forecasts with the misses left in" } };
 
 export default async function Home({ searchParams }: { searchParams: Promise<SP> }) {
   const v = await viewer();

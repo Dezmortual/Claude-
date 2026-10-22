@@ -66,7 +66,7 @@ export function ForecastTable({ data, tab, visible, base, current, watchlist, st
   if (!data.rows.length) {
     return (
       <div className="rounded-lg border bg-surface">
-        <EmptyState title="Nothing matches these filters" action={<Link href={base} className="text-sm font-semibold text-accent hover:underline">Clear filters</Link>}>
+        <EmptyState title="No assets match these filters" action={<Link href={base} className="text-sm font-semibold text-accent hover:underline">Clear filters</Link>}>
           Try a weaker signal, another market or a shorter search.
         </EmptyState>
       </div>

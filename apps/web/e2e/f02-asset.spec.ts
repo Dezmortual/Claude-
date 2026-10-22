@@ -46,7 +46,7 @@ test.describe("F02 read an outlook and size a position", () => {
   test("F02-N1 unknown asset is a 404 with a way back", async ({ page }) => {
     const r = await page.goto("/assets/not-a-coin");
     expect(r?.status()).toBe(404);
-    await expect(page.getByRole("heading", { name: "We couldn't find that page" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "There's nothing at this address" })).toBeVisible();
     await page.getByRole("link", { name: "Go to forecasts" }).click();
     await expect(page).toHaveURL(/\/forecasts/);
   });

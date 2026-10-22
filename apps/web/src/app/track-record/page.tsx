@@ -15,7 +15,7 @@ export default async function TrackRecord() {
     <div className="space-y-10">
       <div className="space-y-3">
         <Label>Track record</Label>
-        <h1 className="text-xl md:text-display">How often the forecasts were right</h1>
+        <h1 className="text-xl md:text-display">Every forecast, scored. Misses included.</h1>
         <p className="max-w-prose text-muted">
           Forecasts are locked when they&apos;re published (hourly) and compared with what actually happened once their target
           time passes. Wins and misses alike, for every live asset. Demo-data assets are never scored.
@@ -23,7 +23,7 @@ export default async function TrackRecord() {
       </div>
       {!rows.length ? (
         <Card>
-          <EmptyState icon={<ClipboardCheck aria-hidden className="h-6 w-6" />} title="No scored forecasts yet">
+          <EmptyState icon={<ClipboardCheck aria-hidden className="h-6 w-6" />} title="Nothing scored yet">
             The first results appear a day after the publish job starts running. Give it about a month before reading anything into them.
           </EmptyState>
         </Card>

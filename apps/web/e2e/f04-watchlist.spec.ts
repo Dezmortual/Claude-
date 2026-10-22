@@ -5,7 +5,7 @@ test.use({ storageState: ownerState("a") });
 test.describe("F04 watch an asset", () => {
   test("F04-E4 empty watchlist", async ({ page }) => {
     await page.goto("/watchlist");
-    await expect(page.getByRole("heading", { name: "Nothing on your watchlist yet" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Your watchlist is empty" })).toBeVisible();
     await a11y(page, "/watchlist empty");
   });
 
@@ -46,6 +46,6 @@ test.describe("F04-E3 another user's watchlist", () => {
   test.use({ storageState: ownerState("b") });
   test("owner B sees none of A's items", async ({ page }) => {
     await page.goto("/watchlist");
-    await expect(page.getByRole("heading", { name: "Nothing on your watchlist yet" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Your watchlist is empty" })).toBeVisible();
   });
 });
