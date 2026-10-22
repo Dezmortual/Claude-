@@ -31,6 +31,8 @@ jobs:
             echo "== $1"
             curl -sS --fail-with-body -m 90 -X POST -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/cron/$1"; echo
           }
+          # Uptime check: the sign-in page must answer. A failure here fails the run, and GitHub emails the repo owner.
+          echo "== health"; curl -sS --fail -m 30 -o /dev/null -w "%{http_code} in %{time_total}s\n" "$APP_URL/sign-in"
           if [ -n "$ONE_JOB" ]; then call "$ONE_JOB"; exit 0; fi
           # Every run: check alerts. Once an hour (the :04 run): publish new forecasts and score matured ones.
           call alerts
