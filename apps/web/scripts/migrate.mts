@@ -2,10 +2,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import postgres from "postgres";
+import { dbUrl } from "../src/lib/dburl";
 
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error("Set DATABASE_URL (see .env.example)");
-const sql = postgres(url, { max: 1, onnotice: () => {} });
+const sql = postgres(dbUrl(url), { max: 1, onnotice: () => {} });
 const dir = path.join(process.cwd(), "db", "migrations");
 
 await sql`create table if not exists schema_migrations (name text primary key, applied_at timestamptz not null default now())`;
