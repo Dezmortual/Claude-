@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "if [ \"$VERCEL_ENV\" = production ]; then npm run db:setup; fi && npm run build",
+  "crons": [
+    { "path": "/api/cron/publish", "schedule": "5 0 * * *" },
+    { "path": "/api/cron/alerts", "schedule": "10 12 * * *" },
+    { "path": "/api/cron/cleanup", "schedule": "17 3 * * *" }
+  ]
+}

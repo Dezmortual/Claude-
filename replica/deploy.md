@@ -128,6 +128,52 @@ All of this works in a phone browser. If a Netlify page looks cramped, use the b
    - Open the confirmation email on the same phone, then sign in.
    - Do the core flow (below, under Watch).
 
+## Vercel instead (from a phone)
+
+This is the fallback while Netlify's build pipeline is degraded. Use **one** host, not both: two hosts would both
+run the jobs against the same database. Checked here 2026-10-22 with Vercel's own build tool (`vercel build`,
+CLI 62.7.0) on a fresh clone:
+- the production build ran the migrations and the seed on an empty database, then built the app and middleware
+- all 3 daily jobs were registered
+- `GET /api/cron/alerts` answers 200 with the secret and 401 without
+
+1. **vercel.com.** Sign up with GitHub (the free Hobby plan).
+2. **Add New → Project.** Import `dezmortual/Claude-`, and give Vercel access to that repo if it asks.
+   - **Project name:** for example `proofcast-yourname`. The URL becomes `https://proofcast-yourname.vercel.app`.
+   - **Root Directory:** tap Edit and choose `apps/web`. The framework shows Next.js. Leave the build settings
+     alone, because they come from `apps/web/vercel.json`.
+   - **Environment Variables:** paste the same values as for Netlify, except `NETLIFY`:
+     - `DATABASE_URL`
+     - `DATABASE_URL_DIRECT`
+     - `OWNER_EMAILS`
+     - `RESEND_API_KEY`
+     - `CRON_SECRET`
+     - `APP_URL` = `https://<project-name>.vercel.app`
+     - `PRIVATE_MODE` = `true`
+     - `EMAIL_FROM`
+   - Tap **Deploy**. **This first deploy fails, and that's expected.** Vercel builds the repo's default branch,
+     which doesn't have the app.
+3. **Point production at the app's branch.** Go to Project → Settings → Environments → Production → Branch
+   Tracking, and set it to `claude/install-replica-skills-4jsrht`. Save.
+4. **Only build production.** Go to Settings → Git → Ignored Build Step and choose **"Only build production"**.
+   The repo has other branches that get daily commits, and this stops them building previews.
+5. **Deploy the branch.** Go to Deployments → Create Deployment (or the ⋯ menu → "Create Deployment"), enter
+   `claude/install-replica-skills-4jsrht`, and deploy. Wait for **Ready** (about 2 to 4 minutes). The build log
+   should show `migrate.mts: connecting to …` then "applied 0001_init.sql".
+6. **Sign in.** Open the URL, choose "Set up the owner account", confirm the email, then sign in.
+7. **Jobs.** Vercel's free plan runs scheduled jobs **once a day**, within the hour:
+   - forecasts publish and score at 00:05 UTC
+   - alerts run at 12:10 UTC
+   - cleanup runs at 03:17 UTC
+
+   Prices themselves load fresh whenever you open a page.
+8. **Optional: run them more often, free.** Use cron-job.org, which works in a phone browser:
+   - **alerts:** `https://<project-name>.vercel.app/api/cron/alerts`, every 30 minutes
+   - **publish:** `…/api/cron/publish`, every hour, at minute 5
+   - For both: method GET, and in Advanced → Headers add `Authorization` = `Bearer <your CRON_SECRET>`.
+9. **Tidy up Netlify.** Delete the Netlify project (Project configuration → General → Danger zone), or at least
+   remove its environment variables, so it can never run jobs against the same database.
+
 ## Domain (optional for a private app)
 
 `<your-site>.netlify.app` works with HTTPS from the start. If you buy a domain, use any registrar.
