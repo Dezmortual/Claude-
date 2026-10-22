@@ -7,19 +7,22 @@ import { SIGNAL_LABEL } from "@/lib/format";
 import { toast } from "./Toaster";
 
 type Opt = { slug: string; name: string; ticker: string; price: number };
+type Ind = { id: string; name: string; buy: boolean; sell: boolean };
 const field = "h-10 w-full rounded-md border border-input bg-surface px-3 text-sm text-fg aria-[invalid=true]:border-danger";
 const COND: Record<AlertCondition, string> = {
   price_above: "Price rises above", price_below: "Price falls below", signal_becomes: "Signal turns", forecast_move_above: "7-day forecast move exceeds",
+  indicator_signal: "My indicator gives a signal",
 };
 const TF = { "5m": "5 min", "30m": "30 min", "1h": "1 hour", "1d": "1 day", "1w": "1 week" } as const;
 
 export function describe(a: Alert, name: string) {
   if (a.condition === "signal_becomes") return `${name}: ${TF[a.timeframe as keyof typeof TF]} signal turns ${SIGNAL_LABEL[a.signal!].toLowerCase()}`;
+  if (a.condition === "indicator_signal") return `${name}: ${a.indicatorName ?? "indicator"} gives a ${a.signal} signal on the ${TF[a.timeframe as keyof typeof TF]} chart`;
   if (a.condition === "forecast_move_above") return `${name}: 7-day forecast moves more than ${a.threshold}%`;
   return `${name}: price ${a.condition === "price_above" ? "above" : "below"} ${a.threshold!.toLocaleString("en-US", { maximumFractionDigits: 8 })}`;
 }
 
-export function AlertForm({ options, preset, limitText }: { options: Opt[]; preset?: string; limitText: string }) {
+export function AlertForm({ options, preset, limitText, indicators = [] }: { options: Opt[]; preset?: string; limitText: string; indicators?: Ind[] }) {
   const id = useId();
   const router = useRouter();
   const [asset, setAsset] = useState(options.some((o) => o.slug === preset) ? preset! : options[0]?.slug);
@@ -27,15 +30,19 @@ export function AlertForm({ options, preset, limitText }: { options: Opt[]; pres
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const cur = options.find((o) => o.slug === asset);
+  const [ind, setInd] = useState(indicators[0]?.id);
+  const curInd = indicators.find((i) => i.id === ind);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     const channels = ["email", "push"].filter((c) => f.get(c));
+    const sig = cond === "signal_becomes" || cond === "indicator_signal";
     const body = {
       assetSlug: asset, condition: cond, channels,
-      threshold: cond === "signal_becomes" ? null : Number(String(f.get("threshold") ?? "").replace(/[,\s$%]/g, "")),
-      signal: cond === "signal_becomes" ? f.get("signal") : null, timeframe: cond === "signal_becomes" ? f.get("timeframe") : null,
+      threshold: sig ? null : Number(String(f.get("threshold") ?? "").replace(/[,\s$%]/g, "")),
+      signal: sig ? f.get("signal") : null, timeframe: sig ? f.get("timeframe") : null,
+      indicatorId: cond === "indicator_signal" ? ind : null,
     };
     setBusy(true); setErr(null);
     const r = await fetch("/api/v1/me/alerts", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -57,10 +64,35 @@ export function AlertForm({ options, preset, limitText }: { options: Opt[]; pres
       <div className="grid gap-1">
         <label htmlFor={`${id}-c`} className="text-sm font-semibold">When</label>
         <select id={`${id}-c`} value={cond} onChange={(e) => setCond(e.target.value as AlertCondition)} className={field}>
-          {Object.entries(COND).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+          {Object.entries(COND).filter(([k]) => k !== "indicator_signal" || indicators.length).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
         </select>
       </div>
-      {cond === "signal_becomes" ? (
+      {cond === "indicator_signal" ? (
+        <div className="grid gap-3">
+          <div className="grid gap-1">
+            <label htmlFor={`${id}-i`} className="text-sm font-semibold">Indicator</label>
+            <select id={`${id}-i`} value={ind} onChange={(e) => setInd(e.target.value)} className={field}>
+              {indicators.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-1">
+              <label htmlFor={`${id}-is`} className="text-sm font-semibold">Signal</label>
+              <select id={`${id}-is`} name="signal" key={ind} defaultValue={curInd?.buy ? "buy" : "sell"} className={field}>
+                {curInd?.buy && <option value="buy">Buy</option>}
+                {curInd?.sell && <option value="sell">Sell</option>}
+              </select>
+            </div>
+            <div className="grid gap-1">
+              <label htmlFor={`${id}-it`} className="text-sm font-semibold">Chart</label>
+              <select id={`${id}-it`} name="timeframe" defaultValue="1d" className={field}>
+                {Object.entries(TF).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+              </select>
+            </div>
+          </div>
+          <p className="text-xs text-muted">Fires when the rule turns true on a closed bar, checked every 30 minutes.</p>
+        </div>
+      ) : cond === "signal_becomes" ? (
         <div className="grid grid-cols-2 gap-3">
           <div className="grid gap-1">
             <label htmlFor={`${id}-s`} className="text-sm font-semibold">Signal</label>

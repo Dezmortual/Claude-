@@ -14,7 +14,8 @@
     "test:api": "tsx --env-file-if-exists=.env.local tests/api.test.mts",
     "e2e:db": "tsx scripts/reset-test-db.mts",
     "e2e": "playwright test",
-    "models:compare": "tsx --env-file-if-exists=.env.local scripts/compare-models.mts"
+    "models:compare": "tsx --env-file-if-exists=.env.local scripts/compare-models.mts",
+    "test:unit": "tsx tests/formula.test.mts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "1.2.0",

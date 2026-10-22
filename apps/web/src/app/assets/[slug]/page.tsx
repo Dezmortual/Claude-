@@ -7,7 +7,7 @@ import { PriceChart } from "@/components/client/PriceChart";
 import { Pulse } from "@/components/client/Pulse";
 import { ScenarioChart } from "@/components/ScenarioChart";
 import { Banner, Card, Label, Paywall, PriceChange, Section, StatCard } from "@/components/ui";
-import { assetBars, assetForecast, assetScenarios, assetSignals, assetSummary, getAsset, relatedAssets, type PathRow } from "@/lib/data";
+import { listIndicators, assetBars, assetForecast, assetScenarios, assetSignals, assetSummary, getAsset, relatedAssets, type PathRow } from "@/lib/data";
 import { compact, dateTime, pct, price as fmtPrice } from "@/lib/format";
 import { viewer } from "@/lib/session";
 
@@ -55,7 +55,7 @@ export default async function AssetForecast({ params }: P) {
   const { asset, quote, metrics, locked, unlockPlan } = await assetSummary(v, slug);
   const forecast = locked ? null : await assetForecast(v, slug);
   const sc = await assetScenarios(slug);
-  const chart = await assetBars(v, slug, "3m");
+  const chart = await assetBars(v, slug, "3m", 250);
   const pulse = await assetSignals(v, slug);
   const unit = asset.quoteUnit;
   const session = ["forex", "stocks", "commodities", "indices", "etfs", "bonds"].includes(asset.market);
@@ -89,7 +89,7 @@ export default async function AssetForecast({ params }: P) {
 
       <Section id="chart" title="Price and forecast range">
         <Card className="p-4 md:p-6">
-          <PriceChart slug={slug} name={asset.name} unit={unit} initial={chart.bars} forecast={forecast?.points ?? null} intradayLocked={locked} />
+          <PriceChart slug={slug} name={asset.name} unit={unit} initial={chart.bars} initialWarmup={chart.warmup} indicators={v.user ? await listIndicators(v) : undefined} forecast={forecast?.points ?? null} intradayLocked={locked} />
         </Card>
       </Section>
 

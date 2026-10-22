@@ -3,7 +3,9 @@
 // Colours come from the theme tokens at runtime, so light/dark and /replica-brand changes apply without code edits.
 import { createChart, LineStyle, type IChartApi, type ISeriesApi, type UTCTimestamp } from "lightweight-charts";
 import { useEffect, useRef, useState } from "react";
-import type { Bar, ForecastPoint } from "@/lib/data";
+import Link from "next/link";
+import type { Bar, ForecastPoint, UserIndicator } from "@/lib/data";
+import { drawIndicators } from "./drawIndicators";
 import { price as fmtPrice } from "@/lib/format";
 
 const RANGES = ["1d", "1w", "1m", "3m", "1y", "5y", "all"] as const;
@@ -17,14 +19,30 @@ function token(name: string, alpha = 1) {
 const seg = (on: boolean) =>
   `h-8 min-w-tap rounded-pill border px-2 text-xs font-semibold ${on ? "border-accent bg-accent text-on-accent" : "bg-surface text-fg hover:bg-surface-sunken"} disabled:opacity-50`;
 
-export function PriceChart({ slug, name, unit, initial, initialRange = "3m", forecast, intradayLocked }: {
-  slug: string; name: string; unit: string; initial: Bar[]; initialRange?: (typeof RANGES)[number];
-  forecast: ForecastPoint[] | null; intradayLocked: boolean;
+const PICKED = "chart-indicators"; // which of your indicators are switched on, remembered in this browser
+const WARMUP = 250; // bars of history before the range, so indicators start on the first visible bar
+
+/** `indicators`: the viewer's own (none for guests); `initialWarmup`: bars from before `initial`. */
+export function PriceChart({ slug, name, unit, initial, initialWarmup = [], initialRange = "3m", forecast, intradayLocked, indicators }: {
+  slug: string; name: string; unit: string; initial: Bar[]; initialWarmup?: Bar[]; initialRange?: (typeof RANGES)[number];
+  forecast: ForecastPoint[] | null; intradayLocked: boolean; indicators?: UserIndicator[];
 }) {
   const box = useRef<HTMLDivElement>(null);
   const chart = useRef<IChartApi | null>(null);
   const [range, setRange] = useState(initialRange);
   const [bars, setBars] = useState(initial);
+  const [warm, setWarm] = useState(initialWarmup);
+  const [chosen, setChosen] = useState<string[]>([]);
+  const [signals, setSignals] = useState(0);
+  useEffect(() => {
+    try { setChosen(JSON.parse(localStorage.getItem(PICKED) ?? "[]")); } catch { /* storage blocked: start with none */ }
+  }, []);
+  const toggle = (id: string) => setChosen((cur) => {
+    const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
+    try { localStorage.setItem(PICKED, JSON.stringify(next)); } catch { /* not remembered, still shown */ }
+    return next;
+  });
+  const shown = (indicators ?? []).filter((i) => chosen.includes(i.id));
   const [picked, setKind] = useState<"line" | "candles">("line");
   // Sources with one price a day and no highs or lows (ECB forex rates, official yields) would draw flat dashes as
   // candles, so those series are always a line.
@@ -47,9 +65,11 @@ export function PriceChart({ slug, name, unit, initial, initialRange = "3m", for
   async function load(r: (typeof RANGES)[number]) {
     setRange(r);
     setState("loading");
-    const res = await fetch(`/api/v1/assets/${slug}/bars?range=${r}`);
+    const res = await fetch(`/api/v1/assets/${slug}/bars?range=${r}${indicators?.length ? `&warmup=${WARMUP}` : ""}`);
     if (!res.ok) { setState("error"); return; }
-    setBars((await res.json()).bars);
+    const j = await res.json();
+    setBars(j.bars);
+    setWarm(j.warmup ?? []);
     setState("ok");
   }
 
@@ -91,14 +111,18 @@ export function PriceChart({ slug, name, unit, initial, initialRange = "3m", for
       s = c.addLineSeries({ color: token("chart-line"), lineWidth: 2, priceLineVisible: false });
       s.setData(bars.map((b) => ({ time: t(b.ts), value: b.c })));
     }
+    setSignals(shown.length ? drawIndicators(c, s, shown, [...warm, ...bars], bars.length, token) : 0);
     c.timeScale().fitContent();
     return () => { c.remove(); chart.current = null; };
-  }, [bars, kind, horizon, forecast, range, unit, theme]);
+    // `shown` is derived from `chosen` and `indicators`
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bars, warm, kind, horizon, forecast, range, unit, theme, chosen, indicators]);
 
   const f = horizon && forecast?.find((p) => p.horizon === horizon);
   const summary = bars.length
     ? `${name} price over ${LABEL[range]}: from ${fmtPrice(bars[0].c, unit)} to ${fmtPrice(bars.at(-1)!.c, unit)}.` +
-      (f ? ` Forecast for ${horizon}: ${fmtPrice(f.low, unit)} to ${fmtPrice(f.high, unit)}, midpoint ${fmtPrice(f.mid, unit)}.` : "")
+      (f ? ` Forecast for ${horizon}: ${fmtPrice(f.low, unit)} to ${fmtPrice(f.high, unit)}, midpoint ${fmtPrice(f.mid, unit)}.` : "") +
+      (shown.length ? ` Showing ${shown.map((i) => i.name).join(", ")}, with ${signals} buy or sell signals in this range.` : "")
     : `No price history for ${LABEL[range]}.`;
 
   return (
@@ -134,6 +158,15 @@ export function PriceChart({ slug, name, unit, initial, initialRange = "3m", for
           )}
         </div>
       </div>
+      {indicators && (
+        <div className="flex flex-wrap items-center gap-1">
+          <span className="mr-1 text-2xs uppercase tracking-wide text-subtle">Indicators</span>
+          {indicators.map((i) => (
+            <button key={i.id} type="button" aria-pressed={chosen.includes(i.id)} onClick={() => toggle(i.id)} className={seg(chosen.includes(i.id))}>{i.name}</button>
+          ))}
+          <Link href="/indicators" className="px-2 text-xs font-semibold text-accent underline">{indicators.length ? "Manage" : "Add indicators"}</Link>
+        </div>
+      )}
       <figure className="relative" aria-label={`${name} price chart`} aria-describedby={`${slug}-chart-summary`}>
         {/* Not role="img": the chart library puts a focusable attribution link inside this box. */}
         <div ref={box} className="h-chart w-full md:h-chart-lg" />

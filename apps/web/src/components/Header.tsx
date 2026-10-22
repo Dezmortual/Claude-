@@ -8,6 +8,7 @@ import { ThemeToggle } from "./client/ThemeToggle";
 const LINKS = [
   { href: "/forecasts", label: "Forecasts" },
   { href: "/markets/crypto", label: "Markets" },
+  { href: "/indicators", label: "Indicators" },
   { href: "/track-record", label: "Track record" },
 ];
 

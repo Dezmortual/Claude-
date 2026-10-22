@@ -3,6 +3,7 @@ import "server-only";
 // dead-letter log. Every job is safe to run twice: inserts are keyed, alert firing is a compare-and-set.
 import { ASSETS, ASSET_BY_SLUG, MARKETS } from "@/lib/data/catalogue";
 import { pulse } from "@/lib/data/indicators";
+import { evaluate, holdsNow } from "@/lib/indicators/formula";
 import { ensure, ensureCrosscheck, effectiveSource, warmAll } from "@/lib/data/marketdata";
 import { MODELS, challenger, closedBars, quote, shortTerm, signalFromP } from "@/lib/data/model";
 import type { MarketCode, Signal, Timeframe } from "@/lib/data/types";
@@ -130,13 +131,15 @@ export async function scoreForecasts() {
 // ---------------------------------------------------------------- alerts
 
 type AlertDue = { id: string; user_id: string; slug: string; name: string; email: string; condition: string; threshold: number | null;
-  signal: Signal | null; timeframe: Timeframe | null; armed: boolean; cooldown_minutes: number; last_fired_at: Date | null; channels: string[] };
+  signal: Signal | null; timeframe: Timeframe | null; armed: boolean; cooldown_minutes: number; last_fired_at: Date | null; channels: string[];
+  indicator_name: string | null; buy_rule: string | null; sell_rule: string | null };
 
 export async function evaluateAlerts() {
   const db = sql();
   const alerts = await db<AlertDue[]>`
-    select al.id, al.user_id, a.slug, a.name, u.email, al.condition, al.threshold, al.signal, al.timeframe, al.armed, al.cooldown_minutes, al.last_fired_at, al.channels
-    from alerts al join assets a on a.id = al.asset_id join users u on u.id = al.user_id
+    select al.id, al.user_id, a.slug, a.name, u.email, al.condition, al.threshold, al.signal, al.timeframe, al.armed, al.cooldown_minutes, al.last_fired_at, al.channels,
+      ui.name as indicator_name, ui.buy_rule, ui.sell_rule
+    from alerts al join assets a on a.id = al.asset_id join users u on u.id = al.user_id left join user_indicators ui on ui.id = al.indicator_id
     where al.is_active and a.is_active and u.email_verified_at is not null`;
   if (!alerts.length) return { checked: 0, fired: 0 };
   await ensure([...new Set(alerts.map((a) => a.slug))]);
@@ -154,6 +157,11 @@ export async function evaluateAlerts() {
       const verdict = pulse(al.timeframe!, closedBars(al.slug, al.timeframe!)).verdict;
       hit = verdict === al.signal;
       message = `${asset.name}'s ${al.timeframe} signal is now ${SIGNAL_LABEL[al.signal!].toLowerCase()}.`;
+    } else if (al.condition === "indicator_signal") {
+      // The rule as it stands on the last closed bar of the chosen chart. A formula that no longer parses never fires.
+      const rule = al.signal === "buy" ? al.buy_rule : al.sell_rule, bars = closedBars(al.slug, al.timeframe!);
+      try { hit = !!rule && bars.length > 0 && holdsNow(evaluate(rule, bars)); } catch { hit = false; }
+      message = `${asset.name}: your indicator "${al.indicator_name}" gives a ${al.signal} signal on the ${al.timeframe} chart, at ${q.price.toPrecision(6)}.`;
     } else {
       const p7 = shortTerm(al.slug).points.find((p) => p.horizon === "7d")!;
       hit = Math.abs(p7.changePct) >= al.threshold!;

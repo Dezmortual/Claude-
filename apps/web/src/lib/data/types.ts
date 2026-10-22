@@ -132,7 +132,7 @@ export interface Subscription { plan: PlanCode; interval: "month" | "year"; stat
 
 export interface Viewer { user: User | null; plan: Plan; subscription: Subscription | null }
 
-export type AlertCondition = "price_above" | "price_below" | "signal_becomes" | "forecast_move_above";
+export type AlertCondition = "price_above" | "price_below" | "signal_becomes" | "forecast_move_above" | "indicator_signal";
 
 export interface Alert {
   id: string;
@@ -141,11 +141,24 @@ export interface Alert {
   threshold: number | null;
   signal: Signal | null;
   timeframe: Timeframe | null;
+  indicatorId: string | null;
+  indicatorName: string | null;
   channels: ("email" | "push")[];
   isActive: boolean;
   cooldownMinutes: number;
   lastFiredAt: string | null;
   createdAt: string;
+}
+
+/** One of your indicators (src/lib/indicators): up to three plotted formulas, optional buy and sell rules. */
+export interface UserIndicator {
+  id: string;
+  name: string;
+  lines: string[];
+  display: "overlay" | "pane";
+  buyRule: string | null;
+  sellRule: string | null;
+  updatedAt: string;
 }
 
 export interface TablePrefs { visibleColumns: string[]; rowsPerPage: 10 | 20 | 50 | 100; defaultTab: Tab }

@@ -42,7 +42,7 @@ const PLANS = [
 const FAQ = [
   ["Is this financial advice?", "No. It's statistics about how prices behaved in the past, the same for everyone, and it can be wrong."],
   ["How is accuracy measured?", "Each forecast is stored when it's published and can't be edited. When its target time passes, we compare it with the price that bar closed at. The track record page shows the results, misses included."],
-  ["Where do the prices come from?", "Official public market data: Binance for crypto, European Central Bank reference rates for currencies, and a second source to cross-check crypto prices. Markets without a free official source are marked as demo data and never scored."],
+  ["Where do the prices come from?", "Public market data: Binance for crypto, Twelve Data for currencies (European Central Bank reference rates as the fallback), Alpaca for stocks and funds, and official government sources for bond yields, with a second source to cross-check crypto prices. Markets without a source are marked as demo data and never scored."],
   ["Can I cancel easily?", "Yes. When paid plans exist, cancelling will be one click on your account page, and you keep access to the end of the period you paid for."],
   ["Is there a phone app?", "Not yet. The site works on phones, and an app is planned."],
 ] as const;

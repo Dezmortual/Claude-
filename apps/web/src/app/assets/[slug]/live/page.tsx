@@ -5,7 +5,7 @@ import { Converter } from "@/components/client/Converter";
 import { LiveQuote } from "@/components/client/LiveQuote";
 import { PriceChart } from "@/components/client/PriceChart";
 import { Card, Label, Paywall, PriceChange, Section, SignalBadge, StatCard } from "@/components/ui";
-import { assetBars, assetSignals, assetStats, assetSummary, getAsset } from "@/lib/data";
+import { listIndicators, assetBars, assetSignals, assetStats, assetSummary, getAsset } from "@/lib/data";
 import { price as fmtPrice } from "@/lib/format";
 import { viewer } from "@/lib/session";
 
@@ -23,7 +23,7 @@ export default async function LivePrice({ params }: P) {
   const { asset, quote, metrics, locked, unlockPlan } = await assetSummary(v, slug);
   const stats = await assetStats(slug);
   const range = locked ? "1m" : "1d";
-  const chart = await assetBars(v, slug, range);
+  const chart = await assetBars(v, slug, range, 250);
   const daily = (await assetSignals(v, slug)).find((c) => c.timeframe === "1d")!;
   const unit = asset.quoteUnit;
 
@@ -33,7 +33,7 @@ export default async function LivePrice({ params }: P) {
         priceSlot={<LiveQuote slug={slug} unit={unit} initial={quote} />} />
 
       <Card className="p-4 md:p-6">
-        <PriceChart slug={slug} name={asset.name} unit={unit} initial={chart.bars} initialRange={range} forecast={null} intradayLocked={locked} />
+        <PriceChart slug={slug} name={asset.name} unit={unit} initial={chart.bars} initialWarmup={chart.warmup} indicators={v.user ? await listIndicators(v) : undefined} initialRange={range} forecast={null} intradayLocked={locked} />
       </Card>
       {locked && <Paywall compact planName={unlockPlan.name} href={`/pricing?plan=${unlockPlan.code}`}>Intraday charts for {asset.name} are on the <b className="text-fg">{unlockPlan.name}</b> plan.</Paywall>}
 

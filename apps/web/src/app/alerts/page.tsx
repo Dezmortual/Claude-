@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { Bell } from "lucide-react";
 import { AlertForm, AlertRow } from "@/components/client/AlertsManager";
 import { Banner, Card, EmptyState, Label, Paywall } from "@/components/ui";
-import { alertableAssets, getAsset, listAlerts } from "@/lib/data";
+import { alertableAssets, getAsset, listAlerts, listIndicators } from "@/lib/data";
 import { viewer } from "@/lib/session";
 
 export const metadata = { title: "Alerts" };
@@ -29,7 +29,8 @@ export default async function Alerts({ searchParams }: { searchParams: Promise<{
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_3fr]">
         <Card className="h-fit space-y-4 p-5">
           <h2 className="text-lg">New alert</h2>
-          <AlertForm options={await alertableAssets(v)} preset={asset} limitText={limitText} />
+          <AlertForm options={await alertableAssets(v)} preset={asset} limitText={limitText}
+            indicators={(await listIndicators(v)).filter((i) => i.buyRule || i.sellRule).map((i) => ({ id: i.id, name: i.name, buy: !!i.buyRule, sell: !!i.sellRule }))} />
         </Card>
         <section aria-labelledby="your-alerts" className="space-y-3">
           <h2 id="your-alerts" className="text-lg">Saved ({alerts.length})</h2>

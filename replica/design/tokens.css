@@ -30,6 +30,9 @@
   --c-chart-line: 122 42 94;
   --c-chart-band: 236 210 226;
   --c-chart-grid: 229 225 230;
+  --c-chart-ind-1: 31 111 184;
+  --c-chart-ind-2: 196 106 0;
+  --c-chart-ind-3: 46 138 87;
   --c-overlay: 16 12 18;
   --c-panel: 42 11 34;
   --c-panel-2: 107 35 83;
@@ -124,6 +127,9 @@
     --c-chart-line: 230 154 200;
     --c-chart-band: 61 31 51;
     --c-chart-grid: 47 40 50;
+    --c-chart-ind-1: 108 180 255;
+    --c-chart-ind-2: 255 177 92;
+    --c-chart-ind-3: 111 220 156;
     --c-overlay: 0 0 0;
     --c-panel: 42 11 34;
     --c-panel-2: 107 35 83;
@@ -166,6 +172,9 @@
   --c-chart-line: 230 154 200;
   --c-chart-band: 61 31 51;
   --c-chart-grid: 47 40 50;
+  --c-chart-ind-1: 108 180 255;
+  --c-chart-ind-2: 255 177 92;
+  --c-chart-ind-3: 111 220 156;
   --c-overlay: 0 0 0;
   --c-panel: 42 11 34;
   --c-panel-2: 107 35 83;

@@ -8,11 +8,12 @@ import { endAllSessions, isOwner, sessionUser } from "@/lib/server/auth";
 import { pushConfigured, sendPush } from "@/lib/server/push";
 import { ASSETS, ASSET_BY_SLUG, MARKETS, PLANS, PLAN_BY_CODE } from "./catalogue";
 import { pulse } from "./indicators";
+import { check as checkFormula } from "../indicators/formula";
 import { ensure, ensureCrosscheck } from "./marketdata";
 import { MODELS, closedBars, isDemo, metrics, paths, quote, scenarios, shortTerm } from "./model";
 import {
   DataError, type Alert, type AlertCondition, type Asset, type Bar, type ForecastPage, type ForecastQuery, type ForecastRow,
-  type Horizon, type Market, type MarketCode, type Mover, type Plan, type Signal, type TablePrefs, type Timeframe, type Viewer,
+  type Horizon, type Market, type MarketCode, type Mover, type Plan, type Signal, type TablePrefs, type Timeframe, type UserIndicator, type Viewer,
 } from "./types";
 
 const PULSE_TFS: Timeframe[] = ["5m", "30m", "1h", "1d", "1w"];
@@ -208,14 +209,17 @@ export async function assetSummary(v: Viewer, slug: string) {
 
 const RANGE_DAYS: Record<string, number> = { "1d": 1, "1w": 7, "1m": 31, "3m": 92, "1y": 366, "5y": 1830, all: 1e9 };
 
-export async function assetBars(v: Viewer, slug: string, range: string): Promise<{ tf: Timeframe; bars: Bar[] }> {
+/** `warmup`: up to this many bars from before the range, so indicators on the chart have history from its first bar. */
+export async function assetBars(v: Viewer, slug: string, range: string, warmup = 0): Promise<{ tf: Timeframe; bars: Bar[]; warmup: Bar[] }> {
   const a = await loadAsset(slug, ["5m", "1h", "1d", "1w"]);
   const days = RANGE_DAYS[range] ?? 92;
   let tf: Timeframe = days <= 1 ? "5m" : days <= 7 ? "1h" : days <= 366 ? "1d" : "1w";
   if ((tf === "5m" || tf === "1h") && !canSee(v, a)) throw new DataError("forbidden", "Intraday charts need a plan");
   if ((tf === "5m" || tf === "1h") && !closedBars(slug, tf).length) tf = "1d"; // daily-only sources
   const from = Date.now() - days * 86_400_000;
-  return { tf, bars: closedBars(slug, tf).filter((x) => x.ts >= from) };
+  const all = closedBars(slug, tf), first = all.findIndex((x) => x.ts >= from);
+  const start = first === -1 ? all.length : first;
+  return { tf, bars: all.slice(start), warmup: all.slice(Math.max(0, start - Math.min(warmup, 500)), start) };
 }
 
 export async function assetForecast(v: Viewer, slug: string) {
@@ -337,19 +341,21 @@ export async function removeFromWatchlist(v: Viewer, slug: string) {
 
 export interface AlertInput {
   assetSlug: string; condition: AlertCondition; threshold?: number | null; signal?: Signal | null;
-  timeframe?: Timeframe | null; channels?: ("email" | "push")[]; cooldownMinutes?: number;
+  timeframe?: Timeframe | null; channels?: ("email" | "push")[]; cooldownMinutes?: number; indicatorId?: string | null;
 }
 
 type AlertRow = { id: string; slug: string; condition: AlertCondition; threshold: number | null; signal: Signal | null; timeframe: Timeframe | null;
+  indicator_id: string | null; indicator_name: string | null;
   channels: ("email" | "push")[]; is_active: boolean; cooldown_minutes: number; last_fired_at: Date | null; created_at: Date };
 
 const toAlert = (r: AlertRow): Alert => ({ id: r.id, assetSlug: r.slug, condition: r.condition, threshold: r.threshold, signal: r.signal,
-  timeframe: r.timeframe, channels: r.channels, isActive: r.is_active, cooldownMinutes: r.cooldown_minutes,
+  timeframe: r.timeframe, indicatorId: r.indicator_id, indicatorName: r.indicator_name, channels: r.channels, isActive: r.is_active, cooldownMinutes: r.cooldown_minutes,
   lastFiredAt: r.last_fired_at?.toISOString() ?? null, createdAt: r.created_at.toISOString() });
 
 export async function listAlerts(v: Viewer): Promise<Alert[]> {
   const u = requireUser(v);
-  const rows = await sql()<AlertRow[]>`select al.*, a.slug from alerts al join assets a on a.id = al.asset_id where al.user_id = ${u.id} order by al.created_at desc`;
+  const rows = await sql()<AlertRow[]>`select al.*, a.slug, ui.name as indicator_name from alerts al join assets a on a.id = al.asset_id
+    left join user_indicators ui on ui.id = al.indicator_id where al.user_id = ${u.id} order by al.created_at desc`;
   return rows.map(toAlert);
 }
 
@@ -357,8 +363,16 @@ export async function createAlert(v: Viewer, i: AlertInput): Promise<Alert> {
   requireFeature(v);
   const a = requireAsset(i.assetSlug);
   if (!canSee(v, a)) throw new DataError("limit", `Alerts on ${a.name} aren't on this plan`);
+  let indicatorName: string | null = null;
   if (i.condition === "signal_becomes") {
     if (!i.signal || !i.timeframe) throw new DataError("invalid", "Pick a signal and a timeframe");
+  } else if (i.condition === "indicator_signal") {
+    if (!i.indicatorId || (i.signal !== "buy" && i.signal !== "sell") || !i.timeframe) throw new DataError("invalid", "Pick an indicator, buy or sell, and a timeframe");
+    const [ind] = await sql()<{ name: string; buy_rule: string | null; sell_rule: string | null }[]>`
+      select name, buy_rule, sell_rule from user_indicators where id = ${i.indicatorId} and user_id = ${v.user!.id}`;
+    if (!ind) throw new DataError("not_found", "No such indicator");
+    if (!(i.signal === "buy" ? ind.buy_rule : ind.sell_rule)) throw new DataError("invalid", `${ind.name} has no ${i.signal} rule`);
+    indicatorName = ind.name;
   } else if (!(typeof i.threshold === "number" && Number.isFinite(i.threshold) && i.threshold > 0)) {
     throw new DataError("invalid", i.condition === "forecast_move_above" ? "Enter a percentage above 0" : "Enter a price above 0");
   }
@@ -370,12 +384,12 @@ export async function createAlert(v: Viewer, i: AlertInput): Promise<Alert> {
     await tx`select 1 from users where id = ${v.user!.id} for update`;
     const [{ n }] = await tx<{ n: number }[]>`select count(*)::int as n from alerts where user_id = ${v.user!.id} and is_active`;
     if (v.plan.maxAlerts !== null && n >= v.plan.maxAlerts) throw new DataError("limit", `Your plan allows ${v.plan.maxAlerts} active alerts`);
-    const sig = i.condition === "signal_becomes";
+    const sig = i.condition === "signal_becomes" || i.condition === "indicator_signal";
     const [r] = await tx<AlertRow[]>`
-      insert into alerts (user_id, asset_id, condition, threshold, signal, timeframe, channels, cooldown_minutes)
+      insert into alerts (user_id, asset_id, condition, threshold, signal, timeframe, indicator_id, channels, cooldown_minutes)
       select ${v.user!.id}, id, ${i.condition}, ${sig ? null : i.threshold!}, ${sig ? i.signal! : null}, ${sig ? i.timeframe! : null},
-        ${channels}, ${Math.max(5, i.cooldownMinutes ?? 60)} from assets where slug = ${i.assetSlug}
-      returning *, ${i.assetSlug}::text as slug`;
+        ${i.condition === "indicator_signal" ? i.indicatorId! : null}, ${channels}, ${Math.max(5, i.cooldownMinutes ?? 60)} from assets where slug = ${i.assetSlug}
+      returning *, ${i.assetSlug}::text as slug, ${indicatorName}::text as indicator_name`;
     return toAlert(r);
   }) as Promise<Alert>;
 }
@@ -515,4 +529,65 @@ export async function sendTestPush(v: Viewer) {
     .catch(() => { throw new DataError("invalid", "The push service didn't accept the test. Turn notifications off and on again."); });
   if (!r.sent) throw new DataError("invalid", "No device is turned on for notifications");
   return r;
+}
+
+// ---------------------------------------------------------------- indicators
+
+type IndicatorRow = { id: string; name: string; lines: string[]; display: "overlay" | "pane"; buy_rule: string | null; sell_rule: string | null; updated_at: Date };
+const toIndicator = (r: IndicatorRow): UserIndicator => ({ id: r.id, name: r.name, lines: r.lines, display: r.display, buyRule: r.buy_rule, sellRule: r.sell_rule, updatedAt: r.updated_at.toISOString() });
+export type IndicatorInput = { name: string; lines: string[]; display: "overlay" | "pane"; buyRule?: string | null; sellRule?: string | null };
+const MAX_INDICATORS = 50;
+
+/** Every formula must parse; the message says which field and where. */
+function validateIndicator(i: IndicatorInput) {
+  const fields: [string, string | null | undefined][] = [...i.lines.map((l, n) => [`Line ${n + 1}`, l] as [string, string]), ["Buy rule", i.buyRule], ["Sell rule", i.sellRule]];
+  for (const [label, f] of fields) {
+    if (!f) continue;
+    const err = checkFormula(f);
+    if (err) throw new DataError("invalid", `${label}: ${err.message}`);
+  }
+}
+
+export async function listIndicators(v: Viewer): Promise<UserIndicator[]> {
+  const u = requireUser(v);
+  return (await sql()<IndicatorRow[]>`select * from user_indicators where user_id = ${u.id} order by created_at`).map(toIndicator);
+}
+
+export async function getIndicator(v: Viewer, id: string): Promise<UserIndicator> {
+  const u = requireUser(v);
+  const [r] = await sql()<IndicatorRow[]>`select * from user_indicators where id = ${id} and user_id = ${u.id}`;
+  if (!r) throw new DataError("not_found", "No such indicator");
+  return toIndicator(r);
+}
+
+export async function createIndicator(v: Viewer, i: IndicatorInput): Promise<UserIndicator> {
+  const u = requireUser(v);
+  validateIndicator(i);
+  return sql().begin(async (tx) => {
+    await tx`select 1 from users where id = ${u.id} for update`;
+    const [{ n }] = await tx<{ n: number }[]>`select count(*)::int as n from user_indicators where user_id = ${u.id}`;
+    if (n >= MAX_INDICATORS) throw new DataError("limit", `You can keep up to ${MAX_INDICATORS} indicators`);
+    const [r] = await tx<IndicatorRow[]>`insert into user_indicators (user_id, name, lines, display, buy_rule, sell_rule)
+      values (${u.id}, ${i.name.trim()}, ${i.lines}, ${i.display}, ${i.buyRule || null}, ${i.sellRule || null}) returning *`;
+    return toIndicator(r);
+  }) as Promise<UserIndicator>;
+}
+
+export async function updateIndicator(v: Viewer, id: string, i: IndicatorInput): Promise<UserIndicator> {
+  const u = requireUser(v);
+  validateIndicator(i);
+  const [r] = await sql()<IndicatorRow[]>`update user_indicators set name = ${i.name.trim()}, lines = ${i.lines}, display = ${i.display},
+    buy_rule = ${i.buyRule || null}, sell_rule = ${i.sellRule || null}, updated_at = now() where id = ${id} and user_id = ${u.id} returning *`;
+  if (!r) throw new DataError("not_found", "No such indicator");
+  // An alert on a rule that no longer exists can't fire: remove it rather than leave it silently dead.
+  if (!r.buy_rule) await sql()`delete from alerts where indicator_id = ${id} and signal = 'buy'`;
+  if (!r.sell_rule) await sql()`delete from alerts where indicator_id = ${id} and signal = 'sell'`;
+  return toIndicator(r);
+}
+
+/** Deleting an indicator deletes the alerts that use it (on delete cascade). */
+export async function deleteIndicator(v: Viewer, id: string) {
+  const u = requireUser(v);
+  const r = await sql()`delete from user_indicators where id = ${id} and user_id = ${u.id} returning 1`;
+  if (!r.length) throw new DataError("not_found", "No such indicator");
 }

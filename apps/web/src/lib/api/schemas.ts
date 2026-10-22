@@ -13,12 +13,21 @@ const signal = z.enum(["strong_buy", "buy", "neutral", "sell", "strong_sell"]);
 const tf = z.enum(["5m", "30m", "1h", "1d", "1w"]);
 export const AlertCreate = z.object({
   assetSlug: z.string().regex(/^[a-z0-9-]{1,40}$/),
-  condition: z.enum(["price_above", "price_below", "signal_becomes", "forecast_move_above"]),
+  condition: z.enum(["price_above", "price_below", "signal_becomes", "forecast_move_above", "indicator_signal"]),
   threshold: z.number().positive("Enter a number above 0").finite().max(1e12).nullish(),
   signal: signal.nullish(),
   timeframe: tf.nullish(),
   channels: z.array(z.enum(["email", "push"])).max(2).optional(),
   cooldownMinutes: z.number().int().min(5).max(10080).optional(),
+  indicatorId: z.string().uuid().nullish(),
+});
+const formula = z.string().trim().max(300, "Keep each formula under 300 characters");
+export const IndicatorBody = z.object({
+  name: z.string().trim().min(1, "Give it a name").max(60, "Keep the name under 60 characters"),
+  lines: z.array(formula.min(1, "A line can't be empty")).min(1, "Add at least one line to plot").max(3, "Up to three lines"),
+  display: z.enum(["overlay", "pane"]),
+  buyRule: formula.nullish(),
+  sellRule: formula.nullish(),
 });
 export const AlertPatch = z.object({ isActive: z.boolean() });
 export const Prefs = z.object({
