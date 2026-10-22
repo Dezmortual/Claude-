@@ -600,3 +600,56 @@ export async function deleteIndicator(v: Viewer, id: string) {
   const r = await sql()`delete from user_indicators where id = ${id} and user_id = ${u.id} returning 1`;
   if (!r.length) throw new DataError("not_found", "No such indicator");
 }
+
+// ---------------------------------------------------------------- notification controls (F6)
+
+export type DeliverySettings = { mutedUntil: string | null; quiet: { start: number; end: number } | null; emailMode: "instant" | "digest"; digestHour: number };
+export type DeliveryPatch = { muteFor?: "off" | "1h" | "8h" | "24h" | "indefinitely"; quiet?: { start: number; end: number } | null; emailMode?: "instant" | "digest"; digestHour?: number };
+const FOREVER = new Date("9999-01-01T00:00:00Z"); // "until I turn it back on"
+const MUTE_MS = { "1h": 3_600_000, "8h": 8 * 3_600_000, "24h": 24 * 3_600_000 } as const;
+
+export async function deliverySettings(v: Viewer): Promise<DeliverySettings> {
+  const u = requireUser(v);
+  const [r] = await sql()<{ alerts_muted_until: Date | null; quiet_start: number | null; quiet_end: number | null; email_mode: "instant" | "digest"; digest_hour: number }[]>`
+    select alerts_muted_until, quiet_start, quiet_end, email_mode, digest_hour from users where id = ${u.id}`;
+  const muted = r.alerts_muted_until && r.alerts_muted_until > new Date() ? r.alerts_muted_until : null;
+  return { mutedUntil: muted ? (muted >= FOREVER ? "indefinitely" : muted.toISOString()) : null,
+    quiet: r.quiet_start === null || r.quiet_end === null ? null : { start: r.quiet_start, end: r.quiet_end }, emailMode: r.email_mode, digestHour: r.digest_hour };
+}
+
+export async function updateDeliverySettings(v: Viewer, p: DeliveryPatch): Promise<DeliverySettings> {
+  const u = requireUser(v);
+  const db = sql();
+  if (p.muteFor) {
+    const until = p.muteFor === "off" ? null : p.muteFor === "indefinitely" ? FOREVER : new Date(Date.now() + MUTE_MS[p.muteFor]);
+    await db`update users set alerts_muted_until = ${until} where id = ${u.id}`;
+  }
+  if (p.quiet !== undefined) {
+    if (p.quiet && p.quiet.start === p.quiet.end) throw new DataError("invalid", "Quiet hours need different start and end times");
+    await db`update users set quiet_start = ${p.quiet?.start ?? null}, quiet_end = ${p.quiet?.end ?? null} where id = ${u.id}`;
+  }
+  if (p.emailMode) {
+    await db`update users set email_mode = ${p.emailMode} where id = ${u.id}`;
+    // Switching back to one email per alert sends what was waiting for the summary on the next run.
+    if (p.emailMode === "instant") await db`update alert_events set email_status = 'pending' where user_id = ${u.id} and email_status = 'digest'`;
+  }
+  if (p.digestHour !== undefined) await db`update users set digest_hour = ${p.digestHour} where id = ${u.id}`;
+  return deliverySettings(v);
+}
+
+/** The alert behind a stop link, without signing in: the token is the only key, so it is long and random. */
+export async function alertByStopToken(token: string) {
+  if (!/^[0-9a-f]{64}$/.test(token)) return null;
+  const [r] = await sql()<(AlertRow & { asset_name: string })[]>`
+    select al.*, a.slug, a.name as asset_name, ui.name as indicator_name from alerts al join assets a on a.id = al.asset_id
+    left join user_indicators ui on ui.id = al.indicator_id where al.stop_token = ${token}`;
+  return r ? { alert: toAlert(r), assetName: r.asset_name } : null;
+}
+
+/** Pauses the alert behind a stop link. It can be resumed from the Alerts page. */
+export async function stopAlertByToken(token: string) {
+  if (!/^[0-9a-f]{64}$/.test(token)) throw new DataError("not_found", "This stop link isn't valid");
+  const r = await sql()`update alerts set is_active = false, updated_at = now() where stop_token = ${token} returning 1`;
+  if (!r.length) throw new DataError("not_found", "This stop link isn't valid");
+  return { stopped: true };
+}

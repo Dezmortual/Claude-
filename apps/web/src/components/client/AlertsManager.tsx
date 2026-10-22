@@ -3,7 +3,7 @@ import { BellRing, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
 import type { Alert, AlertCondition } from "@/lib/data";
-import { SIGNAL_LABEL } from "@/lib/format";
+import { SIGNAL_LABEL, TF_NAME as TF, describeAlert as describe } from "@/lib/format";
 import { toast } from "./Toaster";
 
 type Opt = { slug: string; name: string; ticker: string; price: number };
@@ -13,14 +13,6 @@ const COND: Record<AlertCondition, string> = {
   price_above: "Price rises above", price_below: "Price falls below", signal_becomes: "Signal turns", forecast_move_above: "7-day forecast move exceeds",
   indicator_signal: "My indicator gives a signal",
 };
-const TF = { "5m": "5 min", "30m": "30 min", "1h": "1 hour", "1d": "1 day", "1w": "1 week" } as const;
-
-export function describe(a: Alert, name: string) {
-  if (a.condition === "signal_becomes") return `${name}: ${TF[a.timeframe as keyof typeof TF]} signal turns ${SIGNAL_LABEL[a.signal!].toLowerCase()}`;
-  if (a.condition === "indicator_signal") return `${name}: ${a.indicatorName ?? "indicator"} gives a ${a.signal} signal on the ${TF[a.timeframe as keyof typeof TF]} chart`;
-  if (a.condition === "forecast_move_above") return `${name}: 7-day forecast moves more than ${a.threshold}%`;
-  return `${name}: price ${a.condition === "price_above" ? "above" : "below"} ${a.threshold!.toLocaleString("en-US", { maximumFractionDigits: 8 })}`;
-}
 
 export function AlertForm({ options, preset, limitText, indicators = [] }: { options: Opt[]; preset?: string; limitText: string; indicators?: Ind[] }) {
   const id = useId();

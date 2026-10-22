@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { Bell } from "lucide-react";
 import { AlertForm, AlertRow } from "@/components/client/AlertsManager";
 import { Card, EmptyState, Label, Paywall } from "@/components/ui";
-import { alertEvents, alertableAssets, getAsset, listAlerts, listIndicators, type AlertEvent } from "@/lib/data";
+import { alertEvents, alertableAssets, deliverySettings, getAsset, listAlerts, listIndicators, type AlertEvent } from "@/lib/data";
+import { DeliverySettings } from "@/components/client/DeliverySettings";
 import { viewer } from "@/lib/session";
 
 export const metadata = { title: "Alerts" };
@@ -18,7 +19,7 @@ export default async function Alerts({ searchParams }: { searchParams: Promise<{
   if (!v.plan.watchlistAlerts) {
     return <>{head}<Paywall planName="Crypto" href="/pricing?plan=crypto&need=watchlist">Alerts start on the <b className="text-fg">Crypto</b> plan.</Paywall></>;
   }
-  const [alerts, events] = await Promise.all([listAlerts(v), alertEvents(v, 15)]);
+  const [alerts, events, delivery] = await Promise.all([listAlerts(v), alertEvents(v, 15), deliverySettings(v)]);
   const active = alerts.filter((a) => a.isActive).length;
   const limit = v.plan.maxAlerts;
   const limitText = limit === null ? "Your plan has no alert limit." : `${active} of ${limit} active alerts used.`;
@@ -40,6 +41,10 @@ export default async function Alerts({ searchParams }: { searchParams: Promise<{
             <Card><EmptyState icon={<Bell aria-hidden className="h-6 w-6" />} title="No alerts yet">Create one on the left. A good first one: tell me when Bitcoin&apos;s daily signal turns strong buy.</EmptyState></Card>
           )}
         </section>
+        <section id="delivery" aria-labelledby="delivery-h" className="scroll-mt-16 space-y-3">
+          <h2 id="delivery-h" className="text-lg">How alerts reach you</h2>
+          <Card className="p-5"><DeliverySettings initial={delivery} tz={v.user!.timezone} /></Card>
+        </section>
         <section aria-labelledby="recent-alerts" className="space-y-3">
           <h2 id="recent-alerts" className="text-lg">Recently fired</h2>
           {events.length ? (
@@ -59,7 +64,8 @@ function EventRow({ e, tz }: { e: AlertEvent; tz: string }) {
   const t = (iso: string) => new Date(iso).toLocaleString("en-GB", { timeZone: tz, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   const after = (iso: string) => { const m = Math.round((Date.parse(iso) - Date.parse(e.observedAt ?? e.firedAt)) / 60_000); return m < 1 ? "" : ` (${m < 120 ? `${m} min` : `${Math.round(m / 60)} h`} after the data)`; };
   const channel = (name: string, c: AlertEvent["email"]) =>
-    c.status === "skipped" ? null : c.sentAt ? `${name} sent ${t(c.sentAt)}${after(c.sentAt)}` : `${name} ${c.status === "failed" ? "failed" : "waiting to send"}`;
+    c.status === "skipped" ? null : c.sentAt ? `${name} sent ${t(c.sentAt)}${after(c.sentAt)}`
+      : `${name} ${c.status === "failed" ? "failed" : c.status === "muted" ? "not sent (muted or quiet hours)" : c.status === "digest" ? "waiting for the daily summary" : "waiting to send"}`;
   return (
     <li className="rounded-lg border bg-surface p-4">
       <p className="text-sm">{e.message}</p>

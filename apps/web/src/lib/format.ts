@@ -1,4 +1,5 @@
 // Number and date formatting. Prices keep enough significant digits for sub-cent assets.
+import type { Alert } from "./data/types";
 export function price(n: number | null | undefined, unit = "USD"): string {
   if (n === null || n === undefined || !Number.isFinite(n)) return "—";
   const abs = Math.abs(n);
@@ -29,3 +30,14 @@ export function money(cents: number, currency = "usd"): string {
 }
 
 export const SIGNAL_LABEL = { strong_buy: "Strong buy", buy: "Buy", neutral: "Neutral", sell: "Sell", strong_sell: "Strong sell", unavailable: "Unavailable" } as const;
+
+export const TF_NAME = { "5m": "5 min", "30m": "30 min", "1h": "1 hour", "1d": "1 day", "1w": "1 week" } as const;
+
+/** One line naming an alert, e.g. "Bitcoin: 1 day signal turns strong buy". Used on the Alerts page and stop page. */
+export function describeAlert(a: Alert, name: string) {
+  const tf = TF_NAME[a.timeframe as keyof typeof TF_NAME];
+  if (a.condition === "signal_becomes") return `${name}: ${tf} signal turns ${SIGNAL_LABEL[a.signal!].toLowerCase()}`;
+  if (a.condition === "indicator_signal") return `${name}: ${a.indicatorName ?? "indicator"} gives a ${a.signal} signal on the ${tf} chart`;
+  if (a.condition === "forecast_move_above") return `${name}: 7-day forecast moves more than ${a.threshold}%`;
+  return `${name}: price ${a.condition === "price_above" ? "above" : "below"} ${a.threshold!.toLocaleString("en-US", { maximumFractionDigits: 8 })}`;
+}

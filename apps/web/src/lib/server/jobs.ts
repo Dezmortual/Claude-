@@ -133,13 +133,13 @@ export async function scoreForecasts() {
 
 type AlertDue = { id: string; user_id: string; slug: string; name: string; email: string; condition: string; threshold: number | null;
   signal: Signal | null; timeframe: Timeframe | null; armed: boolean; cooldown_minutes: number; last_fired_at: Date | null; channels: string[];
-  indicator_name: string | null; buy_rule: string | null; sell_rule: string | null };
+  indicator_name: string | null; buy_rule: string | null; sell_rule: string | null; email_mode: "instant" | "digest" };
 
 export async function evaluateAlerts() {
   const db = sql();
   const alerts = await db<AlertDue[]>`
     select al.id, al.user_id, a.slug, a.name, u.email, al.condition, al.threshold, al.signal, al.timeframe, al.armed, al.cooldown_minutes, al.last_fired_at, al.channels,
-      ui.name as indicator_name, ui.buy_rule, ui.sell_rule
+      ui.name as indicator_name, ui.buy_rule, ui.sell_rule, u.email_mode
     from alerts al join assets a on a.id = al.asset_id join users u on u.id = al.user_id left join user_indicators ui on ui.id = al.indicator_id
     where al.is_active and a.is_active and u.email_verified_at is not null`;
   if (!alerts.length) return { checked: 0, fired: 0 };
@@ -181,7 +181,8 @@ export async function evaluateAlerts() {
     // Compare-and-set: only one evaluator can fire this alert for this condition episode.
     const won = await db`update alerts set armed = false, last_fired_at = now() where id = ${al.id} and armed returning 1`;
     if (!won.length) continue;
-    const email = al.channels.includes("email") ? "pending" : "skipped", push = al.channels.includes("push") ? "pending" : "skipped";
+    // Mute and quiet hours are applied when sending, so turning them on also holds back what's already queued.
+    const email = !al.channels.includes("email") ? "skipped" : al.email_mode === "digest" ? "digest" : "pending", push = al.channels.includes("push") ? "pending" : "skipped";
     await db`insert into alert_events (alert_id, user_id, message, dedupe_key, email_status, push_status, observed_at)
       values (${al.id}, ${al.user_id}, ${message}, ${`${al.id}:${Math.floor(Date.now() / 60_000)}`}, ${email}, ${push}, ${observedAt})
       on conflict (dedupe_key) do nothing`;
@@ -196,18 +197,50 @@ function timing(observed: Date | null, fired: Date) {
   return `${observed ? `Based on data up to ${utc(observed)}. ` : ""}Fired ${utc(fired)}, sent ${utc(new Date())}.`;
 }
 
+// ---------------------------------------------------------------- delivery rules (F6)
+
+type Delivery = { timezone: string; alerts_muted_until: Date | null; quiet_start: number | null; quiet_end: number | null };
+
+/** The hour of day (0-23) in a time zone. */
+export function localHour(tz: string, at = new Date()) {
+  try { return Number(new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", hourCycle: "h23" }).format(at)); }
+  catch { return at.getUTCHours(); }
+}
+export const isMuted = (u: Delivery, at = new Date()) => !!u.alerts_muted_until && u.alerts_muted_until > at;
+/** Quiet hours run from `quiet_start` up to `quiet_end`, local time, and may wrap past midnight (22 to 7). */
+export function inQuietHours(u: Delivery, at = new Date()) {
+  if (u.quiet_start === null || u.quiet_end === null) return false;
+  const h = localHour(u.timezone, at);
+  return u.quiet_start < u.quiet_end ? h >= u.quiet_start && h < u.quiet_end : h >= u.quiet_start || h < u.quiet_end;
+}
+
+const stopUrl = (token: string) => `${env().APP_URL}/alerts/stop?t=${token}`;
+/** RFC 8058 one-click: mail apps show an unsubscribe button that posts here, which pauses the alert. */
+const stopHeaders = (token: string) => ({
+  "List-Unsubscribe": `<${env().APP_URL}/api/v1/alerts/stop?t=${token}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+});
+
 /** Sends pending alert emails (failures retry on later runs, up to 5 attempts, then stay as failed) and pushes
- *  (one try: a push that arrives an hour late is worse than none). */
+ *  (one try: a push that arrives an hour late is worse than none). Muted users get nothing; quiet hours hold emails
+ *  until they end and drop pushes. */
 export async function deliverAlerts() {
   const db = sql();
-  const events = await db<{ id: string; email: string; message: string; slug: string; attempts: number; fired_at: Date; observed_at: Date | null }[]>`
-    select e.id, u.email, e.message, a.slug, e.attempts, e.fired_at, e.observed_at from alert_events e join users u on u.id = e.user_id
-    join alerts al on al.id = e.alert_id join assets a on a.id = al.asset_id
+  const now = new Date();
+  const events = await db<(Delivery & { id: string; email: string; message: string; slug: string; attempts: number; fired_at: Date;
+    observed_at: Date | null; stop_token: string })[]>`
+    select e.id, u.email, e.message, a.slug, e.attempts, e.fired_at, e.observed_at, al.stop_token,
+      u.timezone, u.alerts_muted_until, u.quiet_start, u.quiet_end
+    from alert_events e join users u on u.id = e.user_id join alerts al on al.id = e.alert_id join assets a on a.id = al.asset_id
     where e.email_status in ('pending', 'failed') and e.attempts < 5 order by e.fired_at limit 100`;
-  let sent = 0, failed = 0;
+  let sent = 0, failed = 0, muted = 0, held = 0;
   for (const e of events) {
+    if (isMuted(e, now)) { await db`update alert_events set email_status = 'muted' where id = ${e.id}`; muted++; continue; }
+    if (inQuietHours(e, now)) { held++; continue; }
     try {
-      await sendEmail(e.email, `Alert: ${ASSET_BY_SLUG.get(e.slug)?.name ?? e.slug}`, `${e.message}\n\n${timing(e.observed_at, e.fired_at)}\n\nSee it: ${env().APP_URL}/assets/${e.slug}\nManage alerts: ${env().APP_URL}/alerts\n\nForecasts and signals are statistics, not financial advice.`);
+      await sendEmail(e.email, `Alert: ${ASSET_BY_SLUG.get(e.slug)?.name ?? e.slug}`,
+        `${e.message}\n\n${timing(e.observed_at, e.fired_at)}\n\nSee it: ${env().APP_URL}/assets/${e.slug}\nStop this alert: ${stopUrl(e.stop_token)}\n` +
+        `Mute all, quiet hours or a daily summary: ${env().APP_URL}/alerts#delivery\n\nForecasts and signals are statistics, not financial advice.`,
+        stopHeaders(e.stop_token));
       await db`update alert_events set email_status = 'sent', email_sent_at = now(), attempts = attempts + 1, last_error = null where id = ${e.id}`;
       sent++;
     } catch (err) {
@@ -215,11 +248,13 @@ export async function deliverAlerts() {
       failed++;
     }
   }
-  const pushes = await db<{ id: string; user_id: string; message: string; slug: string; observed_at: Date | null }[]>`
-    select e.id, e.user_id, e.message, a.slug, e.observed_at from alert_events e join alerts al on al.id = e.alert_id join assets a on a.id = al.asset_id
+  const pushes = await db<(Delivery & { id: string; user_id: string; message: string; slug: string; observed_at: Date | null })[]>`
+    select e.id, e.user_id, e.message, a.slug, e.observed_at, u.timezone, u.alerts_muted_until, u.quiet_start, u.quiet_end
+    from alert_events e join users u on u.id = e.user_id join alerts al on al.id = e.alert_id join assets a on a.id = al.asset_id
     where e.push_status = 'pending' order by e.fired_at limit 100`;
   let pushed = 0, pushFailed = 0;
   for (const e of pushes) {
+    if (isMuted(e, now) || inQuietHours(e, now)) { await db`update alert_events set push_status = 'muted' where id = ${e.id}`; muted++; continue; }
     try {
       if (!pushConfigured()) throw new Error("push is not configured (VAPID keys missing)");
       const r = await sendPush(e.user_id, { title: `Alert: ${ASSET_BY_SLUG.get(e.slug)?.name ?? e.slug}`, body: e.observed_at ? `${e.message} Data to ${utc(e.observed_at)}.` : e.message, url: `/assets/${e.slug}`, tag: `alert-${e.id}` });
@@ -230,7 +265,37 @@ export async function deliverAlerts() {
       pushFailed++;
     }
   }
-  return { sent, failed, pushed, pushFailed };
+  return { sent, failed, pushed, pushFailed, muted, held, ...(await sendDigests(now)) };
+}
+
+/** The daily summary: one email at the owner's chosen local hour with every alert that fired since the last one.
+ *  Muting drops the waiting alerts instead; quiet hours don't apply, since the hour was chosen. */
+export async function sendDigests(now = new Date()) {
+  const db = sql();
+  const users = await db<(Delivery & { id: string; email: string; digest_hour: number; last_digest_at: Date | null })[]>`
+    select u.id, u.email, u.timezone, u.alerts_muted_until, u.quiet_start, u.quiet_end, u.digest_hour, u.last_digest_at
+    from users u where exists (select 1 from alert_events e where e.user_id = u.id and e.email_status = 'digest')`;
+  let digests = 0;
+  for (const u of users) {
+    if (isMuted(u, now)) { await db`update alert_events set email_status = 'muted' where user_id = ${u.id} and email_status = 'digest'`; continue; }
+    const due = localHour(u.timezone, now) === u.digest_hour && (!u.last_digest_at || now.getTime() - u.last_digest_at.getTime() > 20 * 3_600_000);
+    if (!due) continue;
+    const rows = await db<{ id: string; message: string; slug: string; fired_at: Date; observed_at: Date | null; stop_token: string }[]>`
+      select e.id, e.message, a.slug, e.fired_at, e.observed_at, al.stop_token from alert_events e join alerts al on al.id = e.alert_id
+      join assets a on a.id = al.asset_id where e.user_id = ${u.id} and e.email_status = 'digest' order by e.fired_at`;
+    const body = rows.map((r) => `- ${r.message}\n  ${r.observed_at ? `Data up to ${utc(r.observed_at)}, f` : "F"}ired ${utc(r.fired_at)}. ` +
+      `See it: ${env().APP_URL}/assets/${r.slug} · Stop this alert: ${stopUrl(r.stop_token)}`).join("\n\n");
+    try {
+      await sendEmail(u.email, `Your alerts: ${rows.length} fired since the last summary`,
+        `${body}\n\nSwitch back to one email per alert, or change the hour: ${env().APP_URL}/alerts#delivery\n\nForecasts and signals are statistics, not financial advice.`);
+      await db`update alert_events set email_status = 'sent', email_sent_at = now() where id in ${db(rows.map((r) => r.id))}`;
+      await db`update users set last_digest_at = ${now} where id = ${u.id}`;
+      digests++;
+    } catch (err) {
+      console.error(`digest for ${u.id}: ${err}`); // stays waiting; the next run in the same hour tries again
+    }
+  }
+  return { digests };
 }
 
 /** Housekeeping: expired sessions and tokens, old rate-limit windows, old job logs. */

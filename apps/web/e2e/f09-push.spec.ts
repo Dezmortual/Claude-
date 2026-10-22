@@ -70,7 +70,7 @@ test.describe("F09 app and push alerts", () => {
     await page.getByLabel("Asset").selectOption("bitcoin");
     await page.getByLabel("When").selectOption("price_above");
     await page.getByLabel("Price", { exact: true }).fill("9999999");
-    await page.getByLabel("Email").uncheck();
+    await page.getByLabel("Email", { exact: true }).uncheck();
     await page.getByLabel("Push notification").check();
     await page.getByRole("button", { name: "Save alert" }).click();
     const row = page.getByRole("listitem").filter({ hasText: "Bitcoin: price above 9,999,999" });

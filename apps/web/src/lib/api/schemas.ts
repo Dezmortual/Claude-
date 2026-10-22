@@ -43,3 +43,10 @@ export const PushSubscriptionBody = z.object({
   keys: z.object({ p256dh: z.string().min(20).max(200), auth: z.string().min(8).max(100) }),
 });
 export const PushUnsubscribeBody = z.object({ endpoint: z.string().url().max(1000) });
+
+export const DeliveryBody = z.object({
+  muteFor: z.enum(["off", "1h", "8h", "24h", "indefinitely"]).optional(),
+  quiet: z.object({ start: z.number().int().min(0).max(23), end: z.number().int().min(0).max(23) }).nullable().optional(),
+  emailMode: z.enum(["instant", "digest"]).optional(),
+  digestHour: z.number().int().min(0).max(23).optional(),
+});
