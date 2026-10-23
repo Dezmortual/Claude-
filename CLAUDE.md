@@ -30,3 +30,14 @@ Run everything from inside `trading-desk/`:
 Keep each strategy one level under `trading-desk/`, because strategies import
 `core/` as `../core`. Never commit `trading-desk/.env`. Read the
 `trading-desk-method` skill before reporting any backtest result.
+
+## Ruflo
+
+Ruflo (npm `ruflo`, github ruvnet/ruflo) was installed with
+`npx ruflo@3.56.3 init --no-global --no-codex-detect --no-skills-sh --no-plugin-install`.
+It added `.claude/{skills,agents,commands,helpers}`, hooks and a status line in
+`.claude/settings.json`, the `claude-flow` MCP server in `.mcp.json` (pinned to
+3.56.3), the `ruflo-mods`, `ruflo-swarm` and `ruflo-console` plugins, and runtime
+config in `.claude-flow/`. Its local databases (`.swarm/`, `ruvector.db`) are
+gitignored. Update with `npx ruflo@latest init upgrade --settings`, and keep the
+trading-desk entries in `settings.json` when you do.
