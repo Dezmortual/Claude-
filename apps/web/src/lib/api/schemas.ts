@@ -49,6 +49,7 @@ export const DeliveryBody = z.object({
   quiet: z.object({ start: z.number().int().min(0).max(23), end: z.number().int().min(0).max(23) }).nullable().optional(),
   emailMode: z.enum(["instant", "digest"]).optional(),
   digestHour: z.number().int().min(0).max(23).optional(),
+  topSignalPush: z.boolean().optional(),
 });
 
 export const HoldingBody = z.object({

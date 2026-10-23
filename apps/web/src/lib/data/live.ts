@@ -238,6 +238,21 @@ function topSignals(live: ForecastRow[], n = 5) {
   return { buys: pick("buy"), sells: pick("sell"), scanned: live.length };
 }
 
+/** The home page's top signals for the scheduled job, which has no signed-in viewer: every market, live assets only. */
+export async function scanTopSignals() {
+  const v: Viewer = { user: null, plan: PLAN_BY_CODE.get("unlimited")!, subscription: null };
+  await load(v, ASSETS);
+  const live = ASSETS.map((a) => row(v, a)).filter((r) => !r.locked && !r.demo);
+  return topSignals(live);
+}
+
+/** One line on why an entry is in the list, for its notification. */
+export function topWhy(t: TopSignal) {
+  const word = t.side === "buy" ? "buy" : "sell";
+  return `Daily ${t.daily.agree}/20 ${word}${t.hourly ? (t.aligned ? `, hourly ${t.hourly.agree}/20 ${word}` : ", hourly disagrees") : ""}, ` +
+    `7 days ${Math.round(t.pSide * 100)}% ${t.side === "buy" ? "up" : "down"}.`;
+}
+
 // ---------------------------------------------------------------- asset pages
 
 /** Loads everything an asset page needs in one go. Locked assets still get prices (the daily signal is shown free). */
@@ -653,18 +668,19 @@ export async function deleteIndicator(v: Viewer, id: string) {
 
 // ---------------------------------------------------------------- notification controls (F6)
 
-export type DeliverySettings = { mutedUntil: string | null; quiet: { start: number; end: number } | null; emailMode: "instant" | "digest"; digestHour: number };
-export type DeliveryPatch = { muteFor?: "off" | "1h" | "8h" | "24h" | "indefinitely"; quiet?: { start: number; end: number } | null; emailMode?: "instant" | "digest"; digestHour?: number };
+export type DeliverySettings = { mutedUntil: string | null; quiet: { start: number; end: number } | null; emailMode: "instant" | "digest"; digestHour: number; topSignalPush: boolean };
+export type DeliveryPatch = { muteFor?: "off" | "1h" | "8h" | "24h" | "indefinitely"; quiet?: { start: number; end: number } | null; emailMode?: "instant" | "digest"; digestHour?: number; topSignalPush?: boolean };
 const FOREVER = new Date("9999-01-01T00:00:00Z"); // "until I turn it back on"
 const MUTE_MS = { "1h": 3_600_000, "8h": 8 * 3_600_000, "24h": 24 * 3_600_000 } as const;
 
 export async function deliverySettings(v: Viewer): Promise<DeliverySettings> {
   const u = requireUser(v);
-  const [r] = await sql()<{ alerts_muted_until: Date | null; quiet_start: number | null; quiet_end: number | null; email_mode: "instant" | "digest"; digest_hour: number }[]>`
-    select alerts_muted_until, quiet_start, quiet_end, email_mode, digest_hour from users where id = ${u.id}`;
+  const [r] = await sql()<{ alerts_muted_until: Date | null; quiet_start: number | null; quiet_end: number | null; email_mode: "instant" | "digest"; digest_hour: number; top_signal_push: boolean }[]>`
+    select alerts_muted_until, quiet_start, quiet_end, email_mode, digest_hour, top_signal_push from users where id = ${u.id}`;
   const muted = r.alerts_muted_until && r.alerts_muted_until > new Date() ? r.alerts_muted_until : null;
   return { mutedUntil: muted ? (muted >= FOREVER ? "indefinitely" : muted.toISOString()) : null,
-    quiet: r.quiet_start === null || r.quiet_end === null ? null : { start: r.quiet_start, end: r.quiet_end }, emailMode: r.email_mode, digestHour: r.digest_hour };
+    quiet: r.quiet_start === null || r.quiet_end === null ? null : { start: r.quiet_start, end: r.quiet_end }, emailMode: r.email_mode, digestHour: r.digest_hour,
+    topSignalPush: r.top_signal_push };
 }
 
 export async function updateDeliverySettings(v: Viewer, p: DeliveryPatch): Promise<DeliverySettings> {
@@ -684,6 +700,7 @@ export async function updateDeliverySettings(v: Viewer, p: DeliveryPatch): Promi
     if (p.emailMode === "instant") await db`update alert_events set email_status = 'pending' where user_id = ${u.id} and email_status = 'digest'`;
   }
   if (p.digestHour !== undefined) await db`update users set digest_hour = ${p.digestHour} where id = ${u.id}`;
+  if (p.topSignalPush !== undefined) await db`update users set top_signal_push = ${p.topSignalPush} where id = ${u.id}`;
   return deliverySettings(v);
 }
 

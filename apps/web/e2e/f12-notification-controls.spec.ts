@@ -118,3 +118,19 @@ base.describe("F6-H2 the stop link in an alert email", () => {
     await guest.close(); await owner.close();
   });
 });
+
+test.describe("Top signal notifications", () => {
+  test("the switch saves, and the job runs on its own", async ({ page, request }) => {
+    await page.goto("/alerts#delivery");
+    const box = page.getByLabel("Notify me about new top buys and sells");
+    await expect(box).toBeChecked(); // on by default
+    await box.uncheck();
+    await expect(page.getByRole("status").filter({ hasText: "Top signal notifications off" })).toBeVisible();
+    await page.reload();
+    await expect(page.getByLabel("Notify me about new top buys and sells")).not.toBeChecked();
+    await page.getByLabel("Notify me about new top buys and sells").check();
+    // The test build runs on demo prices, which are never ranked, so there is nothing to announce.
+    const r = await (await request.post("/api/cron/top-signals", { headers: CRON })).json();
+    expect(r).toEqual({ job: "top-signals", scanned: 0, new: 0, pushed: 0 });
+  });
+});

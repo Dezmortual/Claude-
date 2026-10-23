@@ -1,6 +1,6 @@
 "use client";
 // F6: mute all, quiet hours, and one email per alert or a daily summary. Each change saves straight away.
-import { BellOff, Moon, Mail } from "lucide-react";
+import { BellOff, Moon, Mail, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useId, useState } from "react";
 import type { DeliveryPatch, DeliverySettings as Settings } from "@/lib/data";
@@ -21,7 +21,7 @@ export function DeliverySettings({ initial, tz }: { initial: Settings; tz: strin
     const before = s;
     // Show the choice straight away; the server's reply replaces it, or puts the old one back on failure.
     setS({ ...s, ...(p.quiet !== undefined ? { quiet: p.quiet } : {}), ...(p.emailMode ? { emailMode: p.emailMode } : {}),
-      ...(p.digestHour !== undefined ? { digestHour: p.digestHour } : {}) });
+      ...(p.digestHour !== undefined ? { digestHour: p.digestHour } : {}), ...(p.topSignalPush !== undefined ? { topSignalPush: p.topSignalPush } : {}) });
     setBusy(true);
     const r = await fetch("/api/v1/me/delivery", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(p) });
     setBusy(false);
@@ -90,6 +90,15 @@ export function DeliverySettings({ initial, tz }: { initial: Settings; tz: strin
           </select>
         </div>
         <p className="text-xs text-muted">Push notifications still arrive as alerts fire. Every alert email has a link that stops that alert.</p>
+      </fieldset>
+      <fieldset className="grid gap-2 border-t pt-5">
+        <legend className="flex items-center gap-2 text-sm font-semibold"><TrendingUp aria-hidden className="h-4 w-4 text-accent" />Top signals</legend>
+        <label className="flex items-center gap-3 text-sm">
+          <input type="checkbox" checked={s.topSignalPush} disabled={busy} className="h-5 w-5 accent-accent"
+            onChange={(e) => save({ topSignalPush: e.target.checked }, e.target.checked ? "Top signal notifications on" : "Top signal notifications off")} />
+          Notify me about new top buys and sells
+        </label>
+        <p className="text-xs text-muted">Strong and very strong entries only, each asset at most once a day, all in one notification. Checked every 30 minutes; mute and quiet hours apply.</p>
       </fieldset>
       <p className="text-xs text-muted">Times are in your time zone, {tz}. Change it under <Link href="/account" className="font-semibold text-accent underline">Account</Link>.</p>
     </div>

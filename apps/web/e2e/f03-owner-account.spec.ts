@@ -47,8 +47,10 @@ test.describe("F03 set up the owner account", () => {
     const link = await emailedLink(email, "verify-email");
     await page.goto(link);
     await expect(page.getByRole("heading", { name: "Email confirmed" })).toBeVisible();
-    await page.goto(link);
-    await expect(page.getByText(/already used/)).toBeVisible();
+    await page.goto(link); // used, but for this now-confirmed account: still a success
+    await expect(page.getByRole("heading", { name: "Email confirmed" })).toBeVisible();
+    await page.goto("/verify-email?token=not-a-real-code");
+    await expect(page.getByText(/expired or was already used/)).toBeVisible();
 
     await page.goto("/sign-in");
     await page.getByLabel("Email").fill(email);
@@ -67,7 +69,12 @@ test.describe("F03 set up the owner account", () => {
     await page.getByRole("checkbox").check();
     await page.getByRole("button", { name: "Create account" }).dblclick();
     await expect(page.getByRole("status")).toContainText("Confirm your email");
-    await page.goto(await emailedLink("owner-d@e2e.test", "verify-email"));
+    const link = await emailedLink("owner-d@e2e.test", "verify-email");
+    await page.goto(link);
+    await expect(page.getByRole("heading", { name: "Email confirmed" })).toBeVisible();
+    // Opening it again (or a mail scanner having opened it first) still says confirmed, not "didn't work".
+    await page.goto(link);
+    await expect(page.getByRole("heading", { name: "Email confirmed" })).toBeVisible();
     await page.goto("/sign-in");
     await page.getByLabel("Email").fill("owner-d@e2e.test");
     await page.getByLabel("Password", { exact: true }).fill(OWNER_PASSWORD);

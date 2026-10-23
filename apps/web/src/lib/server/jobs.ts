@@ -3,6 +3,8 @@ import "server-only";
 // dead-letter log. Every job is safe to run twice: inserts are keyed, alert firing is a compare-and-set.
 import { ASSETS, ASSET_BY_SLUG, MARKETS } from "@/lib/data/catalogue";
 import { heldTwoBars } from "@/lib/data/indicators";
+import { scanTopSignals, topWhy } from "@/lib/data/live";
+import { pickNew, topMessage, type Candidate } from "@/lib/data/topNotify";
 import { evaluate, holdsNow } from "@/lib/indicators/formula";
 import { ensure, ensureCrosscheck, effectiveSource, warmAll } from "@/lib/data/marketdata";
 import { MODELS, challenger, closedBars, quote, shortTerm, signalFromP } from "@/lib/data/model";
@@ -299,6 +301,35 @@ export async function sendDigests(now = new Date()) {
   return { digests };
 }
 
+/** Pushes the owner a notification when a Strong or Very strong signal enters the home page's top buys or sells.
+ *  Each asset and side is announced at most once a day; mute, quiet hours and the setting are respected. */
+export async function notifyTopSignals(now = new Date()) {
+  const db = sql();
+  const top = await scanTopSignals();
+  const all: Candidate[] = [...top.buys, ...top.sells].map((t) => ({ slug: t.row.asset.slug, name: t.row.asset.name, side: t.side,
+    strength: t.strength, score: t.score, why: topWhy(t) }));
+  const last = new Map((await db<{ slug: string; side: string; at: Date }[]>`select slug, side, last_notified_at as at from top_signal_notices`)
+    .map((r) => [`${r.slug}:${r.side}`, r.at.getTime()]));
+  const fresh = pickNew(all, last, now.getTime());
+  if (!fresh.length) return { scanned: top.scanned, new: 0, pushed: 0 };
+  for (const c of fresh) {
+    await db`insert into top_signal_notices (slug, side, last_notified_at) values (${c.slug}, ${c.side}, ${now})
+      on conflict (slug, side) do update set last_notified_at = excluded.last_notified_at`;
+  }
+  if (!pushConfigured()) return { scanned: top.scanned, new: fresh.length, pushed: 0 };
+  const users = await db<{ id: string; timezone: string; alerts_muted_until: Date | null; quiet_start: number | null; quiet_end: number | null }[]>`
+    select u.id, u.timezone, u.alerts_muted_until, u.quiet_start, u.quiet_end from users u
+    where u.top_signal_push and exists (select 1 from push_subscriptions p where p.user_id = u.id)`;
+  const msg = topMessage(fresh);
+  let pushed = 0;
+  for (const u of users) {
+    if (isMuted(u, now) || inQuietHours(u, now)) continue;
+    const r = await sendPush(u.id, msg).catch((e) => { console.error(`top signal push: ${e}`); return null; });
+    if (r?.sent) pushed++;
+  }
+  return { scanned: top.scanned, new: fresh.length, pushed };
+}
+
 /** Housekeeping: expired sessions and tokens, old rate-limit windows, old job logs. */
 export async function cleanup() {
   const db = sql();
@@ -319,6 +350,7 @@ async function tick() {
   out.health = await recordHealth(sourceProblems(now)); // this run is itself proof the scheduler works
   await recordHealth({ checked: ["scheduler"], problems: [] });
   out.alerts = { ...(await evaluateAlerts()), ...(await deliverAlerts()) };
+  out.topSignals = await notifyTopSignals(now);
   if (now.getUTCMinutes() < 30) out.publish = { ...(await publishForecasts()), ...(await scoreForecasts()) };
   if (now.getUTCHours() === 3 && now.getUTCMinutes() < 30) out.cleanup = await cleanup();
   return out;
@@ -332,5 +364,6 @@ export const JOBS: Record<string, () => Promise<unknown>> = {
   publish: async () => ({ ...(await publishForecasts()), ...(await scoreForecasts()), health: await recordHealth(await schedulerProblem()) }),
   alerts: async () => ({ ...(await evaluateAlerts()), ...(await deliverAlerts()), health: await recordHealth(await schedulerProblem()) }),
   cleanup,
+  "top-signals": () => notifyTopSignals(),
   tick,
 };

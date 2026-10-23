@@ -101,7 +101,14 @@ export async function sendVerification(user: { id: string; email: string; name: 
 }
 
 export async function verifyEmail(t: string) {
-  const userId = await consumeToken(t, "verify");
+  let userId = await consumeToken(t, "verify");
+  // Opening the link again (a second render of the page, or a mail scanner that opened it first) finds the code
+  // already used; for an account it confirmed, that's still a success, not a broken link.
+  if (!userId) {
+    const [r] = await sql()<{ user_id: string }[]>`select t.user_id from email_tokens t join users u on u.id = t.user_id
+      where t.token_hash = ${sha256(t)} and t.purpose = 'verify' and t.used_at is not null and u.email_verified_at is not null`;
+    userId = r?.user_id ?? null;
+  }
   if (!userId) throw new DataError("invalid", "This link has expired or was already used. Sign in to get a new one.");
   await sql()`update users set email_verified_at = coalesce(email_verified_at, now()) where id = ${userId}`;
   return userId;

@@ -36,7 +36,7 @@ export default async function Alerts({ searchParams }: { searchParams: Promise<{
         <section aria-labelledby="your-alerts" className="space-y-3">
           <h2 id="your-alerts" className="text-lg">Saved ({alerts.length})</h2>
           {alerts.length ? (
-            <ul className="grid gap-2">{alerts.map((a) => <AlertRow key={a.id} alert={a} name={getAsset(a.assetSlug)?.name ?? a.assetSlug} />)}</ul>
+            <ul className="grid gap-2">{alerts.map((a) => <AlertRow key={a.id} alert={a} name={getAsset(a.assetSlug)?.name ?? a.assetSlug} tz={v.user!.timezone} />)}</ul>
           ) : (
             <Card><EmptyState icon={<Bell aria-hidden className="h-6 w-6" />} title="No alerts yet">Create one on the left. A good first one: tell me when Bitcoin&apos;s daily signal turns strong buy.</EmptyState></Card>
           )}

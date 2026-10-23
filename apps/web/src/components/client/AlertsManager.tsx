@@ -120,7 +120,7 @@ export function AlertForm({ options, preset, limitText, indicators = [] }: { opt
   );
 }
 
-export function AlertRow({ alert, name }: { alert: Alert; name: string }) {
+export function AlertRow({ alert, name, tz = "UTC" }: { alert: Alert; name: string; tz?: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [active, setActive] = useState(alert.isActive); // optimistic: the switch moves when pressed
@@ -142,7 +142,7 @@ export function AlertRow({ alert, name }: { alert: Alert; name: string }) {
       <BellRing aria-hidden className={`h-5 w-5 ${active ? "text-accent" : "text-subtle"}`} />
       <div className="min-w-0 flex-1">
         <p className={`text-sm font-semibold ${active ? "" : "text-muted"}`}>{describe(alert, name)}</p>
-        <p className="text-xs text-muted">{alert.channels.join(" and ")} · {alert.lastFiredAt ? `last fired ${new Date(alert.lastFiredAt).toLocaleString()}` : "hasn't fired yet"}{active ? "" : " · paused"}</p>
+        <p className="text-xs text-muted">{alert.channels.join(" and ")} · {alert.lastFiredAt ? `last fired ${new Date(alert.lastFiredAt).toLocaleString("en-GB", { timeZone: tz, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}` : "hasn't fired yet"}{active ? "" : " · paused"}</p>
       </div>
       <label className="flex min-h-tap items-center gap-2 text-sm">
         <input type="checkbox" role="switch" checked={active} disabled={busy} onChange={() => call("PATCH", { isActive: !active })} className="h-5 w-5 accent-accent" />
