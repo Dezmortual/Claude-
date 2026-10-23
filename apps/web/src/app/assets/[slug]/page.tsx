@@ -5,6 +5,8 @@ import { AssetHeader } from "@/components/AssetHeader";
 import { ContributionCalc, ScenarioCalc } from "@/components/client/Calculators";
 import { PriceChart } from "@/components/client/PriceChart";
 import { LedgerTable } from "@/components/LedgerTable";
+import { TradeTicket } from "@/components/client/TradeTicket";
+import { Suspense } from "react";
 import { Pulse } from "@/components/client/Pulse";
 import { OutlookCards } from "@/components/OutlookCards";
 import { ScenarioChart } from "@/components/ScenarioChart";
@@ -129,6 +131,12 @@ export default async function AssetForecast({ params }: P) {
           </Paywall>
         )}
       </Section>
+
+      {v.user && (
+        <Section id="trade" title={`Trade ${asset.name}`} action={<Link prefetch={false} href="/trade" className="text-sm font-semibold text-accent hover:underline">Your account</Link>}>
+          <Card className="max-w-xl p-5"><Suspense fallback={<p className="text-sm text-muted">Loading the order ticket…</p>}><TradeTicket slug={slug} /></Suspense></Card>
+        </Section>
+      )}
 
       {ledger && (
         <Section id="record" title="This asset's forecast record"

@@ -5,6 +5,9 @@ import { price } from "@/lib/format";
 import { AssetMark, Badge, Card, PriceChange, cx } from "./ui";
 
 /** Where the three reads point hardest, buys and sells side by side, each with its reasons in plain numbers. */
+/** Assets Alpaca trades: crypto, stocks, funds and the stand-in funds. */
+const tradable = (t: TopSignal) => ["crypto", "stocks", "etfs"].includes(t.row.asset.market) || !!t.row.asset.meta.proxy;
+
 export function TopSignals({ buys, sells, scanned }: { buys: TopSignal[]; sells: TopSignal[]; scanned: number }) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -55,6 +58,11 @@ function SideList({ title, side, items, scanned }: { title: string; side: "buy" 
                   </span>
                   <span className="ml-7 text-xs text-muted">7-day 80% range {price(t.range7d.low, unit)} – {price(t.range7d.high, unit)}</span>
                 </Link>
+                {tradable(t) && (
+                  <Link href={`/assets/${a.slug}?side=${side}#trade`} prefetch={false} className="mb-3 ml-11 inline-flex text-xs font-semibold text-accent underline">
+                    {side === "buy" ? "Buy" : "Sell"} {a.name}<span className="sr-only"> on the order ticket</span>
+                  </Link>
+                )}
               </li>
             );
           })}

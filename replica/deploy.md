@@ -64,7 +64,8 @@ Result: **preflight passes.**
   | `CRON_SECRET` | output of `openssl rand -base64 32` | Functions | Production only |
   | `RESEND_API_KEY` | your Resend key | Functions | Production only |
   | `EMAIL_FROM` | `Proofcast <onboarding@resend.dev>` until a domain is verified | Functions | all |
-  | `ALPACA_KEY_ID`, `ALPACA_SECRET_KEY` | optional: real stock and ETF prices | Functions | Production |
+  | `ALPACA_KEY_ID`, `ALPACA_SECRET_KEY` | optional: real stock and ETF prices, and trading from the Trade page (paper account keys for practice) | Functions | Production |
+  | `ALPACA_TRADING` | optional: `live` sends orders to the real-money account instead of practice | Functions | Production |
 
   Leave unset: `TRUST_PROXY_HEADERS`, `MARKET_DATA`, `EMAIL_OUTBOX` and `PUBLIC_LANDING` (the landing page
   stays private). If an edge function can't read an env var, the middleware falls back to private, and

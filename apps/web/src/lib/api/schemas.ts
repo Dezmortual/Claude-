@@ -59,3 +59,15 @@ export const HoldingBody = z.object({
   boughtOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a date like 2026-01-31").nullish(),
   note: z.string().max(120, "Keep the note under 120 characters").nullish(),
 });
+
+const price = z.number().positive("Prices must be above 0").finite().max(1e9);
+export const TradeBody = z.object({
+  slug: z.string().regex(/^[a-z0-9-]{1,40}$/),
+  side: z.enum(["buy", "sell"]),
+  type: z.enum(["market", "limit"]),
+  amountUsd: z.number().positive().finite().max(1e8).nullish(),
+  qty: z.number().positive().finite().max(1e12).nullish(),
+  limitPrice: price.nullish(), stopLoss: price.nullish(), takeProfit: price.nullish(),
+  clientOrderId: z.string().uuid(),
+});
+export const MaxOrderBody = z.object({ maxOrderUsd: z.number().min(1, "At least $1").max(10_000_000).finite() });

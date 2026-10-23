@@ -6,6 +6,7 @@ import { sql } from "@/lib/server/db";
 import { env } from "@/lib/server/env";
 import { endAllSessions, isOwner, sessionUser } from "@/lib/server/auth";
 import { pushConfigured, sendPush } from "@/lib/server/push";
+import { BrokerError, broker, brokerConfigured, brokerMode, type BrokerPosition, type OrderRequest } from "@/lib/server/broker";
 import { ASSETS, ASSET_BY_SLUG, MARKETS, PLANS, PLAN_BY_CODE, SCENARIO_CAGR } from "./catalogue";
 import { MIN_BARS, pulse, recentVerdicts, signalChanges, signalHistory, type SignalChange } from "./indicators";
 import { check as checkFormula, evaluate as evalFormula, holdsNow, signalBars } from "../indicators/formula";
@@ -965,4 +966,160 @@ export async function dataStatus(v: Viewer) {
     incidents: incidents.map((i) => ({ id: i.id, key: i.key, detail: i.detail, startedAt: i.started_at.toISOString(), resolvedAt: i.resolved_at?.toISOString() ?? null })),
     runs: runs.map((r) => ({ job: r.job, startedAt: r.started_at.toISOString(), seconds: r.finished_at ? (r.finished_at.getTime() - r.started_at.getTime()) / 1000 : null, status: r.status })),
   };
+}
+
+// ---------------------------------------------------------------- trading (Alpaca)
+
+/** The broker's symbol for an asset: crypto as BTC/USD, stocks and funds by ticker (stand-ins by their fund). */
+export function tradeSymbol(a: Asset): string | null {
+  if (a.market === "crypto") return `${a.ticker}/USD`;
+  if (a.meta.proxy) return a.meta.proxy;
+  if (a.market === "stocks" || a.market === "etfs") return a.ticker;
+  return null; // currency pairs, bond yields, and indices without a fund aren't traded at Alpaca
+}
+const posKey = (sym: string) => sym.replace("/", "");
+const bySymbol = () => new Map(ASSETS.map((a) => [tradeSymbol(a), a] as const).filter(([s]) => s).map(([s, a]) => [posKey(s!), a]));
+const num = (x: string | null | undefined) => (x === null || x === undefined || x === "" ? null : Number(x));
+/** Broker failures reach the screen as plain messages, never as a server error. */
+async function viaBroker<T>(f: () => Promise<T>): Promise<T> {
+  try { return await f(); } catch (e) {
+    if (e instanceof BrokerError) throw new DataError(e.status === 404 ? "not_found" : "invalid", e.message);
+    throw new DataError("invalid", `Couldn't reach Alpaca: ${e instanceof Error ? e.message : e}`);
+  }
+}
+
+export async function tradingOverview(v: Viewer) {
+  const u = requireUser(v);
+  const [[limits], log] = await Promise.all([
+    sql()<{ max_order_usd: number }[]>`select max_order_usd from users where id = ${u.id}`,
+    sql()<{ created_at: Date; slug: string; side: string; notional: number | null; qty: number | null; status: string; error: string | null }[]>`
+      select created_at, slug, side, notional, qty, status, error from trade_log where user_id = ${u.id} order by created_at desc limit 10`,
+  ]);
+  const base = { configured: brokerConfigured(), mode: brokerMode(), maxOrderUsd: limits.max_order_usd,
+    log: log.map((l) => ({ at: l.created_at.toISOString(), slug: l.slug, side: l.side, notional: l.notional, qty: l.qty, status: l.status, error: l.error })) };
+  if (!base.configured) return { ...base, account: null, positions: [], open: [], recent: [], marketOpen: null };
+  const [account, positions, open, recent, clock] = await viaBroker(() => Promise.all([
+    broker.account(), broker.positions(), broker.orders("open", 50), broker.orders("all", 15), broker.clock()]));
+  const map = bySymbol();
+  const order = (o: (typeof open)[number]) => ({ id: o.id, symbol: o.symbol, slug: map.get(posKey(o.symbol))?.slug ?? null, side: o.side, type: o.type,
+    orderClass: o.order_class, qty: num(o.qty), notional: num(o.notional), filledQty: num(o.filled_qty), filledPrice: num(o.filled_avg_price),
+    limitPrice: num(o.limit_price), status: o.status, submittedAt: o.submitted_at });
+  return {
+    ...base,
+    account: { status: account.status, cash: Number(account.cash), buyingPower: Number(account.buying_power), equity: Number(account.equity),
+      dayChange: Number(account.equity) - Number(account.last_equity), blocked: account.trading_blocked || account.account_blocked },
+    positions: positions.map((x: BrokerPosition) => ({ symbol: x.symbol, slug: map.get(posKey(x.symbol))?.slug ?? null, name: map.get(posKey(x.symbol))?.name ?? x.symbol,
+      qty: Number(x.qty), avgPrice: Number(x.avg_entry_price), price: Number(x.current_price), value: Number(x.market_value),
+      pnl: Number(x.unrealized_pl), pnlPct: Number(x.unrealized_plpc) * 100 })),
+    open: open.map(order), recent: recent.map(order), marketOpen: clock.is_open,
+  };
+}
+
+/** What the order ticket on an asset page needs: whether Alpaca trades it, the price, what's held and the limit. */
+export async function tradeTicket(v: Viewer, slug: string) {
+  const u = requireUser(v);
+  const a = await loadAsset(slug, ["5m", "1d"]);
+  const symbol = tradeSymbol(a), mode = brokerMode();
+  const [{ max_order_usd }] = await sql()<{ max_order_usd: number }[]>`select max_order_usd from users where id = ${u.id}`;
+  const none = (reason: string) => ({ tradable: false as const, reason, mode });
+  if (!brokerConfigured()) return none("Trading isn't set up: add your Alpaca keys in the host's settings.");
+  if (!symbol) return none(`${a.name} isn't traded through Alpaca. Currency pairs, bond yields and indices without a stand-in fund aren't available there.`);
+  const asset = await viaBroker(() => broker.asset(symbol)).catch((e) => { if (e instanceof DataError && e.code === "not_found") return null; throw e; });
+  if (!asset || !asset.tradable) return none(`Alpaca doesn't offer ${symbol} for trading.`);
+  const [positions, clock] = await viaBroker(() => Promise.all([broker.positions(), broker.clock()]));
+  const held = positions.find((x) => posKey(x.symbol) === posKey(symbol));
+  const crypto = asset.class === "crypto";
+  return {
+    tradable: true as const, mode, symbol, name: a.name, crypto, fractionable: crypto || asset.fractionable,
+    price: quote(slug).price, held: held ? Number(held.qty) : 0, maxOrderUsd: max_order_usd,
+    // Alpaca: stop-loss and take-profit legs (bracket orders) are for stocks and funds, in whole shares.
+    brackets: !crypto, marketOpen: crypto ? true : clock.is_open,
+  };
+}
+
+export type TradeInput = { slug: string; side: "buy" | "sell"; type: "market" | "limit"; amountUsd?: number | null; qty?: number | null;
+  limitPrice?: number | null; stopLoss?: number | null; takeProfit?: number | null; clientOrderId: string };
+
+const round = (x: number, dp: number) => Math.floor(x * 10 ** dp) / 10 ** dp;
+
+/** Checks an order against the ticket and the owner's limit, then sends it. Every attempt is logged. */
+export async function placeTrade(v: Viewer, i: TradeInput) {
+  const u = requireUser(v);
+  const db = sql();
+  const [dup] = await db<{ status: string; broker_order_id: string | null; error: string | null }[]>`
+    select status, broker_order_id, error from trade_log where client_order_id = ${i.clientOrderId} and user_id = ${u.id}`;
+  if (dup) return { duplicate: true, status: dup.status, orderId: dup.broker_order_id, error: dup.error }; // the same tap sent twice
+  const t = await tradeTicket(v, i.slug);
+  if (!t.tradable) throw new DataError("invalid", t.reason);
+  const ref = i.type === "limit" ? i.limitPrice ?? 0 : t.price;
+  if (i.type === "limit") {
+    if (!(ref > 0)) throw new DataError("invalid", "Enter a limit price above 0");
+    if (Math.abs(ref / t.price - 1) > 0.2) throw new DataError("invalid", `The limit price is more than 20% from the current price of ${t.price.toPrecision(6)}. Check for a typo.`);
+  }
+  const dp = t.crypto ? 8 : t.fractionable ? 6 : 0;
+  const o: OrderRequest = { symbol: t.symbol, side: i.side, type: i.type, time_in_force: t.crypto ? "gtc" : "day", client_order_id: i.clientOrderId,
+    ...(i.type === "limit" ? { limit_price: String(ref) } : {}) };
+  let notional: number | null = null, qty: number | null = null;
+  const wantsBracket = !!(i.stopLoss || i.takeProfit);
+  if (i.side === "buy") {
+    const amount = i.amountUsd ?? 0;
+    if (!(amount >= 1)) throw new DataError("invalid", "Enter an amount of at least $1");
+    if (amount > t.maxOrderUsd) throw new DataError("invalid", `That's above your limit of $${t.maxOrderUsd.toLocaleString("en-US")} per order. Change it on the Trade page.`);
+    if (wantsBracket) {
+      if (!t.brackets) throw new DataError("invalid", "Alpaca doesn't take stop-loss or take-profit on crypto orders. Place the buy, then a separate sell later.");
+      if (i.stopLoss && !(i.stopLoss < ref)) throw new DataError("invalid", "The stop-loss must be below the buy price");
+      if (i.takeProfit && !(i.takeProfit > ref)) throw new DataError("invalid", "The take-profit must be above the buy price");
+      qty = Math.floor(amount / ref);
+      if (qty < 1) throw new DataError("invalid", `With a stop-loss or take-profit Alpaca needs whole shares: $${amount} doesn't buy one at ${ref.toFixed(2)}.`);
+      Object.assign(o, { qty: String(qty), order_class: "bracket" as const,
+        ...(i.takeProfit ? { take_profit: { limit_price: String(i.takeProfit) } } : {}), ...(i.stopLoss ? { stop_loss: { stop_price: String(i.stopLoss) } } : {}) });
+    } else if (i.type === "market" && t.fractionable) {
+      notional = round(amount, 2); o.notional = String(notional); // Alpaca buys this many dollars' worth
+    } else {
+      qty = round(amount / ref, dp);
+      if (!(qty > 0)) throw new DataError("invalid", `$${amount} doesn't buy a whole share at ${ref.toFixed(2)}`);
+      o.qty = String(qty);
+    }
+  } else {
+    // Sells close or reduce what's held: the app never sells short.
+    if (wantsBracket) throw new DataError("invalid", "Stop-loss and take-profit go with a buy");
+    qty = round(i.qty ?? 0, dp);
+    if (!(qty > 0)) throw new DataError("invalid", "Enter how much to sell");
+    if (qty > t.held + 1e-9) throw new DataError("invalid", t.held ? `You hold ${t.held}; you can't sell more than that` : `You don't hold any ${t.name} to sell`);
+    o.qty = String(qty);
+  }
+  const claimed = await db`insert into trade_log (user_id, client_order_id, mode, slug, symbol, side, order_type, notional, qty, limit_price, stop_loss, take_profit, status)
+    values (${u.id}, ${i.clientOrderId}, ${t.mode}, ${i.slug}, ${t.symbol}, ${i.side}, ${i.type}, ${notional}, ${qty}, ${i.type === "limit" ? ref : null},
+      ${i.stopLoss ?? null}, ${i.takeProfit ?? null}, 'sending')
+    on conflict (client_order_id) do nothing returning id`;
+  // Two copies of one tap arriving together: the first claims the id, the other reports it as a repeat.
+  if (!claimed.length) return { duplicate: true, status: "sending", orderId: null, error: null };
+  try {
+    const r = await broker.place(o);
+    await db`update trade_log set broker_order_id = ${r.id}, status = ${r.status} where client_order_id = ${i.clientOrderId}`;
+    return { duplicate: false, status: r.status, orderId: r.id, error: null, mode: t.mode };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    await db`update trade_log set status = 'rejected', error = ${msg.slice(0, 300)} where client_order_id = ${i.clientOrderId}`;
+    throw new DataError("invalid", msg);
+  }
+}
+
+export async function cancelTrade(v: Viewer, orderId: string) {
+  requireUser(v);
+  await viaBroker(() => broker.cancel(orderId));
+}
+
+/** Sells the whole position at market. */
+export async function closeTradePosition(v: Viewer, symbol: string) {
+  requireUser(v);
+  if (!/^[A-Z0-9./]{1,15}$/.test(symbol)) throw new DataError("invalid", "Not a symbol");
+  const r = await viaBroker(() => broker.close(symbol));
+  return { orderId: r.id, status: r.status };
+}
+
+export async function setMaxOrder(v: Viewer, usd: number) {
+  const u = requireUser(v);
+  await sql()`update users set max_order_usd = ${usd} where id = ${u.id}`;
+  return { maxOrderUsd: usd };
 }

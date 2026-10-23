@@ -21,7 +21,12 @@ export default defineConfig({
     { name: "desktop", dependencies: ["setup"], grepInvert: /@mobile/, use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
     { name: "mobile", dependencies: ["setup"], grep: /@mobile/, use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 }, isMobile: false, hasTouch: true } },
   ],
-  webServer: {
+  webServer: [{
+    // A stand-in for Alpaca's trading API: the suite never talks to a real broker.
+    command: "node e2e/fake-alpaca.mjs",
+    url: "http://localhost:3999/__reset",
+    reuseExistingServer: false,
+  }, {
     command: `npm run e2e:db && npm run build && npx next start -p ${PORT}`,
     url: `http://localhost:${PORT}/sign-in`,
     timeout: 400_000,
@@ -31,6 +36,7 @@ export default defineConfig({
       EMAIL_OUTBOX: "true", MARKET_DATA: "demo", CRON_SECRET: "e2e-cron-secret-0123456789abcdef", TRUST_PROXY_HEADERS: "true",
       RESEND_API_KEY: "", NEXT_TELEMETRY_DISABLED: "1", NEXT_DIST_DIR: ".next-e2e",
       VAPID_PUBLIC_KEY: VAPID.publicKey, VAPID_PRIVATE_KEY: VAPID.privateKey,
+      ALPACA_KEY_ID: "e2e-key", ALPACA_SECRET_KEY: "e2e-secret", ALPACA_TRADE_URL: "http://localhost:3999",
     },
-  },
+  }],
 });
