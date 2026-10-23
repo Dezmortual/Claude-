@@ -113,7 +113,8 @@ export function PushCard() {
           <p className="text-xs text-muted">Alerts that use &ldquo;Push notification&rdquo; arrive here within 30 minutes of firing.</p>
         </div>
         {supported && status?.configured && (
-          <div className="flex flex-wrap gap-2">
+          // Its own row on a phone, so the buttons don't squeeze the text into a narrow column.
+          <div className="flex basis-full flex-wrap gap-2 pl-8 sm:basis-auto sm:pl-0">
             {sub ? <>
               <Button onClick={test} loading={busy} variant="secondary">Send a test</Button>
               <Button onClick={turnOff} disabled={busy} variant="ghost">Turn off</Button>

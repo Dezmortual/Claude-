@@ -537,7 +537,11 @@ export async function sendTestPush(v: Viewer) {
   const u = requireUser(v);
   if (!pushConfigured()) throw new DataError("invalid", "Push isn't set up on this server yet");
   const r = await sendPush(u.id, { title: "FXDEZ", body: "Notifications are on. Alerts you set will arrive here.", url: "/alerts", tag: "test" })
-    .catch(() => { throw new DataError("invalid", "The push service didn't accept the test. Turn notifications off and on again."); });
+    .catch((e) => {
+      // Owner-only app: show the push service's reply, it's the only way to tell a key problem from a stale device.
+      const why = String(e instanceof Error ? e.message : e).replace(/^push failed on every device: /, "").slice(0, 200);
+      throw new DataError("invalid", `The push service didn't accept the test: ${why}`);
+    });
   if (!r.sent) throw new DataError("invalid", "No device is turned on for notifications");
   return r;
 }

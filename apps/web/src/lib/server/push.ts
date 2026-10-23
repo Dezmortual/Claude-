@@ -38,7 +38,13 @@ export async function sendPush(userId: string, msg: PushMessage) {
     } catch (e) {
       const code = (e as { statusCode?: number }).statusCode;
       if (code === 404 || code === 410) { await db`delete from push_subscriptions where id = ${s.id}`; removed++; }
-      else { failed++; lastError = e instanceof Error ? e.message : String(e); }
+      else {
+        failed++;
+        // web-push puts the push service's own answer in statusCode and body; that's what explains a refusal.
+        const w = e as { statusCode?: number; body?: string; message?: string };
+        lastError = w.statusCode ? `${w.statusCode} ${String(w.body ?? "").trim() || w.message}` : e instanceof Error ? e.message : String(e);
+        console.error(`push to ${new URL(s.endpoint).host}: ${lastError}`);
+      }
     }
   }
   if (failed && !sent) throw new Error(`push failed on every device: ${lastError.slice(0, 200)}`);
