@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CandlestickChart } from "lucide-react";
+import { AutoRefresh } from "@/components/client/AutoRefresh";
 import { CancelOrder, ClosePosition, MaxOrderForm } from "@/components/client/TradeActions";
 import { AssetMark, Badge, Card, EmptyState, Label, Section, cx } from "@/components/ui";
 import { DataError, getAsset, tradingOverview } from "@/lib/data";
-import { price } from "@/lib/format";
+import { pnlWords, price, tradeTotals as totals } from "@/lib/format";
 import { viewer } from "@/lib/session";
 
 export const metadata = { title: "Trade" };
@@ -40,14 +41,18 @@ export default async function Trade() {
         </Card>
       ) : (
         <>
-          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {[["Account value", usd(o.account!.equity), o.account!.blocked ? "Trading is blocked on this account" : o.account!.status.toLowerCase()],
+          <AutoRefresh seconds={20} />
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            {[["Open trades", o.positions.length ? pnlWords(totals(o.positions).pnl, totals(o.positions).pct) : "None open",
+                o.positions.length ? `profit or loss if you sold now · updates every 20 s` : "buy from any stock, fund or crypto page"],
+              ["Account value", usd(o.account!.equity), o.account!.blocked ? "Trading is blocked on this account" : o.account!.status.toLowerCase()],
               ["Today", signed(o.account!.dayChange), "change in account value"],
               ["Cash", usd(o.account!.cash), "not invested"],
               ["Buying power", usd(o.account!.buyingPower), o.marketOpen ? "US market open" : "US market closed: stock orders wait for the open"]].map(([k, val, sub]) => (
               <li key={k}><Card className="h-full space-y-1 p-5">
                 <p className="text-2xs uppercase tracking-wide text-subtle">{k}</p>
-                <p className={cx("tabular text-xl", k === "Today" && (o!.account!.dayChange >= 0 ? "text-up" : "text-down"))}>{val}</p>
+                <p className={cx("tabular text-xl", k === "Today" && (o!.account!.dayChange >= 0 ? "text-up" : "text-down"),
+                  k === "Open trades" && o!.positions.length > 0 && (totals(o!.positions).pnl >= 0 ? "text-up" : "text-down"))}>{val}</p>
                 <p className="text-sm text-muted">{sub}</p>
               </Card></li>
             ))}
@@ -65,11 +70,11 @@ export default async function Trade() {
                     {x.slug && <AssetMark ticker={getAsset(x.slug)!.ticker} slug={x.slug} />}
                     <div className="min-w-0 flex-1">
                       {x.slug ? <Link href={`/assets/${x.slug}#trade`} className="font-semibold hover:underline">{x.name}</Link> : <span className="font-semibold">{x.symbol}</span>}
-                      <p className="text-xs text-muted">{x.qty} at {usd(x.avgPrice)} · now {usd(x.price)}</p>
+                      <p className="text-xs text-muted">{x.qty} bought at {usd(x.avgPrice)} · now {usd(x.price)}</p>
                     </div>
                     <div className="grid justify-items-end">
                       <span className="tabular font-semibold">{usd(x.value)}</span>
-                      <span className={cx("tabular text-xs font-semibold", x.pnl >= 0 ? "text-up" : "text-down")}>{signed(x.pnl)} ({x.pnlPct >= 0 ? "+" : ""}{x.pnlPct.toFixed(1)}%)</span>
+                      <span className={cx("tabular text-xs font-semibold", x.pnl >= 0 ? "text-up" : "text-down")}>{pnlWords(x.pnl, x.pnlPct)}</span>
                     </div>
                     <ClosePosition symbol={x.symbol} name={x.name} qty={x.qty} />
                   </Card></li>

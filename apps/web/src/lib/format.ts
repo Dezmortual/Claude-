@@ -41,3 +41,14 @@ export function describeAlert(a: Alert, name: string) {
   if (a.condition === "forecast_move_above") return `${name}: 7-day forecast moves more than ${a.threshold}%`;
   return `${name}: price ${a.condition === "price_above" ? "above" : "below"} ${a.threshold!.toLocaleString("en-US", { maximumFractionDigits: 8 })}`;
 }
+
+/** "Up $12.30 (+4.92%)": the words carry the direction too, not just the colour. */
+export const pnlWords = (pnl: number, pct: number) =>
+  `${pnl >= 0 ? "Up" : "Down"} ${price(Math.abs(pnl), "USD")} (${pct >= 0 ? "+" : "−"}${Math.abs(pct).toFixed(2)}%)`;
+
+/** Open positions added up: profit or loss, as a share of what they cost, and what they're worth now. */
+export function tradeTotals(ps: { pnl: number; value: number }[]) {
+  const pnl = ps.reduce((s, x) => s + x.pnl, 0);
+  const cost = ps.reduce((s, x) => s + (x.value - x.pnl), 0);
+  return { pnl, pct: cost ? (pnl / cost) * 100 : 0, value: ps.reduce((s, x) => s + x.value, 0) };
+}

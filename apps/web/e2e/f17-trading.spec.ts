@@ -22,7 +22,7 @@ test.describe.serial("Trading through the broker (a stand-in for Alpaca's practi
     await t.getByRole("link", { name: "See it on the Trade page" }).click();
     await expect(page.getByRole("heading", { name: "Your Alpaca account" })).toBeVisible();
     await expect(page.locator("#positions")).toContainText("Bitcoin");
-    await expect(page.locator("#positions")).toContainText("2.5 at $100.00");
+    await expect(page.locator("#positions")).toContainText("2.5 bought at $100.00");
     await expect(page.getByRole("region", { name: "Orders table" })).toContainText("Buy $250.00 BTC/USD");
     await a11y(page, "/trade");
   });
@@ -90,6 +90,44 @@ test.describe.serial("Trading through the broker (a stand-in for Alpaca's practi
     await request.post(`${BROKER}/__badkeys`);
     await page.goto("/trade");
     await expect(page.getByRole("alert").filter({ hasText: "Alpaca refused the keys" })).toBeVisible();
+    await request.post(`${BROKER}/__reset`);
+  });
+});
+
+test.describe.serial("Open trades: profit and loss while a trade is open", () => {
+  test.beforeAll(async ({ request }) => { await request.post(`${BROKER}/__reset`); });
+
+  test("T-H3 the home screen and the Trade page show each position's gain or loss, and the total", async ({ page, request }) => {
+    await page.goto("/");
+    const card = page.locator("#open-trades");
+    await expect(card).toContainText("None open");
+    for (const [slug, usd] of [["bitcoin", 200], ["ethereum", 100]] as const) {
+      const r = await page.request.post("/api/v1/trade/orders", { headers: ipHeaders(), data: { clientOrderId: randomUUID(), slug, side: "buy", type: "market", amountUsd: usd } });
+      expect(r.status(), await r.text()).toBe(200);
+    }
+    await request.post(`${BROKER}/__mark?price=110`); // both up 10%
+    await page.reload();
+    await expect(card).toContainText("Up $30.00 (+10.00%)");
+    await expect(card.getByRole("link", { name: /Bitcoin/ })).toContainText("Up $20.00 (+10.00%)");
+    await expect(card.getByRole("link", { name: /Ethereum/ })).toContainText("Up $10.00 (+10.00%)");
+    await a11y(page, "home with open trades");
+    await request.post(`${BROKER}/__mark?price=95`); // both down 5%
+    await page.goto("/trade");
+    await expect(page.getByRole("list").first()).toContainText("Down $15.00 (−5.00%)");
+    await expect(page.locator("#positions")).toContainText("Down $10.00 (−5.00%)");
+    await page.goto("/");
+    await expect(card).toContainText("Down $15.00 (−5.00%)");
+    await request.post(`${BROKER}/__reset`);
+  });
+
+  test("T-H4 open trades update on screen without a reload", async ({ page, request }) => {
+    test.setTimeout(90_000);
+    await page.request.post("/api/v1/trade/orders", { headers: ipHeaders(), data: { clientOrderId: randomUUID(), slug: "bitcoin", side: "buy", type: "market", amountUsd: 100 } });
+    await page.goto("/");
+    const card = page.locator("#open-trades");
+    await expect(card).toContainText("Up $0.00 (+0.00%)");
+    await request.post(`${BROKER}/__mark?price=120`);
+    await expect(card).toContainText("Up $20.00 (+20.00%)", { timeout: 30_000 });
     await request.post(`${BROKER}/__reset`);
   });
 });

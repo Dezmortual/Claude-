@@ -1008,7 +1008,7 @@ export async function tradingOverview(v: Viewer) {
     ...base,
     account: { status: account.status, cash: Number(account.cash), buyingPower: Number(account.buying_power), equity: Number(account.equity),
       dayChange: Number(account.equity) - Number(account.last_equity), blocked: account.trading_blocked || account.account_blocked },
-    positions: positions.map((x: BrokerPosition) => ({ symbol: x.symbol, slug: map.get(posKey(x.symbol))?.slug ?? null, name: map.get(posKey(x.symbol))?.name ?? x.symbol,
+    positions: positions.map((x: BrokerPosition) => ({ symbol: x.symbol, slug: map.get(posKey(x.symbol))?.slug ?? null, ticker: map.get(posKey(x.symbol))?.ticker ?? null, name: map.get(posKey(x.symbol))?.name ?? x.symbol,
       qty: Number(x.qty), avgPrice: Number(x.avg_entry_price), price: Number(x.current_price), value: Number(x.market_value),
       pnl: Number(x.unrealized_pl), pnlPct: Number(x.unrealized_plpc) * 100 })),
     open: open.map(order), recent: recent.map(order), marketOpen: clock.is_open,

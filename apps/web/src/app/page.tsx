@@ -4,6 +4,7 @@ import { ForecastTable } from "@/components/ForecastTable";
 import { TabSwitch } from "@/components/HubControls";
 import { Sparkline } from "@/components/Sparkline";
 import { TopSignals } from "@/components/TopSignals";
+import { OpenTrades } from "@/components/client/OpenTrades";
 import { AssetMark, Badge, ButtonLink, Card, DemoNote, EmptyState, PriceChange, Section, SignalBadge, cx } from "@/components/ui";
 import { dashboard, getWatchlist, listForecasts, listMarkets, watchlistSlugs } from "@/lib/data";
 import { dateTime, pct, price as fmtPrice } from "@/lib/format";
@@ -84,6 +85,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
           </div>
         </div>
       </section>
+
+      {v.user && (
+        <Section id="open-trades" title="Your open trades"
+          action={<Link href="/trade" className="text-sm font-semibold text-accent hover:underline">Trade</Link>}>
+          <OpenTrades />
+        </Section>
+      )}
 
       <Section id="top-signals" title="Top signals now"
         action={<Link href="/track-record" className="text-sm font-semibold text-accent hover:underline">How signals have done</Link>}>
