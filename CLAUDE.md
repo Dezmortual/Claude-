@@ -60,7 +60,7 @@ checks the indicator formula language in `src/lib/indicators`, which must never 
 Screens import only from `@/lib/data`; server-only code lives in `src/lib/server` and must never be imported by a
 client component. Never commit `apps/web/.env.local`. Never use raw hex or non-token sizes in components: change
 `replica/design/tokens.json`, then `npm run tokens`.
-Hosting is Vercel since 2026-10-22 (https://proofcast100.vercel.app; Netlify's free credits ran out). Netlify or Vercel, one at a time (Vercel: root directory `apps/web`, `apps/web/vercel.json` with daily crons on
+Hosting is Vercel since 2026-10-22 (https://fxdez.vercel.app since 2026-10-23, the old proofcast100.vercel.app redirects; Netlify's free credits ran out). Netlify or Vercel, one at a time (Vercel: root directory `apps/web`, `apps/web/vercel.json` with daily crons on
 Hobby; see `replica/deploy.md`). Netlify: (`netlify.toml` at the repo root, env vars set in the Netlify UI with scope Functions, plus
 `NETLIFY=true`); scheduled jobs run from the Netlify scheduled function `apps/web/netlify/functions/jobs.mts` (the GitHub workflow
 `.github/workflows/forecast-jobs.yml` is the alternative and only runs from the default branch). The landing page `/welcome` is

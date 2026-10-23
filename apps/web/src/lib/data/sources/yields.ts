@@ -36,6 +36,8 @@ async function bundesbank(from: Date): Promise<Bar[]> {
   const csv = await getText(`https://api.statistiken.bundesbank.de/rest/data/BBSIS/D.I.ZST.ZI.EUR.S1311.B.A604.R10XX.R.A.A._Z._Z.A?startPeriod=${from.toISOString().slice(0, 10)}`,
     { Accept: "application/vnd.sdmx.data+csv;version=1.0.0" });
   const rows = csv.replace(/^﻿/, "").trim().split(/\r?\n/).map((l) => l.split(";"));
+  // With nothing new since `from` (every evening before the next fixing) the reply is a lone "DATAFLOW" header line.
+  if (rows.length < 2) return [];
   const t = rows[0].indexOf("TIME_PERIOD"), o = rows[0].indexOf("OBS_VALUE");
   if (t < 0 || o < 0) throw new Error("bundesbank: unexpected columns");
   return rows.slice(1).flatMap((r) => {

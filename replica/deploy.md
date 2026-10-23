@@ -261,6 +261,13 @@ the listing in `launch/listing.json` waits for one.
 - A failed push isn't retried, because a late price alert is worse than none. Devices the push service reports
   gone are removed.
 
+## New address (2026-10-23)
+
+**https://fxdez.vercel.app**, added as a domain on the same Vercel project when the app was renamed FXDEZ. The old
+`proofcast100.vercel.app` redirects to it (301). `APP_URL` is the new address. cron-job.org must call
+`https://fxdez.vercel.app/api/cron/tick` directly: it doesn't follow the redirect. Sign-ins, the installed app and
+push permission belong to an address, so they were set up again on the new one.
+
 ## Moved to Vercel (2026-10-22)
 
 **Live URL: https://proofcast100.vercel.app** (Vercel Hobby, project `proofcast100`, root directory `apps/web`,
