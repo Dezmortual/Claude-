@@ -5,7 +5,7 @@ test.describe("D-H1 owner dashboard", () => {
   test("panel, market cards, signals and watchlist render; axe passes", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1, name: "Your markets today" })).toBeVisible();
-    for (const h of ["Markets", "Strongest signals", "Watchlist", "Crypto signals right now"]) {
+    for (const h of ["Top signals now", "Markets", "Watchlist", "Crypto signals right now"]) {
       await expect(page.getByRole("heading", { level: 2, name: h })).toBeVisible();
     }
     await expect(page.getByRole("link", { name: /Bitcoin/ }).first()).toHaveAttribute("href", "/assets/bitcoin");

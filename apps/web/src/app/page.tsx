@@ -3,6 +3,7 @@ import { ArrowRight, Star } from "lucide-react";
 import { ForecastTable } from "@/components/ForecastTable";
 import { TabSwitch } from "@/components/HubControls";
 import { Sparkline } from "@/components/Sparkline";
+import { TopSignals } from "@/components/TopSignals";
 import { AssetMark, Badge, ButtonLink, Card, DemoNote, EmptyState, PriceChange, Section, SignalBadge, cx } from "@/components/ui";
 import { dashboard, getWatchlist, listForecasts, listMarkets, watchlistSlugs } from "@/lib/data";
 import { dateTime, pct, price as fmtPrice } from "@/lib/format";
@@ -84,6 +85,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
         </div>
       </section>
 
+      <Section id="top-signals" title="Top signals now"
+        action={<Link href="/track-record" className="text-sm font-semibold text-accent hover:underline">How signals have done</Link>}>
+        <p className="max-w-prose text-sm text-muted">
+          Every live asset, scanned each time this page loads. An asset ranks high only when its daily chart&apos;s 20 indicators and its
+          7-day forecast point the same way, stronger still when the hourly chart agrees. These are statistics about past prices,
+          often wrong and not advice: check each one&apos;s signal history before you trade it.
+        </p>
+        <TopSignals buys={d.top.buys} sells={d.top.sells} scanned={d.top.scanned} />
+      </Section>
+
       <Section id="markets" title="Markets" action={<Link href="/forecasts?market=all" className="text-sm font-semibold text-accent hover:underline">Every asset</Link>}>
         <ul className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
           {d.cards.map(({ market, row: r, spark }) => (
@@ -124,29 +135,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
         </ul>
       </Section>
 
-      <div className="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:gap-6">
-        <Section id="strongest" title="Strongest signals" className="lg:col-span-2">
-          <Card className="divide-y">
-            {d.strongest.length === 0 ? (
-              <p className="p-6 text-sm text-muted">No live signals yet.</p>
-            ) : d.strongest.map((r) => (
-              <Link key={r.asset.slug} href={`/assets/${r.asset.slug}/signals`} prefetch={false}
-                className="flex flex-wrap items-center gap-x-4 gap-y-2 p-4 hover:bg-surface-sunken">
-                <AssetMark ticker={r.asset.ticker} slug={r.asset.slug} />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold">{r.asset.name}</span>
-                  <span className="font-mono text-xs text-subtle">{r.asset.ticker} · {listMarkets(v).find((m) => m.code === r.asset.market)?.name}</span>
-                </span>
-                <span className="grid justify-items-end">
-                  <span className="tabular text-sm">{fmtPrice(r.horizons?.["7d"]?.mid, r.asset.quoteUnit)}</span>
-                  <PriceChange value={r.horizons?.["7d"]?.changePct} suffix="7d" className="text-xs" />
-                </span>
-                <SignalBadge signal={r.signal!} pUp={r.pUp} />
-              </Link>
-            ))}
-          </Card>
-        </Section>
-
+      <div className="grid grid-cols-1 gap-12 lg:gap-6">
         <Section id="watchlist" title="Watchlist" action={<Link href="/watchlist" className="text-sm font-semibold text-accent hover:underline">Open</Link>}>
           <Card className="divide-y">
             {watch.length === 0 ? (

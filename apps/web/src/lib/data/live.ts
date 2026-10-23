@@ -7,7 +7,7 @@ import { env } from "@/lib/server/env";
 import { endAllSessions, isOwner, sessionUser } from "@/lib/server/auth";
 import { pushConfigured, sendPush } from "@/lib/server/push";
 import { ASSETS, ASSET_BY_SLUG, MARKETS, PLANS, PLAN_BY_CODE, SCENARIO_CAGR } from "./catalogue";
-import { MIN_BARS, pulse, signalChanges, signalHistory, type SignalChange } from "./indicators";
+import { MIN_BARS, pulse, recentVerdicts, signalChanges, signalHistory, type SignalChange } from "./indicators";
 import { check as checkFormula, evaluate as evalFormula, holdsNow, signalBars } from "../indicators/formula";
 import { backtest } from "../indicators/backtest";
 import { effectiveSource, ensure, ensureCrosscheck } from "./marketdata";
@@ -180,11 +180,12 @@ export async function dashboard(v: Viewer) {
     return { market: m, row: r, spark: r.locked ? [] : closedBars(r.asset.slug, "1d").slice(-30).map((b) => b.c) };
   });
   const strongest = [...live].sort((a, b) => Math.abs(b.pUp! - 0.5) - Math.abs(a.pUp! - 0.5)).slice(0, 6);
+  const top = topSignals(live);
   const scored = await trackRecord();
   const n = scored.reduce((s, r) => s + r.n, 0);
   const hitRate = n ? scored.reduce((s, r) => s + r.hit_rate * r.n, 0) / n : null;
   return {
-    cards, strongest, runAt: runAt(),
+    cards, strongest, top, runAt: runAt(),
     counts: {
       live: live.length,
       bullish: live.filter((r) => r.signal === "buy" || r.signal === "strong_buy").length,
@@ -192,6 +193,49 @@ export async function dashboard(v: Viewer) {
     },
     record: { scored: n, hitRate },
   };
+}
+
+// ---------------------------------------------------------------- top signals
+
+export type TopSignal = {
+  row: ForecastRow; side: "buy" | "sell";
+  /** -1 to 1, signed: the weighted blend of the three reads below. */
+  score: number; strength: "Very strong" | "Strong" | "Moderate";
+  daily: { agree: number; heldBars: number }; hourly: { agree: number; against: number } | null;
+  pSide: number; range7d: { low: number; high: number }; aligned: boolean;
+};
+const WEIGHTS = { daily: 0.45, hourly: 0.25, forecast: 0.3 } as const;
+
+/** Ranks the live assets by three independent reads that must point the same way to rank high: the daily chart's
+ *  20 indicators, the hourly chart's 20, and the 7-day forecast's chance of a move. Stale prices are left out. */
+function topSignals(live: ForecastRow[], n = 5) {
+  const scored: TopSignal[] = [];
+  for (const r of live) {
+    const slug = r.asset.slug, q = quote(slug);
+    if (q.status === "stale" || r.pUp === undefined) continue;
+    const d = pulse("1d", closedBars(slug, "1d"));
+    if (d.verdict === "unavailable") continue;
+    const h = pulse("1h", closedBars(slug, "1h"));
+    const net = (p: typeof d) => (p.ma.buy + p.osc.buy - p.ma.sell - p.osc.sell) / 20;
+    const sd = net(d), sh = h.verdict === "unavailable" ? 0 : net(h), f = (r.pUp - 0.5) * 2;
+    const score = WEIGHTS.daily * sd + WEIGHTS.hourly * sh + WEIGHTS.forecast * f;
+    const side = score > 0 ? "buy" : "sell", dir = side === "buy" ? 1 : -1;
+    // A real candidate needs the daily chart and the forecast on its side; the hourly chart can only add or subtract.
+    if (Math.abs(score) < 0.15 || sd * dir <= 0 || f * dir <= 0) continue;
+    const v = recentVerdicts("1d", closedBars(slug, "1d"), 8);
+    let held = 0;
+    while (held < v.length && v[v.length - 1 - held] === d.verdict) held++;
+    const p7 = shortTerm(slug).points.find((x) => x.horizon === "7d")!;
+    const agree = (p: typeof d) => (dir === 1 ? p.ma.buy + p.osc.buy : p.ma.sell + p.osc.sell);
+    const against = (p: typeof d) => (dir === 1 ? p.ma.sell + p.osc.sell : p.ma.buy + p.osc.buy);
+    scored.push({
+      row: r, side, score, strength: Math.abs(score) >= 0.5 ? "Very strong" : Math.abs(score) >= 0.3 ? "Strong" : "Moderate",
+      daily: { agree: agree(d), heldBars: held }, hourly: h.verdict === "unavailable" ? null : { agree: agree(h), against: against(h) },
+      pSide: dir === 1 ? r.pUp : 1 - r.pUp, range7d: { low: p7.low, high: p7.high }, aligned: sh * dir > 0,
+    });
+  }
+  const pick = (side: "buy" | "sell") => scored.filter((x) => x.side === side).sort((a, b) => Math.abs(b.score) - Math.abs(a.score)).slice(0, n);
+  return { buys: pick("buy"), sells: pick("sell"), scanned: live.length };
 }
 
 // ---------------------------------------------------------------- asset pages
