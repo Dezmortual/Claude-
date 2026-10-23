@@ -15,7 +15,7 @@ test.describe("L-H1 owner previews the landing page", () => {
     for (const h of ["Signal apps grade their own homework", "How it works", "Built to be checked", "Pricing", "Questions"]) {
       await expect(page.getByRole("heading", { level: 2, name: h })).toBeVisible();
     }
-    const img = page.getByRole("img", { name: /A Proofcast asset page/ });
+    const img = page.getByRole("img", { name: /A FXDEZ asset page/ });
     await expect(img).toBeVisible();
     expect(await img.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBeGreaterThan(0);
     await expect(page.getByRole("link", { name: "Open the forecasts" }).first()).toHaveAttribute("href", "/forecasts");

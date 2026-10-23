@@ -13,7 +13,7 @@ function fakeSubscription() {
 test.describe("F09 app and push alerts", () => {
   test("F09-H1 the app is installable", async ({ page, request }) => {
     const m = await (await request.get("/manifest.webmanifest")).json();
-    expect(m).toMatchObject({ name: "Proofcast", display: "standalone", start_url: "/" });
+    expect(m).toMatchObject({ name: "FXDEZ", display: "standalone", start_url: "/" });
     expect(m.icons.map((i: { sizes: string }) => i.sizes)).toEqual(expect.arrayContaining(["192x192", "512x512"]));
     for (const i of m.icons) expect((await request.get(i.src)).status()).toBe(200);
     const sw = await request.get("/sw.js");

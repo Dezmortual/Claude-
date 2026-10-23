@@ -67,7 +67,7 @@ export async function recordHealth(r: { checked: string[]; problems: Problem[] }
       insert into health_incidents (key, detail) values (${p.key}, ${p.detail})
       on conflict (key) where resolved_at is null do update set last_seen_at = now(), detail = excluded.detail
       returning (xmax = 0) as fresh`;
-    if (row.fresh) { opened++; await tellOwners("Proofcast: data problem", p.detail); }
+    if (row.fresh) { opened++; await tellOwners("FXDEZ: data problem", p.detail); }
   }
   const ok = r.checked.filter((k) => !r.problems.some((p) => p.key === k));
   if (ok.length) {
@@ -76,7 +76,7 @@ export async function recordHealth(r: { checked: string[]; problems: Problem[] }
     for (const c of closed) {
       resolved++;
       const mins = Math.round((Date.now() - c.started_at.getTime()) / MIN);
-      await tellOwners("Proofcast: data back to normal", `Fixed after ${mins < 120 ? `${mins} minutes` : `${Math.round(mins / 60)} hours`}: ${c.detail}`);
+      await tellOwners("FXDEZ: data back to normal", `Fixed after ${mins < 120 ? `${mins} minutes` : `${Math.round(mins / 60)} hours`}: ${c.detail}`);
     }
   }
   return { problems: r.problems.length, opened, resolved };

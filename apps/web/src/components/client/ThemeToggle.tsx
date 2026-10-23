@@ -10,10 +10,13 @@ export function ThemeToggle() {
     setDark(t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches);
   }, []);
   const flip = () => {
-    const next = dark ? "light" : "dark";
+    // Read the theme in force now rather than state, which is still unset if the tap comes before the first effect.
+    const t = document.documentElement.dataset.theme;
+    const isDark = t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    const next = isDark ? "light" : "dark";
     document.documentElement.dataset.theme = next;
     try { localStorage.setItem("theme", next); } catch {}
-    setDark(!dark);
+    setDark(!isDark);
   };
   return (
     <button type="button" onClick={flip} aria-pressed={dark ?? false} aria-label="Dark theme"

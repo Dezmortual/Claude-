@@ -9,7 +9,20 @@ export const ownerState = (who: "a" | "b") => path.join(__dirname, ".auth", `own
 
 /** Every test fails on a console error or a 5xx response from the app. (No context-wide extra headers: Playwright's
  *  extraHTTPHeaders breaks Next's client-side navigation, so per-test client addresses are sent per API request.) */
+/** After a page loads, wait until React has attached its handlers: a tap before that does nothing, which made a few
+ *  tests fail now and then. Only HTML pages carry the marker. */
+async function interactive(page: Page, r: Awaited<ReturnType<Page["goto"]>>) {
+  if (r && (r.headers()["content-type"] ?? "").includes("text/html")) await page.locator("html[data-hydrated]").waitFor({ state: "attached" });
+  return r;
+}
+
 export const test = base.extend<{ guard: void }>({
+  page: async ({ page }, use) => {
+    const goto = page.goto.bind(page), reload = page.reload.bind(page);
+    page.goto = async (...a) => interactive(page, await goto(...a));
+    page.reload = async (...a) => interactive(page, await reload(...a));
+    await use(page);
+  },
   guard: [async ({ page }, use) => {
     const problems: string[] = [];
     page.on("console", (m) => {

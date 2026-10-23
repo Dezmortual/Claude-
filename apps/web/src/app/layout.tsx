@@ -14,13 +14,13 @@ import { guestHome, isPublicPath } from "@/lib/paths";
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl()), // absolute URL for the social image
-  title: { default: "Proofcast: price forecasts with every result kept", template: "%s · Proofcast" },
+  title: { default: "FXDEZ: price forecasts with every result kept", template: "%s · FXDEZ" },
   robots: { index: false, follow: false }, // private build: keep it out of search engines
-  appleWebApp: { capable: true, title: "Proofcast", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "FXDEZ", statusBarStyle: "black-translucent" },
   description: "Short-term forecasts, technical signals and long-term scenarios for crypto and other markets, with every forecast scored in public.",
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#2a0b22" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#0b0f18" };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const v = await viewer();

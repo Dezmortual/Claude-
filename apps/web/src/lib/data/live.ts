@@ -536,7 +536,7 @@ export async function removePushSubscription(v: Viewer, endpoint: string) {
 export async function sendTestPush(v: Viewer) {
   const u = requireUser(v);
   if (!pushConfigured()) throw new DataError("invalid", "Push isn't set up on this server yet");
-  const r = await sendPush(u.id, { title: "Proofcast", body: "Notifications are on. Alerts you set will arrive here.", url: "/alerts", tag: "test" })
+  const r = await sendPush(u.id, { title: "FXDEZ", body: "Notifications are on. Alerts you set will arrive here.", url: "/alerts", tag: "test" })
     .catch(() => { throw new DataError("invalid", "The push service didn't accept the test. Turn notifications off and on again."); });
   if (!r.sent) throw new DataError("invalid", "No device is turned on for notifications");
   return r;

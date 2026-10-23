@@ -9,7 +9,7 @@ import { dateTime, pct, price as fmtPrice } from "@/lib/format";
 import { parseForecastQuery, type SP } from "@/lib/query";
 import { viewer } from "@/lib/session";
 
-export const metadata = { title: { absolute: "Proofcast: forecasts with the misses left in" } };
+export const metadata = { title: { absolute: "FXDEZ: forecasts with the misses left in" } };
 
 function greeting(tz: string) {
   const h = Number(new Date().toLocaleString("en-US", { timeZone: tz, hour: "2-digit", hour12: false }));

@@ -90,20 +90,20 @@ base.describe("Data health", () => {
       await sql`delete from health_incidents`;
       await sql`delete from job_runs where job = 'tick'`;
       await sql`insert into job_runs (job, status, started_at, finished_at) values ('tick', 'ok', now() - interval '3 hours', now() - interval '3 hours')`;
-      const before = mails("Proofcast: data problem");
+      const before = mails("FXDEZ: data problem");
       const r1 = await (await request.post("/api/cron/alerts", { headers: CRON })).json();
       expect(r1.health).toMatchObject({ problems: 1, opened: 1 });
-      expect(mails("Proofcast: data problem")).toBe(before + 1);
+      expect(mails("FXDEZ: data problem")).toBe(before + 1);
       const again = await (await request.post("/api/cron/alerts", { headers: CRON })).json();
       expect(again.health).toMatchObject({ problems: 1, opened: 0 }); // told once, not every run
       await page.goto("/status");
       await expect(page.getByRole("status").filter({ hasText: "1 problem right now" })).toContainText("check cron-job.org");
       await a11y(page, "/status");
       await sql`insert into job_runs (job, status, started_at, finished_at) values ('tick', 'ok', now(), now())`;
-      const fixedBefore = mails("Proofcast: data back to normal");
+      const fixedBefore = mails("FXDEZ: data back to normal");
       const r2 = await (await request.post("/api/cron/alerts", { headers: CRON })).json();
       expect(r2.health).toMatchObject({ problems: 0, resolved: 1 });
-      expect(mails("Proofcast: data back to normal")).toBe(fixedBefore + 1);
+      expect(mails("FXDEZ: data back to normal")).toBe(fixedBefore + 1);
       await page.reload();
       await expect(page.getByRole("status").filter({ hasText: "Everything is running" })).toBeVisible();
       await expect(page.locator("#history")).toContainText("No successful 30-minute update since");

@@ -88,13 +88,13 @@ export function PushCard() {
         <div className="min-w-0 flex-1 space-y-1">
           <p className="font-semibold">The app</p>
           {installed ? <p className="text-sm text-up">Installed. You&apos;re using it now.</p>
-            : prompt ? <p className="text-sm text-muted">Add Proofcast to your home screen. It opens full screen, like any other app.</p>
+            : prompt ? <p className="text-sm text-muted">Add FXDEZ to your home screen. It opens full screen, like any other app.</p>
             : ios ? <p className="text-sm text-muted">In Safari, tap Share, then <span className="font-semibold">Add to Home Screen</span>. On iPhone, notifications only work from the installed app.</p>
             : <p className="text-sm text-muted">Use your browser&apos;s menu and choose <span className="font-semibold">Install app</span> or <span className="font-semibold">Add to Home screen</span>.</p>}
         </div>
         {!installed && prompt && <Button onClick={install} disabled={busy} variant="secondary"><Download aria-hidden className="h-4 w-4" />Install</Button>}
         <p className="basis-full text-xs text-muted">
-          Once installed, long-press the Proofcast icon for shortcuts to Glance, Watchlist, Alerts and Indicators. On Android you can drag
+          Once installed, long-press the FXDEZ icon for shortcuts to Glance, Watchlist, Alerts and Indicators. On Android you can drag
           Glance out onto the home screen as its own icon: your watchlist and latest alerts in one tap.
         </p>
       </div>

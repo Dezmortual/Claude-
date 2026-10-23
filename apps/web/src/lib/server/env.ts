@@ -10,7 +10,7 @@ const Env = z.object({
   PRIVATE_MODE: z.enum(["true", "false"]).default("true").transform((v) => v === "true"),
   RESEND_API_KEY: z.string().optional(),
   EMAIL_OUTBOX: z.enum(["true", "false"]).default("false").transform((v) => v === "true"),
-  EMAIL_FROM: z.string().default("Proofcast <onboarding@resend.dev>"),
+  EMAIL_FROM: z.string().default("FXDEZ <onboarding@resend.dev>"),
   CRON_SECRET: z.string().min(24).optional(),
   ALPACA_KEY_ID: z.string().optional(),
   ALPACA_SECRET_KEY: z.string().optional(),

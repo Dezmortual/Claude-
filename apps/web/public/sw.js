@@ -1,4 +1,4 @@
-// Proofcast service worker: shows alert notifications and opens the asset when one is tapped.
+// FXDEZ service worker: shows alert notifications and opens the asset when one is tapped.
 // It caches nothing, so every page is always fresh from the server.
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
@@ -6,7 +6,7 @@ self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
 self.addEventListener("push", (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch { d = { body: e.data && e.data.text() }; }
-  e.waitUntil(self.registration.showNotification(d.title || "Proofcast", {
+  e.waitUntil(self.registration.showNotification(d.title || "FXDEZ", {
     body: d.body || "", tag: d.tag, data: { url: d.url || "/alerts" },
     icon: "/icons/icon-192.png", badge: "/icons/badge-96.png",
   }));

@@ -1,4 +1,11 @@
-# Brand: Proofcast
+# Brand: FXDEZ
+
+**Renamed 2026-10-23.** The owner renamed the app FXDEZ and supplied its logo: a gold-and-green FX mark with a rising
+candle chart and arrow, and the FXDEZ wordmark, on dark navy (`#0b0f18`). Every icon is cut from that image:
+`apps/web/public/icons/` (app icons, badge, shortcuts), `public/brand/mark-*.png` (header) and `src/app/` (favicon,
+Apple icon, link preview). The palette below is still the original plum one; only the name and logo changed. The
+notes below are kept as the history of the first name.
+
 
 Working name: **Proofcast**. It's a mix of *proof* and *forecast*. It carries angle A from `replica/fixes.md`:
 "publishes every forecast it ever made, and scores the misses too."

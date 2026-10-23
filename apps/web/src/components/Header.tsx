@@ -21,10 +21,9 @@ export function Header({ viewer }: { viewer: Viewer }) {
     <header className="sticky top-0 z-header h-header border-b bg-surface/85 backdrop-blur-md">
       <div className="mx-auto flex h-full max-w-wide items-center gap-4 px-4 lg:gap-6 lg:px-6">
         <Link href="/" className="flex items-center gap-2 whitespace-nowrap font-bold text-fg">
-          {/* The mark draws itself once on load (still under prefers-reduced-motion); dark mode uses the light variant. */}
-          <img src="/brand/mark-animated.svg" alt="" width={32} height={32} className="h-8 w-8 dark:hidden" />
-          <img src="/brand/mark-light.svg" alt="" width={32} height={32} className="hidden h-8 w-8 dark:block" />
-          Proofcast
+          {/* The FX mark on its own dark tile reads the same in light and dark mode. */}
+          <img src="/brand/mark-64.png" alt="" width={32} height={32} className="h-8 w-8 rounded-md" />
+          FXDEZ
         </Link>
         {signedIn && <nav aria-label="Main" className="hidden gap-5 text-sm text-muted md:flex">
           {LINKS.map((l) => <Link key={l.href} href={l.href} className="hover:text-fg">{l.label}</Link>)}

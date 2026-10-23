@@ -9,7 +9,7 @@ import { viewer } from "@/lib/session";
 
 export async function generateMetadata() {
   return {
-    title: { absolute: "Proofcast: forecasts that keep score, misses included" },
+    title: { absolute: "FXDEZ: forecasts that keep score, misses included" },
     description: "Price ranges and buy-or-sell signals for crypto and other markets. Every forecast is locked when it's made and scored when it's due.",
     robots: publicLanding() ? { index: true, follow: true } : { index: false, follow: false },
   };
@@ -66,7 +66,7 @@ export default async function Welcome() {
         <Label>Price forecasts with receipts</Label>
         <h1 className="max-w-3xl text-xl md:text-display">Forecasts that keep score, misses included.</h1>
         <p className="max-w-prose text-base text-muted">
-          Proofcast publishes price ranges and buy-or-sell signals for crypto and other markets. Each forecast is locked when it&apos;s made
+          FXDEZ publishes price ranges and buy-or-sell signals for crypto and other markets. Each forecast is locked when it&apos;s made
           and scored when it&apos;s due, so the hit rate you see is measured, not claimed.
         </p>
         <div className="flex flex-wrap gap-3">
@@ -74,7 +74,7 @@ export default async function Welcome() {
           <ButtonLink href="#how" size="lg" variant="secondary">How it works</ButtonLink>
         </div>
         <Image src="/welcome/asset-page.webp" width={1440} height={756} priority sizes="(min-width: 1200px) 1200px, 100vw"
-          alt="A Proofcast asset page: Bitcoin's price, the 90-day range, volatility, and a chart with the forecast range"
+          alt="A FXDEZ asset page: Bitcoin's price, the 90-day range, volatility, and a chart with the forecast range"
           className="h-auto w-full rounded-lg border shadow-card" />
       </section>
 
