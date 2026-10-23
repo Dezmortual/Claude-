@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<defs>
+  <radialGradient id="bg" cx="50%" cy="36%" r="78%">
+    <stop offset="0" stop-color="#1d2944"/><stop offset="0.5" stop-color="#0d1322"/><stop offset="1" stop-color="#04060b"/>
+  </radialGradient>
+  <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+    <stop offset="0" stop-color="#f5c35a" stop-opacity="0.22"/><stop offset="1" stop-color="#f5c35a" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="gold" x1="0" y1="0" x2="0.6" y2="1">
+    <stop offset="0" stop-color="#fff0bd"/><stop offset="0.35" stop-color="#f2c35b"/><stop offset="0.7" stop-color="#c88c27"/><stop offset="1" stop-color="#8f5b12"/>
+  </linearGradient>
+  <linearGradient id="goldTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbe9"/><stop offset="1" stop-color="#ffd877"/></linearGradient>
+  <linearGradient id="green" x1="0" y1="0" x2="0.6" y2="1">
+    <stop offset="0" stop-color="#a6ffd9"/><stop offset="0.35" stop-color="#25d98f"/><stop offset="0.7" stop-color="#0d9a62"/><stop offset="1" stop-color="#05573a"/>
+  </linearGradient>
+  <linearGradient id="greenDeep" x1="0" y1="0" x2="0.6" y2="1">
+    <stop offset="0" stop-color="#62f2b6"/><stop offset="0.5" stop-color="#12a06b"/><stop offset="1" stop-color="#065a3b"/>
+  </linearGradient>
+  <linearGradient id="wordGold" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#fff5cf"/><stop offset="0.42" stop-color="#f3c65f"/><stop offset="0.5" stop-color="#b97d20"/>
+    <stop offset="0.75" stop-color="#e9b44a"/><stop offset="1" stop-color="#ffdf8a"/>
+  </linearGradient>
+  <linearGradient id="stage" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#f3c65f" stop-opacity="0"/><stop offset="0.5" stop-color="#ffe7a0" stop-opacity="0.9"/><stop offset="1" stop-color="#f3c65f" stop-opacity="0"/>
+  </linearGradient>
+  <linearGradient id="greenTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9fff5"/><stop offset="1" stop-color="#6ff3bd"/></linearGradient>
+  <linearGradient id="candleG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffe7a3"/><stop offset="0.5" stop-color="#e3a840"/><stop offset="1" stop-color="#a86f1a"/></linearGradient>
+  <linearGradient id="candleE" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9dffd5"/><stop offset="0.5" stop-color="#1fcf86"/><stop offset="1" stop-color="#0a7d51"/></linearGradient>
+  <filter id="lift" x="-25%" y="-25%" width="150%" height="150%">
+    <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#000" flood-opacity="0.6"/>
+  </filter>
+  <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="6" result="b"/><feColorMatrix in="b" type="matrix" values="0 0 0 0 0.2  0 0 0 0 1  0 0 0 0 0.6  0 0 0 0.55 0"/>
+    <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+</defs><rect width="512" height="512" rx="112" fill="url(#bg)"/><g transform="translate(88 30) scale(1.2)"><g transform="skewX(-12) translate(22 0)"><ellipse cx="128" cy="140" rx="130" ry="100" fill="url(#halo)"/><g filter="url(#lift)"><rect x="36.75" y="86" width="3.5" height="42" rx="1.75" fill="url(#candleG)"/><rect x="30" y="96" width="17" height="26" rx="3" fill="url(#candleG)"/><rect x="62.75" y="72" width="3.5" height="50" rx="1.75" fill="url(#candleG)"/><rect x="56" y="82" width="17" height="34" rx="3" fill="url(#candleG)"/><rect x="88.75" y="58" width="3.5" height="56" rx="1.75" fill="url(#candleG)"/><rect x="82" y="70" width="17" height="38" rx="3" fill="url(#candleG)"/><rect x="114.75" y="46" width="3.5" height="58" rx="1.75" fill="url(#candleE)"/><rect x="108" y="60" width="17" height="38" rx="3" fill="url(#candleE)"/></g><g filter="url(#lift)"><g fill="url(#gold)"><path d="M30 130 H60 V210 H30 Z"/><path d="M30 130 H120 V156 H30 Z"/><path d="M30 172 H102 V196 H30 Z"/></g><g fill="url(#goldTop)" opacity="0.75"><path d="M30 130 H120 V137 H30 Z"/></g></g><g filter="url(#lift)"><g fill="url(#greenDeep)"><path d="M128 130 H162 L222 210 H188 Z"/></g><g filter="url(#glow)" fill="url(#green)" stroke="#070b14" stroke-width="3" paint-order="stroke"><path d="M128 210 L212 98 L199.2 88.4 L262 54 L258.8 107.6 L246 98 L162 210 Z"/></g><g fill="url(#greenTop)" opacity="0.7"><path d="M128 130 H162 L157 137 H133 Z"/></g></g></g><rect x="14" y="222" width="236" height="3" rx="1.5" fill="url(#stage)"/></g><g transform="translate(116 340)"><g fill="url(#wordGold)" filter="url(#lift)"><path d="M0 0 H44 V12 H14 V24 H38 V36 H14 V60 H0 Z"/><path d="M52 0 H68 L80 20 L92 0 H108 L88 30 L108 60 H92 L80 40 L68 60 H52 L72 30 Z"/><path d="M116 0 H140 A30 30 0 0 1 140 60 H116 Z M130 12 V48 H140 A18 18 0 0 0 140 12 Z" fill-rule="evenodd"/><path d="M180 0 H224 V12 H194 V24 H218 V36 H194 V48 H224 V60 H180 Z"/><path d="M232 0 H280 V12 L250 48 H280 V60 H232 V48 L262 12 H232 Z"/></g></g></svg>

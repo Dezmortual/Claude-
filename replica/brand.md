@@ -1,10 +1,18 @@
 # Brand: FXDEZ
 
-**Renamed 2026-10-23.** The owner renamed the app FXDEZ and supplied its logo: a gold-and-green FX mark with a rising
-candle chart and arrow, and the FXDEZ wordmark, on dark navy (`#0b0f18`). Every icon is cut from that image:
-`apps/web/public/icons/` (app icons, badge, shortcuts), `public/brand/mark-*.png` (header) and `src/app/` (favicon,
-Apple icon, link preview). The palette below is still the original plum one; only the name and logo changed. The
-notes below are kept as the history of the first name.
+**Renamed 2026-10-23.** The owner renamed the app FXDEZ. The logo is drawn from the owner's idea (an FX
+monogram with rising candles and an up-trend arrow, gold and green on dark navy) as vector artwork in
+`replica/design/logo-fxdez/` (`build.py` writes every SVG; the PNGs in the app are rendered from them):
+
+- **Mark:** a forward-leaning monogram. The F is polished gold with a bevelled top edge. The X is emerald, and its
+  rising leg carries on into the arrow head: growth comes out of the letters. Four candles climb above the F, gold
+  turning green. A thin gold stage line sits underneath.
+- **Wordmark:** FXDEZ in a geometric bold, metallic gold with a bright top and a dark mid band, drawn as paths.
+- **Colours:** navy `#0b0f18` to `#1d2944`, gold `#fff0bd` to `#8f5b12`, emerald `#a6ffd9` to `#05573a`.
+- **Where it's used:** app icons (square, maskable), Apple icon, favicon, header, push badge (white silhouette),
+  link preview, shortcut icons. The app's palette is still the original plum one; only the name and logo changed.
+
+The notes below are kept as the history of the first name.
 
 
 Working name: **Proofcast**. It's a mix of *proof* and *forecast*. It carries angle A from `replica/fixes.md`:
