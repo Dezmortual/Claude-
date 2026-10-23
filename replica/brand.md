@@ -10,7 +10,7 @@ monogram with rising candles and an up-trend arrow, gold and green on dark navy)
 - **Wordmark:** FXDEZ in a geometric bold, metallic gold with a bright top and a dark mid band, drawn as paths.
 - **Colours:** navy `#0b0f18` to `#1d2944`, gold `#fff0bd` to `#8f5b12`, emerald `#a6ffd9` to `#05573a`.
 - **Where it's used:** app icons (square, maskable), Apple icon, favicon, header, push badge (white silhouette),
-  link preview, shortcut icons. The app's palette is still the original plum one; only the name and logo changed.
+  link preview, shortcut icons. Since 2026-10-23 the app palette uses the same colours (`replica/design/tokens.json`): gold accent (bronze `#8a5c0c` on light backgrounds for contrast), emerald for gains, navy panels and dark mode.
 
 The notes below are kept as the history of the first name.
 
