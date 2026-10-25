@@ -182,6 +182,6 @@ See `features.csv`. Must: 7, should: 11, could: 16, skip: 10 (44 rows; FXDEZ alr
 
 ## Size
 
-Screens 41 (5 skip, 8 already in FXDEZ, 6 in part), flows 10, entities 13. Hard parts: an honest backtest engine (no look-ahead,
+Screens 41 (5 skip, 8 already in FXDEZ, 5 in part), flows 10, entities 13. Hard parts: an honest backtest engine (no look-ahead,
 costs, walk-forward, counting every try), AI agents that call tools safely and cheaply, and live algo trading with a
 kill switch. Size of the whole terminal: XL, rescope. Recommended first slice, the backtesting lab (F01-F03): M.
