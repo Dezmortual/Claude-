@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Wallet } from "lucide-react";
 import { DeleteLot, HoldingForm } from "@/components/client/HoldingForm";
+import { PortfolioNav } from "@/components/PortfolioNav";
 import { AssetMark, Badge, Card, EmptyState, Label, PriceChange, Section, SignalBadge, cx } from "@/components/ui";
 import { portfolio } from "@/lib/data";
 import { price } from "@/lib/format";
@@ -23,6 +24,7 @@ export default async function Portfolio() {
       <div className="space-y-2">
         <Label>Portfolio</Label>
         <h1 className="text-xl md:text-display">Your portfolio</h1>
+        <PortfolioNav at="/portfolio" />
         <p className="max-w-prose text-muted">What you hold, valued at live prices, with each holding&apos;s signal and alerts. Only you can see it.</p>
       </div>
 
@@ -50,6 +52,7 @@ export default async function Portfolio() {
                 <>
                   <p className={cx("tabular text-xl", p.pnl >= 0 ? "text-up" : "text-down")}>{signedUsd(p.pnl)}</p>
                   <p className="text-sm text-muted"><PriceChange value={p.pnlPct} /> on {usd(p.cost!)} paid</p>
+                  {(p.realised !== 0 || p.income > 0) && <p className="text-xs text-muted">Plus {signedUsd(p.realised)} locked in by sales{p.income > 0 ? `, ${usd(p.income)} in dividends` : ""}</p>}
                 </>
               )}
             </Card></li>

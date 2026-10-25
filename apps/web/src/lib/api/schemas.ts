@@ -104,3 +104,15 @@ export const MonitorPatch = z.object({ enabled: z.boolean().optional(), label: z
 export const FeedBody = z.object({ name: z.string().trim().min(1, "Give it a name").max(60), url: z.string().trim().min(1, "Paste the feed's address").max(500) });
 export const NewsQuery = z.object({ q: z.string().max(80).optional(), slug: z.string().max(40).optional(), mood: z.enum(["positive", "neutral", "negative"]).optional(),
   source: z.string().max(60).optional() });
+
+// Portfolio ledger, targets, limits.
+const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a date like 2026-01-31");
+const usdAmount = z.number().positive("Enter an amount above 0").finite().max(1e12);
+export const EntryBody = z.object({
+  slug: z.string().regex(/^[a-z0-9-]{1,40}$/), kind: z.enum(["sell", "dividend", "fee"]), on: day,
+  quantity: z.number().positive("Enter a quantity above 0").finite().max(1e15).nullish(), price: z.number().positive("Enter a price above 0").finite().max(1e12).nullish(),
+  amount: usdAmount.nullish(), note: z.string().max(120, "Keep the note under 120 characters").nullish(),
+});
+export const TargetsBody = z.object({ targets: z.array(z.object({ slug: z.string().regex(/^[a-z0-9-]{1,40}$/), weight: z.number().positive("Weights are above 0").max(100) })).max(40) });
+export const LimitBody = z.object({ kind: z.enum(["max_holding", "max_market"]), target: z.string().max(40), pct: z.number().positive("Enter a percent above 0").max(100, "A percent is at most 100") });
+export const BenchmarkBody = z.object({ slug: z.string().regex(/^[a-z0-9-]{1,40}$/) });

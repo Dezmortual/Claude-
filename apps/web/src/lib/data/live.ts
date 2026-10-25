@@ -74,7 +74,7 @@ function requireAsset(slug: string): Asset {
 }
 
 /** Load prices for the assets a call touches (only those the viewer may see). */
-async function load(v: Viewer, assets: Asset[], tfs: Timeframe[] = ROW_TFS) {
+export async function load(v: Viewer, assets: Asset[], tfs: Timeframe[] = ROW_TFS) {
   const seen = assets.filter((a) => canSee(v, a)).map((a) => a.slug);
   await Promise.all([ensure(seen, tfs), seen.some((s) => ASSET_BY_SLUG.get(s)!.market === "crypto") ? ensureCrosscheck() : null]);
 }
@@ -895,23 +895,40 @@ export async function deleteHolding(v: Viewer, id: string) {
 export async function portfolio(v: Viewer) {
   const u = requireUser(v);
   const db = sql();
-  const [lots, alertCounts] = await Promise.all([
+  const [lots, entries, alertCounts] = await Promise.all([
     db<{ id: string; slug: string; quantity: number; cost_price: number | null; bought_on: Date | null; note: string | null }[]>`
       select h.id, a.slug, h.quantity, h.cost_price, h.bought_on, h.note from holdings h join assets a on a.id = h.asset_id
-      where h.user_id = ${u.id} order by h.bought_on nulls last, h.created_at`,
+      where h.user_id = ${u.id} order by h.bought_on nulls first, h.created_at`,
+    db<{ slug: string; kind: "buy" | "sell" | "dividend" | "fee"; quantity: number | null; price: number | null; amount: number | null; happened_on: Date }[]>`
+      select a.slug, e.kind, e.quantity, e.price, e.amount, e.happened_on from portfolio_entries e join assets a on a.id = e.asset_id
+      where e.user_id = ${u.id} order by e.happened_on, e.created_at`,
     db<{ slug: string; n: number }[]>`select a.slug, count(*)::int as n from alerts al join assets a on a.id = al.asset_id
       where al.user_id = ${u.id} and al.is_active group by a.slug`,
   ]);
-  const assets = [...new Set(lots.map((l) => l.slug))].map((s) => getAsset(s)).filter((a): a is Asset => !!a);
+  const slugs = [...new Set([...lots.map((l) => l.slug), ...entries.map((e) => e.slug)])];
+  const assets = slugs.map((s) => getAsset(s)).filter((a): a is Asset => !!a);
   await load(v, assets);
   const nAlerts = new Map(alertCounts.map((x) => [x.slug, x.n]));
+  let realised = 0, income = 0;
   const positions: Position[] = assets.filter((a) => closedBars(a.slug, "1d").length).map((a) => {
     const mine = lots.filter((l) => l.slug === a.slug);
+    // Purchases (undated first) and ledger entries in date order; average cost; a sale takes its share of the cost with it.
+    const steps = [...mine.map((l) => ({ at: l.bought_on?.getTime() ?? -Infinity, kind: "buy" as const, q: l.quantity, p: l.cost_price, fee: 0 })),
+      ...entries.filter((e) => e.slug === a.slug).map((e) => ({ at: e.happened_on.getTime(), kind: e.kind, q: e.quantity ?? 0, p: e.price, fee: e.amount ?? 0 }))]
+      .sort((x, y) => x.at - y.at);
+    let quantity = 0, pq = 0, costSum = 0;
+    for (const st of steps) {
+      if (st.kind === "buy") { quantity += st.q; if (st.p !== null) { pq += st.q; costSum += st.q * st.p + st.fee; } }
+      else if (st.kind === "sell" && quantity > 0) {
+        const frac = Math.min(1, st.q / quantity), pricedShare = quantity ? pq / quantity : 0;
+        realised += pricedShare * (Math.min(st.q, quantity) * (st.p ?? 0) - st.fee) - costSum * frac;
+        quantity -= Math.min(st.q, quantity); pq -= pq * frac; costSum -= costSum * frac;
+      } else if (st.kind === "dividend") income += st.fee;
+      else if (st.kind === "fee") realised -= st.fee;
+    }
     const r = row(v, a), q = quote(a.slug);
-    const quantity = mine.reduce((t, l) => t + l.quantity, 0), value = quantity * q.price;
-    const priced = mine.filter((l) => l.cost_price !== null);
-    const pq = priced.reduce((t, l) => t + l.quantity, 0);
-    const cost = pq ? priced.reduce((t, l) => t + l.quantity * l.cost_price!, 0) : null;
+    const value = quantity * q.price;
+    const cost = pq > 1e-12 ? costSum : null;
     const pricedValue = pq * q.price;
     return {
       asset: a, quantity, price: q.price, value,
@@ -920,7 +937,7 @@ export async function portfolio(v: Viewer) {
       weight: 0, signal: r.signal ?? null, pUp: r.pUp ?? null, alerts: nAlerts.get(a.slug) ?? 0, stale: q.status === "stale",
       lots: mine.map((l) => ({ id: l.id, quantity: l.quantity, costPrice: l.cost_price, boughtOn: l.bought_on?.toISOString().slice(0, 10) ?? null, note: l.note })),
     };
-  });
+  }).filter((x) => x.quantity > 1e-12);
   const total = positions.reduce((t, x) => t + x.value, 0);
   for (const x of positions) x.weight = total ? x.value / total : 0;
   positions.sort((x, y) => y.value - x.value);
@@ -933,7 +950,7 @@ export async function portfolio(v: Viewer) {
   };
   return {
     positions, total, cost: cost || null, pnl: cost ? pricedValue - cost : null, pnlPct: cost ? (pricedValue / cost - 1) * 100 : null,
-    change24h, change24hPct: total - change24h ? (change24h / (total - change24h)) * 100 : 0,
+    change24h, change24hPct: total - change24h ? (change24h / (total - change24h)) * 100 : 0, realised, income,
     scenarios: [scenario(1), scenario(5)],
     holdableAssets: ASSETS.filter(holdable).map((a) => ({ slug: a.slug, name: a.name, ticker: a.ticker, unit: a.meta.proxy ? `${a.meta.proxy} shares` : a.market === "crypto" ? a.ticker : "shares" })),
   };
@@ -978,10 +995,10 @@ export function tradeSymbol(a: Asset): string | null {
   return null; // currency pairs, bond yields, and indices without a fund aren't traded at Alpaca
 }
 const posKey = (sym: string) => sym.replace("/", "");
-const bySymbol = () => new Map(ASSETS.map((a) => [tradeSymbol(a), a] as const).filter(([s]) => s).map(([s, a]) => [posKey(s!), a]));
+export const bySymbol = () => new Map(ASSETS.map((a) => [tradeSymbol(a), a] as const).filter(([s]) => s).map(([s, a]) => [posKey(s!), a]));
 const num = (x: string | null | undefined) => (x === null || x === undefined || x === "" ? null : Number(x));
 /** Broker failures reach the screen as plain messages, never as a server error. */
-async function viaBroker<T>(f: () => Promise<T>): Promise<T> {
+export async function viaBroker<T>(f: () => Promise<T>): Promise<T> {
   try { return await f(); } catch (e) {
     if (e instanceof BrokerError) throw new DataError(e.status === 404 ? "not_found" : "invalid", e.message);
     throw new DataError("invalid", `Couldn't reach Alpaca: ${e instanceof Error ? e.message : e}`);

@@ -47,6 +47,8 @@ export type OrderRequest = {
   order_class?: "bracket"; take_profit?: { limit_price: string }; stop_loss?: { stop_price: string };
 };
 
+export type BrokerFill = { id: string; activity_type: string; transaction_time: string; type: string; price: string; qty: string; side: string; symbol: string; order_id: string };
+
 export const broker = {
   account: () => call<BrokerAccount>("GET", "/v2/account"),
   clock: () => call<{ is_open: boolean; next_open: string; next_close: string }>("GET", "/v2/clock"),
@@ -56,4 +58,5 @@ export const broker = {
   place: (o: OrderRequest) => call<BrokerOrder>("POST", "/v2/orders", o),
   cancel: (id: string) => call<null>("DELETE", `/v2/orders/${encodeURIComponent(id)}`),
   close: (symbol: string) => call<BrokerOrder>("DELETE", `/v2/positions/${encodeURIComponent(symbol)}`),
+  fills: (pageToken?: string) => call<BrokerFill[]>("GET", `/v2/account/activities/FILL?page_size=100&direction=desc${pageToken ? `&page_token=${encodeURIComponent(pageToken)}` : ""}`),
 };

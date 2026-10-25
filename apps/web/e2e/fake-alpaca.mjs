@@ -20,7 +20,7 @@ const FEEDS = {
     ["Ethereum upgrade approved by core developers", "https://central.example/2", "Ether gains."]]),
   "/rss/mine.xml": rss([["My blog: why gold could rally &amp; what to watch", "https://blog.example/1", "Gold notes."]]),
 };
-const reset = () => { state = { cash: 100000, positions: new Map(), orders: [] }; badKeys = false; mark = PRICE; };
+const reset = () => { state = { cash: 100000, positions: new Map(), orders: [], fills: [] }; badKeys = false; mark = PRICE; };
 reset();
 const key = (s) => s.replace("/", "");
 
@@ -31,6 +31,8 @@ function fill(o) {
   else { p.cost -= (p.cost / p.qty) * qty; p.qty -= qty; state.cash += qty * PRICE; }
   if (p.qty <= 1e-9) state.positions.delete(k); else state.positions.set(k, p);
   Object.assign(o, { status: "filled", filled_qty: String(qty), filled_avg_price: String(PRICE), filled_at: new Date().toISOString() });
+  state.fills.unshift({ id: `${Date.now()}::${randomUUID()}`, activity_type: "FILL", transaction_time: o.filled_at, type: "fill", price: String(PRICE), qty: String(qty),
+    side: o.side, symbol: key(o.symbol), order_id: o.id });
 }
 
 http.createServer((req, res) => {
@@ -47,6 +49,7 @@ http.createServer((req, res) => {
     if (badKeys || req.headers["apca-api-key-id"] !== KEY || req.headers["apca-api-secret-key"] !== SECRET) return send(res, 401, { code: 40110000, message: "request is not authorized" });
     const equity = state.cash + [...state.positions.values()].reduce((t, p) => t + p.qty * mark, 0);
     if (path === "/v1beta1/news") return send(res, 200, { news: news.slice(0, Number(url.searchParams.get("limit") ?? 50)), next_page_token: null });
+    if (path === "/v2/account/activities/FILL") return send(res, 200, state.fills.slice(0, 100));
     if (path === "/v2/account") return send(res, 200, { status: "ACTIVE", currency: "USD", cash: String(state.cash), buying_power: String(state.cash), equity: String(equity), last_equity: "100000", trading_blocked: false, account_blocked: false });
     if (path === "/v2/clock") return send(res, 200, { is_open: true, next_open: new Date().toISOString(), next_close: new Date().toISOString() });
     if (path === "/v2/positions" && m === "GET") return send(res, 200, [...state.positions].map(([s, p]) => ({ symbol: s, qty: String(p.qty), avg_entry_price: String(p.cost / p.qty), market_value: String(p.qty * mark), current_price: String(mark), unrealized_pl: String(p.qty * mark - p.cost), unrealized_plpc: String((p.qty * mark) / p.cost - 1), side: "long", asset_class: p.cls })));

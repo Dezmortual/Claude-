@@ -7,13 +7,13 @@ Run history and compare 2 to 4 runs on one chart,backtesting,should,yes,yes,F03
 Parameter sweep with walk-forward test windows,backtesting,should,yes,yes,F02
 Count every try per strategy family (deflated Sharpe),backtesting,should,yes,yes,F02; guards against curve fitting
 Trades drawn on the price chart,backtesting,should,yes,yes,Trade Viz (S24)
-"Portfolio performance: time-weighted return, drawdown, monthly table",portfolio,must,yes,partial,FXDEZ has value and P/L only
-"Portfolio ledger (buys, sells, fees, dividends, deposits)",portfolio,should,yes,partial,FXDEZ holdings have no transaction history
-"Portfolio risk: volatility, beta, VaR",portfolio,should,yes,no,
-"Stress scenarios (past crises, Monte Carlo fan)",portfolio,could,yes,no,F07
-Rebalance proposal to target weights,portfolio,could,yes,no,
-Portfolio limits with warn and breach,portfolio,could,yes,no,
-Import trades from the linked broker,portfolio,should,yes,no,Alpaca fills into the ledger
+"Portfolio performance: time-weighted return, drawdown, monthly table",portfolio,must,yes,yes,FXDEZ has value and P/L only
+"Portfolio ledger (buys, sells, fees, dividends, deposits)",portfolio,should,yes,yes,FXDEZ holdings have no transaction history
+"Portfolio risk: volatility, beta, VaR",portfolio,should,yes,yes,
+"Stress scenarios (past crises, Monte Carlo fan)",portfolio,could,yes,yes,F07
+Rebalance proposal to target weights,portfolio,could,yes,yes,
+Portfolio limits with warn and breach,portfolio,could,yes,yes,
+Import trades from the linked broker,portfolio,should,yes,yes,Alpaca fills into the ledger
 Market news feed per asset,news,must,yes,yes,public RSS and free news APIs within their terms
 News sentiment label per article,news,should,yes,yes,lexicon based in the original
 Keyword news monitors with push alerts,news,should,yes,yes,F05; fits FXDEZ alerts
