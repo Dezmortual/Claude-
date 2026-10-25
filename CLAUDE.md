@@ -31,6 +31,16 @@ Keep each strategy one level under `trading-desk/`, because strategies import
 `core/` as `../core`. Never commit `trading-desk/.env`. Read the
 `trading-desk-method` skill before reporting any backtest result.
 
+## Day Trader skill pack
+
+The eleven `trader-*` skills in `.claude/skills/` were copied from
+Jakeschincariol/day-trader-skill (MIT, commit 3d0f4ef). Their tools are
+standard-library Python and read free public data (Yahoo, Nasdaq Trader, SEC
+EDGAR, House Clerk). They write to `trader/` at the repo root, which is
+gitignored. The SEC tools need `SEC_USER_AGENT` ("Name email"). Only
+`trader-broker` can lead to an order: keep any broker order tool on "ask",
+never "allow".
+
 ## Ruflo
 
 Ruflo (npm `ruflo`, github ruvnet/ruflo) was installed with

@@ -19,3 +19,6 @@ ruvector.db
 .claude-flow/security/
 .claude/.proven-config-version
 .claude/proven-config.json
+
+# day-trader-skill working files (portfolio, orders, broker log)
+/trader/
