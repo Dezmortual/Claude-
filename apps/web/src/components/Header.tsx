@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/forecasts", label: "Forecasts" },
   { href: "/markets/crypto", label: "Markets" },
   { href: "/news", label: "News" },
+  { href: "/macro", label: "Economy" },
   { href: "/trade", label: "Trade" },
   { href: "/portfolio", label: "Portfolio" },
   { href: "/indicators", label: "Indicators" },
@@ -28,7 +29,7 @@ export function Header({ viewer }: { viewer: Viewer }) {
           <img src="/brand/mark-64.png" alt="" width={32} height={32} className="h-8 w-8 rounded-md" />
           FXDEZ
         </Link>
-        {signedIn && <nav aria-label="Main" className="hidden gap-5 text-sm text-muted md:flex">
+        {signedIn && <nav aria-label="Main" className="hidden gap-5 whitespace-nowrap text-sm text-muted xl:flex">
           {LINKS.map((l) => <Link key={l.href} href={l.href} className="hover:text-fg">{l.label}</Link>)}
         </nav>}
         <div className="flex-1" />

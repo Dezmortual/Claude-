@@ -116,3 +116,4 @@ export const EntryBody = z.object({
 export const TargetsBody = z.object({ targets: z.array(z.object({ slug: z.string().regex(/^[a-z0-9-]{1,40}$/), weight: z.number().positive("Weights are above 0").max(100) })).max(40) });
 export const LimitBody = z.object({ kind: z.enum(["max_holding", "max_market"]), target: z.string().max(40), pct: z.number().positive("Enter a percent above 0").max(100, "A percent is at most 100") });
 export const BenchmarkBody = z.object({ slug: z.string().regex(/^[a-z0-9-]{1,40}$/) });
+export const MacroPinBody = z.object({ id: z.string().regex(/^[A-Za-z0-9_.]{1,30}$/), on: z.boolean() });

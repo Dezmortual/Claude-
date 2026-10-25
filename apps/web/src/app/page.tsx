@@ -5,8 +5,9 @@ import { TabSwitch } from "@/components/HubControls";
 import { Sparkline } from "@/components/Sparkline";
 import { TopSignals } from "@/components/TopSignals";
 import { OpenTrades } from "@/components/client/OpenTrades";
+import { MacroCard } from "@/components/MacroCard";
 import { AssetMark, Badge, ButtonLink, Card, DemoNote, EmptyState, PriceChange, Section, SignalBadge, cx } from "@/components/ui";
-import { dashboard, getWatchlist, listForecasts, listMarkets, watchlistSlugs } from "@/lib/data";
+import { dashboard, getWatchlist, listForecasts, listMarkets, macroPins, macroSeries, watchlistSlugs } from "@/lib/data";
 import { dateTime, pct, price as fmtPrice } from "@/lib/format";
 import { parseForecastQuery, type SP } from "@/lib/query";
 import { viewer } from "@/lib/session";
@@ -92,6 +93,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<SP>
           <OpenTrades />
         </Section>
       )}
+
+      {v.user && await (async () => {
+        const pins = await macroPins(v);
+        if (!pins.length) return null;
+        const series = (await Promise.all(pins.map((id) => macroSeries(v, id).catch(() => null)))).filter((x) => !!x);
+        return (
+          <Section id="economy" title="Economy" action={<Link href="/macro" className="text-sm font-semibold text-accent hover:underline">All series</Link>}>
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">{series.map((s) => <li key={s.def.id}><MacroCard s={{ ...s, points: s.points.slice(-750), yoyPoints: s.yoyPoints?.slice(-36) ?? null }} /></li>)}</ul>
+          </Section>
+        );
+      })()}
 
       <Section id="top-signals" title="Top signals now"
         action={<Link href="/track-record" className="text-sm font-semibold text-accent hover:underline">How signals have done</Link>}>

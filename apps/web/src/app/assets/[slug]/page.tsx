@@ -10,9 +10,10 @@ import { Suspense } from "react";
 import { Pulse } from "@/components/client/Pulse";
 import { OutlookCards } from "@/components/OutlookCards";
 import { MoodSummary, NewsList } from "@/components/News";
+import { PredictionList } from "@/components/Predictions";
 import { ScenarioChart } from "@/components/ScenarioChart";
 import { Banner, Card, Label, Paywall, PriceChange, Section, StatCard } from "@/components/ui";
-import { forecastLedger, listIndicators, listNews, newsMood, assetBars, assetForecast, assetScenarios, assetSignals, assetSummary, getAsset, relatedAssets, type PathRow } from "@/lib/data";
+import { assetPredictions, forecastLedger, listIndicators, listNews, newsMood, assetBars, assetForecast, assetScenarios, assetSignals, assetSummary, getAsset, relatedAssets, type PathRow } from "@/lib/data";
 import { compact, dateTime, pct, price as fmtPrice } from "@/lib/format";
 import { viewer } from "@/lib/session";
 
@@ -149,6 +150,17 @@ export default async function AssetForecast({ params }: P) {
               : <p className="text-sm text-muted">No stories about {asset.name} in the last 45 days.</p>}
           </Section>
         );
+      })()}
+
+      {v.user && await (async () => {
+        const odds = await assetPredictions(v, slug);
+        return odds.length ? (
+          <Section id="predictions" title={`What prediction markets say about ${asset.name}`}
+            action={<Link prefetch={false} href={`/predictions?q=${encodeURIComponent(asset.name)}`} className="text-sm font-semibold text-accent hover:underline">More</Link>}>
+            <PredictionList items={odds} />
+            <p className="text-xs text-muted">Polymarket traders&apos; prices for &ldquo;yes&rdquo;: the crowd&apos;s odds, not ours.</p>
+          </Section>
+        ) : null;
       })()}
 
       {ledger && (

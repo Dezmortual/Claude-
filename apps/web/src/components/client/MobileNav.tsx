@@ -8,7 +8,7 @@ export function MobileNav({ links, signedIn }: { links: { href: string; label: s
   const [open, setOpen] = useState(false);
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger className="grid h-10 w-10 place-items-center rounded-md text-fg hover:bg-surface-sunken md:hidden" aria-label="Menu">
+      <Dialog.Trigger className="grid h-10 w-10 place-items-center rounded-md text-fg hover:bg-surface-sunken xl:hidden" aria-label="Menu">
         <Menu aria-hidden className="h-5 w-5" />
       </Dialog.Trigger>
       <Dialog.Portal>

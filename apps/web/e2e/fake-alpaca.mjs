@@ -1,6 +1,7 @@
 // A stand-in for Alpaca's trading API (the endpoints the app calls), in memory, for the e2e suite.
 // Market orders fill at once at PRICE; limit orders stay open. POST /__reset clears it; POST /__badkeys makes it refuse the keys;
 // POST /__mark?price=110 moves the price positions are valued at (fills stay at PRICE), to show a gain or loss.
+// Also FRED CSVs, World Bank and Polymarket stand-ins (/graph/fredgraph.csv, /v2/country/..., /markets).
 // Also news: GET /v1beta1/news (Alpaca's news API), POST /__news adds a story, and /rss/*.xml serve test feeds.
 import http from "node:http";
 import { randomUUID } from "node:crypto";
@@ -20,6 +21,30 @@ const FEEDS = {
     ["Ethereum upgrade approved by core developers", "https://central.example/2", "Ether gains."]]),
   "/rss/mine.xml": rss([["My blog: why gold could rally &amp; what to watch", "https://blog.example/1", "Gold notes."]]),
 };
+// Monthly series: an index rising 3% a year with a wobble, or a rate around 4%; daily ones for the last 3 years.
+function fredCsv(id) {
+  if (id === "NOPE") return null;
+  const daily = ["DFF", "DGS2", "DGS10", "T10Y2Y", "T10YIE", "VIXCLS", "DCOILWTICO", "DTWEXBGS"].includes(id);
+  const rate = !["CPIAUCSL", "CPILFESL", "PCEPI", "GDPC1", "INDPRO", "RSAFS", "M2SL", "CSUSHPINSA", "PAYEMS"].includes(id);
+  const rows = [];
+  const now = new Date(Date.UTC(2026, 8, 1));
+  const n = daily ? 750 : 15 * 12;
+  for (let i = n; i >= 0; i--) {
+    const d = daily ? new Date(now.getTime() - i * 86_400_000) : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+    const t = n - i;
+    const v = rate ? 4 + Math.sin(t / 9) : 100 * Math.pow(1.03, t / (daily ? 365 : 12)) * (1 + 0.002 * Math.sin(t));
+    rows.push(`${d.toISOString().slice(0, 10)},${i === 3 ? "." : v.toFixed(3)}`);
+  }
+  return `observation_date,${id}\n${rows.join("\n")}\n`;
+}
+const WB = ["US|United States", "GB|United Kingdom", "DE|Germany", "JP|Japan"];
+const markets = [
+  { id: "1", question: "Will the Fed cut rates in December?", slug: "fed-dec", outcomes: '["Yes", "No"]', outcomePrices: '["0.62", "0.38"]', volume24hr: 2500000, volumeNum: 40000000,
+    endDate: "2026-12-10T00:00:00Z", oneDayPriceChange: 0.04, events: [{ slug: "fed-december", title: "Fed decision in December" }] },
+  { id: "2", question: "Will Bitcoin reach $150,000 by December 31?", slug: "btc-150k", outcomes: '["Yes", "No"]', outcomePrices: '["0.18", "0.82"]', volume24hr: 900000, volumeNum: 12000000,
+    endDate: "2026-12-31T00:00:00Z", oneDayPriceChange: -0.02, events: [{ slug: "bitcoin-150k", title: "Bitcoin price" }] },
+  { id: "3", question: "Who will win the league?", slug: "league", outcomes: '["Team A", "Team B"]', outcomePrices: '["0.5", "0.5"]', volume24hr: 10000, volumeNum: 50000, events: [] },
+];
 const reset = () => { state = { cash: 100000, positions: new Map(), orders: [], fills: [] }; badKeys = false; mark = PRICE; };
 reset();
 const key = (s) => s.replace("/", "");
@@ -40,6 +65,12 @@ http.createServer((req, res) => {
   req.on("data", (c) => (raw += c));
   req.on("end", () => {
     const url = new URL(req.url, "http://x"), path = decodeURIComponent(url.pathname), m = req.method;
+    if (path === "/graph/fredgraph.csv") { const csv = fredCsv(url.searchParams.get("id") ?? ""); res.writeHead(200, { "content-type": "text/csv" }); return res.end(csv ?? "<html>Not found</html>"); }
+    if (path.startsWith("/v2/country/")) {
+      const rows = WB.flatMap((c, k) => { const [id, value] = c.split("|"); return [2025, 2024, 2023].map((y) => ({ country: { id, value }, date: String(y), value: y === 2025 && k === 3 ? null : 1.5 + k + (2025 - y) * 0.2 })); });
+      return send(res, 200, [{ page: 1, pages: 1 }, rows]);
+    }
+    if (path === "/markets") return send(res, 200, markets);
     if (FEEDS[path]) { res.writeHead(200, { "content-type": "application/rss+xml" }); return res.end(FEEDS[path]); }
     if (path === "/rss/notafeed.xml") { res.writeHead(200, { "content-type": "text/html" }); return res.end("<html><body>Hello</body></html>"); }
     if (path === "/__news") { const b = JSON.parse(raw || "{}"); news.unshift(STORY(news.length + 1, b.headline, b.symbols ?? [], 0)); return send(res, 200, { ok: true }); }

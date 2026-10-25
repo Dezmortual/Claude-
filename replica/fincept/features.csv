@@ -23,8 +23,8 @@ AI desk note summarising headlines,ai,could,yes,no,
 Long-form AI research report,ai,could,yes,no,
 Agent teams and visual node editor,ai,could,yes,no,large
 Connect external MCP servers,ai,could,yes,no,
-Economic series browser (FRED IMF World Bank),macro,should,yes,partial,FXDEZ has bond yields only
-Prediction-market odds (Polymarket public data),macro,could,yes,no,
+Economic series browser (FRED IMF World Bank),macro,should,yes,yes,FRED (22 curated series or any code) and World Bank country comparison
+Prediction-market odds (Polymarket public data),macro,could,yes,yes,
 Geopolitical event feed,macro,could,yes,no,
 Bracket orders,trading,must,yes,yes,stocks via Alpaca
 OCO and trailing-stop orders,trading,could,yes,no,

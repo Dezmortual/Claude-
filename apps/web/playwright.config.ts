@@ -38,6 +38,7 @@ export default defineConfig({
       VAPID_PUBLIC_KEY: VAPID.publicKey, VAPID_PRIVATE_KEY: VAPID.privateKey,
       ALPACA_KEY_ID: "e2e-key", ALPACA_SECRET_KEY: "e2e-secret", ALPACA_TRADE_URL: "http://localhost:3999",
       ALPACA_NEWS_URL: "http://localhost:3999", NEWS_RSS: "Central Bank Wire|http://localhost:3999/rss/central.xml", NEWS_ALLOW_LOCAL: "true",
+      FRED_URL: "http://localhost:3999", WORLDBANK_URL: "http://localhost:3999", POLYMARKET_URL: "http://localhost:3999",
     },
   }],
 });
