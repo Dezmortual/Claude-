@@ -3,7 +3,10 @@ import "server-only";
 // comparisons, and Polymarket odds. Each fetch is cached in the database: series for 12 hours, odds for 10 minutes.
 import { sql } from "@/lib/server/db";
 import { ASSET_BY_SLUG } from "./catalogue";
-import { requireUser } from "./live";
+import { loadAsset, requireUser } from "./live";
+import { quote } from "./model";
+import { optionSnapshots } from "./sources/options";
+import { annual, sharesOutstanding } from "../fundamentals";
 import { DataError, type Viewer } from "./types";
 import { fredSeries, polymarketTop, worldBank, type Prediction, type Point } from "./sources/macro";
 
@@ -127,4 +130,67 @@ export async function assetPredictions(v: Viewer, slug: string) {
   const t = a.ticker.replace(/\/.*/, "");
   const re = new RegExp(`\\b(${a.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}${t.length >= 3 ? `|${t}` : ""})\\b`, "i");
   try { return (await predictions(v)).markets.filter((m) => re.test(m.question)).slice(0, 6); } catch { return []; }
+}
+
+// ---------------------------------------------------------------- options
+
+/** One expiry's chain around the price, the expiries available, and the move the options price in. Cached 10 minutes. */
+export async function assetOptions(v: Viewer, slug: string, expiry?: string) {
+  requireUser(v);
+  const a = ASSET_BY_SLUG.get(slug);
+  if (!a) throw new DataError("not_found", "No such asset");
+  const underlying = a.market === "stocks" || a.market === "etfs" ? a.ticker : a.meta.proxy ? String(a.meta.proxy) : null;
+  if (!underlying) throw new DataError("invalid", `${a.name} has no listed options through Alpaca.`);
+  await loadAsset(slug, ["1d"]);
+  const px = a.meta.proxy ? null : quote(slug).price;
+  const today = new Date().toISOString().slice(0, 10), to = new Date(Date.now() + 75 * 86_400_000).toISOString().slice(0, 10);
+  const c = await cached(`opt:${underlying}:${today}`, 10 * 60_000, async () => {
+    const ref = px ?? 0;
+    return optionSnapshots(underlying, { from: today, to, strikeLo: ref ? ref * 0.7 : 0, strikeHi: ref ? ref * 1.3 : 1e6 });
+  });
+  const expiries = [...new Set(c.data.map((x) => x.expiry))].sort();
+  const pick = expiry && expiries.includes(expiry) ? expiry : expiries.find((e) => Date.parse(e) - Date.now() > 5 * 86_400_000) ?? expiries[0];
+  const chain = c.data.filter((x) => x.expiry === pick);
+  const strikes = [...new Set(chain.map((x) => x.strike))].sort((x, y) => x - y);
+  const rows = strikes.map((k) => ({ strike: k, call: chain.find((x) => x.strike === k && x.type === "call") ?? null, put: chain.find((x) => x.strike === k && x.type === "put") ?? null }));
+  const price = px ?? (rows.length ? rows[Math.floor(rows.length / 2)].strike : null);
+  const mid = (x: { bid: number | null; ask: number | null; last: number | null } | null) => (x ? (x.bid !== null && x.ask !== null ? (x.bid + x.ask) / 2 : x.last) : null);
+  const atm = price === null ? null : rows.reduce<(typeof rows)[number] | null>((b, r) => (!b || Math.abs(r.strike - price) < Math.abs(b.strike - price) ? r : b), null);
+  const straddle = atm && mid(atm.call) !== null && mid(atm.put) !== null ? mid(atm.call)! + mid(atm.put)! : null;
+  return { asset: a, underlying, price, expiries, expiry: pick ?? null, rows, atmStrike: atm?.strike ?? null,
+    expectedMove: straddle && price ? { usd: straddle, pct: (straddle / price) * 100 } : null, fetchedAt: c.fetchedAt, stale: c.stale };
+}
+
+// ---------------------------------------------------------------- company fundamentals (SEC EDGAR)
+
+/** SEC company numbers (CIK) for the catalogue's stocks, checked against EDGAR's company facts. */
+const CIK: Record<string, number> = { aapl: 320193, nvda: 1045810, msft: 789019, tsla: 1318605, amzn: 1018724, googl: 1652044 };
+export const hasFundamentals = (slug: string) => Object.hasOwn(CIK, slug);
+export const FUNDAMENTAL_SLUGS = Object.keys(CIK);
+
+export async function companyFundamentals(v: Viewer, slug: string) {
+  requireUser(v);
+  const a = ASSET_BY_SLUG.get(slug);
+  if (!a || !hasFundamentals(slug)) throw new DataError("not_found", "No company filings for this asset");
+  const c = await cached(`sec:${slug}`, 24 * 3_600_000, async () => {
+    const contact = process.env.SEC_CONTACT?.trim();
+    const base = process.env.SEC_DATA_URL?.trim() || "https://data.sec.gov";
+    const r = await fetch(`${base}/api/xbrl/companyfacts/CIK${String(CIK[slug]).padStart(10, "0")}.json`, { cache: "no-store", signal: AbortSignal.timeout(20_000),
+      headers: { "user-agent": `FXDEZ private research app${contact ? ` ${contact}` : ""}`, accept: "application/json" } });
+    if (!r.ok) throw new Error(`the SEC answered ${r.status}`);
+    const f = await r.json();
+    return { name: f.entityName as string, years: annual(f), shares: sharesOutstanding(f) };
+  });
+  await loadAsset(slug, ["1d"]);
+  const price = quote(slug).price;
+  const y = c.data.years, last = y.at(-1) ?? null, first = y.find((x) => x.revenue !== null) ?? null;
+  const mcap = c.data.shares ? price * c.data.shares : null;
+  const span = last && first ? last.fy - first.fy : 0;
+  const ratios = last && {
+    pe: last.eps ? price / last.eps : null, ps: mcap && last.revenue ? mcap / last.revenue : null,
+    fcfYield: mcap && last.fcf ? (last.fcf / mcap) * 100 : null, netMargin: last.revenue && last.netIncome !== null ? (last.netIncome / last.revenue) * 100 : null,
+    revenueGrowth: span >= 1 && first!.revenue && last.revenue ? ((last.revenue / first!.revenue) ** (1 / span) - 1) * 100 : null,
+    netCash: last.cash !== null ? last.cash - (last.debt ?? 0) : null,
+  };
+  return { asset: a, cik: CIK[slug], ...c.data, price, mcap, last, ratios, fetchedAt: c.fetchedAt, stale: c.stale };
 }

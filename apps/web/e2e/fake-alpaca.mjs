@@ -20,6 +20,7 @@ const rss = (items) => `<?xml version="1.0"?><rss version="2.0"><channel><title>
 const FEEDS = {
   "/rss/central.xml": rss([["Central bank holds rates; the Fed signals patience", "https://central.example/1", "Policy unchanged."],
     ["Ethereum upgrade approved by core developers", "https://central.example/2", "Ether gains."]]),
+  "/rss/world.xml": rss([["Ceasefire talks resume as shipping lanes reopen", "https://world.example/1", "Diplomacy update."]]),
   "/rss/mine.xml": rss([["My blog: why gold could rally &amp; what to watch", "https://blog.example/1", "Gold notes."]]),
 };
 // Monthly series: an index rising 3% a year with a wobble, or a rate around 4%; daily ones for the last 3 years.
@@ -74,6 +75,30 @@ function claude(b, headers) {
   return [200, reply([think, { type: "tool_use", id: `toolu_${msgN}a`, name: "asset_snapshot", input: { slug: "bitcoin" } },
     { type: "tool_use", id: `toolu_${msgN}b`, name: "search_news", input: { query: "", slug: "bitcoin" } }], "tool_use")];
 }
+// Options around $100 for two expiries; SEC company facts for Apple with three fiscal years.
+function optionsFor(sym) {
+  const out = {};
+  const exp = [new Date(Date.now() + 20 * 86_400_000), new Date(Date.now() + 48 * 86_400_000)].map((d) => d.toISOString().slice(2, 10).replace(/-/g, ""));
+  for (const e of exp) for (const k of [90, 95, 100, 105, 110]) for (const t of ["C", "P"]) {
+    const intrinsic = t === "C" ? Math.max(0, 100 - k) : Math.max(0, k - 100), p = intrinsic + 2.5;
+    out[`${sym}${e}${t}${String(k * 1000).padStart(8, "0")}`] = { latestQuote: { bp: p - 0.1, ap: p + 0.1 }, latestTrade: { p }, impliedVolatility: 0.3,
+      greeks: { delta: t === "C" ? 0.5 + (100 - k) / 40 : -0.5 + (100 - k) / 40, gamma: 0.04, theta: -0.05, vega: 0.12 } };
+  }
+  return out;
+}
+const yr = (y, val, extra = {}) => ({ start: `${y - 1}-09-28`, end: `${y}-09-27`, val, fy: y, fp: "FY", form: "10-K", filed: `${y}-11-01`, ...extra });
+const bal = (y, val) => ({ end: `${y}-09-27`, val, fy: y, fp: "FY", form: "10-K", filed: `${y}-11-01` });
+const SEC_AAPL = { entityName: "Apple Inc.", facts: {
+  dei: { EntityCommonStockSharesOutstanding: { units: { shares: [{ end: "2026-07-17", val: 15000000000 }] } } },
+  "us-gaap": {
+    RevenueFromContractWithCustomerExcludingAssessedTax: { units: { USD: [yr(2023, 383e9), yr(2024, 391e9), yr(2025, 416e9)] } },
+    NetIncomeLoss: { units: { USD: [yr(2023, 97e9), yr(2024, 94e9), yr(2025, 112e9)] } },
+    EarningsPerShareDiluted: { units: { "USD/shares": [yr(2023, 6.13), yr(2024, 6.08), yr(2025, 7.46)] } },
+    NetCashProvidedByUsedInOperatingActivities: { units: { USD: [yr(2023, 110e9), yr(2024, 118e9), yr(2025, 111e9)] } },
+    PaymentsToAcquirePropertyPlantAndEquipment: { units: { USD: [yr(2023, 11e9), yr(2024, 9e9), yr(2025, 12e9)] } },
+    CashAndCashEquivalentsAtCarryingValue: { units: { USD: [bal(2025, 36e9)] } },
+    LongTermDebt: { units: { USD: [bal(2025, 90e9)] } },
+  } } };
 const reset = () => { state = { cash: 100000, positions: new Map(), orders: [], fills: [] }; badKeys = false; mark = PRICE; };
 reset();
 const key = (s) => s.replace("/", "");
@@ -99,6 +124,8 @@ http.createServer((req, res) => {
       const [code, body] = claude(JSON.parse(raw || "{}"), req.headers);
       return send(res, code, body);
     }
+    if (path === "/api/xbrl/companyfacts/CIK0000320193.json") return send(res, 200, SEC_AAPL);
+    if (path.startsWith("/api/xbrl/companyfacts/")) return send(res, 404, { message: "not found" });
     if (path === "/graph/fredgraph.csv") { const csv = fredCsv(url.searchParams.get("id") ?? ""); res.writeHead(200, { "content-type": "text/csv" }); return res.end(csv ?? "<html>Not found</html>"); }
     if (path.startsWith("/v2/country/")) {
       const rows = WB.flatMap((c, k) => { const [id, value] = c.split("|"); return [2025, 2024, 2023].map((y) => ({ country: { id, value }, date: String(y), value: y === 2025 && k === 3 ? null : 1.5 + k + (2025 - y) * 0.2 })); });
@@ -113,6 +140,7 @@ http.createServer((req, res) => {
     if (path === "/__badkeys") { badKeys = true; return send(res, 200, { ok: true }); }
     if (badKeys || req.headers["apca-api-key-id"] !== KEY || req.headers["apca-api-secret-key"] !== SECRET) return send(res, 401, { code: 40110000, message: "request is not authorized" });
     const equity = state.cash + [...state.positions.values()].reduce((t, p) => t + p.qty * mark, 0);
+    if (path.startsWith("/v1beta1/options/snapshots/")) return send(res, 200, { snapshots: optionsFor(path.split("/").pop()), next_page_token: null });
     if (path === "/v1beta1/news") return send(res, 200, { news: news.slice(0, Number(url.searchParams.get("limit") ?? 50)), next_page_token: null });
     if (path === "/v2/account/activities/FILL") return send(res, 200, state.fills.slice(0, 100));
     if (path === "/v2/account") return send(res, 200, { status: "ACTIVE", currency: "USD", cash: String(state.cash), buying_power: String(state.cash), equity: String(equity), last_equity: "100000", trading_blocked: false, account_blocked: false });

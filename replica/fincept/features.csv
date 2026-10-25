@@ -21,18 +21,18 @@ Add your own RSS feeds,news,could,yes,yes,
 AI chat over your assets signals and trades with sources,ai,should,yes,yes,F04; owner's Anthropic key; cost cap per day
 AI desk note summarising headlines,ai,could,yes,yes,
 Long-form AI research report,ai,could,yes,partial,ask the assistant for a research note; no separate report builder or export
-Agent teams and visual node editor,ai,could,yes,no,large
-Connect external MCP servers,ai,could,yes,no,
+Agent teams and visual node editor,ai,could,yes,skip,one research assistant with tools covers the use; a visual agent builder is a product of its own
+Connect external MCP servers,ai,could,yes,skip,the assistant reads only FXDEZ data by design; outside tool servers would widen what it can reach
 Economic series browser (FRED IMF World Bank),macro,should,yes,yes,FRED (22 curated series or any code) and World Bank country comparison
 Prediction-market odds (Polymarket public data),macro,could,yes,yes,
-Geopolitical event feed,macro,could,yes,no,
+Geopolitical event feed,macro,could,yes,partial,"a World affairs news topic (UN News, BBC World); no event map"
 Bracket orders,trading,must,yes,yes,stocks via Alpaca
 OCO and trailing-stop orders,trading,could,yes,yes,
-Live algo deployment with kill switch,trading,could,yes,no,F09; high risk; paper first
+Live algo deployment with kill switch,trading,could,yes,skip,the owner chose to confirm every trade; automated order sending contradicts that
 Research notes per asset,workspace,could,yes,yes,
-Spreadsheet over data,workspace,could,yes,no,
-Option chains and greeks,derivatives,could,yes,no,needs an options data source
-Company fundamentals and DCF,research,could,yes,no,needs a fundamentals source (SEC EDGAR is public)
+Spreadsheet over data,workspace,could,yes,skip,tables export and the backtest lab cover analysis; a spreadsheet engine is out of proportion
+Option chains and greeks,derivatives,could,yes,yes,Alpaca indicative feed; next 75 days within 30% of the price; move priced in
+Company fundamentals and DCF,research,could,yes,yes,SEC EDGAR company facts for the six stocks; adjustable DCF with sensitivity
 Volatility surface,derivatives,skip,yes,skip,needs paid options surface data
 Indian F&O module,derivatives,skip,yes,skip,no data source; not the owner's market
 Alternative investments,research,skip,yes,skip,no data source

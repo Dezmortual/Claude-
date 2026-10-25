@@ -10,16 +10,19 @@ export type RawStory = FeedItem & { source: string; symbols: string[] };
 const clean = (v?: string) => v?.trim().replace(/^["']|["']$/g, "").trim() ?? "";
 const MAX_BYTES = 2_000_000;
 
-/** Built-in feeds: official and widely used, all public RSS. NEWS_RSS ("Name|url,Name|url") replaces the list (tests). */
-export function builtInFeeds(): { name: string; url: string }[] {
+/** Built-in feeds: official and widely used, all public RSS. NEWS_RSS ("Name|url|topic,…") replaces the list (tests). */
+export type Topic = "markets" | "world";
+export function builtInFeeds(): { name: string; url: string; topic: Topic }[] {
   const env = clean(process.env.NEWS_RSS);
-  if (env) return env.split(",").map((x) => { const [name, url] = x.split("|"); return { name: name.trim(), url: url.trim() }; });
+  if (env) return env.split(",").map((x) => { const [name, url, topic] = x.split("|"); return { name: name.trim(), url: url.trim(), topic: topic?.trim() === "world" ? "world" : "markets" }; });
   return [
-    { name: "CoinDesk", url: "https://www.coindesk.com/arc/outboundfeeds/rss/" },
-    { name: "Cointelegraph", url: "https://cointelegraph.com/rss" },
-    { name: "Federal Reserve", url: "https://www.federalreserve.gov/feeds/press_all.xml" },
-    { name: "ECB", url: "https://www.ecb.europa.eu/rss/press.html" },
-    { name: "Bank of England", url: "https://www.bankofengland.co.uk/rss/news" },
+    { name: "CoinDesk", url: "https://www.coindesk.com/arc/outboundfeeds/rss/", topic: "markets" },
+    { name: "Cointelegraph", url: "https://cointelegraph.com/rss", topic: "markets" },
+    { name: "Federal Reserve", url: "https://www.federalreserve.gov/feeds/press_all.xml", topic: "markets" },
+    { name: "ECB", url: "https://www.ecb.europa.eu/rss/press.html", topic: "markets" },
+    { name: "Bank of England", url: "https://www.bankofengland.co.uk/rss/news", topic: "markets" },
+    { name: "UN News", url: "https://news.un.org/feed/subscribe/en/news/all/rss.xml", topic: "world" },
+    { name: "BBC World", url: "https://feeds.bbci.co.uk/news/world/rss.xml", topic: "world" },
   ];
 }
 

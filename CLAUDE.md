@@ -65,3 +65,12 @@ Hobby; see `replica/deploy.md`). Netlify: (`netlify.toml` at the repo root, env 
 `NETLIFY=true`); scheduled jobs run from the Netlify scheduled function `apps/web/netlify/functions/jobs.mts` (the GitHub workflow
 `.github/workflows/forecast-jobs.yml` is the alternative and only runs from the default branch). The landing page `/welcome` is
 public only with `PUBLIC_LANDING=true`, and every claim on it must be true of the running app.
+
+Features added from the Fincept recon (`replica/fincept/`): the backtest lab (`src/lib/indicators/strategy.ts`), news
+(`src/lib/data/news.ts`), the portfolio ledger and analytics (`src/lib/portfolio/analytics.ts`), economy, prediction
+markets, options and SEC fundamentals (`src/lib/data/macro.ts`), and the research assistant (`src/lib/data/assistant.ts`,
+Claude through `@anthropic-ai/sdk` with the owner's `ANTHROPIC_API_KEY`, capped by `AI_DAILY_LIMIT_USD`; its tools are
+read-only and conversations are stored append-only, never edited). The e2e suite never calls a real service:
+`e2e/fake-alpaca.mjs` stands in for Alpaca (trading, news, options), Claude, the RSS feeds, FRED, the World Bank,
+Polymarket and SEC EDGAR, pointed at by the `*_URL` variables in `playwright.config.ts`. Apply new migrations to the
+Neon database before the deploy that needs them (the build doesn't run them).

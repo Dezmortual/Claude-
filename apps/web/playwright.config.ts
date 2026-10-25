@@ -37,8 +37,8 @@ export default defineConfig({
       RESEND_API_KEY: "", NEXT_TELEMETRY_DISABLED: "1", NEXT_DIST_DIR: ".next-e2e",
       VAPID_PUBLIC_KEY: VAPID.publicKey, VAPID_PRIVATE_KEY: VAPID.privateKey,
       ALPACA_KEY_ID: "e2e-key", ALPACA_SECRET_KEY: "e2e-secret", ALPACA_TRADE_URL: "http://localhost:3999",
-      ALPACA_NEWS_URL: "http://localhost:3999", NEWS_RSS: "Central Bank Wire|http://localhost:3999/rss/central.xml", NEWS_ALLOW_LOCAL: "true",
-      FRED_URL: "http://localhost:3999", ANTHROPIC_API_KEY: "e2e-anthropic", ANTHROPIC_BASE_URL: "http://localhost:3999", WORLDBANK_URL: "http://localhost:3999", POLYMARKET_URL: "http://localhost:3999",
+      ALPACA_NEWS_URL: "http://localhost:3999", NEWS_RSS: "Central Bank Wire|http://localhost:3999/rss/central.xml|markets,World Desk|http://localhost:3999/rss/world.xml|world", NEWS_ALLOW_LOCAL: "true",
+      FRED_URL: "http://localhost:3999", ANTHROPIC_API_KEY: "e2e-anthropic", ANTHROPIC_BASE_URL: "http://localhost:3999", SEC_DATA_URL: "http://localhost:3999", WORLDBANK_URL: "http://localhost:3999", POLYMARKET_URL: "http://localhost:3999",
     },
   }],
 });

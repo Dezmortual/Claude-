@@ -14,7 +14,7 @@ import { PredictionList } from "@/components/Predictions";
 import { NoteEditor } from "@/components/client/NoteEditor";
 import { ScenarioChart } from "@/components/ScenarioChart";
 import { Banner, Card, Label, Paywall, PriceChange, Section, StatCard } from "@/components/ui";
-import { assetPredictions, forecastLedger, getNote, listIndicators, listNews, newsMood, assetBars, assetForecast, assetScenarios, assetSignals, assetSummary, getAsset, relatedAssets, type PathRow } from "@/lib/data";
+import { assetPredictions, forecastLedger, getNote, hasFundamentals, listIndicators, listNews, newsMood, assetBars, assetForecast, assetScenarios, assetSignals, assetSummary, getAsset, relatedAssets, type PathRow } from "@/lib/data";
 import { compact, dateTime, pct, price as fmtPrice } from "@/lib/format";
 import { viewer } from "@/lib/session";
 
@@ -138,6 +138,15 @@ export default async function AssetForecast({ params }: P) {
       {v.user && (
         <Section id="trade" title={`Trade ${asset.name}`} action={<Link prefetch={false} href="/trade" className="text-sm font-semibold text-accent hover:underline">Your account</Link>}>
           <Card className="max-w-xl p-5"><Suspense fallback={<p className="text-sm text-muted">Loading the order ticket…</p>}><TradeTicket slug={slug} /></Suspense></Card>
+        </Section>
+      )}
+
+      {v.user && (asset.market === "stocks" || asset.market === "etfs" || !!asset.meta.proxy) && (
+        <Section id="research" title="Go deeper">
+          <div className="flex flex-wrap gap-3 text-sm font-semibold">
+            <Link prefetch={false} href={`/assets/${slug}/options`} className="rounded-md border bg-surface px-4 py-2 hover:bg-surface-sunken">Options and greeks</Link>
+            {hasFundamentals(slug) && <Link prefetch={false} href={`/assets/${slug}/fundamentals`} className="rounded-md border bg-surface px-4 py-2 hover:bg-surface-sunken">Fundamentals and a cash-flow value</Link>}
+          </div>
         </Section>
       )}
 

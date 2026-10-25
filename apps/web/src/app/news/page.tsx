@@ -34,8 +34,10 @@ export default async function News({ searchParams }: { searchParams: Promise<Rec
 
       <Section id="feed" title="Latest">
         <form method="get" className="grid gap-3 rounded-lg border bg-surface p-4 md:grid-cols-5 md:items-end">
-          <div className="grid gap-1 md:col-span-2"><label htmlFor="nq" className="text-xs font-semibold">Search</label>
+          <div className="grid gap-1"><label htmlFor="nq" className="text-xs font-semibold">Search</label>
             <input id="nq" name="q" defaultValue={f.q} placeholder="Words in the headline or summary" className={field} /></div>
+          <div className="grid gap-1"><label htmlFor="nt" className="text-xs font-semibold">Topic</label>
+            <select id="nt" name="topic" defaultValue={f.topic ?? ""} className={field}><option value="">Everything</option><option value="markets">Markets</option><option value="world">World affairs</option></select></div>
           <div className="grid gap-1"><label htmlFor="na" className="text-xs font-semibold">Asset</label>
             <select id="na" name="slug" defaultValue={f.slug ?? ""} className={field}><option value="">All</option>{assets.map((a) => <option key={a.slug} value={a.slug}>{a.name}</option>)}</select></div>
           <div className="grid gap-1"><label htmlFor="nm" className="text-xs font-semibold">Mood</label>

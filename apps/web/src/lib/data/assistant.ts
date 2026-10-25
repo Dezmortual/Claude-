@@ -13,7 +13,7 @@ import { ASSETS, ASSET_BY_SLUG } from "./catalogue";
 import { dashboard, listForecasts, portfolio, requireUser, tradingOverview } from "./live";
 import { listNews, newsMood } from "./news";
 import { listRuns } from "./backtests";
-import { MACRO, macroSeries, predictions } from "./macro";
+import { FUNDAMENTAL_SLUGS, MACRO, assetOptions, companyFundamentals, hasFundamentals, macroSeries, predictions } from "./macro";
 import { portfolioPerformance, portfolioRisk } from "./portfolioLedger";
 import { DataError, type MarketCode, type Viewer } from "./types";
 
@@ -47,6 +47,10 @@ const TOOLS: (Anthropic.Beta.BetaTool & { input: z.ZodType })[] = [
     input_schema: obj({ code: str("The FRED code, e.g. CPIAUCSL") }, ["code"]), input: z.object({ code: z.string().max(30) }) },
   { name: "prediction_markets", description: "Polymarket's odds (price of yes, 0 to 1) on the busiest open questions, filtered by words.",
     input_schema: obj({ query: str("Words to match in the question; empty for the busiest overall") }, ["query"]), input: z.object({ query: z.string().max(80) }) },
+  { name: "company_fundamentals", description: `Annual figures from SEC filings (revenue, profit, earnings a share, free cash flow, cash, debt) and ratios (price to earnings, price to sales, free cash flow yield, margin, revenue growth). Available for: ${FUNDAMENTAL_SLUGS.join(", ")}.`,
+    input_schema: obj({ slug: str("The stock's slug") }, ["slug"]), input: z.object({ slug: z.string().max(40) }) },
+  { name: "option_chain", description: "Listed options on a stock or fund (or a commodity's stand-in fund): the next expiry's move priced in by the options, and implied volatility and delta near the price.",
+    input_schema: obj({ slug: str("The asset's slug") }, ["slug"]), input: z.object({ slug: z.string().max(40) }) },
   { name: "past_backtests", description: "The owner's recent backtests from the lab: strategy, asset, return, buy-and-hold, worst drop, trades and the luck test.",
     input_schema: obj({}), input: z.object({}) },
 ].map((t) => ({ ...t, strict: true }));
@@ -107,6 +111,18 @@ async function runTool(v: Viewer, name: string, raw: unknown): Promise<unknown> 
     }
     case "prediction_markets":
       return (await predictions(v, i.query)).markets.slice(0, 12).map((m) => ({ question: m.question, yes: m.yes, change24h: m.change24h, volume24hUsd: Math.round(m.volume24h), ends: m.endsAt?.slice(0, 10), url: m.url }));
+    case "company_fundamentals": {
+      if (!hasFundamentals(i.slug)) return { error: "No SEC filings for that asset here" };
+      const f = await companyFundamentals(v, i.slug);
+      return { company: f.name, price: f.price, marketCapUsd: f.mcap, ratios: f.ratios, years: f.years, source: "SEC EDGAR 10-K filings", page: `/assets/${i.slug}/fundamentals` };
+    }
+    case "option_chain": {
+      const o = await assetOptions(v, i.slug);
+      const near = o.rows.filter((r) => o.atmStrike !== null && Math.abs(r.strike - o.atmStrike) <= Math.abs(o.atmStrike) * 0.06);
+      return { underlying: o.underlying, expiry: o.expiry, expiries: o.expiries, price: o.price, movePricedIn: o.expectedMove,
+        nearTheMoney: near.map((r) => ({ strike: r.strike, callIv: r.call?.iv, callDelta: r.call?.delta, putIv: r.put?.iv, putDelta: r.put?.delta })),
+        note: "Alpaca's free indicative feed: quotes adjusted, trades delayed", page: `/assets/${i.slug}/options` };
+    }
     case "past_backtests":
       return (await listRuns(v)).slice(0, 15).map((r) => ({ name: r.name, when: r.createdAt.slice(0, 10), returnPct: round(r.totalReturn, 1), buyHoldPct: round(r.buyHold, 1),
         worstDropPct: round(r.maxDrawdown, 1), trades: r.trades, luckTest: round(r.luck), page: `/backtest/runs/${r.id}` }));
@@ -132,6 +148,7 @@ const TOOL_LABEL: Record<string, (i: Record<string, string>) => string> = {
   top_signals: () => "checked the top signals", search_news: (i) => `searched the news${i.query ? ` for "${i.query}"` : ""}${i.slug ? ` about ${ASSET_BY_SLUG.get(i.slug)?.name ?? i.slug}` : ""}`,
   portfolio_overview: () => "read your portfolio", broker_account: () => "read your Alpaca account", economic_series: (i) => `read ${i.code}`,
   prediction_markets: (i) => `checked prediction markets${i.query ? ` for "${i.query}"` : ""}`, past_backtests: () => "read your backtests",
+  company_fundamentals: (i) => `read ${ASSET_BY_SLUG.get(i.slug)?.name ?? i.slug}'s filings`, option_chain: (i) => `read ${ASSET_BY_SLUG.get(i.slug)?.name ?? i.slug}'s options`,
 };
 
 /** What the screen shows of the stored messages: the user's words, and per assistant turn its text and what it looked up. */

@@ -9,6 +9,8 @@ import { alpacaNews, builtInFeeds, checkFeedUrl, fetchFeed, type RawStory } from
 import { matchesKeywords } from "../news/feed";
 import { scoreText, type Mood } from "../news/sentiment";
 
+/** Sources of the world-affairs topic; everything else counts as markets news. */
+const world = () => { const w = builtInFeeds().filter((f) => f.topic === "world").map((f) => f.name); return w.length ? w : ["-"]; };
 export const builtInFeedNames = () => ["Alpaca", ...builtInFeeds().map((f) => f.name)];
 export const MAX_FEEDS = 10, MAX_MONITORS = 20, KEEP_DAYS = 45;
 
@@ -129,7 +131,7 @@ const toArticle = (r: ArticleRow): Article => ({ id: r.id, source: r.source, url
   slugs: r.slugs.filter((s) => ASSET_BY_SLUG.has(s)).map((s) => ({ slug: s, name: ASSET_BY_SLUG.get(s)!.name })), mood: r.mood, sentiment: r.sentiment,
   moodWords: r.mood_words, own: !!r.feed_id });
 
-export type NewsQuery = { q?: string; slug?: string; mood?: Mood; source?: string; limit?: number };
+export type NewsQuery = { q?: string; slug?: string; mood?: Mood; source?: string; topic?: "markets" | "world"; limit?: number };
 
 export async function listNews(v: Viewer, f: NewsQuery = {}): Promise<Article[]> {
   const u = requireUser(v);
@@ -141,6 +143,7 @@ export async function listNews(v: Viewer, f: NewsQuery = {}): Promise<Article[]>
       ${f.slug ? db`and ${f.slug} = any(slugs)` : db``}
       ${f.mood ? db`and mood = ${f.mood}` : db``}
       ${f.source ? db`and source = ${f.source}` : db``}
+      ${f.topic === "world" ? db`and source in ${db(world())}` : f.topic === "markets" ? db`and source not in ${db(world())}` : db``}
     order by published_at desc limit ${Math.min(f.limit ?? 40, 100)}`;
   return rows.map(toArticle);
 }
