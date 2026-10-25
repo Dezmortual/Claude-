@@ -1054,8 +1054,9 @@ export async function tradeTicket(v: Viewer, slug: string) {
   };
 }
 
-export type TradeInput = { slug: string; side: "buy" | "sell"; type: "market" | "limit"; amountUsd?: number | null; qty?: number | null;
-  limitPrice?: number | null; stopLoss?: number | null; takeProfit?: number | null; clientOrderId: string };
+/** `trailing` and `oco` are exits for a holding: a stop that follows the price up, or a target and a stop where filling one cancels the other. */
+export type TradeInput = { slug: string; side: "buy" | "sell"; type: "market" | "limit" | "trailing" | "oco"; amountUsd?: number | null; qty?: number | null;
+  limitPrice?: number | null; stopLoss?: number | null; takeProfit?: number | null; trailPct?: number | null; clientOrderId: string };
 
 const round = (x: number, dp: number) => Math.floor(x * 10 ** dp) / 10 ** dp;
 
@@ -1073,9 +1074,12 @@ export async function placeTrade(v: Viewer, i: TradeInput) {
     if (!(ref > 0)) throw new DataError("invalid", "Enter a limit price above 0");
     if (Math.abs(ref / t.price - 1) > 0.2) throw new DataError("invalid", `The limit price is more than 20% from the current price of ${t.price.toPrecision(6)}. Check for a typo.`);
   }
-  const dp = t.crypto ? 8 : t.fractionable ? 6 : 0;
-  const o: OrderRequest = { symbol: t.symbol, side: i.side, type: i.type, time_in_force: t.crypto ? "gtc" : "day", client_order_id: i.clientOrderId,
-    ...(i.type === "limit" ? { limit_price: String(ref) } : {}) };
+  const exitOrder = i.type === "trailing" || i.type === "oco";
+  if (exitOrder && i.side !== "sell") throw new DataError("invalid", "Trailing stops and OCO orders protect something you hold, so they're sells");
+  if (exitOrder && t.crypto) throw new DataError("invalid", "Alpaca offers trailing stops and OCO orders on stocks and funds, not crypto");
+  const dp = exitOrder ? 0 : t.crypto ? 8 : t.fractionable ? 6 : 0;
+  const o: OrderRequest = { symbol: t.symbol, side: i.side, type: i.type === "trailing" ? "trailing_stop" : i.type === "oco" ? "limit" : i.type,
+    time_in_force: t.crypto || exitOrder ? "gtc" : "day", client_order_id: i.clientOrderId, ...(i.type === "limit" ? { limit_price: String(ref) } : {}) };
   let notional: number | null = null, qty: number | null = null;
   const wantsBracket = !!(i.stopLoss || i.takeProfit);
   if (i.side === "buy") {
@@ -1099,15 +1103,24 @@ export async function placeTrade(v: Viewer, i: TradeInput) {
     }
   } else {
     // Sells close or reduce what's held: the app never sells short.
-    if (wantsBracket) throw new DataError("invalid", "Stop-loss and take-profit go with a buy");
+    if (wantsBracket && i.type !== "oco") throw new DataError("invalid", "Stop-loss and take-profit go with a buy, or with an OCO sell");
     qty = round(i.qty ?? 0, dp);
-    if (!(qty > 0)) throw new DataError("invalid", "Enter how much to sell");
+    if (!(qty > 0)) throw new DataError("invalid", exitOrder ? "Trailing stops and OCO orders need whole shares: enter at least 1" : "Enter how much to sell");
+    if (i.type === "trailing") {
+      if (!(i.trailPct && i.trailPct >= 0.1 && i.trailPct <= 50)) throw new DataError("invalid", "Set the trail between 0.1% and 50%");
+      o.trail_percent = String(i.trailPct);
+    }
+    if (i.type === "oco") {
+      if (!i.takeProfit || !(i.takeProfit > t.price)) throw new DataError("invalid", "The target must be above the current price");
+      if (!i.stopLoss || !(i.stopLoss < t.price)) throw new DataError("invalid", "The stop must be below the current price");
+      Object.assign(o, { order_class: "oco" as const, take_profit: { limit_price: String(i.takeProfit) }, stop_loss: { stop_price: String(i.stopLoss) } });
+    }
     if (qty > t.held + 1e-9) throw new DataError("invalid", t.held ? `You hold ${t.held}; you can't sell more than that` : `You don't hold any ${t.name} to sell`);
     o.qty = String(qty);
   }
-  const claimed = await db`insert into trade_log (user_id, client_order_id, mode, slug, symbol, side, order_type, notional, qty, limit_price, stop_loss, take_profit, status)
+  const claimed = await db`insert into trade_log (user_id, client_order_id, mode, slug, symbol, side, order_type, notional, qty, limit_price, stop_loss, take_profit, trail_pct, status)
     values (${u.id}, ${i.clientOrderId}, ${t.mode}, ${i.slug}, ${t.symbol}, ${i.side}, ${i.type}, ${notional}, ${qty}, ${i.type === "limit" ? ref : null},
-      ${i.stopLoss ?? null}, ${i.takeProfit ?? null}, 'sending')
+      ${i.stopLoss ?? null}, ${i.takeProfit ?? null}, ${i.type === "trailing" ? i.trailPct ?? null : null}, 'sending')
     on conflict (client_order_id) do nothing returning id`;
   // Two copies of one tap arriving together: the first claims the id, the other reports it as a repeat.
   if (!claimed.length) return { duplicate: true, status: "sending", orderId: null, error: null };

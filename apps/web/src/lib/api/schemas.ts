@@ -64,7 +64,8 @@ const price = z.number().positive("Prices must be above 0").finite().max(1e9);
 export const TradeBody = z.object({
   slug: z.string().regex(/^[a-z0-9-]{1,40}$/),
   side: z.enum(["buy", "sell"]),
-  type: z.enum(["market", "limit"]),
+  type: z.enum(["market", "limit", "trailing", "oco"]),
+  trailPct: z.number().min(0.1, "Set the trail between 0.1% and 50%").max(50, "Set the trail between 0.1% and 50%").nullish(),
   amountUsd: z.number().positive().finite().max(1e8).nullish(),
   qty: z.number().positive().finite().max(1e12).nullish(),
   limitPrice: price.nullish(), stopLoss: price.nullish(), takeProfit: price.nullish(),
@@ -117,3 +118,5 @@ export const TargetsBody = z.object({ targets: z.array(z.object({ slug: z.string
 export const LimitBody = z.object({ kind: z.enum(["max_holding", "max_market"]), target: z.string().max(40), pct: z.number().positive("Enter a percent above 0").max(100, "A percent is at most 100") });
 export const BenchmarkBody = z.object({ slug: z.string().regex(/^[a-z0-9-]{1,40}$/) });
 export const MacroPinBody = z.object({ id: z.string().regex(/^[A-Za-z0-9_.]{1,30}$/), on: z.boolean() });
+export const AskBody = z.object({ conversationId: Uuid.nullable(), text: z.string().trim().min(1, "Ask something").max(4000, "Keep a question under 4,000 characters") });
+export const NoteBody = z.object({ body: z.string().max(10000, "Notes can be up to 10,000 characters") });

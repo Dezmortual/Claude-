@@ -2,8 +2,9 @@ import { redirect } from "next/navigation";
 import { Newspaper } from "lucide-react";
 import { MoodSummary, NewsList } from "@/components/News";
 import { FeedManager, MonitorManager } from "@/components/client/NewsManagers";
+import { HeadlineNote } from "@/components/client/HeadlineNote";
 import { Button, Card, EmptyState, Label, Section } from "@/components/ui";
-import { builtInFeedNames, listAssets, listFeeds, listMonitors, listNews, monitorHits, newsMood, newsSources } from "@/lib/data";
+import { assistantStatus, builtInFeedNames, listAssets, listFeeds, listMonitors, listNews, monitorHits, newsMood, newsSources } from "@/lib/data";
 import { NewsQuery } from "@/lib/api/schemas";
 import { viewer } from "@/lib/session";
 
@@ -16,7 +17,7 @@ export default async function News({ searchParams }: { searchParams: Promise<Rec
   // Empty choices ("All", "Any") arrive as empty strings: leave them out rather than fail the whole filter.
   const parsed = NewsQuery.safeParse(Object.fromEntries(Object.entries(await searchParams).filter(([, x]) => typeof x === "string" && x.trim())));
   const f = parsed.success ? parsed.data : {};
-  const [items, mood, sources, monitors, hits, feeds] = await Promise.all([listNews(v, f), newsMood(v, f.slug), newsSources(v), listMonitors(v), monitorHits(v), listFeeds(v)]);
+  const [items, mood, sources, monitors, hits, feeds, ai] = await Promise.all([listNews(v, f), newsMood(v, f.slug), newsSources(v), listMonitors(v), monitorHits(v), listFeeds(v), assistantStatus(v)]);
   const assets = listAssets().filter((a) => a.market !== "bonds");
   const tz = v.user.timezone;
   const filtered = Object.keys(f).length > 0;
@@ -43,6 +44,7 @@ export default async function News({ searchParams }: { searchParams: Promise<Rec
             <select id="ns" name="source" defaultValue={f.source ?? ""} className={field}><option value="">All</option>{sources.map((s) => <option key={s} value={s}>{s}</option>)}</select></div>
           <div className="flex gap-2 md:col-span-5"><Button type="submit" size="sm">Show</Button>{filtered && <a href="/news" className="self-center text-sm font-semibold text-accent underline">Clear filters</a>}</div>
         </form>
+        <HeadlineNote configured={ai.configured} />
         <MoodSummary day={mood.day} week={mood.week} what={f.slug ? assets.find((a) => a.slug === f.slug)?.name ?? "this asset" : "every asset"} />
         {items.length ? <NewsList items={items} tz={tz} /> : (
           <Card><EmptyState icon={<Newspaper aria-hidden className="h-6 w-6" />} title={filtered ? "Nothing matches" : "No stories yet"}>

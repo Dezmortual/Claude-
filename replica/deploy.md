@@ -65,6 +65,8 @@ Result: **preflight passes.**
   | `RESEND_API_KEY` | your Resend key | Functions | Production only |
   | `EMAIL_FROM` | `Proofcast <onboarding@resend.dev>` until a domain is verified | Functions | all |
   | `ALPACA_KEY_ID`, `ALPACA_SECRET_KEY` | optional: real stock and ETF prices, and trading from the Trade page (paper account keys for practice) | Functions | Production |
+  | `ANTHROPIC_API_KEY` | optional: the research assistant and headline notes (your Anthropic key; billed per question) | Functions | Production |
+  | `AI_DAILY_LIMIT_USD` | optional: the assistant's daily spending cap in dollars (default 2) | Functions | Production |
   | `ALPACA_TRADING` | optional: `live` sends orders to the real-money account instead of practice | Functions | Production |
 
   Leave unset: `TRUST_PROXY_HEADERS`, `MARKET_DATA`, `EMAIL_OUTBOX` and `PUBLIC_LANDING` (the landing page

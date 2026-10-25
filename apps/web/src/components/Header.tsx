@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/markets/crypto", label: "Markets" },
   { href: "/news", label: "News" },
   { href: "/macro", label: "Economy" },
+  { href: "/assistant", label: "Assistant" },
   { href: "/trade", label: "Trade" },
   { href: "/portfolio", label: "Portfolio" },
   { href: "/indicators", label: "Indicators" },

@@ -42,9 +42,9 @@ export type BrokerOrder = { id: string; client_order_id: string; symbol: string;
   status: string; submitted_at: string; filled_at: string | null; legs?: BrokerOrder[] | null };
 export type BrokerAsset = { symbol: string; class: string; tradable: boolean; fractionable: boolean; min_order_size?: string };
 export type OrderRequest = {
-  symbol: string; side: "buy" | "sell"; type: "market" | "limit"; time_in_force: "day" | "gtc";
-  qty?: string; notional?: string; limit_price?: string; client_order_id: string;
-  order_class?: "bracket"; take_profit?: { limit_price: string }; stop_loss?: { stop_price: string };
+  symbol: string; side: "buy" | "sell"; type: "market" | "limit" | "trailing_stop"; time_in_force: "day" | "gtc";
+  qty?: string; notional?: string; limit_price?: string; trail_percent?: string; client_order_id: string;
+  order_class?: "bracket" | "oco"; take_profit?: { limit_price: string }; stop_loss?: { stop_price: string };
 };
 
 export type BrokerFill = { id: string; activity_type: string; transaction_time: string; type: string; price: string; qty: string; side: string; symbol: string; order_id: string };

@@ -18,6 +18,7 @@
     "test:unit": "tsx tests/formula.test.mts && tsx tests/strategy.test.mts && tsx tests/news.test.mts && tsx tests/portfolio.test.mts && tsx tests/signals.test.mts && tsx tests/topNotify.test.mts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "0.133.0",
     "@radix-ui/react-dialog": "1.2.0",
     "lightweight-charts": "4.2.3",
     "lucide-react": "0.577.0",

@@ -2,6 +2,7 @@
 // Market orders fill at once at PRICE; limit orders stay open. POST /__reset clears it; POST /__badkeys makes it refuse the keys;
 // POST /__mark?price=110 moves the price positions are valued at (fills stay at PRICE), to show a gain or loss.
 // Also FRED CSVs, World Bank and Polymarket stand-ins (/graph/fredgraph.csv, /v2/country/..., /markets).
+// Also a stand-in for Claude's Messages API (POST /v1/messages): it looks up Bitcoin and the news, then answers from the results.
 // Also news: GET /v1beta1/news (Alpaca's news API), POST /__news adds a story, and /rss/*.xml serve test feeds.
 import http from "node:http";
 import { randomUUID } from "node:crypto";
@@ -45,6 +46,34 @@ const markets = [
     endDate: "2026-12-31T00:00:00Z", oneDayPriceChange: -0.02, events: [{ slug: "bitcoin-150k", title: "Bitcoin price" }] },
   { id: "3", question: "Who will win the league?", slug: "league", outcomes: '["Team A", "Team B"]', outcomePrices: '["0.5", "0.5"]', volume24hr: 10000, volumeNum: 50000, events: [] },
 ];
+let msgN = 0;
+function claude(b, headers) {
+  const reply = (content, stop, usage = {}) => ({ id: `msg_${++msgN}`, type: "message", role: "assistant", model: b.model, content, stop_reason: stop, stop_sequence: null,
+    usage: { input_tokens: 1000, output_tokens: 200, cache_read_input_tokens: 0, cache_creation_input_tokens: 0, ...usage } });
+  const sys = typeof b.system === "string" ? b.system : (b.system ?? []).map((x) => x.text).join("");
+  if (sys.startsWith("You write short market desk notes")) {
+    const first = (b.messages[0].content.match(/https?:\/\/\S+/) ?? ["https://news.example/1"])[0];
+    return [200, reply([{ type: "text", text: `**Crypto** rallied on ETF demand ([story](${first})).\n\n**Stocks** were mixed.` }], "end_turn")];
+  }
+  // Replayed history must come back exactly as sent: every assistant turn still starts with its thinking block.
+  for (const m of b.messages) if (m.role === "assistant" && !(Array.isArray(m.content) && m.content[0]?.type === "thinking" && m.content[0].signature === "sig"))
+    return [400, { type: "error", error: { type: "invalid_request_error", message: "thinking block missing or changed" } }];
+  if (!String(headers["anthropic-beta"] ?? "").includes("server-side-fallback-2026-07-01") || b.fallbacks !== "default") return [400, { type: "error", error: { type: "invalid_request_error", message: "expected fallbacks: default" } }];
+  const last = b.messages.at(-1);
+  const results = Array.isArray(last.content) ? last.content.filter((c) => c.type === "tool_result") : [];
+  const think = { type: "thinking", thinking: "", signature: "sig" };
+  if (results.length) {
+    const data = results.map((r) => { try { return JSON.parse(r.content); } catch { return null; } });
+    const snap = data.find((d) => d && d.slug === "bitcoin"), news = data.find((d) => Array.isArray(d)) ?? [];
+    const story = news[0];
+    return [200, reply([think, { type: "text", text: `[Bitcoin](/assets/bitcoin) is at $${snap?.price ?? "?"} with a ${snap?.signal ?? "?"} daily signal.\n\n- Latest story: ${story ? `[${story.title}](${story.url})` : "none"}\n- These are statistics, often wrong.` }], "end_turn")];
+  }
+  const text = (Array.isArray(last.content) ? last.content.find((c) => c.type === "text")?.text : last.content) ?? "";
+  if (/refuse/i.test(text)) return [200, reply([], "refusal")];
+  if (/expensive/i.test(text)) return [200, reply([think, { type: "text", text: "A very long answer." }], "end_turn", { output_tokens: 10_000_000 })];
+  return [200, reply([think, { type: "tool_use", id: `toolu_${msgN}a`, name: "asset_snapshot", input: { slug: "bitcoin" } },
+    { type: "tool_use", id: `toolu_${msgN}b`, name: "search_news", input: { query: "", slug: "bitcoin" } }], "tool_use")];
+}
 const reset = () => { state = { cash: 100000, positions: new Map(), orders: [], fills: [] }; badKeys = false; mark = PRICE; };
 reset();
 const key = (s) => s.replace("/", "");
@@ -65,6 +94,11 @@ http.createServer((req, res) => {
   req.on("data", (c) => (raw += c));
   req.on("end", () => {
     const url = new URL(req.url, "http://x"), path = decodeURIComponent(url.pathname), m = req.method;
+    if (path === "/v1/messages" && m === "POST") {
+      if (req.headers["x-api-key"] !== "e2e-anthropic") return send(res, 401, { type: "error", error: { type: "authentication_error", message: "invalid x-api-key" } });
+      const [code, body] = claude(JSON.parse(raw || "{}"), req.headers);
+      return send(res, code, body);
+    }
     if (path === "/graph/fredgraph.csv") { const csv = fredCsv(url.searchParams.get("id") ?? ""); res.writeHead(200, { "content-type": "text/csv" }); return res.end(csv ?? "<html>Not found</html>"); }
     if (path.startsWith("/v2/country/")) {
       const rows = WB.flatMap((c, k) => { const [id, value] = c.split("|"); return [2025, 2024, 2023].map((y) => ({ country: { id, value }, date: String(y), value: y === 2025 && k === 3 ? null : 1.5 + k + (2025 - y) * 0.2 })); });

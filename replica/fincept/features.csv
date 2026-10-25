@@ -18,18 +18,18 @@ Market news feed per asset,news,must,yes,yes,public RSS and free news APIs withi
 News sentiment label per article,news,should,yes,yes,lexicon based in the original
 Keyword news monitors with push alerts,news,should,yes,yes,F05; fits FXDEZ alerts
 Add your own RSS feeds,news,could,yes,yes,
-AI chat over your assets signals and trades with sources,ai,should,yes,no,F04; owner's Anthropic key; cost cap per day
-AI desk note summarising headlines,ai,could,yes,no,
-Long-form AI research report,ai,could,yes,no,
+AI chat over your assets signals and trades with sources,ai,should,yes,yes,F04; owner's Anthropic key; cost cap per day
+AI desk note summarising headlines,ai,could,yes,yes,
+Long-form AI research report,ai,could,yes,partial,ask the assistant for a research note; no separate report builder or export
 Agent teams and visual node editor,ai,could,yes,no,large
 Connect external MCP servers,ai,could,yes,no,
 Economic series browser (FRED IMF World Bank),macro,should,yes,yes,FRED (22 curated series or any code) and World Bank country comparison
 Prediction-market odds (Polymarket public data),macro,could,yes,yes,
 Geopolitical event feed,macro,could,yes,no,
 Bracket orders,trading,must,yes,yes,stocks via Alpaca
-OCO and trailing-stop orders,trading,could,yes,no,
+OCO and trailing-stop orders,trading,could,yes,yes,
 Live algo deployment with kill switch,trading,could,yes,no,F09; high risk; paper first
-Research notes per asset,workspace,could,yes,no,
+Research notes per asset,workspace,could,yes,yes,
 Spreadsheet over data,workspace,could,yes,no,
 Option chains and greeks,derivatives,could,yes,no,needs an options data source
 Company fundamentals and DCF,research,could,yes,no,needs a fundamentals source (SEC EDGAR is public)
