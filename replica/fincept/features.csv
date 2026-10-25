@@ -1,0 +1,45 @@
+feature,area,priority,original,clone,notes
+"Backtest a rule strategy on past bars (equity curve, metrics, trades)",backtesting,must,yes,no,F01; reuse FXDEZ indicators and formula language for rules
+"Strategy templates (trend, mean reversion, breakout)",backtesting,must,yes,no,F01
+Trading costs in backtests (fees and slippage per market),backtesting,must,yes,no,"built-in profiles for crypto spot, US stocks, fx"
+Save strategies with version history,backtesting,must,yes,no,
+Run history and compare 2 to 4 runs on one chart,backtesting,should,yes,no,F03
+Parameter sweep with walk-forward test windows,backtesting,should,yes,no,F02
+Count every try per strategy family (deflated Sharpe),backtesting,should,yes,no,F02; guards against curve fitting
+Trades drawn on the price chart,backtesting,should,yes,no,Trade Viz (S24)
+"Portfolio performance: time-weighted return, drawdown, monthly table",portfolio,must,yes,partial,FXDEZ has value and P/L only
+"Portfolio ledger (buys, sells, fees, dividends, deposits)",portfolio,should,yes,partial,FXDEZ holdings have no transaction history
+"Portfolio risk: volatility, beta, VaR",portfolio,should,yes,no,
+"Stress scenarios (past crises, Monte Carlo fan)",portfolio,could,yes,no,F07
+Rebalance proposal to target weights,portfolio,could,yes,no,
+Portfolio limits with warn and breach,portfolio,could,yes,no,
+Import trades from the linked broker,portfolio,should,yes,no,Alpaca fills into the ledger
+Market news feed per asset,news,must,yes,no,public RSS and free news APIs within their terms
+News sentiment label per article,news,should,yes,no,lexicon based in the original
+Keyword news monitors with push alerts,news,should,yes,no,F05; fits FXDEZ alerts
+Add your own RSS feeds,news,could,yes,no,
+AI chat over your assets signals and trades with sources,ai,should,yes,no,F04; owner's Anthropic key; cost cap per day
+AI desk note summarising headlines,ai,could,yes,no,
+Long-form AI research report,ai,could,yes,no,
+Agent teams and visual node editor,ai,could,yes,no,large
+Connect external MCP servers,ai,could,yes,no,
+Economic series browser (FRED IMF World Bank),macro,should,yes,partial,FXDEZ has bond yields only
+Prediction-market odds (Polymarket public data),macro,could,yes,no,
+Geopolitical event feed,macro,could,yes,no,
+Bracket orders,trading,must,yes,yes,stocks via Alpaca
+OCO and trailing-stop orders,trading,could,yes,no,
+Live algo deployment with kill switch,trading,could,yes,no,F09; high risk; paper first
+Research notes per asset,workspace,could,yes,no,
+Spreadsheet over data,workspace,could,yes,no,
+Option chains and greeks,derivatives,could,yes,no,needs an options data source
+Company fundamentals and DCF,research,could,yes,no,needs a fundamentals source (SEC EDGAR is public)
+Volatility surface,derivatives,skip,yes,skip,needs paid options surface data
+Indian F&O module,derivatives,skip,yes,skip,no data source; not the owner's market
+Alternative investments,research,skip,yes,skip,no data source
+M&A analytics,research,skip,yes,skip,no data source
+Maritime AIS vessel tracking,macro,skip,yes,skip,paid AIS feed
+L2 market depth and crypto perpetuals,trading,skip,yes,skip,paid feed; perps not offered by Alpaca
+Point-in-time proprietary data,data,skip,yes,skip,licensed data
+Seats SSO audit logs roles,admin,skip,yes,skip,FXDEZ is owner-only
+Credits plans top-ups payments,billing,skip,yes,skip,FXDEZ is free for its owner
+Desktop installers (C++/Qt),platform,skip,yes,skip,FXDEZ is a PWA
