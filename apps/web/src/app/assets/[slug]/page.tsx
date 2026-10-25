@@ -9,9 +9,10 @@ import { TradeTicket } from "@/components/client/TradeTicket";
 import { Suspense } from "react";
 import { Pulse } from "@/components/client/Pulse";
 import { OutlookCards } from "@/components/OutlookCards";
+import { MoodSummary, NewsList } from "@/components/News";
 import { ScenarioChart } from "@/components/ScenarioChart";
 import { Banner, Card, Label, Paywall, PriceChange, Section, StatCard } from "@/components/ui";
-import { forecastLedger, listIndicators, assetBars, assetForecast, assetScenarios, assetSignals, assetSummary, getAsset, relatedAssets, type PathRow } from "@/lib/data";
+import { forecastLedger, listIndicators, listNews, newsMood, assetBars, assetForecast, assetScenarios, assetSignals, assetSummary, getAsset, relatedAssets, type PathRow } from "@/lib/data";
 import { compact, dateTime, pct, price as fmtPrice } from "@/lib/format";
 import { viewer } from "@/lib/session";
 
@@ -137,6 +138,18 @@ export default async function AssetForecast({ params }: P) {
           <Card className="max-w-xl p-5"><Suspense fallback={<p className="text-sm text-muted">Loading the order ticket…</p>}><TradeTicket slug={slug} /></Suspense></Card>
         </Section>
       )}
+
+      {v.user && asset.market !== "bonds" && await (async () => {
+        const [items, mood] = await Promise.all([listNews(v, { slug, limit: 6 }), newsMood(v, slug)]);
+        return (
+          <Section id="news" title={`${asset.name} in the news`}
+            action={<Link prefetch={false} href={`/news?slug=${slug}`} className="text-sm font-semibold text-accent hover:underline">All {asset.name} news</Link>}>
+            <MoodSummary day={mood.day} week={mood.week} what={asset.name} />
+            {items.length ? <NewsList items={items} tz={v.user!.timezone} showAssets={false} />
+              : <p className="text-sm text-muted">No stories about {asset.name} in the last 45 days.</p>}
+          </Section>
+        );
+      })()}
 
       {ledger && (
         <Section id="record" title="This asset's forecast record"

@@ -96,3 +96,11 @@ export const StrategyBody = z.object({
   notes: z.string().max(2000).default(""), spec: StrategySpecBody,
 });
 export const PinBody = z.object({ pinned: z.boolean() });
+
+// News.
+const keyword = z.string().trim().min(1).max(40, "Keep each keyword under 40 characters");
+export const MonitorBody = z.object({ label: z.string().trim().min(1, "Give it a name").max(60), keywords: z.array(keyword).min(1, "Add at least one keyword").max(10, "Up to ten keywords") });
+export const MonitorPatch = z.object({ enabled: z.boolean().optional(), label: z.string().trim().min(1).max(60).optional(), keywords: z.array(keyword).min(1).max(10).optional() });
+export const FeedBody = z.object({ name: z.string().trim().min(1, "Give it a name").max(60), url: z.string().trim().min(1, "Paste the feed's address").max(500) });
+export const NewsQuery = z.object({ q: z.string().max(80).optional(), slug: z.string().max(40).optional(), mood: z.enum(["positive", "neutral", "negative"]).optional(),
+  source: z.string().max(60).optional() });

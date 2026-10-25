@@ -14,10 +14,10 @@ Trades drawn on the price chart,backtesting,should,yes,yes,Trade Viz (S24)
 Rebalance proposal to target weights,portfolio,could,yes,no,
 Portfolio limits with warn and breach,portfolio,could,yes,no,
 Import trades from the linked broker,portfolio,should,yes,no,Alpaca fills into the ledger
-Market news feed per asset,news,must,yes,no,public RSS and free news APIs within their terms
-News sentiment label per article,news,should,yes,no,lexicon based in the original
-Keyword news monitors with push alerts,news,should,yes,no,F05; fits FXDEZ alerts
-Add your own RSS feeds,news,could,yes,no,
+Market news feed per asset,news,must,yes,yes,public RSS and free news APIs within their terms
+News sentiment label per article,news,should,yes,yes,lexicon based in the original
+Keyword news monitors with push alerts,news,should,yes,yes,F05; fits FXDEZ alerts
+Add your own RSS feeds,news,could,yes,yes,
 AI chat over your assets signals and trades with sources,ai,should,yes,no,F04; owner's Anthropic key; cost cap per day
 AI desk note summarising headlines,ai,could,yes,no,
 Long-form AI research report,ai,could,yes,no,

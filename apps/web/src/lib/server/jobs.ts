@@ -4,6 +4,7 @@ import "server-only";
 import { ASSETS, ASSET_BY_SLUG, MARKETS } from "@/lib/data/catalogue";
 import { heldTwoBars } from "@/lib/data/indicators";
 import { scanTopSignals, topWhy } from "@/lib/data/live";
+import { ingestNews } from "@/lib/data/news";
 import { pickNew, topMessage, type Candidate } from "@/lib/data/topNotify";
 import { evaluate, holdsNow } from "@/lib/indicators/formula";
 import { ensure, ensureCrosscheck, effectiveSource, warmAll } from "@/lib/data/marketdata";
@@ -330,6 +331,9 @@ export async function notifyTopSignals(now = new Date()) {
   return { scanned: top.scanned, new: fresh.length, pushed };
 }
 
+/** Stories from Alpaca and RSS; keyword matches are pushed unless the owner is muted or in quiet hours. */
+export const news = (now = new Date()) => ingestNews(now, (u) => isMuted(u, now) || inQuietHours(u, now));
+
 /** Housekeeping: expired sessions and tokens, old rate-limit windows, old job logs. */
 export async function cleanup() {
   const db = sql();
@@ -351,6 +355,7 @@ async function tick() {
   await recordHealth({ checked: ["scheduler"], problems: [] });
   out.alerts = { ...(await evaluateAlerts()), ...(await deliverAlerts()) };
   out.topSignals = await notifyTopSignals(now);
+  out.news = await news(now);
   if (now.getUTCMinutes() < 30) out.publish = { ...(await publishForecasts()), ...(await scoreForecasts()) };
   if (now.getUTCHours() === 3 && now.getUTCMinutes() < 30) out.cleanup = await cleanup();
   return out;
@@ -365,5 +370,6 @@ export const JOBS: Record<string, () => Promise<unknown>> = {
   alerts: async () => ({ ...(await evaluateAlerts()), ...(await deliverAlerts()), health: await recordHealth(await schedulerProblem()) }),
   cleanup,
   "top-signals": () => notifyTopSignals(),
+  news: () => news(),
   tick,
 };
