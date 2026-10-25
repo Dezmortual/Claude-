@@ -71,3 +71,28 @@ export const TradeBody = z.object({
   clientOrderId: z.string().uuid(),
 });
 export const MaxOrderBody = z.object({ maxOrderUsd: z.number().min(1, "At least $1").max(10_000_000).finite() });
+
+// The backtest lab.
+const pct = (max: number, msg: string) => z.number().positive(msg).max(max, msg).nullable();
+const rule = z.string().trim().max(400, "Keep each rule under 400 characters");
+const ParamName = z.string().regex(/^[a-z][a-z0-9_]{0,19}$/, "Placeholder names are lower-case letters, digits and _");
+export const StrategySpecBody = z.object({
+  slug: z.string().max(40), timeframe: z.enum(["1d", "1w"]), period: z.enum(["1y", "2y", "3y", "all"]),
+  template: z.string().max(30).nullable(),
+  entry: rule.min(1, "Write an entry rule"), exit: rule.nullable().transform((x) => x || null), side: z.enum(["long", "short"]),
+  params: z.record(ParamName, z.number().finite()).refine((p) => Object.keys(p).length <= 8, "Up to eight placeholders"),
+  stopPct: pct(90, "A stop-loss is a percent between 0 and 90"), takePct: pct(1000, "A target is a percent above 0"),
+  maxBars: z.number().int("Bars are whole numbers").positive("Bars must be above 0").max(1000).nullable(),
+  feePct: z.number().min(0, "Costs can't be negative").max(5, "A fee over 5% is surely a typo"),
+  slippagePct: z.number().min(0, "Costs can't be negative").max(5, "Slippage over 5% is surely a typo"),
+});
+export const BacktestBody = StrategySpecBody.extend({
+  strategyId: Uuid.nullable(),
+  ranges: z.array(z.object({ name: ParamName, from: z.number().finite(), to: z.number().finite(), step: z.number().positive("Steps must be above 0") }))
+    .max(4, "Sweep up to four placeholders at once").nullable(),
+});
+export const StrategyBody = z.object({
+  id: Uuid.nullish(), name: z.string().trim().min(1, "Give it a name").max(60, "Keep the name under 60 characters"),
+  notes: z.string().max(2000).default(""), spec: StrategySpecBody,
+});
+export const PinBody = z.object({ pinned: z.boolean() });

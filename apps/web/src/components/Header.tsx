@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/trade", label: "Trade" },
   { href: "/portfolio", label: "Portfolio" },
   { href: "/indicators", label: "Indicators" },
+  { href: "/backtest", label: "Backtest" },
   { href: "/track-record", label: "Track record" },
 ];
 

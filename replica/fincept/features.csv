@@ -1,12 +1,12 @@
 feature,area,priority,original,clone,notes
-"Backtest a rule strategy on past bars (equity curve, metrics, trades)",backtesting,must,yes,no,F01; reuse FXDEZ indicators and formula language for rules
-"Strategy templates (trend, mean reversion, breakout)",backtesting,must,yes,no,F01
-Trading costs in backtests (fees and slippage per market),backtesting,must,yes,no,"built-in profiles for crypto spot, US stocks, fx"
-Save strategies with version history,backtesting,must,yes,no,
-Run history and compare 2 to 4 runs on one chart,backtesting,should,yes,no,F03
-Parameter sweep with walk-forward test windows,backtesting,should,yes,no,F02
-Count every try per strategy family (deflated Sharpe),backtesting,should,yes,no,F02; guards against curve fitting
-Trades drawn on the price chart,backtesting,should,yes,no,Trade Viz (S24)
+"Backtest a rule strategy on past bars (equity curve, metrics, trades)",backtesting,must,yes,yes,F01; reuse FXDEZ indicators and formula language for rules
+"Strategy templates (trend, mean reversion, breakout)",backtesting,must,yes,yes,F01
+Trading costs in backtests (fees and slippage per market),backtesting,must,yes,yes,"built-in profiles for crypto spot, US stocks, fx"
+Save strategies with version history,backtesting,must,yes,yes,
+Run history and compare 2 to 4 runs on one chart,backtesting,should,yes,yes,F03
+Parameter sweep with walk-forward test windows,backtesting,should,yes,yes,F02
+Count every try per strategy family (deflated Sharpe),backtesting,should,yes,yes,F02; guards against curve fitting
+Trades drawn on the price chart,backtesting,should,yes,yes,Trade Viz (S24)
 "Portfolio performance: time-weighted return, drawdown, monthly table",portfolio,must,yes,partial,FXDEZ has value and P/L only
 "Portfolio ledger (buys, sells, fees, dividends, deposits)",portfolio,should,yes,partial,FXDEZ holdings have no transaction history
 "Portfolio risk: volatility, beta, VaR",portfolio,should,yes,no,

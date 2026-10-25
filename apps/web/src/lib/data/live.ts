@@ -257,7 +257,7 @@ export function topWhy(t: TopSignal) {
 // ---------------------------------------------------------------- asset pages
 
 /** Loads everything an asset page needs in one go. Locked assets still get prices (the daily signal is shown free). */
-async function loadAsset(slug: string, tfs: Timeframe[] = PULSE_TFS) {
+export async function loadAsset(slug: string, tfs: Timeframe[] = PULSE_TFS) {
   const a = requireAsset(slug);
   await Promise.all([ensure([slug], tfs), a.market === "crypto" ? ensureCrosscheck() : null]);
   if (!closedBars(slug, "1d").length) throw new DataError("not_found", `No price history for ${a.name} yet`);
@@ -344,7 +344,7 @@ export async function getViewer(token: string | undefined): Promise<Viewer> {
   return { user, plan: owner ? OWNER_PLAN : GUEST_PLAN, subscription: null };
 }
 
-function requireUser(v: Viewer) {
+export function requireUser(v: Viewer) {
   if (!v.user) throw new DataError("unauthorized", "Sign in first");
   return v.user;
 }
