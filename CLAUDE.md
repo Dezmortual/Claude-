@@ -41,3 +41,12 @@ It added `.claude/{skills,agents,commands,helpers}`, hooks and a status line in
 config in `.claude-flow/`. Its local databases (`.swarm/`, `ruvector.db`) are
 gitignored. Update with `npx ruflo@latest init upgrade --settings`, and keep the
 trading-desk entries in `settings.json` when you do.
+
+## treg
+
+`.mcp.json` adds treg (https://treg.to/llms.txt), a paid tool gateway, as the
+`treg` HTTP MCP server at `https://treg.to/mcp/`. It signs in with OAuth: run
+`/mcp` in a local Claude Code session and authenticate. For cloud sessions, add
+the same URL as a custom connector on claude.ai instead. Calls bill the team's
+prepaid treg balance, so check `balance` before bulk work. Never commit a treg
+token.

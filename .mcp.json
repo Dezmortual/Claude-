@@ -17,6 +17,10 @@
         "CLAUDE_FLOW_MEMORY_BACKEND": "hybrid"
       },
       "autoStart": false
+    },
+    "treg": {
+      "type": "http",
+      "url": "https://treg.to/mcp/"
     }
   }
 }
