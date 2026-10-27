@@ -51,3 +51,7 @@ keep them, with the PDF script path changed to
 `.claude/skills/trade/scripts/generate_trade_pdf.py`. PDF reports need
 `pip3 install 'reportlab>=4.0'`. These are research prompts that use web data;
 they don't place trades.
+
+`.claude/helpers/.LOCKED` stops the ruflo daemon (run unpinned through `npx`)
+from rewriting `.claude/helpers/` with its own newer version during a session.
+Delete it before a deliberate `init upgrade`.
