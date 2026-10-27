@@ -45,7 +45,7 @@ export default async function Series({ params, searchParams }: { params: Promise
           )}
           <nav aria-label="Period" className="flex gap-1">
             {RANGES.map(([k]) => <Link key={k} href={link({ range: k })} aria-current={(sp.range ?? "10y") === k ? "page" : undefined}
-              className={cx("rounded-md px-3 py-1 font-semibold", (sp.range ?? "10y") === k ? "bg-accent text-on-accent" : "hover:bg-surface-sunken")}>{k === "max" ? "All" : k.replace("y", " years")}</Link>)}
+              className={cx("rounded-md px-3 py-1 font-semibold", (sp.range ?? "10y") === k ? "bg-accent text-on-accent" : "hover:bg-surface-sunken")}>{k === "max" ? "Longest" : k.replace("y", " years")}</Link>)}
           </nav>
         </div>
         <ValueChart points={pts} unit={unit} title={`${s.def.name}${view === "yoy" ? ", change over a year" : ""}`} zeroLine={view === "yoy" || s.def.id === "T10Y2Y"} />

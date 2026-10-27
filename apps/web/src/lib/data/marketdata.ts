@@ -1,7 +1,9 @@
 import "server-only";
 // Bar cache: Postgres (price_bars) is the store of record, refreshed from each asset's source when its tail is stale.
 // `ensure()` is the only async step; afterwards the model reads `cachedBars()` synchronously from memory.
+import { gunzipSync, gzipSync } from "node:zlib";
 import { sql } from "@/lib/server/db";
+import { pack, unpack } from "./barcodec";
 import { ASSETS, ASSET_BY_SLUG } from "./catalogue";
 import { alpacaBars, alpacaConfigured } from "./sources/alpaca";
 import { binanceBars } from "./sources/binance";
@@ -83,7 +85,7 @@ async function load(slug: string, tf: Timeframe): Promise<Entry> {
   const [f] = await db<{ fetched_at: Date; last: Date | null }[]>`
     select bf.fetched_at, (select max(ts) from price_bars where asset_id = ${id} and timeframe = ${tf}) as last
     from bar_fetches bf where bf.asset_id = ${id} and bf.timeframe = ${tf}`;
-  let error: string | undefined;
+  let error: string | undefined, wrote = false;
   const refresh = effectiveSource(slug) === "twelvedata" ? TWELVE_DATA_REFRESH[tf] : REFRESH[tf]; // free-plan credits
   if (!f || Date.now() - f.fetched_at.getTime() > refresh) {
     try {
@@ -93,6 +95,7 @@ async function load(slug: string, tf: Timeframe): Promise<Entry> {
       const fresh = [...new Map((await fetchFromSource(slug, tf, since))
         .filter((b) => b.h >= b.l && b.o > 0 && b.c > 0).map((b) => [b.ts, b] as const)).values()];
       if (fresh.length) {
+        wrote = true;
         const rows = fresh.map((b) => ({ asset_id: id, timeframe: tf, ts: new Date(b.ts), open: b.o, high: b.h, low: b.l, close: b.c, volume: b.v }));
         for (let i = 0; i < rows.length; i += 1000) {
           await db`insert into price_bars ${db(rows.slice(i, i + 1000))}
@@ -107,11 +110,69 @@ async function load(slug: string, tf: Timeframe): Promise<Entry> {
       console.error(`bars ${slug} ${tf}: ${error}`);
     }
   }
-  const rows = await db<{ ts: Date; open: number; high: number; low: number; close: number; volume: number | null }[]>`
-    select ts, open, high, low, close, volume from (
-      select * from price_bars where asset_id = ${id} and timeframe = ${tf} and not quarantined order by ts desc limit ${KEEP[tf]}
-    ) t order by ts`;
-  return { bars: rows.map((r) => ({ ts: r.ts.getTime(), o: r.open, h: r.high, l: r.low, c: r.close, v: r.volume ?? 0 })), at: Date.now(), error };
+  return { bars: await readBars(id, slug, tf, wrote), at: Date.now(), error };
+}
+
+// Reading bars is what the database's data-transfer allowance pays for, so it is done as little as possible: a warm
+// server asks only for bars from its newest one on; a fresh one reads the series' compressed snapshot, then tops it up.
+// After quarantining a bar by hand, delete that series' row in bar_snapshots so it's rebuilt without it.
+type Row = { ts: Date; open: number; high: number; low: number; close: number; volume: number | null };
+const toBar = (r: Row): Bar => ({ ts: r.ts.getTime(), o: r.open, h: r.high, l: r.low, c: r.close, v: r.volume ?? 0 });
+let snapshotsMissing = false; // the table isn't there until its migration runs: fall back to reading rows
+
+function merge(old: Bar[], fresh: Bar[], keep: number): Bar[] {
+  if (!fresh.length) return old;
+  const from = fresh[0].ts;
+  return [...old.filter((b) => b.ts < from), ...fresh].slice(-keep);
+}
+
+async function rowsSince(id: string, tf: Timeframe, since: number | null): Promise<Bar[]> {
+  const db = sql();
+  const rows = since === null
+    ? await db<Row[]>`select ts, open, high, low, close, volume from (
+        select * from price_bars where asset_id = ${id} and timeframe = ${tf} and not quarantined order by ts desc limit ${KEEP[tf]}) t order by ts`
+    : await db<Row[]>`select ts, open, high, low, close, volume from price_bars
+        where asset_id = ${id} and timeframe = ${tf} and not quarantined and ts >= ${new Date(since)} order by ts limit ${KEEP[tf]}`;
+  return rows.map(toBar);
+}
+
+async function readBars(id: string, slug: string, tf: Timeframe, wrote: boolean): Promise<Bar[]> {
+  const key = `${slug}:${tf}`, have = mem.get(key)?.bars;
+  // Warm: re-read from the last bar we hold (it may have been updated in place) onwards.
+  if (have?.length) {
+    const fresh = await rowsSince(id, tf, have.at(-1)!.ts);
+    const bars = merge(have, fresh, KEEP[tf]);
+    if (wrote) await saveSnapshot(id, tf, bars);
+    return bars;
+  }
+  let bars: Bar[] | null = null;
+  if (!snapshotsMissing) {
+    try {
+      const [s] = await sql()<{ data: Buffer }[]>`select data from bar_snapshots where asset_id = ${id} and timeframe = ${tf}`;
+      if (s) {
+        const snap = unpack(JSON.parse(gunzipSync(s.data).toString()));
+        bars = snap.length ? merge(snap, await rowsSince(id, tf, snap.at(-1)!.ts), KEEP[tf]) : null;
+      }
+    } catch (e) {
+      if ((e as { code?: string }).code === "42P01") snapshotsMissing = true; // undefined table
+      else console.error(`snapshot ${key}: ${e instanceof Error ? e.message : e}`);
+    }
+  }
+  if (!bars) { bars = await rowsSince(id, tf, null); await saveSnapshot(id, tf, bars); }
+  else if (wrote) await saveSnapshot(id, tf, bars);
+  return bars;
+}
+
+async function saveSnapshot(id: string, tf: Timeframe, bars: Bar[]) {
+  if (snapshotsMissing || !bars.length) return;
+  const data = gzipSync(JSON.stringify(pack(bars)), { level: 9 });
+  try {
+    await sql()`insert into bar_snapshots (asset_id, timeframe, last_ts, data, updated_at) values (${id}, ${tf}, ${new Date(bars.at(-1)!.ts)}, ${data}, now())
+      on conflict (asset_id, timeframe) do update set last_ts = excluded.last_ts, data = excluded.data, updated_at = now()`;
+  } catch (e) {
+    if ((e as { code?: string }).code === "42P01") snapshotsMissing = true;
+    else console.error(`snapshot save: ${e instanceof Error ? e.message : e}`);
+  }
 }
 
 const inflight = new Map<string, Promise<Entry>>();

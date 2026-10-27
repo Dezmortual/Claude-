@@ -76,7 +76,11 @@ export async function macroSeries(v: Viewer, rawId: string): Promise<MacroSeries
   const id = rawId.toUpperCase();
   if (!FRED_ID.test(id)) throw new DataError("invalid", "FRED codes are letters, digits, dots and underscores, like UNRATE");
   const def = defOf(id) ?? { id, name: id, group: "Other", unit: "", freq: "monthly" as const, about: "A FRED series opened by its code." };
-  const c = await cached(`fred:${id}`, 12 * 3_600_000, () => fredSeries(id));
+  // Daily series go back decades (the fed funds rate to 1954): keep 12 years, which the charts' longest view needs at most.
+  const c = await cached(`fred:${id}`, 12 * 3_600_000, async () => {
+    const all = await fredSeries(id);
+    return all.length > 1500 ? all.filter((p) => p.ts > Date.now() - 12 * 365.25 * 86_400_000) : all;
+  });
   const points = c.data;
   const latest = points.at(-1) ?? null;
   const yearAgo = latest ? [...points].reverse().find((p) => p.ts <= latest.ts - 360 * 86_400_000) ?? null : null;
