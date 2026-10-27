@@ -1,175 +1,4233 @@
 %PDF-1.4
-%“Œ‹ž ReportLab Generated PDF document (opensource)
+%âãÏÓ
 1 0 obj
 <<
-/F1 2 0 R /F2 3 0 R /F3 4 0 R
+/Producer (pypdf)
 >>
 endobj
 2 0 obj
 <<
-/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font
+/Type /Pages
+/Count 13
+/Kids [ 4 0 R 9 0 R 15 0 R 17 0 R 19 0 R 21 0 R 23 0 R 25 0 R 31 0 R 33 0 R 35 0 R 37 0 R 39 0 R ]
 >>
 endobj
 3 0 obj
 <<
-/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font
+/Type /Catalog
+/Pages 2 0 R
 >>
 endobj
 4 0 obj
 <<
-/BaseFont /Times-Roman /Encoding /WinAnsiEncoding /Name /F3 /Subtype /Type1 /Type /Font
+/Contents 5 0 R
+/MediaBox [ 0 0 612 792 ]
+/Resources <<
+/Font 6 0 R
+/ProcSet [ /ImageB /ImageC /ImageI /PDF /Text ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
 >>
 endobj
 5 0 obj
-<<
-/Contents 14 0 R /MediaBox [ 0 0 612 792 ] /Parent 13 0 R /Resources <<
-/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
->> /Rotate 0 /Trans <<
-
->> 
-  /Type /Page
->>
+[ 42 0 R 43 0 R ]
 endobj
 6 0 obj
 <<
-/Contents 15 0 R /MediaBox [ 0 0 612 792 ] /Parent 13 0 R /Resources <<
-/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
->> /Rotate 0 /Trans <<
-
->> 
-  /Type /Page
+/F1 7 0 R
+/F1-0 41 0 R
+/F2 8 0 R
 >>
 endobj
 7 0 obj
 <<
-/Contents 16 0 R /MediaBox [ 0 0 612 792 ] /Parent 13 0 R /Resources <<
-/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
->> /Rotate 0 /Trans <<
-
->> 
-  /Type /Page
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
 >>
 endobj
 8 0 obj
 <<
-/Contents 17 0 R /MediaBox [ 0 0 612 792 ] /Parent 13 0 R /Resources <<
-/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
->> /Rotate 0 /Trans <<
-
->> 
-  /Type /Page
+/BaseFont /Helvetica-Bold
+/Encoding /WinAnsiEncoding
+/Name /F2
+/Subtype /Type1
+/Type /Font
 >>
 endobj
 9 0 obj
 <<
-/Contents 18 0 R /MediaBox [ 0 0 612 792 ] /Parent 13 0 R /Resources <<
-/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
->> /Rotate 0 /Trans <<
-
->> 
-  /Type /Page
+/Contents 10 0 R
+/MediaBox [ 0 0 612 792 ]
+/Resources <<
+/Font 11 0 R
+/ProcSet [ /ImageB /ImageC /ImageI /PDF /Text ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
 >>
 endobj
 10 0 obj
-<<
-/Contents 19 0 R /MediaBox [ 0 0 612 792 ] /Parent 13 0 R /Resources <<
-/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]
->> /Rotate 0 /Trans <<
-
->> 
-  /Type /Page
->>
+[ 45 0 R 46 0 R ]
 endobj
 11 0 obj
 <<
-/PageMode /UseNone /Pages 13 0 R /Type /Catalog
+/F1 12 0 R
+/F1-0 44 0 R
+/F1-1 47 0 R
+/F1-2 50 0 R
+/F1-3 53 0 R
+/F1-4 56 0 R
+/F1-5 59 0 R
+/F2 13 0 R
+/F3 14 0 R
 >>
 endobj
 12 0 obj
 <<
-/Author (\(anonymous\)) /CreationDate (D:20261027222321+00'00') /Creator (\(unspecified\)) /Keywords () /ModDate (D:20261027222321+00'00') /Producer (ReportLab PDF Library - \(opensource\)) 
-  /Subject (\(unspecified\)) /Title (\(anonymous\)) /Trapped /False
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
 >>
 endobj
 13 0 obj
 <<
-/Count 6 /Kids [ 5 0 R 6 0 R 7 0 R 8 0 R 9 0 R 10 0 R ] /Type /Pages
+/BaseFont /Helvetica-Bold
+/Encoding /WinAnsiEncoding
+/Name /F2
+/Subtype /Type1
+/Type /Font
 >>
 endobj
 14 0 obj
 <<
-/Filter [ /ASCII85Decode /FlateDecode ] /Length 1295
+/BaseFont /Times-Roman
+/Encoding /WinAnsiEncoding
+/Name /F3
+/Subtype /Type1
+/Type /Font
 >>
-stream
-Gat%b6$JeX&:j6IME1%>m7Ut]8-3gQ[VaUmdS63Mg[5)pCt$A]JnUbUrJlPj+XZ%=q'?ZB@HO&A1]mi;5N_sC4+Q'&jrYEo%e1I)+9LPLGTV:i4Ef5=$<.S2+Ph=8?`XXlXafpJocq`r&1U+:3=mN_,T,#M%pcErX+GSO*]a#FHM!Kq-NbP,$KDP,M^?;aP3(d0(1gA`R_42A]ru2B#3)ft^P2!)3g+s+TVDE2XV=&sb:FW2atVnj";4GXL*p.:>$C0(=X](5pka4bl+SMaM5Jq$0;mL5s/TtfU4^A.;f;3:Kps[fqa/3+9Z`-+P(U#2%M;,mLBo:P+G[fOm]9kK;"Bd%pDdYXEMlH8-Uq`-n;s)RV/,#*'l_;1I$nQ&8K_`?6@CoX!Mi07kUZGQa%^%8bF9Ti$TYo:4R/,T`j<_@UMfXIL[3:]n0e3`p&=pqf<V0QMe`7-8"Oc9k^@dM_?8p.2[L..pIg4_a"cLs(T_0\7#D29b0[VEM5/m0hZE=@T[I<_Nuj"GRkPTj-)5--l,7a94i)q--k4rV)lbureAJQC3@f:hS:'gX[4sH#/DRs&At$dn%[X>T<$Jm27rk+RX=%8W?ngi`G!L(>!f7e7O";8aKh(\FHC_CJ'B4L7IX],e(`@E2egGM8H^1"S7qS8FWedHJ0UQrk4/AH2GnK^tpZV4TQ@JO_A$=?W3hamUDOb(<2F[n+bjO8+=!6*;HnmaD'C.kaJ7V-C:dF74lqE8`2*3j1P?6[Op#kUm$Lt?QlMSoS#(:Kt05`_8e'3XEl?'X.ouE=`H\dA<2?iL[D3gP>gTRLZB"$<)GY5#?hge'5+*3pIq2+r<L9RW4=^/(3\c#k;kF-TXMIrjiE]0I5(/<tjX3iKV6s\l0];kgUf7DUR^;3Ql"+NGg^H44]N(kI)ACH>cpsfkl.?UMLU[3(3Om=ajQ;>9Q0:!^;5MeZ<`=I[VI4,*@2Q-6NWrq9=`O`'8B5O*)]Y\&!.5TIkFAf#@fXLMpgCL`fZ8`Ct3X^F#`3@P1UeGj1T7,$am:9@r4)%l`NQFn11aH`cX`cd3B$LLG$<HQQ$6!1a=&@GF]ZmlbOeMLO9%(/n%Josd1^<Zb7`HI[e")9"19bJV3[p'>Y\m0>CQ$s`VBN/lSs)NoRW,4Z)QMs5Z52?AM]>)S)`BqhM!@N4+FMjM2T?=dR$Eq+^D_:;^\4-I0>Hhm?l]..eh#9ahI'%@2;Y(denhCukoA261%kYF\?Qu\WX:>UWSSR&!8StP,VfUkIiC8RH(4$1`8GF%^&1D%mls]qF`7~>endstream
 endobj
 15 0 obj
 <<
-/Filter [ /ASCII85Decode /FlateDecode ] /Length 1742
+/Contents 16 0 R
+/MediaBox [ 0 0 612 792 ]
+/Resources <<
+/Font 11 0 R
+/ProcSet [ /ImageB /ImageC /ImageI /PDF /Text ]
 >>
-stream
-GauHL95bb.&AIV:i2),H+DVIZb9#]n.=q])@f\_,4fFMpajm/KjJE+Wj#]U<="EZAFra..'Fnb9O,rmd0+\cr+T=Hi$h:)A0!@Qk'"p@-VDP%A62]([4r;!ZXV2`a%Rs_QF\q!a.BNnSM%Zls#/k7]THgC`UUN8[<C0:JWt]im\/d,%,Or4WT)?=hYD1qkhS&-dU1cL\[hI/CMB_J&/Q=/0fKiBU."$>rqCgKHO2(SOfABC`jDQK`bA/[PAd"!2G&(:o4r6=Y+c_ate[07q9*"F>`sHe7=%8EHKD'V0U9)/V1fY@*d9s8I%f.u$]31+/j3;+IG&ZS`RaIr[K6<I.fQr6/+GUu1(Bn2#YZAsUUOAA=-rm+MQjn1t_$mCq[D@0d%SgmR-*M!(P]X4`RX-e:O4Xq?'MlHZ6ZPV$n.!jr;/p]811SF;Mem.M2!$kK-H4fA#[N<#VbeTC9DqQ.g6iQj[<B"N)7=WOIc/S`9?:7rfX&d5[Os\QLq_2j5>k0t'"=]c*q,&Q2=nJp"=a)tFs=5m.YbTb=:G)ud:.`M^No%hVON'q_02Y2gJM^k*P7HXau%bR>\6(sR-b+Ofktn@418C2UN`_TF=M5f9c]Y&ND[4>3V_0)Bp&"91#!pbm@Z:p>!%_%1SZ:sRVh9DFcl&gNnCZHRI/[]+W&Q#q=(#4m7][HcGoS9@`2L3q38rQ^(h`V,Ws;3_"Ib%Fqbj"`uZrqW%HJNa[DIq-FsW_6jH7Na-I)BYZ#4c<825X3Y`GLK;:QkaL,H4lR4WM,(h:\T]o*Ro3mk%'Ma+qWTf)Q3&Of9F$/k&eg)TL=luMqH\.IZSdFq$B[%O'k%q,B-:[ni?2l's?7kWCZdBB;C]h!]Ka+$O7s&lob@[Z>c/(1C^#.kU&!>#eUq6EL/1^FmC=t)ZNbdnof/-"!X_\Q=k6kB3d:n<tJV4QcohmM.XW4?^4RNg$,Y""LElPMp-YmaKHDIHI06>69B4J,Gl*NSkXf#rS[9WVe*GhUr`=XN"4B!)N#)0<P,ZWB\_HJ^KNF</5]16:_6E[OaKf-SI=Q<mGZW35!(KO0]ClVV%.5*[,(Jm)cUW(_0HlDL)bkO"oUos8T9YH6:M%M%l2D;saD7iD7:QP-)'P9[7gS413qbh5"`n\;XR]<B+R!Uc*]L"$IYh'iRTo,"kai:shj#N!TX6'9*ja+KUM;G6s*/Sq1ra*P@Ft50tgii-GjAH9R0E0gj^ILE"H*3@cl$1UJZ'Q*e"[SicW`%R!s#GO+&/RS1o\jYYeCVseBK[5`7-84Vj=A3$7O*VGPiB)+@Pne>%j2DUB-m:9+'9#o!&rj=mdTB5^V$!"O>liGlHJ=n:[^D5FPmXkXB5AFBY7S-mp(il;#/NBA*`*94PaM4[AB+l*W+#n3hC0!#A`^!L$39dS,VPYh&*d$;?I/t8Gi%caUT_XX[?sW](@mHiKb;^?,_)nZJY"ZftO(A2>:;7)CM6PLrh7cj-N'8i#-b&%d7`\\c?jrkHW&0c47Sn\+S(X:3?PL_q#^9$TO2IZ3bnsO*hkP8"TVElf7X+dI:_/[6A]`mXWFaXTMQ><#uG@#Z04+=$R3jT$'1QL@2aa$Z.jEf[,J?[\ENk].ZdKS<fG;D$O;!f/,Wdj$Dj$]`l[@8kp#%?;W4U-[.Dl1$NK.P4gHXWi\-r9M((-f&:e:FS*l#3a@o5%Y^u_3C/q*d"<K1TlqAZRA<i[WR[N:DWI2q7&'GeX]ucc~>endstream
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
+>>
 endobj
 16 0 obj
-<<
-/Filter [ /ASCII85Decode /FlateDecode ] /Length 1801
->>
-stream
-Gb!;cD/\-!&H88.0cu"32ItK"HYl2Q.=G4"8RDPdl(icJ?it9UVRB&KpZlbK?3A2Me)'WVKY[;+G353`fpN'L'L/\s*R=bXO'qIG!TPlF"X](Zd3ZFD*W7s,<n$Y+0o=%$,?0>dq*:l+6css6O,&la2EaAoCi(,nc-\-K:5rQ)NRa5T*mYVl3(i,HS^-Y4IK'F>hdH*+3;eH%L/U;FN72(3+'9r8GX_sF&9-S/#p4pHCFC$P#r*j%][IC1WUFql4!?!V;UN0t08sqm9AMBV+k(E-'TJJUr>ICL?P?\gP]&haJM6Mm3*KWAOL!=VmclIY$iM]!C)?dhCN;A&L,JCP?BuLbYY5/.FgdPc+.,qQ>:3uo[M#pC`4UVRTie@Ebi5mV>a=o?`V4)?[o6!oSJi4."QbKg`3mnN]SI>5%DmZjKLG@G>;%uP^./7[$of"pG+c5=YN$R0KO[@@?NgjGY+pB0km>S_3t:F+gdJ[t=>[n4?(B](;\5qtbg]:GKh$u_,u0L5jbU*nC6s<S/p.BEdj0bd;nP2G-qV^AGckHj:M91iK[Bf:?_9=:;K!@(F/<+a,dgru/7_#!hgs0))?d^+Et8"\\P+%e.PO9TT:lQ-Y^i!s?`^P,0+-nkYSrm7JVFnJe;_Z:)-CXh.8%TOl;"9ZQ0o3GVci!6S\"$dqQUS4;,tk4`u5'"WZ*W+npAS),jB_!?<phFL0#1]p;)t<(W>dQ&.6fMkU\ZN:t2CpLI>/K77X?-ei24mf)Y>d()mJ#H[U_5b9YZ&Zgs3NSdTDf!:)\`dN`1NB;7X.ZiWi?_&8o2lG[KFb;:ltFHe?gEk^C+::H.u9UO`-qsB3<d&/>nK)T_Zi71LV!S;7ML^3\?d5!@:Wjtc1=A#QXd=u19Vg@*(BkEKmin[dq"34%(DCssc$[gt@LIif1Rp)\(OD<fIerJh2&$OgYg5E4P]U8!h-b!!f-2l>j#SOmhMBKHZ#`A+p0gVs?U`!G'BOVV.728q7T-BO^^cQ0`G(o4hpfXWDiYG7gcsdXbm'X>l_d86mlnR,O((G%2-F(VFJ)M05<S_ki<lb%!)q?T=Z>spm\S\UufeV#F<5e%\?]pA@C<%Qh3>4?W>4(pefMUE<UOgEa?&`GXV8=]=SH`:,(JH7)3WdNs!<tgrP*JP1S:0n.l=#5'K[B#+_^E9WWo)b[AL-IY&l=3Aal4:9c$;="OWe*kbe^[8!T3r3^EVGn;31=OiEO2HUl.jL/HY#i_VCX?Z!Z6"n^sF<QVenMUeDr%4Tj^XE:d]'cd!e^aM0q'6^FTj\C%c7eu<q=PHLdhU,-%IXKF0^]^,pRC.X$&mW+C`_Qab.<sK$+Ff+aJgoQV%iH:ZeH/?T3k!_>UU,f"WUfF=Wck,s4?:WllH"r+K\_42Xa0R0Iic.Jm<k%f5E(UV5pC\AqH7)lG%M8#SSDHJu0h^]DUr`sHmf5O6s5K'X.O,[;=!hp36a%WDRl]S,i;pe]9Q8-RGQmmo_F-_L_j+!T2i,K6eU3XH4mO)R;22'+QfTIIU:;^ob8o4$h]9/Ur$.dI1Vb4)Kem&]4$^Hr+"OJnen0\c,_QQt3nKQT_WcVp]lVhfZhV/Pat9oDg5M[>XlZ7J@ER)=:j9EMob@H$6&m05Ejo_%Lh?9+9dY0`*D0"B&WJmD<rYHZ#RnrXR2.T&/<r!._i:5Dn!PaJIf'k[8Wp=@Y1`tGFc$!]@q,Oh5%"nL8>9ho.-B/k:3#W:^u4,9?E<&_)T+Ilb`Yllmq(,jSSa+p^!]_:/#E7VhRu5$V<-NR,HZ2L*;p!4LPb9~>endstream
+[ 48 0 R 49 0 R ]
 endobj
 17 0 obj
 <<
-/Filter [ /ASCII85Decode /FlateDecode ] /Length 1911
+/Contents 18 0 R
+/MediaBox [ 0 0 612 792 ]
+/Resources <<
+/Font 11 0 R
+/ProcSet [ /ImageB /ImageC /ImageI /PDF /Text ]
 >>
-stream
-Gatm<=``R^&:Vs/k_GskbQPnJj_OIPaZsI!m#XL"el;16(]g'_[`:9;p4;,8/RLcYc>6M'7BC7un[83i.hiD>B`?Uj!.5^$Fe8_H0U`()KZ!!ak`*l:SC*MKZGE4SR?9rIdppl3@T_DA(_CF:O&JS]B;gX;\l%2`oeKp0f#sH3g?C9.M-.hQ'*3Jda^h7/q@Z9T@IujTI)P3`XR3RPlt`WgQ=-Z"N?Be(AYoXL3t6pG@*f;KUmm#4?#JRdAr6*-7LTb1NnE604k(No1uoM#AK2<hdgrBF5LjD24T%lLQo_ZFD7d65Dhk%K8q;5h9cq>Kpj`-"Dq2m7_gb%GpY)5AFj=dlDeS17]fFl\7d,-k1@XkEZ8-RsJo>/a=ZZJO,1Lt%hW(=g,G)qkhS2I_Pc%Y%VhB&-e\"96B2J`>X4_1fPO:-[VQ!6f>l]5a7a>-36<ejmBWc!4#Sj:W#(u4_N'$dC[tF3^PA;MVB%E]R8)0F8f1_[DQ;b+n)\B%fCe]OA%3i?(,s1['J9[)T&u'LSF-Yb!Cei1,5TM5=l:8s",STQ:]*"=KBbAq[J3e!DCXt/;(mRbH;MS@+/lVmVp&\qLcUQQQR<&japUKbBoqZljD1W($$Z*)S2J87kGVs-Am>O"VLeHme9.[t[XW"J[)4=P+^@'nOhq6nN("8g)hMc`5]@<j+WNh#.S1"sNZWbhRP'Bn(r!!]@Cm5>T\Xs[tk`)<UT&`Lu9*t>a[*IgDoDM/m^.$otGMhsF'<k(Z"Ws^<G_6mR*.iQ"k5HT\fhtNiI.Y"72MgHiPnLtcM8IqG+Z4g%Ji&;79jYA!_=RrLT6CQNAD3&DaaRc,P;ee#**tFUf:j.3Xc-P9I-G5e;:?u&fI<E@:#N.J<"O;C_LkBk.Vs"&N+;$$,qO[*D5E6m1MP+F$NPC^ghd?_.DT6=X^*?ZhdB23Yk^Q\@k$NSNQ#<A7J&I'M9'd'/c<G(N(+=rL8'phRcYQ_-lH5V@93'fb;`Et."Wem72c%Q1Un+_]Eof/Y)T:dk3]_(4uII)LYt-jEIPn0"l$`F%+M?3G*_&h#1"J)Te@R[9=]PPko&bFr-^dSNb9;k$cFpq^k?VhXI8R"Imttkf>H&]5NDDdJ723TBSVh#T&T(@Un5"e.]t8$*iTLH?I`#FUe3,>C+>6:,o'K=PuZE-WhOg)0lL^JWD#<69>!$uGBOh,iKlB9(-_!Wc6pU=WdaE8-7u1m>u;])k@eb'R\NU??05f`/.%lQE,rTO!i(sX1lDGZGArYpq14BR/\lJPA$^>e(Xq(d/h+?eTpg[MWdGCj_$2*3S^:m$":tk\(KgWoAWWlNOBBgjOSkObj%EM#'n1C6VCL)0r*q/WQ#/d_&5&'M2OE(8@u.#X1A+(4GEL1\1J"7>b/CX/KrB>%?_dt3O]1EM*[6_TL5dhm<7?hEor.02,M96M+qBi2&LZSp\ed%N%KYquoY3,m#MX<d\D@s:Yfb@BD&Ghnru];p0gU)l@TkE=/Sn[#P[F'\@PSYVU`@B2rc8a:_iMYKLP9:Hf]Zs'6[3k><6uJu4,jUG@&Zr+\l3asZ#*E!3#ZZk@be=Zd4K.-/W6sBhD2b-To62q9rFdE*t70tE\b[[O6!s3(9u(_L(dH+QSou1.SUuM/Q+4QSu5t;lJb6"L]8ef:O^F1m4u-QJ)d6RMSVEpTPokf+QuUO)!d<mk==b`c/\rS[EAEXc3kn/kmbW``CkH+6$jBHe>\*7*"oiN_Q_;8Cu1&4ZM-`^.EQWGIkb9V1r_LY@jR'qC,![2K$VUG,!G(?^quaGT'&D:A9)WS+(:rdIm8n$E=>4I(.briU&Mf\O7a:o,/`DEjRoQnD^it/!fL))XiMLZrK,heYpWq0Z0JU.iR^B0PNai_K2'si$`q[,k#DJ7Zi:$f4@qg~>endstream
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
+>>
 endobj
 18 0 obj
-<<
-/Filter [ /ASCII85Decode /FlateDecode ] /Length 2076
->>
-stream
-Gatm<9iKe;&A@ZcqI$=2@ggQF)bpr.&dieRn8?coEKTXnX[LSc,73i\q!IrJQG>De#[-0hM,mEul^mOr/Mf0P@Fa7D6?LYRK6'M@;h%Kb2JhYcd91t^`t#.-*LAm#6Q%YsZi\NX1/,^u9MPe5G[N=*P8tKLcaI76JR)%+e93k(<qeeUpED7'OVZH=MEK&UWW.tS^Zk^2i3Teg)u+a*<N5<1OdK[(^23n<@<$gC"i5(!5Xi<I<tJ-L32VaF/m>`mlV.f-4P0;bVJBX"1:Y:Sce>`B_J%64=RF'9MJf:H'm*VO;IP_/;Po+H,GB/#ANV/>(0qiC&T3M'9gh9>A5X.O'[O!-b/K1.CjVKU8PdREVD=-gSF6*nF=>UXU_5DngMcb=DoEN1d&g.=d88orJam$gi\ID>O[Np5bN+:P5^FBKLdn56_2MtM<'?A\`D!'fKp7H"3rXMgQ\0[aU9'/]9!Obj@Q1cJh(n2n"8rlos*.9^0QgWLK!<Q*iUD1h;+^j81+f@_Q)TYhn$n$Ccqp$BEJ2;74iQ@g_gL/Bf^ZEPfJ_r/PXjtkY)b"b!4#8HBJL<[@el*e/qe<jitsfgk!)H]rY>(-bR7qedYj!^TJ2CQ7?iUCD(BFH/$L%HNmf\RjiC8h]@qg]<p,6[H#kRf,YY1I\RlZ9a2b^_E-la]e5.@E*QpBG@6/cF,<24>_)&;n@'Te!`*N:c5>)=(e2Jhm1&7+`iG2`WW+Tb0L1R&o]B0DB\ks)cQXok-1ca`VUP_="E/"KhdqB<4&PcPG?AFSYW,7#7W)<I/9'/,VW!TJ8;FVlj!8P$7Zi+/J/"%M)ES/Z`g`+:B;,i5,Qj2;.U-p8)c(<Au72<f*%,>X;mVW1iMVg<6WB`f8C?a0kf``eSYe/h&cl%N>GqZ1DkubB.=96:2k27f[gH9ge;;,5?M2M=d+sj$o$C!O[6?Td<7#?8QQ4;Ipal3TbXj5m]I$.us6e"<+Zr8F=&,ti=)TdcA4+F.!X61@dZeOaUhhjXYcLXVa7*l0G+SLR)Asip7SM^Mr^kJ#:=ATKgLJu@4R2u`XB7&o_oAj;Vme/pUJ(!TSEL2]lN,E&rFQrFYb?"P<]7qO]cY^>CisOoa0K$<Z14o2jbBg&\(`!k";'2lsCtd)M*lH4^^,\!G>1p>]7OIf<NFSjUD_RnMc!sFDbE!)``n>%lY4#Q(HHcGc(P)Nhb^',7eh@E<=Q:?o=(<OH?e*Qaoh;n-@MdHX#C-jPT.ZG^JeE,@e/gD#e?jK>(1Os<?VnM""jBHW\'IV]%Mq&X/+j)kCW0sJQ*p3:p.K+KTMmT3r@$1.r`YuHX+-K1`4MK-g]cf+A>sO;f)+aXC?j*Ji3On!rt;7gh<b`F3T@qBcSf+[r0!C1X!?C=7JH9We&>8+1q8<U`4Tt=%@AY0en^nbO22c!HGLA%]TNeB^,TGQkECk"&c1TTeN%]E-_[N&jjG-Ui_$oV$Md,0Vh\2gpW%9^i6SeJ7:jp0P#\X=>;L&5p8)):1=Nd+(45(P/@IE3HCnLSRnN/PF[\#Gru3CFJ)ArG8apaKQY7<g;o;4ZD8D,fnF\,pq#.X2G_%bEL2Uc9a&R<qMnWNa(_/\ko6F6]U:uQM[Z[)ebZp;^lHGm7?E"l//`eXd_=DXjDAjD&I4iE3,6NGAA[lGb]E-*C>nErLDgd&eS(CQP+T:lBj`7eI/8$W2kPo8,B5+&])4s&]"\&KG4IF>N[U$oGbKS;?>m(gZ,+CV4_Rf[;NBW2\[oc#ehdm7C)m'!+?`grc9rPos?k2)@/8a:K".VlVIt\Ijrj=Z;1m%"(rfKip;>]mmqSHL\i5gZ,r:(WL:t85M0rnN[B3@EXU($;65s=oma/=J$iHJH(@_]*N^eOK2csIgm2gj`:l2t[Z@H2/Cds\*#J=S=c\UOLbHa[Yf)V1A:0c"DDKpT+L/">CKgQ@rK#^kbkL-&En!$K""qc/:]m(9qX^.U8u4&F8f>gL`+SY"$8foFC!N$.V)$WbTU^Tq#,#4E]"MHG"l/J;hDHUZH13gTZ;onnp?E0ZToCmC0kCmC0kCcs)r]?JB`G5_SbJfI8~>endstream
+[ 51 0 R 52 0 R ]
 endobj
 19 0 obj
 <<
-/Filter [ /ASCII85Decode /FlateDecode ] /Length 2129
+/Contents 20 0 R
+/MediaBox [ 0 0 612 792 ]
+/Resources <<
+/Font 11 0 R
+/ProcSet [ /ImageB /ImageC /ImageI /PDF /Text ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
+>>
+endobj
+20 0 obj
+[ 54 0 R 55 0 R ]
+endobj
+21 0 obj
+<<
+/Contents 22 0 R
+/MediaBox [ 0 0 612 792 ]
+/Resources <<
+/Font 11 0 R
+/ProcSet [ /ImageB /ImageC /ImageI /PDF /Text ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
+>>
+endobj
+22 0 obj
+[ 57 0 R 58 0 R ]
+endobj
+23 0 obj
+<<
+/Contents 24 0 R
+/MediaBox [ 0 0 612 792 ]
+/Resources <<
+/Font 11 0 R
+/ProcSet [ /ImageB /ImageC /ImageI /PDF /Text ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
+>>
+endobj
+24 0 obj
+[ 60 0 R 61 0 R ]
+endobj
+25 0 obj
+<<
+/Contents 26 0 R
+/MediaBox [ 0 0 612 792 ]
+/Resources <<
+/Font 27 0 R
+/ProcSet [ /ImageB /ImageC /ImageI /PDF /Text ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
+>>
+endobj
+26 0 obj
+[ 63 0 R 64 0 R ]
+endobj
+27 0 obj
+<<
+/F1 28 0 R
+/F1-0 62 0 R
+/F1-1 65 0 R
+/F1-2 68 0 R
+/F1-3 71 0 R
+/F1-4 74 0 R
+/F1-5 77 0 R
+/F2 29 0 R
+/F3 30 0 R
+>>
+endobj
+28 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+29 0 obj
+<<
+/BaseFont /Helvetica-Bold
+/Encoding /WinAnsiEncoding
+/Name /F2
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+30 0 obj
+<<
+/BaseFont /Times-Roman
+/Encoding /WinAnsiEncoding
+/Name /F3
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+31 0 obj
+<<
+/Contents 32 0 R
+/MediaBox [ 0 0 612 792 ]
+/Resources <<
+/Font 27 0 R
+/ProcSet [ /ImageB /ImageC /ImageI /PDF /Text ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
+>>
+endobj
+32 0 obj
+[ 66 0 R 67 0 R ]
+endobj
+33 0 obj
+<<
+/Contents 34 0 R
+/MediaBox [ 0 0 612 792 ]
+/Resources <<
+/Font 27 0 R
+/ProcSet [ /ImageB /ImageC /ImageI /PDF /Text ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
+>>
+endobj
+34 0 obj
+[ 69 0 R 70 0 R ]
+endobj
+35 0 obj
+<<
+/Contents 36 0 R
+/MediaBox [ 0 0 612 792 ]
+/Resources <<
+/Font 27 0 R
+/ProcSet [ /ImageB /ImageC /ImageI /PDF /Text ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
+>>
+endobj
+36 0 obj
+[ 72 0 R 73 0 R ]
+endobj
+37 0 obj
+<<
+/Contents 38 0 R
+/MediaBox [ 0 0 612 792 ]
+/Resources <<
+/Font 27 0 R
+/ProcSet [ /ImageB /ImageC /ImageI /PDF /Text ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
+>>
+endobj
+38 0 obj
+[ 75 0 R 76 0 R ]
+endobj
+39 0 obj
+<<
+/Contents 40 0 R
+/MediaBox [ 0 0 612 792 ]
+/Resources <<
+/Font 27 0 R
+/ProcSet [ /ImageB /ImageC /ImageI /PDF /Text ]
+>>
+/Rotate 0
+/Trans <<
+>>
+/Type /Page
+/Parent 2 0 R
+>>
+endobj
+40 0 obj
+[ 78 0 R 79 0 R ]
+endobj
+41 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+42 0 obj
+<<
+/Length 7131
 >>
 stream
-Gatm;>C4gY&:O#NR"t'X"VTFMYNbI=P]GIF!Xg<t;dWL.8HcI:A@lRLJ`"13^>r1\5RZYJ<lUo&d:h[d#pU6.f)/6_U8MK^I_gh[)Gc1bN_e\:oR)&Uq1*UV5tDUZTaVgGfua<'jM\UbE;Y;$GHD1logYI*GR"/gjlEXrO*jE/8k0\tr'\<J>@"7$l%7cms&:_$7,s=bIVbRh_e7/43/XiugX7cn_f;'O%4=F]F"\YKe2uEFe@1Ro(i^%4bh0qjL3$$)EZn+KVhN3XV(-\D'>ZWn*Uc,P6"-%,TDZd,+ns)LRQQ<:qrqH4<SO\tCh?OX%hQaSLM+P6\_f(JpR-s7rN,hb5&5OYkY8$q)Dru)?(Gfm3J;Kb1Yl[:[B,<Z2U].0b2'Jr#EdPW6d9IiH@Kb75;u^?47;P,6D1cqbW/PeHan@Ala-)_P;M6@[_FMOSM2Pci]$_n@theu`Uha/o3t>Br*b`.X:8D]3mVB"b&j[9jR0Bt48I5bUs#N$bUGNaHo)sUF8l%YXqMe<SrikTX(lphR?3$!1%JN'cncm^WF!AW+q%hfElV#7,F>,%*$4*HFK;`a4IrH[jS4KUKdkBs,u)AV2aWB3Bq\7(;'O.gGJ&sYo@efC)=B1Gq"3/$M9>O&UYBfM^*)RVhVj"ar8?OFi.P45I%Dd_p;ujO7p^@MA(2gBI$,58Bk*qJ5Sq&g[QFI?-!eVbOKB+"7QJqp)D5!?I$3fg^/J$4ONI.cd=sB6.=^=V`rd\-Kl.S<6FQrHVo:BO/m]SY!A.>[OuGO<<uJ\iUi%Q$[j7G(mG"gg>4h'TI(^JCg^:=MAH8#sL.*`tGdK4WH5Z/RjLlAt[_D.8p\jMqGRjeF?c0JtnXfjN\&OBGUR=l"VPhUc,KJtrmi<818&0:p7CX<)0e`+3o'Z&!4]'RDLM5`IKt<E2E+24EK+Q]BPquiZ8UjRcUGlJ:@KKgVaeCO`)A9&]Ieh'!+FkfmOJ$$(8<p&\N4-HdBWp[%ZL'LL,ZXKA7WVQcg$J'dF_&Zj'T!g&4;1SYmHYBj=P->]WJjeRW`5-0[[Pd@k;V%0o/5!".SY1TJFVELn:`(i6]')D@:0uC8U@/8M6@n+*WbhEX1l2PGOeF>#[f9Nc*?DR<SDNn/[K9H*!A5,ThJ8ONNP^I;Lrb>Ag2kmFc=Rk!b=ZC3CM0L>BKg*.a*bJT2A`S;LTEpi$&+acJ\+2o'nkuI'@h9HejeX*\cYFm/X_->\p>nQT5Wr^Jb>s?\th\&pEKZ^;GB&f7/6*Q\iEU$X)"l(D('jG5>^DVGh1M2N,IrJj$6`'kc9BC,83#PgLlbH?IOsr'?Xb_T;7Jp7AM(%eO+U5j$U[:?MiFaePuSZ2[YdZEor*K6tI;O(**=PdQc_)%A!=-BmEOb0[L"A.7[)XjN@n+R#ZG<M9Co7KMAqr,sH(jk4Qboi%[]Hh,skqce,gJ)frmpF(,Mk,f%VnXFoQU&3af_srfNpq.GUWfT%rWi-,=Ni<",!u$Sj(1k0<X/tD,:[No*aD.Wu\$ET'kC'+Q@jghJ!=YCJk0rDo!^!8a(Y,U7Gl?JP[EQB9[kF4]k,Ktp=JO'&Eabi4.9A8,8+Rse6sp\)1)EBj)Ij.(4r"^a\:KJl\P2HWpj4\S[jP7#oh>Y"db/)K)a!)OQc3`H(A,6j=S";Ok@IuGbMo0LLr\3j$X9<QY,+6qV=rS8mpL+i]B]\_kPaj[GXn[+?#bY(Jd0/9#.kg!C+dhL02EA31b?H%iAlmW81cQ1Vf(#rM6fn*\D]67b'eA^NP,,l`50jtQpSETfO@9Gcd(F?]fJ<+rVYZ.`\UV(Ia5e!$*3<mG\qg`XV9(p5Z"Qsg*IXP'PUmC\Lp/QFce6r3c?R^q.C+V<e.b1X.N_!6oOL3/_d`M&h6n4.=iD+rmtZ?_,@Y@H9%W2UhTnHZmo_3jPYHC2b@j?K,o7gOMJC`LbZA4Z1VL]fX)D`'U8eQW%iXq%Cscad\5-++dOE2BrPl8p,?Jb@jf8WNh4>SJ2TZk,J"<""2E8g-S"eH46GOd]h_X5K@Ad!eXF:r7$T_F]T,9q71JO"b1;-+U9\.q,Iarp:h^B^8L!>_jc5boLdoR[EU!s\O2IpuLGq!%bo>p*In%eq?2~>endstream
+q
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 56 714 cm
+q
+.101961 .211765 .364706 rg
+BT 1 0 0 1 0 -2 Tm /F2 24 Tf 22 TL 91.3 0 Td (AI Trading Research Report) Tj T* -91.3 0 Td ET
+Q
+Q
+q
+1 0 0 1 56 695 cm
+q
+BT 1 0 0 1 0 3.5 Tm 113.7605 0 Td 13 TL /F1 9.5 Tf .176471 .215686 .282353 rg (Generated by AI Trading Analyst \267 October 27, 2026 \267 2 analyses) Tj T* -113.7605 0 Td ET
+Q
+Q
+q
+1 0 0 1 56 681 cm
+Q
+q
+1 0 0 1 57.6 653 cm
+q
+1 1 .941176 rg
+n 0 28 496.8 -28 re f*
+0 0 0 rg
+BT /F1 10 Tf 12 TL ET
+q
+1 0 0 1 6 3 cm
+q
+BT 1 0 0 1 0 13.5 Tm 11 TL /F2 8.5 Tf .176471 .215686 .282353 rg (DISCLAIMER:) Tj /F1 8.5 Tf ( For educational/research purposes only. Not financial advice. Scores are structured opinions from web research) Tj T* (and computed indicators, not backtested signals. AI-generated analysis may contain errors; verify all data independently.) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+.839216 .619608 .180392 RG
+.8 w
+n 0 28 m 496.8 28 l S
+n 0 0 m 496.8 0 l S
+n 0 0 m 0 28 l S
+n 496.8 0 m 496.8 28 l S
+Q
+Q
+Q
+q
+1 0 0 1 56 637 cm
+Q
+q
+1 0 0 1 56 607 cm
+q
+.101961 .211765 .364706 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Executive Summary) Tj T* ET
+Q
+Q
+q
+1 0 0 1 57.6 527 cm
+q
+.101961 .211765 .364706 rg
+n 0 74 496.8 -18 re f*
+1 1 1 rg
+BT /F1 8.5 Tf 12 TL ET
+BT 1 0 0 1 6 62.5 Tm (Ticker) Tj T* ET
+BT 1 0 0 1 60 62.5 Tm (Score) Tj T* ET
+BT 1 0 0 1 106.8 62.5 Tm (Grade) Tj T* ET
+BT 1 0 0 1 142.8 62.5 Tm (Signal) Tj T* ET
+BT 1 0 0 1 225.6 62.5 Tm (Price \(10/27\)) Tj T* ET
+BT 1 0 0 1 294 62.5 Tm (Action) Tj T* ET
+0 0 0 rg
+BT 1 0 0 1 6 39.5 Tm (AAPL) Tj T* ET
+BT 1 0 0 1 60 39.5 Tm (64/100) Tj T* ET
+.839216 .619608 .180392 rg
+BT 1 0 0 1 106.8 39.5 Tm (B) Tj T* ET
+BT 1 0 0 1 142.8 39.5 Tm (Hold / Accumulate) Tj T* ET
+0 0 0 rg
+BT 1 0 0 1 225.6 39.5 Tm ($347.10) Tj T* ET
+q
+1 0 0 1 294 31 cm
+q
+.176471 .215686 .282353 rg
+BT 1 0 0 1 0 13.5 Tm /F1 8.5 Tf 11 TL -0.0213 Tw (Wait for Nov 2 earnings; buy a dip to $331-338 \(stop) Tj T* 0 Tw ($327\) or a close above $351.73 \(stop $338\)) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 11.5 Tm (BTC/USD) Tj T* ET
+BT 1 0 0 1 60 11.5 Tm (48/100) Tj T* ET
+.866667 .419608 .12549 rg
+BT 1 0 0 1 106.8 11.5 Tm (C) Tj T* ET
+BT 1 0 0 1 142.8 11.5 Tm (Neutral) Tj T* ET
+0 0 0 rg
+BT 1 0 0 1 225.6 11.5 Tm ($80,820) Tj T* ET
+q
+1 0 0 1 294 3 cm
+q
+.176471 .215686 .282353 rg
+BT 1 0 0 1 0 13.5 Tm /F1 8.5 Tf 11 TL (Stay out; buy only on a positive 28-day momentum) Tj T* (Sunday or a daily close above $84k \(stop $78.5k\)) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+.886275 .909804 .941176 RG
+.5 w
+n 0 74 m 496.8 74 l S
+n 0 0 m 496.8 0 l S
+n 0 0 m 0 74 l S
+n 496.8 0 m 496.8 74 l S
+n 0 56 m 496.8 56 l S
+n 0 28 m 496.8 28 l S
+n 54 0 m 54 74 l S
+n 100.8 0 m 100.8 74 l S
+n 136.8 0 m 136.8 74 l S
+n 219.6 0 m 219.6 74 l S
+n 288 0 m 288 74 l S
+Q
+Q
+Q
+q
+1 0 0 1 56 515 cm
+Q
+q
+1 0 0 1 56 496 cm
+q
+BT 1 0 0 1 0 3.5 Tm 13 TL /F2 9.5 Tf .176471 .215686 .282353 rg (Top conviction:) Tj /F1 9.5 Tf ( none. Neither analysis supports buying today; both say wait for a dated event to resolve.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 491 cm
+Q
+q
+1 0 0 1 56 459 cm
+q
+BT 1 0 0 1 0 16.5 Tm 13 TL /F2 9.5 Tf .176471 .215686 .282353 rg (Biggest risk flags:) Tj /F1 9.5 Tf ( AAPL at ~40x trailing earnings into a high guidance bar \(last print -7.35%\). BTC in a descending) Tj T* (triangle on $79.1k with a hiking Fed and ~70% of Binance accounts long.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 454 cm
+Q
+q
+1 0 0 1 56 422 cm
+q
+BT 1 0 0 1 0 16.5 Tm 13 TL /F2 9.5 Tf .176471 .215686 .282353 rg (Only tested evidence:) Tj /F1 9.5 Tf ( the repo's 28-day crypto momentum rule \(trading-desk/trend\), which is in cash since 10/25. Its) Tj T* (backtest missed its own significance bar \(p = 0.025 vs 0.0167\), so it is used as a risk filter, not a forecast.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 417 cm
+Q
+q
+1 0 0 1 56 385 cm
+q
+BT 1 0 0 1 0 16.5 Tm -0.03725 Tw 13 TL /F2 9.5 Tf .176471 .215686 .282353 rg (Signal labels:) Tj /F1 9.5 Tf ( the stock pages use the PDF script's labels, which call a 40-54 score CAUTION. The analysis files call a) Tj T* 0 Tw (C grade Neutral; it is the same score band.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 380 cm
+Q
+q
+1 0 0 1 56 372 cm
+Q
+q
+1 0 0 1 56 342 cm
+q
+.101961 .211765 .364706 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Upcoming Catalysts) Tj T* ET
+Q
+Q
+q
+1 0 0 1 57.6 174 cm
+q
+.101961 .211765 .364706 rg
+n 0 162 496.8 -18 re f*
+1 1 1 rg
+n 0 144 496.8 -18 re f*
+.968627 .980392 .988235 rg
+n 0 126 496.8 -18 re f*
+1 1 1 rg
+n 0 108 496.8 -18 re f*
+.968627 .980392 .988235 rg
+n 0 90 496.8 -18 re f*
+1 1 1 rg
+n 0 72 496.8 -18 re f*
+.968627 .980392 .988235 rg
+n 0 54 496.8 -18 re f*
+1 1 1 rg
+n 0 36 496.8 -18 re f*
+.968627 .980392 .988235 rg
+n 0 18 496.8 -18 re f*
+1 1 1 rg
+BT /F1 8.5 Tf 12 TL ET
+BT 1 0 0 1 6 150.5 Tm (Date) Tj T* ET
+BT 1 0 0 1 92.4 150.5 Tm (Ticker) Tj T* ET
+BT 1 0 0 1 135.6 150.5 Tm (Event) Tj T* ET
+BT 1 0 0 1 423.6 150.5 Tm (Impact) Tj T* ET
+0 0 0 rg
+BT 1 0 0 1 6 132.5 Tm (Wed Oct 28) Tj T* ET
+BT 1 0 0 1 92.4 132.5 Tm (BTC) Tj T* ET
+BT 1 0 0 1 135.6 132.5 Tm (FOMC decision + press conference) Tj T* ET
+BT 1 0 0 1 423.6 132.5 Tm (Very high) Tj T* ET
+BT 1 0 0 1 6 114.5 Tm (Fri Oct 30) Tj T* ET
+BT 1 0 0 1 92.4 114.5 Tm (BTC) Tj T* ET
+BT 1 0 0 1 135.6 114.5 Tm (Deribit monthly expiry \(~$11B, max pain $76-79k\)) Tj T* ET
+BT 1 0 0 1 423.6 114.5 Tm (High) Tj T* ET
+BT 1 0 0 1 6 96.5 Tm (Sun Nov 1 / 8 / 15) Tj T* ET
+BT 1 0 0 1 92.4 96.5 Tm (BTC) Tj T* ET
+BT 1 0 0 1 135.6 96.5 Tm (Momentum checks: need > $86,480 / $83,679 / $82,018) Tj T* ET
+BT 1 0 0 1 423.6 96.5 Tm (Entry trigger) Tj T* ET
+BT 1 0 0 1 6 78.5 Tm (Mon Nov 2) Tj T* ET
+BT 1 0 0 1 92.4 78.5 Tm (AAPL) Tj T* ET
+BT 1 0 0 1 135.6 78.5 Tm (FQ4 earnings + Dec-quarter guide \(first Ternus call\); implied +/-4.5%) Tj T* ET
+BT 1 0 0 1 423.6 78.5 Tm (Very high) Tj T* ET
+BT 1 0 0 1 6 60.5 Tm (Tue Nov 10) Tj T* ET
+BT 1 0 0 1 92.4 60.5 Tm (Both) Tj T* ET
+BT 1 0 0 1 135.6 60.5 Tm (October CPI \(December hike odds\)) Tj T* ET
+BT 1 0 0 1 423.6 60.5 Tm (High) Tj T* ET
+BT 1 0 0 1 6 42.5 Tm (Dec 8-9) Tj T* ET
+BT 1 0 0 1 92.4 42.5 Tm (Both) Tj T* ET
+BT 1 0 0 1 135.6 42.5 Tm (FOMC) Tj T* ET
+BT 1 0 0 1 423.6 42.5 Tm (High) Tj T* ET
+BT 1 0 0 1 6 24.5 Tm (By Dec 31) Tj T* ET
+BT 1 0 0 1 92.4 24.5 Tm (AAPL) Tj T* ET
+BT 1 0 0 1 135.6 24.5 Tm (Gemini-powered Siri due) Tj T* ET
+BT 1 0 0 1 423.6 24.5 Tm (Medium-High) Tj T* ET
+BT 1 0 0 1 6 6.5 Tm (Late Jan 2027) Tj T* ET
+BT 1 0 0 1 92.4 6.5 Tm (AAPL) Tj T* ET
+BT 1 0 0 1 135.6 6.5 Tm (FQ1 FY27 report) Tj T* ET
+BT 1 0 0 1 423.6 6.5 Tm (High) Tj T* ET
+q
+1 J
+1 j
+.886275 .909804 .941176 RG
+.5 w
+n 0 162 m 496.8 162 l S
+n 0 0 m 496.8 0 l S
+n 0 0 m 0 162 l S
+n 496.8 0 m 496.8 162 l S
+n 0 144 m 496.8 144 l S
+n 0 126 m 496.8 126 l S
+n 0 108 m 496.8 108 l S
+n 0 90 m 496.8 90 l S
+n 0 72 m 496.8 72 l S
+n 0 54 m 496.8 54 l S
+n 0 36 m 496.8 36 l S
+n 0 18 m 496.8 18 l S
+n 86.4 0 m 86.4 162 l S
+n 129.6 0 m 129.6 162 l S
+n 417.6 0 m 417.6 162 l S
+Q
+Q
+Q
+q
+1 0 0 1 56 160 cm
+Q
+q
+1 0 0 1 56 130 cm
+q
+.101961 .211765 .364706 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Contents) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 111 cm
+q
+BT 1 0 0 1 0 3.5 Tm 13 TL /F1 9.5 Tf .176471 .215686 .282353 rg (1. Executive summary \(this page\)  ) Tj (\267) Tj (  2-7. AAPL  ) Tj (\267) Tj (  8-13. BTC/USD) Tj T* ET
+Q
+Q
+ 
+
+Q
+
+endstream
+endobj
+43 0 obj
+<<
+/Length 401
+>>
+stream
+q
+0.0 0.0 612 792 re
+W
+n
+1 0 0 1 0 0 cm
+BT
+/F1-0 12 Tf
+14.4 TL
+ET
+1 1 1 rg
+n
+0 0 612 30 re
+f*
+0.886275 0.909804 0.941176 RG
+n
+40 30 m
+572 30 l
+S
+BT
+/F1-0 7 Tf
+8.4 TL
+ET
+0.443137 0.501961 0.588235 rg
+BT
+1 0 0 1 40 18 Tm
+(DISCLAIMER\072 For educational\057research purposes only\056 Not financial advice\056  \174  Generated 2026\05510\05527) Tj
+T*
+ET
+BT
+1 0 0 1 532.303 18 Tm
+(Page 1 of 13) Tj
+T*
+ET
+Q
+
+endstream
+endobj
+44 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+45 0 obj
+<<
+/Length 2726
+>>
+stream
+q
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 56 678.4 cm
+Q
+q
+1 0 0 1 56 642.4 cm
+q
+.039216 .054902 .152941 rg
+BT 1 0 0 1 0 6 Tm /F2 30 Tf 36 TL 57.46 0 Td (AI Trading Analysis Report) Tj T* -57.46 0 Td ET
+Q
+Q
+q
+1 0 0 1 56 603.4 cm
+Q
+q
+1 0 0 1 56 547.4 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 8 Tm /F2 48 Tf 56 TL 184.672 0 Td (AAPL) Tj T* -184.672 0 Td ET
+Q
+Q
+q
+1 0 0 1 56 535.4 cm
+Q
+q
+1 0 0 1 56 523.4 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 -4 Tm /F1 16 Tf 12 TL (Apple Inc.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 511.4 cm
+Q
+q
+1 0 0 1 56 499.4 cm
+q
+.470588 .564706 .611765 rg
+BT 1 0 0 1 0 -2 Tm /F1 14 Tf 12 TL (Generated: October 27, 2026 \(data as of 10/27 close, $347.10\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 453.4 cm
+Q
+q
+1 0 0 1 56 293.4 cm
+q
+1 0 0 1 0 0 cm
+0 0 0 RG
+1 w
+0 J
+0 j
+[] 0 d
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 0 0 cm
+q
+.941176 .956863 .972549 rg
+.796078 .835294 .882353 RG
+2 w
+0 J
+0 j
+[] 0 d
+n
+150 80 m
+150 118.6599 118.6599 150 80 150 c
+41.34007 150 10 118.6599 10 80 c
+10 41.34007 41.34007 10 80 10 c
+118.6599 10 150 41.34007 150 80 c
+B*
+Q
+q
+1 .596078 0 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+142 80 m
+142 114.2417 114.2417 142 80 142 c
+45.75835 142 18 114.2417 18 80 c
+18 45.75835 45.75835 18 80 18 c
+114.2417 18 142 45.75835 142 80 c
+f*
+Q
+q
+1 1 1 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+128 80 m
+128 106.5097 106.5097 128 80 128 c
+53.49033 128 32 106.5097 32 80 c
+32 53.49033 53.49033 32 80 32 c
+106.5097 32 128 53.49033 128 80 c
+f*
+Q
+q
+BT /F2 36 Tf 43.2 TL ET
+BT /F2 36 Tf 43.2 TL ET
+.039216 .054902 .152941 rg
+BT 1 0 0 1 59.984 82 Tm (64) Tj T* ET
+Q
+q
+BT /F1 10 Tf 12 TL ET
+BT /F1 10 Tf 12 TL ET
+.470588 .564706 .611765 rg
+BT 1 0 0 1 68.88 62 Tm (/ 100) Tj T* ET
+Q
+Q
+Q
+Q
+q
+1 0 0 1 56 258.4 cm
+Q
+q
+1 0 0 1 56 236.4 cm
+q
+BT 1 0 0 1 0 4 Tm 118.456 0 Td 22 TL /F2 18 Tf .039216 .054902 .152941 rg (Trade Score: ) Tj 1 .596078 0 rg (64/100) Tj .039216 .054902 .152941 rg ( \(Grade: ) Tj 1 .596078 0 rg (B) Tj .039216 .054902 .152941 rg (\)) Tj T* -118.456 0 Td ET
+Q
+Q
+q
+1 0 0 1 56 218.4 cm
+Q
+q
+1 0 0 1 56 196.4 cm
+q
+BT 1 0 0 1 0 -2 Tm 172.66 0 Td 22 TL /F2 24 Tf .129412 .588235 .952941 rg (Signal: HOLD) Tj T* -172.66 0 Td ET
+Q
+Q
+q
+1 0 0 1 56 152.4 cm
+Q
+q
+1 0 0 1 56 117.4 cm
+q
+.470588 .564706 .611765 rg
+BT 1 0 0 1 0 20.5 Tm /F1 6.5 Tf 9 TL (DISCLAIMER: This report is generated by AI for educational and research purposes only. It is NOT financial advice. It does NOT constitute a recommendation to buy, sell, or) Tj T* (hold any security. Past performance does not guarantee future results. Always do your own due diligence and consult a licensed financial advisor before making investment) Tj T* (decisions. The authors and creators of this tool accept no liability for any losses incurred.) Tj T* ET
+Q
+Q
+ 
+
+Q
+
+endstream
+endobj
+46 0 obj
+<<
+/Length 401
+>>
+stream
+q
+0.0 0.0 612 792 re
+W
+n
+1 0 0 1 0 0 cm
+BT
+/F1-0 12 Tf
+14.4 TL
+ET
+1 1 1 rg
+n
+0 0 612 30 re
+f*
+0.886275 0.909804 0.941176 RG
+n
+40 30 m
+572 30 l
+S
+BT
+/F1-0 7 Tf
+8.4 TL
+ET
+0.443137 0.501961 0.588235 rg
+BT
+1 0 0 1 40 18 Tm
+(DISCLAIMER\072 For educational\057research purposes only\056 Not financial advice\056  \174  Generated 2026\05510\05527) Tj
+T*
+ET
+BT
+1 0 0 1 532.303 18 Tm
+(Page 2 of 13) Tj
+T*
+ET
+Q
+
+endstream
+endobj
+47 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+48 0 obj
+<<
+/Length 6279
+>>
+stream
+q
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 56 714 cm
+q
+.039216 .054902 .152941 rg
+BT 1 0 0 1 0 2 Tm /F2 20 Tf 22 TL (Score Dashboard) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 698 cm
+Q
+q
+1 0 0 1 56 518 cm
+q
+1 0 0 1 0 0 cm
+0 0 0 RG
+1 w
+0 J
+0 j
+[] 0 d
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 0 0 cm
+q
+BT /F1 9 Tf 10.8 TL ET
+BT /F1 9 Tf 10.8 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 5 160 Tm (Technical Strength) Tj T* ET
+Q
+q
+.941176 .956863 .972549 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 155 m
+437 155 l
+438.6584 155 440 156.3416 440 158 c
+440 172 l
+440 173.6584 438.6584 175 437 175 c
+173 175 l
+171.3416 175 170 173.6584 170 172 c
+170 158 l
+170 156.3416 171.3416 155 173 155 c
+h
+f*
+Q
+q
+0 .784314 .32549 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 155 m
+364.1 155 l
+365.7584 155 367.1 156.3416 367.1 158 c
+367.1 172 l
+367.1 173.6584 365.7584 175 364.1 175 c
+173 175 l
+171.3416 175 170 173.6584 170 172 c
+170 158 l
+170 156.3416 171.3416 155 173 155 c
+h
+f*
+Q
+q
+BT /F2 10 Tf 12 TL ET
+BT /F2 10 Tf 12 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 450 160 Tm (73/100) Tj T* ET
+Q
+q
+BT /F1 9 Tf 10.8 TL ET
+BT /F1 9 Tf 10.8 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 5 128 Tm (Fundamental Quality) Tj T* ET
+Q
+q
+.941176 .956863 .972549 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 123 m
+437 123 l
+438.6584 123 440 124.3416 440 126 c
+440 140 l
+440 141.6584 438.6584 143 437 143 c
+173 143 l
+171.3416 143 170 141.6584 170 140 c
+170 126 l
+170 124.3416 171.3416 123 173 123 c
+h
+f*
+Q
+q
+0 .784314 .32549 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 123 m
+361.4 123 l
+363.0584 123 364.4 124.3416 364.4 126 c
+364.4 140 l
+364.4 141.6584 363.0584 143 361.4 143 c
+173 143 l
+171.3416 143 170 141.6584 170 140 c
+170 126 l
+170 124.3416 171.3416 123 173 123 c
+h
+f*
+Q
+q
+BT /F2 10 Tf 12 TL ET
+BT /F2 10 Tf 12 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 450 128 Tm (72/100) Tj T* ET
+Q
+q
+BT /F1 9 Tf 10.8 TL ET
+BT /F1 9 Tf 10.8 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 5 96 Tm (Sentiment & Momentum) Tj T* ET
+Q
+q
+.941176 .956863 .972549 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 91 m
+437 91 l
+438.6584 91 440 92.3416 440 94 c
+440 108 l
+440 109.6584 438.6584 111 437 111 c
+173 111 l
+171.3416 111 170 109.6584 170 108 c
+170 94 l
+170 92.3416 171.3416 91 173 91 c
+h
+f*
+Q
+q
+1 .596078 0 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 91 m
+312.8 91 l
+314.4584 91 315.8 92.3416 315.8 94 c
+315.8 108 l
+315.8 109.6584 314.4584 111 312.8 111 c
+173 111 l
+171.3416 111 170 109.6584 170 108 c
+170 94 l
+170 92.3416 171.3416 91 173 91 c
+h
+f*
+Q
+q
+BT /F2 10 Tf 12 TL ET
+BT /F2 10 Tf 12 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 450 96 Tm (54/100) Tj T* ET
+Q
+q
+BT /F1 9 Tf 10.8 TL ET
+BT /F1 9 Tf 10.8 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 5 64 Tm (Risk Profile) Tj T* ET
+Q
+q
+.941176 .956863 .972549 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 59 m
+437 59 l
+438.6584 59 440 60.3416 440 62 c
+440 76 l
+440 77.6584 438.6584 79 437 79 c
+173 79 l
+171.3416 79 170 77.6584 170 76 c
+170 62 l
+170 60.3416 171.3416 59 173 59 c
+h
+f*
+Q
+q
+1 .596078 0 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 59 m
+323.6 59 l
+325.2584 59 326.6 60.3416 326.6 62 c
+326.6 76 l
+326.6 77.6584 325.2584 79 323.6 79 c
+173 79 l
+171.3416 79 170 77.6584 170 76 c
+170 62 l
+170 60.3416 171.3416 59 173 59 c
+h
+f*
+Q
+q
+BT /F2 10 Tf 12 TL ET
+BT /F2 10 Tf 12 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 450 64 Tm (58/100) Tj T* ET
+Q
+q
+BT /F1 9 Tf 10.8 TL ET
+BT /F1 9 Tf 10.8 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 5 32 Tm (Thesis Conviction) Tj T* ET
+Q
+q
+.941176 .956863 .972549 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 27 m
+437 27 l
+438.6584 27 440 28.3416 440 30 c
+440 44 l
+440 45.6584 438.6584 47 437 47 c
+173 47 l
+171.3416 47 170 45.6584 170 44 c
+170 30 l
+170 28.3416 171.3416 27 173 27 c
+h
+f*
+Q
+q
+1 .596078 0 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 27 m
+315.5 27 l
+317.1584 27 318.5 28.3416 318.5 30 c
+318.5 44 l
+318.5 45.6584 317.1584 47 315.5 47 c
+173 47 l
+171.3416 47 170 45.6584 170 44 c
+170 30 l
+170 28.3416 171.3416 27 173 27 c
+h
+f*
+Q
+q
+BT /F2 10 Tf 12 TL ET
+BT /F2 10 Tf 12 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 450 32 Tm (55/100) Tj T* ET
+Q
+Q
+Q
+Q
+q
+1 0 0 1 56 502 cm
+Q
+q
+1 0 0 1 56 488 cm
+q
+BT 1 0 0 1 0 2 Tm 73.252 0 Td 14 TL /F2 12 Tf .117647 .160784 .231373 rg (Composite Trade Score: ) Tj 1 .596078 0 rg (64/100) Tj .117647 .160784 .231373 rg (   |   Grade: ) Tj 1 .596078 0 rg (B) Tj .117647 .160784 .231373 rg (   |   Signal: ) Tj .129412 .588235 .952941 rg (HOLD) Tj T* -73.252 0 Td ET
+Q
+Q
+q
+1 0 0 1 106 332 cm
+q
+.039216 .054902 .152941 rg
+n 0 144 400 -24 re f*
+1 1 1 rg
+n 0 120 400 -24 re f*
+.941176 .956863 .972549 rg
+n 0 96 400 -24 re f*
+1 1 1 rg
+n 0 72 400 -24 re f*
+.941176 .956863 .972549 rg
+n 0 48 400 -24 re f*
+1 1 1 rg
+n 0 24 400 -24 re f*
+1 1 1 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 6 129 Tm (Category) Tj T* ET
+BT 1 0 0 1 187.4945 129 Tm (Score) Tj T* ET
+BT 1 0 0 1 255.0015 129 Tm (Weight) Tj T* ET
+BT 1 0 0 1 336.248 129 Tm (Status) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 105 Tm (Technical Strength) Tj T* ET
+BT 1 0 0 1 186.239 105 Tm (73/100) Tj T* ET
+BT 1 0 0 1 260.9955 105 Tm (25%) Tj T* ET
+0 .784314 .32549 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 335.501 105 Tm (Strong) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 81 Tm (Fundamental Quality) Tj T* ET
+BT 1 0 0 1 186.239 81 Tm (72/100) Tj T* ET
+BT 1 0 0 1 260.9955 81 Tm (25%) Tj T* ET
+0 .784314 .32549 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 335.501 81 Tm (Strong) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 57 Tm (Sentiment & Momentum) Tj T* ET
+BT 1 0 0 1 186.239 57 Tm (54/100) Tj T* ET
+BT 1 0 0 1 260.9955 57 Tm (20%) Tj T* ET
+1 .596078 0 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 337.247 57 Tm (Mixed) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 33 Tm (Risk Profile) Tj T* ET
+BT 1 0 0 1 186.239 33 Tm (58/100) Tj T* ET
+BT 1 0 0 1 260.9955 33 Tm (15%) Tj T* ET
+1 .596078 0 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 337.247 33 Tm (Mixed) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 9 Tm (Thesis Conviction) Tj T* ET
+BT 1 0 0 1 186.239 9 Tm (55/100) Tj T* ET
+BT 1 0 0 1 260.9955 9 Tm (15%) Tj T* ET
+1 .596078 0 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 337.247 9 Tm (Mixed) Tj T* ET
+q
+1 J
+1 j
+.796078 .835294 .882353 RG
+.5 w
+n 0 144 m 400 144 l S
+n 0 0 m 400 0 l S
+n 0 0 m 0 144 l S
+n 400 0 m 400 144 l S
+n 0 120 m 400 120 l S
+n 0 96 m 400 96 l S
+n 0 72 m 400 72 l S
+n 0 48 m 400 48 l S
+n 0 24 m 400 24 l S
+n 160 0 m 160 144 l S
+n 240 0 m 240 144 l S
+n 300 0 m 300 144 l S
+Q
+Q
+Q
+ 
+
+Q
+
+endstream
+endobj
+49 0 obj
+<<
+/Length 401
+>>
+stream
+q
+0.0 0.0 612 792 re
+W
+n
+1 0 0 1 0 0 cm
+BT
+/F1-1 12 Tf
+14.4 TL
+ET
+1 1 1 rg
+n
+0 0 612 30 re
+f*
+0.886275 0.909804 0.941176 RG
+n
+40 30 m
+572 30 l
+S
+BT
+/F1-1 7 Tf
+8.4 TL
+ET
+0.443137 0.501961 0.588235 rg
+BT
+1 0 0 1 40 18 Tm
+(DISCLAIMER\072 For educational\057research purposes only\056 Not financial advice\056  \174  Generated 2026\05510\05527) Tj
+T*
+ET
+BT
+1 0 0 1 532.303 18 Tm
+(Page 3 of 13) Tj
+T*
+ET
+Q
+
+endstream
+endobj
+50 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+51 0 obj
+<<
+/Length 5183
+>>
+stream
+q
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 56 714 cm
+q
+.039216 .054902 .152941 rg
+BT 1 0 0 1 0 2 Tm /F2 20 Tf 22 TL (Technical Overview) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 698 cm
+Q
+q
+1 0 0 1 56 668 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Key Levels) Tj T* ET
+Q
+Q
+q
+1 0 0 1 71 470 cm
+q
+.039216 .054902 .152941 rg
+n 0 192 470 -24 re f*
+1 1 1 rg
+n 0 168 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 144 470 -24 re f*
+1 1 1 rg
+n 0 120 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 96 470 -24 re f*
+1 1 1 rg
+n 0 72 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 48 470 -24 re f*
+1 1 1 rg
+n 0 24 470 -24 re f*
+1 1 1 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 6 177 Tm (Level) Tj T* ET
+BT 1 0 0 1 158.993 177 Tm (Price) Tj T* ET
+BT 1 0 0 1 226 177 Tm (Notes) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 153 Tm (Resistance 3) Tj T* ET
+BT 1 0 0 1 139.7285 153 Tm ($365.80 - $374) Tj T* ET
+BT 1 0 0 1 226 153 Tm (Fib 1.272 ext / measured move of base) Tj T* ET
+BT 1 0 0 1 6 129 Tm (Resistance 2) Tj T* ET
+BT 1 0 0 1 133.4735 129 Tm ($350.74 - $351.73) Tj T* ET
+BT 1 0 0 1 226 129 Tm (Upper Bollinger + all-time high \(10/23\)) Tj T* ET
+BT 1 0 0 1 6 105 Tm (Resistance 1) Tj T* ET
+BT 1 0 0 1 153.737 105 Tm ($348.36) Tj T* ET
+BT 1 0 0 1 226 105 Tm (10/22 high; supply at $346-348) Tj T* ET
+BT 1 0 0 1 6 81 Tm (Current Price) Tj T* ET
+BT 1 0 0 1 153.737 81 Tm ($347.10) Tj T* ET
+BT 1 0 0 1 226 81 Tm (10/27/2026 close) Tj T* ET
+BT 1 0 0 1 6 57 Tm (Support 1) Tj T* ET
+BT 1 0 0 1 139.7285 57 Tm ($338.70 - $341) Tj T* ET
+BT 1 0 0 1 226 57 Tm (10/20 swing low, EMA/SMA20, Fib 23.6%) Tj T* ET
+BT 1 0 0 1 6 33 Tm (Support 2) Tj T* ET
+BT 1 0 0 1 139.7285 33 Tm ($329.40 - $333) Tj T* ET
+BT 1 0 0 1 226 33 Tm (Swing low, SMA/EMA50, Fib 38.2%, implied-move low) Tj T* ET
+BT 1 0 0 1 6 9 Tm (Support 3) Tj T* ET
+BT 1 0 0 1 145.9835 9 Tm ($300 - $302) Tj T* ET
+BT 1 0 0 1 226 9 Tm (Aug post-earnings low, EMA200) Tj T* ET
+q
+1 J
+1 j
+.796078 .835294 .882353 RG
+.5 w
+n 0 192 m 470 192 l S
+n 0 0 m 470 0 l S
+n 0 0 m 0 192 l S
+n 470 0 m 470 192 l S
+n 0 168 m 470 168 l S
+n 0 144 m 470 144 l S
+n 0 120 m 470 120 l S
+n 0 96 m 470 96 l S
+n 0 72 m 470 72 l S
+n 0 48 m 470 48 l S
+n 0 24 m 470 24 l S
+n 120 0 m 120 192 l S
+n 220 0 m 220 192 l S
+Q
+Q
+Q
+q
+1 0 0 1 56 456 cm
+Q
+q
+1 0 0 1 56 426 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Indicator Readings) Tj T* ET
+Q
+Q
+q
+1 0 0 1 71 194 cm
+q
+.039216 .054902 .152941 rg
+n 0 226 470 -24 re f*
+1 1 1 rg
+n 0 202 470 -34 re f*
+.941176 .956863 .972549 rg
+n 0 168 470 -24 re f*
+1 1 1 rg
+n 0 144 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 120 470 -24 re f*
+1 1 1 rg
+n 0 96 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 72 470 -24 re f*
+1 1 1 rg
+n 0 48 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 24 470 -24 re f*
+1 1 1 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 6 211 Tm (Indicator) Tj T* ET
+BT 1 0 0 1 126 211 Tm (Value) Tj T* ET
+BT 1 0 0 1 246 211 Tm (Interpretation) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 187 Tm (Trend) Tj T* ET
+BT 1 0 0 1 126 187 Tm (Uptrend) Tj T* ET
+q
+1 0 0 1 246 174 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 14 Tm /F1 8 Tf 11 TL (Price > EMA20 341.0 > EMA50 332.7 > EMA200 301.8, all) Tj T* (rising; higher lows 300 / 329 / 339) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 153 Tm (RSI \(14\)) Tj T* ET
+BT 1 0 0 1 126 153 Tm (61.1) Tj T* ET
+q
+1 0 0 1 246 151 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Rising \(50.9 -> 61.1 over 20 days\), room before overbought) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 129 Tm (MACD) Tj T* ET
+BT 1 0 0 1 126 129 Tm (4.20 vs 4.10) Tj T* ET
+q
+1 0 0 1 246 127 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Fresh bullish cross, histogram only +0.09 \(weak\)) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 105 Tm (Stochastic) Tj T* ET
+BT 1 0 0 1 126 105 Tm (%K 78 / %D 74) Tj T* ET
+q
+1 0 0 1 246 103 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Near overbought) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 81 Tm (Volume / OBV) Tj T* ET
+BT 1 0 0 1 126 81 Tm (39.1M vs 39.0M avg) Tj T* ET
+q
+1 0 0 1 246 79 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (OBV +179M shares in 20d = accumulation; participation flat) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 57 Tm (Bollinger) Tj T* ET
+BT 1 0 0 1 126 57 Tm (Width 0.063) Tj T* ET
+q
+1 0 0 1 246 55 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Squeeze vs 6-month median 0.115; earnings likely trigger) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 33 Tm (50/200 SMA) Tj T* ET
+BT 1 0 0 1 126 33 Tm (+$36 spread) Tj T* ET
+q
+1 0 0 1 246 31 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Golden cross intact) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 9 Tm (Rel. Strength) Tj T* ET
+BT 1 0 0 1 126 9 Tm (1y +32.6% vs SPY +14.9%) Tj T* ET
+q
+1 0 0 1 246 7 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Leads on 6m/1y, lags on 3m \(+2.7% vs SPY +5.8%\)) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+.796078 .835294 .882353 RG
+.5 w
+n 0 226 m 470 226 l S
+n 0 0 m 470 0 l S
+n 0 0 m 0 226 l S
+n 470 0 m 470 226 l S
+n 0 202 m 470 202 l S
+n 0 168 m 470 168 l S
+n 0 144 m 470 144 l S
+n 0 120 m 470 120 l S
+n 0 96 m 470 96 l S
+n 0 72 m 470 72 l S
+n 0 48 m 470 48 l S
+n 0 24 m 470 24 l S
+n 120 0 m 120 226 l S
+n 240 0 m 240 226 l S
+Q
+Q
+Q
+ 
+
+Q
+
+endstream
+endobj
+52 0 obj
+<<
+/Length 401
+>>
+stream
+q
+0.0 0.0 612 792 re
+W
+n
+1 0 0 1 0 0 cm
+BT
+/F1-2 12 Tf
+14.4 TL
+ET
+1 1 1 rg
+n
+0 0 612 30 re
+f*
+0.886275 0.909804 0.941176 RG
+n
+40 30 m
+572 30 l
+S
+BT
+/F1-2 7 Tf
+8.4 TL
+ET
+0.443137 0.501961 0.588235 rg
+BT
+1 0 0 1 40 18 Tm
+(DISCLAIMER\072 For educational\057research purposes only\056 Not financial advice\056  \174  Generated 2026\05510\05527) Tj
+T*
+ET
+BT
+1 0 0 1 532.303 18 Tm
+(Page 4 of 13) Tj
+T*
+ET
+Q
+
+endstream
+endobj
+53 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+54 0 obj
+<<
+/Length 4621
+>>
+stream
+q
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 56 714 cm
+q
+.039216 .054902 .152941 rg
+BT 1 0 0 1 0 2 Tm /F2 20 Tf 22 TL (Fundamental Overview) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 698 cm
+Q
+q
+1 0 0 1 56 668 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Key Metrics) Tj T* ET
+Q
+Q
+q
+1 0 0 1 71 422 cm
+q
+.039216 .054902 .152941 rg
+n 0 240 470 -24 re f*
+1 1 1 rg
+n 0 216 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 192 470 -24 re f*
+1 1 1 rg
+n 0 168 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 144 470 -24 re f*
+1 1 1 rg
+n 0 120 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 96 470 -24 re f*
+1 1 1 rg
+n 0 72 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 48 470 -24 re f*
+1 1 1 rg
+n 0 24 470 -24 re f*
+1 1 1 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 6 225 Tm (Metric) Tj T* ET
+BT 1 0 0 1 162.994 225 Tm (Value) Tj T* ET
+BT 1 0 0 1 241.2445 225 Tm (Sector Avg) Tj T* ET
+BT 1 0 0 1 316 225 Tm (Assessment) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 201 Tm (Trailing P/E \(GAAP\)) Tj T* ET
+BT 1 0 0 1 163.993 201 Tm (39.8x) Tj T* ET
+BT 1 0 0 1 236.857 201 Tm (5y avg ~30.7x) Tj T* ET
+BT 1 0 0 1 316 201 Tm (~30% above own history) Tj T* ET
+BT 1 0 0 1 6 177 Tm (Forward P/E) Tj T* ET
+BT 1 0 0 1 163.993 177 Tm (35.2x) Tj T* ET
+BT 1 0 0 1 230.611 177 Tm (Hardware ~17.5x) Tj T* ET
+BT 1 0 0 1 316 177 Tm (~2x sector) Tj T* ET
+BT 1 0 0 1 6 153 Tm (PEG \(fwd\)) Tj T* ET
+BT 1 0 0 1 166.117 153 Tm (~4.4) Tj T* ET
+BT 1 0 0 1 241.609 153 Tm (5y avg ~2.7) Tj T* ET
+BT 1 0 0 1 316 153 Tm (Expensive) Tj T* ET
+BT 1 0 0 1 6 129 Tm (P/FCF) Tj T* ET
+BT 1 0 0 1 163.993 129 Tm (36.7x) Tj T* ET
+BT 1 0 0 1 229.4815 129 Tm (10y median 25.7x) Tj T* ET
+BT 1 0 0 1 316 129 Tm (Rich; FCF yield ~2.7%) Tj T* ET
+BT 1 0 0 1 6 105 Tm (Revenue Growth \(FQ3 YoY\)) Tj T* ET
+BT 1 0 0 1 159.6145 105 Tm (+16.4%) Tj T* ET
+BT 1 0 0 1 227.1055 105 Tm (FQ4 guide +9-11%) Tj T* ET
+BT 1 0 0 1 316 105 Tm (Strong, guided to slow) Tj T* ET
+BT 1 0 0 1 6 81 Tm (EPS Growth \(FQ3 YoY\)) Tj T* ET
+BT 1 0 0 1 163.3675 81 Tm (+29%) Tj T* ET
+BT 1 0 0 1 258.745 81 Tm (n/a) Tj T* ET
+BT 1 0 0 1 316 81 Tm (+22% ex-tariff refund) Tj T* ET
+BT 1 0 0 1 6 57 Tm (Gross Margin) Tj T* ET
+BT 1 0 0 1 162.2425 57 Tm (50.1%) Tj T* ET
+BT 1 0 0 1 227.2315 57 Tm (FQ4 guide 47-48%) Tj T* ET
+BT 1 0 0 1 316 57 Tm (48.1% ex-refund; memory squeeze) Tj T* ET
+BT 1 0 0 1 6 33 Tm (Operating Margin \(TTM\)) Tj T* ET
+BT 1 0 0 1 163.3675 33 Tm (~33%) Tj T* ET
+BT 1 0 0 1 258.745 33 Tm (n/a) Tj T* ET
+BT 1 0 0 1 316 33 Tm (Exceptional) Tj T* ET
+BT 1 0 0 1 6 9 Tm (Net Cash) Tj T* ET
+BT 1 0 0 1 161.8645 9 Tm (~$62B) Tj T* ET
+BT 1 0 0 1 247.4905 9 Tm (D/E 0.78) Tj T* ET
+BT 1 0 0 1 316 9 Tm (Fortress balance sheet) Tj T* ET
+q
+1 J
+1 j
+.796078 .835294 .882353 RG
+.5 w
+n 0 240 m 470 240 l S
+n 0 0 m 470 0 l S
+n 0 0 m 0 240 l S
+n 470 0 m 470 240 l S
+n 0 216 m 470 216 l S
+n 0 192 m 470 192 l S
+n 0 168 m 470 168 l S
+n 0 144 m 470 144 l S
+n 0 120 m 470 120 l S
+n 0 96 m 470 96 l S
+n 0 72 m 470 72 l S
+n 0 48 m 470 48 l S
+n 0 24 m 470 24 l S
+n 130 0 m 130 240 l S
+n 220 0 m 220 240 l S
+n 310 0 m 310 240 l S
+Q
+Q
+Q
+q
+1 0 0 1 56 408 cm
+Q
+q
+1 0 0 1 56 378 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Valuation Assessment) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 316 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 46 Tm /F1 10 Tf 14 TL (Significantly overvalued on every multiple \(Valuation 4/20\) while business quality is near the top of the scale) Tj T* (\(Profitability 18, Health 17, Moat 19\). Forward EPS of $9.57 implies only ~8% growth over FY26E ~$8.89, yet the) Tj T* (stock trades at 35x forward, 40x trailing and above the $340 consensus target. FQ3 EPS of $2.02 included a) Tj T* ($0.11 tariff refund; gross margin included ~2pts of the same one-off.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 300 cm
+Q
+q
+1 0 0 1 56 270 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Competitive Moat) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 250 cm
+q
+BT 1 0 0 1 0 4 Tm 14 TL /F2 10 Tf .117647 .160784 .231373 rg (Moat Rating:) Tj /F1 10 Tf ( Wide) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 230 cm
+q
+BT 1 0 0 1 16 4 Tm 14 TL /F1 10 Tf .117647 .160784 .231373 rg (\177 Ecosystem switching costs; installed base at an all-time high) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 212 cm
+q
+BT 1 0 0 1 16 4 Tm 14 TL /F1 10 Tf .117647 .160784 .231373 rg (\177 Brand and pricing power \(iPhone Duo opens a ~$1,999 tier\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 194 cm
+q
+BT 1 0 0 1 16 4 Tm 14 TL /F1 10 Tf .117647 .160784 .231373 rg (\177 App Store / Services platform growing ~12% a year) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 176 cm
+q
+BT 1 0 0 1 16 4 Tm 14 TL /F1 10 Tf .117647 .160784 .231373 rg (\177 Custom silicon IP and supply-chain scale) Tj T* ET
+Q
+Q
+ 
+
+Q
+
+endstream
+endobj
+55 0 obj
+<<
+/Length 401
+>>
+stream
+q
+0.0 0.0 612 792 re
+W
+n
+1 0 0 1 0 0 cm
+BT
+/F1-3 12 Tf
+14.4 TL
+ET
+1 1 1 rg
+n
+0 0 612 30 re
+f*
+0.886275 0.909804 0.941176 RG
+n
+40 30 m
+572 30 l
+S
+BT
+/F1-3 7 Tf
+8.4 TL
+ET
+0.443137 0.501961 0.588235 rg
+BT
+1 0 0 1 40 18 Tm
+(DISCLAIMER\072 For educational\057research purposes only\056 Not financial advice\056  \174  Generated 2026\05510\05527) Tj
+T*
+ET
+BT
+1 0 0 1 532.303 18 Tm
+(Page 5 of 13) Tj
+T*
+ET
+Q
+
+endstream
+endobj
+56 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+57 0 obj
+<<
+/Length 5577
+>>
+stream
+q
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 56 714 cm
+q
+.039216 .054902 .152941 rg
+BT 1 0 0 1 0 2 Tm /F2 20 Tf 22 TL (Investment Thesis) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 698 cm
+Q
+q
+1 0 0 1 56 668 cm
+q
+0 .784314 .32549 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Bull Case) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 648 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (1. iPhone Duo ramp: preorders sold out, build target reportedly raised ~44% to ~14M units \(unconfirmed\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 628 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (2. Services +12% plus Gemini-powered Siri due by year-end opens a new AI/subscription leg) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 608 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (3. ~$137B FCF and $62B buybacks in 9 months shrink share count; ~$62B net cash) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 588 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (4. Rising MA stack, higher lows and a Bollinger squeeze just under the all-time high) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 568 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (5. Analysts raising targets: JPMorgan $360, BofA $370, Evercore $380) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 552 cm
+Q
+q
+1 0 0 1 56 522 cm
+q
+1 .090196 .266667 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Bear Case) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 502 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (1. Reported ~15% cut to iPhone 18 Pro component orders; Duo may cannibalize Pro Max) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 482 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (2. Gross margin guided to 47-48% from a tariff-flattered 50.1%; memory squeeze until 2027) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 462 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (3. 40x trailing, PEG ~4.4, price above the $340.39 consensus target) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 442 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (4. High earnings bar: consensus revenue above implied guide; 8 of last 13 prints traded down, last one -7.35%) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 422 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (5. Regulatory tail: appeal to ban Google search payments \(~$20B/yr\), EU DMA, App Store, DOJ) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 406 cm
+Q
+q
+1 0 0 1 56 376 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Catalyst Timeline) Tj T* ET
+Q
+Q
+q
+1 0 0 1 71 226 cm
+q
+.039216 .054902 .152941 rg
+n 0 144 470 -24 re f*
+1 1 1 rg
+n 0 120 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 96 470 -24 re f*
+1 1 1 rg
+n 0 72 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 48 470 -24 re f*
+1 1 1 rg
+n 0 24 470 -24 re f*
+1 1 1 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 6 129 Tm (Event) Tj T* ET
+BT 1 0 0 1 166 129 Tm (Expected Date) Tj T* ET
+BT 1 0 0 1 266 129 Tm (Potential Impact) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 105 Tm (FQ4 earnings + Dec-qtr guide) Tj T* ET
+BT 1 0 0 1 166 105 Tm (Nov 2, 2026) Tj T* ET
+q
+1 0 0 1 266 103 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Very high: implied +/-4.5%) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 81 Tm (Ex-dividend ~$0.27 \(est.\)) Tj T* ET
+BT 1 0 0 1 166 81 Tm (~Nov 9, 2026) Tj T* ET
+q
+1 0 0 1 266 79 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Low) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 57 Tm (Holiday / Duo sell-through) Tj T* ET
+BT 1 0 0 1 166 57 Tm (Late Nov-Dec 2026) Tj T* ET
+q
+1 0 0 1 266 55 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Medium) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 33 Tm (Gemini-powered Siri) Tj T* ET
+BT 1 0 0 1 166 33 Tm (By Dec 31, 2026) Tj T* ET
+q
+1 0 0 1 266 31 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Medium-High) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 9 Tm (FQ1 FY27 report) Tj T* ET
+BT 1 0 0 1 166 9 Tm (Late Jan 2027) Tj T* ET
+q
+1 0 0 1 266 7 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (High) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+.796078 .835294 .882353 RG
+.5 w
+n 0 144 m 470 144 l S
+n 0 0 m 470 0 l S
+n 0 0 m 0 144 l S
+n 470 0 m 470 144 l S
+n 0 120 m 470 120 l S
+n 0 96 m 470 96 l S
+n 0 72 m 470 72 l S
+n 0 48 m 470 48 l S
+n 0 24 m 470 24 l S
+n 160 0 m 160 144 l S
+n 260 0 m 260 144 l S
+Q
+Q
+Q
+q
+1 0 0 1 56 212 cm
+Q
+q
+1 0 0 1 56 182 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Entry / Exit Strategy) Tj T* ET
+Q
+Q
+q
+1 0 0 1 126 56 cm
+q
+.039216 .054902 .152941 rg
+n 0 120 360 -24 re f*
+1 1 1 rg
+n 0 96 360 -24 re f*
+.941176 .956863 .972549 rg
+n 0 72 360 -24 re f*
+1 1 1 rg
+n 0 48 360 -24 re f*
+.941176 .956863 .972549 rg
+n 0 24 360 -24 re f*
+1 1 1 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 6 105 Tm (Parameter) Tj T* ET
+BT 1 0 0 1 248.4935 105 Tm (Level) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 81 Tm (Entry Zone) Tj T* ET
+.129412 .588235 .952941 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 163.214 81 Tm (After Nov 2: $331-338 dip / $352-358 breakout) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 57 Tm (Price Target) Tj T* ET
+0 .784314 .32549 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 215.4725 57 Tm (T1 $365, T2 $374-400) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 33 Tm (Stop Loss) Tj T* ET
+1 .090196 .266667 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 201.9815 33 Tm ($327 \(dip\) / $338 \(breakout\)) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 9 Tm (Timeframe) Tj T* ET
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 235.997 9 Tm (3-6 months) Tj T* ET
+q
+1 J
+1 j
+.796078 .835294 .882353 RG
+.5 w
+n 0 120 m 360 120 l S
+n 0 0 m 360 0 l S
+n 0 0 m 0 120 l S
+n 360 0 m 360 120 l S
+n 0 96 m 360 96 l S
+n 0 72 m 360 72 l S
+n 0 48 m 360 48 l S
+n 0 24 m 360 24 l S
+n 160 0 m 160 120 l S
+Q
+Q
+Q
+ 
+
+Q
+
+endstream
+endobj
+58 0 obj
+<<
+/Length 401
+>>
+stream
+q
+0.0 0.0 612 792 re
+W
+n
+1 0 0 1 0 0 cm
+BT
+/F1-4 12 Tf
+14.4 TL
+ET
+1 1 1 rg
+n
+0 0 612 30 re
+f*
+0.886275 0.909804 0.941176 RG
+n
+40 30 m
+572 30 l
+S
+BT
+/F1-4 7 Tf
+8.4 TL
+ET
+0.443137 0.501961 0.588235 rg
+BT
+1 0 0 1 40 18 Tm
+(DISCLAIMER\072 For educational\057research purposes only\056 Not financial advice\056  \174  Generated 2026\05510\05527) Tj
+T*
+ET
+BT
+1 0 0 1 532.303 18 Tm
+(Page 6 of 13) Tj
+T*
+ET
+Q
+
+endstream
+endobj
+59 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+60 0 obj
+<<
+/Length 4889
+>>
+stream
+q
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 56 714 cm
+q
+BT 1 0 0 1 0 2 Tm 22 TL /F2 20 Tf .039216 .054902 .152941 rg (Risk & Position Sizing) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 698 cm
+Q
+q
+1 0 0 1 56 668 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Risk / Reward Analysis) Tj T* ET
+Q
+Q
+q
+1 0 0 1 71 518 cm
+q
+.039216 .054902 .152941 rg
+n 0 144 470 -24 re f*
+1 1 1 rg
+n 0 120 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 96 470 -24 re f*
+1 1 1 rg
+n 0 72 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 48 470 -24 re f*
+1 1 1 rg
+n 0 24 470 -24 re f*
+1 1 1 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 6 129 Tm (Risk Metric) Tj T* ET
+BT 1 0 0 1 206 129 Tm (Value) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 105 Tm (Risk/Reward Ratio) Tj T* ET
+0 .784314 .32549 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 206 105 Tm (~1.1:1 now; ~4:1 on $331-338 dip) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 81 Tm (Recommended Position Size) Tj T* ET
+BT 1 0 0 1 206 81 Tm (2-3% \(cap 5%\), risk <=0.5% of equity) Tj T* ET
+BT 1 0 0 1 6 57 Tm (Max Drawdown Scenario) Tj T* ET
+1 .090196 .266667 rg
+BT 1 0 0 1 206 57 Tm (-7.4% earnings gap; -33% worst case) Tj T* ET
+0 0 0 rg
+BT 1 0 0 1 6 33 Tm (Volatility Profile) Tj T* ET
+BT 1 0 0 1 206 33 Tm (ATR 1.83%, HV30 15.6%, implied +/-4.5%) Tj T* ET
+BT 1 0 0 1 6 9 Tm (Market Correlation) Tj T* ET
+BT 1 0 0 1 206 9 Tm (Use beta ~1.1 \(short-window 0.29 distorted\)) Tj T* ET
+q
+1 J
+1 j
+.796078 .835294 .882353 RG
+.5 w
+n 0 144 m 470 144 l S
+n 0 0 m 470 0 l S
+n 0 0 m 0 144 l S
+n 470 0 m 470 144 l S
+n 0 120 m 470 120 l S
+n 0 96 m 470 96 l S
+n 0 72 m 470 72 l S
+n 0 48 m 470 48 l S
+n 0 24 m 470 24 l S
+n 200 0 m 200 144 l S
+Q
+Q
+Q
+q
+1 0 0 1 56 502 cm
+Q
+q
+1 0 0 1 56 472 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Position Sizing Methodology) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 424 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 32 Tm /F1 10 Tf 14 TL (Fixed-fractional: shares = 0.5% x equity / \(entry - stop\). Size for a -7% to -8% overnight gap, not just the stop) Tj T* (distance, because stops cannot fill inside an earnings gap. Existing holders: trim to ~2% or collar before Nov 2) Tj T* (\(rich implied volatility helps pay for puts\). Kelly not computed: no validated win rate or payoff estimate.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 404 cm
+Q
+q
+1 0 0 1 56 374 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Scenario Analysis) Tj T* ET
+Q
+Q
+q
+1 0 0 1 71 262 cm
+q
+.039216 .054902 .152941 rg
+n 0 106 470 -24 re f*
+1 1 1 rg
+n 0 82 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 58 470 -24 re f*
+1 1 1 rg
+n 0 34 470 -34 re f*
+1 1 1 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 6 91 Tm (Scenario) Tj T* ET
+BT 1 0 0 1 101.744 91 Tm (Probability) Tj T* ET
+BT 1 0 0 1 184.243 91 Tm (Expected Return) Tj T* ET
+BT 1 0 0 1 281 91 Tm (Trigger) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 67 Tm (Bull Case) Tj T* ET
+BT 1 0 0 1 115.9955 67 Tm (30%) Tj T* ET
+0 .784314 .32549 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 167.35 67 Tm (+15% \($400 by Apr 2027\)) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+q
+1 0 0 1 281 65 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Strong Dec-qtr guide, Duo ramp, Gemini Siri ships) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 43 Tm (Base Case) Tj T* ET
+BT 1 0 0 1 115.9955 43 Tm (45%) Tj T* ET
+.129412 .588235 .952941 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 196.6135 43 Tm (+4% \($360\)) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+q
+1 0 0 1 281 41 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (In-line print, guide near consensus) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 19 Tm (Bear Case) Tj T* ET
+BT 1 0 0 1 115.9955 19 Tm (25%) Tj T* ET
+1 .090196 .266667 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 168.736 19 Tm (-13% \($302, 1-3 months\)) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+q
+1 0 0 1 281 6 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 14 Tm /F1 8 Tf 11 TL (Guide miss, gross margin below 47%, Pro demand) Tj T* (weakness confirmed) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+.796078 .835294 .882353 RG
+.5 w
+n 0 106 m 470 106 l S
+n 0 0 m 470 0 l S
+n 0 0 m 0 106 l S
+n 470 0 m 470 106 l S
+n 0 82 m 470 82 l S
+n 0 58 m 470 58 l S
+n 0 34 m 470 34 l S
+n 85 0 m 85 106 l S
+n 165 0 m 165 106 l S
+n 275 0 m 275 106 l S
+Q
+Q
+Q
+q
+1 0 0 1 56 238 cm
+Q
+q
+1 0 0 1 56 228 cm
+q
+.470588 .564706 .611765 rg
+BT 1 0 0 1 0 3 Tm /F1 7 Tf 10 TL (Generated by AI Trading Analyst for Claude Code) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 193 cm
+q
+.470588 .564706 .611765 rg
+BT 1 0 0 1 0 20.5 Tm /F1 6.5 Tf 9 TL (DISCLAIMER: This report is generated by AI for educational and research purposes only. It is NOT financial advice. It does NOT constitute a recommendation to buy, sell, or) Tj T* (hold any security. Past performance does not guarantee future results. Always do your own due diligence and consult a licensed financial advisor before making investment) Tj T* (decisions. The authors and creators of this tool accept no liability for any losses incurred.) Tj T* ET
+Q
+Q
+ 
+
+Q
+
+endstream
+endobj
+61 0 obj
+<<
+/Length 401
+>>
+stream
+q
+0.0 0.0 612 792 re
+W
+n
+1 0 0 1 0 0 cm
+BT
+/F1-5 12 Tf
+14.4 TL
+ET
+1 1 1 rg
+n
+0 0 612 30 re
+f*
+0.886275 0.909804 0.941176 RG
+n
+40 30 m
+572 30 l
+S
+BT
+/F1-5 7 Tf
+8.4 TL
+ET
+0.443137 0.501961 0.588235 rg
+BT
+1 0 0 1 40 18 Tm
+(DISCLAIMER\072 For educational\057research purposes only\056 Not financial advice\056  \174  Generated 2026\05510\05527) Tj
+T*
+ET
+BT
+1 0 0 1 532.303 18 Tm
+(Page 7 of 13) Tj
+T*
+ET
+Q
+
+endstream
+endobj
+62 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+63 0 obj
+<<
+/Length 2745
+>>
+stream
+q
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 56 678.4 cm
+Q
+q
+1 0 0 1 56 642.4 cm
+q
+.039216 .054902 .152941 rg
+BT 1 0 0 1 0 6 Tm /F2 30 Tf 36 TL 57.46 0 Td (AI Trading Analysis Report) Tj T* -57.46 0 Td ET
+Q
+Q
+q
+1 0 0 1 56 603.4 cm
+Q
+q
+1 0 0 1 56 547.4 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 8 Tm /F2 48 Tf 56 TL 143.344 0 Td (BTC/USD) Tj T* -143.344 0 Td ET
+Q
+Q
+q
+1 0 0 1 56 535.4 cm
+Q
+q
+1 0 0 1 56 523.4 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 -4 Tm /F1 16 Tf 12 TL (Bitcoin \(spot\) - crypto-adapted scoring) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 511.4 cm
+Q
+q
+1 0 0 1 56 499.4 cm
+q
+.470588 .564706 .611765 rg
+BT 1 0 0 1 0 -2 Tm /F1 14 Tf 12 TL (Generated: October 27, 2026 \(UTC daily close $80,820\)) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 453.4 cm
+Q
+q
+1 0 0 1 56 293.4 cm
+q
+1 0 0 1 0 0 cm
+0 0 0 RG
+1 w
+0 J
+0 j
+[] 0 d
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 0 0 cm
+q
+.941176 .956863 .972549 rg
+.796078 .835294 .882353 RG
+2 w
+0 J
+0 j
+[] 0 d
+n
+150 80 m
+150 118.6599 118.6599 150 80 150 c
+41.34007 150 10 118.6599 10 80 c
+10 41.34007 41.34007 10 80 10 c
+118.6599 10 150 41.34007 150 80 c
+B*
+Q
+q
+1 .596078 0 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+142 80 m
+142 114.2417 114.2417 142 80 142 c
+45.75835 142 18 114.2417 18 80 c
+18 45.75835 45.75835 18 80 18 c
+114.2417 18 142 45.75835 142 80 c
+f*
+Q
+q
+1 1 1 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+128 80 m
+128 106.5097 106.5097 128 80 128 c
+53.49033 128 32 106.5097 32 80 c
+32 53.49033 53.49033 32 80 32 c
+106.5097 32 128 53.49033 128 80 c
+f*
+Q
+q
+BT /F2 36 Tf 43.2 TL ET
+BT /F2 36 Tf 43.2 TL ET
+.039216 .054902 .152941 rg
+BT 1 0 0 1 59.984 82 Tm (48) Tj T* ET
+Q
+q
+BT /F1 10 Tf 12 TL ET
+BT /F1 10 Tf 12 TL ET
+.470588 .564706 .611765 rg
+BT 1 0 0 1 68.88 62 Tm (/ 100) Tj T* ET
+Q
+Q
+Q
+Q
+q
+1 0 0 1 56 258.4 cm
+Q
+q
+1 0 0 1 56 236.4 cm
+q
+BT 1 0 0 1 0 4 Tm 118.456 0 Td 22 TL /F2 18 Tf .039216 .054902 .152941 rg (Trade Score: ) Tj 1 .596078 0 rg (48/100) Tj .039216 .054902 .152941 rg ( \(Grade: ) Tj 1 .596078 0 rg (C) Tj .039216 .054902 .152941 rg (\)) Tj T* -118.456 0 Td ET
+Q
+Q
+q
+1 0 0 1 56 218.4 cm
+Q
+q
+1 0 0 1 56 196.4 cm
+q
+BT 1 0 0 1 0 -2 Tm 151.996 0 Td 22 TL /F2 24 Tf 1 .596078 0 rg (Signal: CAUTION) Tj T* -151.996 0 Td ET
+Q
+Q
+q
+1 0 0 1 56 152.4 cm
+Q
+q
+1 0 0 1 56 117.4 cm
+q
+.470588 .564706 .611765 rg
+BT 1 0 0 1 0 20.5 Tm /F1 6.5 Tf 9 TL (DISCLAIMER: This report is generated by AI for educational and research purposes only. It is NOT financial advice. It does NOT constitute a recommendation to buy, sell, or) Tj T* (hold any security. Past performance does not guarantee future results. Always do your own due diligence and consult a licensed financial advisor before making investment) Tj T* (decisions. The authors and creators of this tool accept no liability for any losses incurred.) Tj T* ET
+Q
+Q
+ 
+
+Q
+
+endstream
+endobj
+64 0 obj
+<<
+/Length 401
+>>
+stream
+q
+0.0 0.0 612 792 re
+W
+n
+1 0 0 1 0 0 cm
+BT
+/F1-0 12 Tf
+14.4 TL
+ET
+1 1 1 rg
+n
+0 0 612 30 re
+f*
+0.886275 0.909804 0.941176 RG
+n
+40 30 m
+572 30 l
+S
+BT
+/F1-0 7 Tf
+8.4 TL
+ET
+0.443137 0.501961 0.588235 rg
+BT
+1 0 0 1 40 18 Tm
+(DISCLAIMER\072 For educational\057research purposes only\056 Not financial advice\056  \174  Generated 2026\05510\05527) Tj
+T*
+ET
+BT
+1 0 0 1 532.303 18 Tm
+(Page 8 of 13) Tj
+T*
+ET
+Q
+
+endstream
+endobj
+65 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+66 0 obj
+<<
+/Length 6261
+>>
+stream
+q
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 56 714 cm
+q
+.039216 .054902 .152941 rg
+BT 1 0 0 1 0 2 Tm /F2 20 Tf 22 TL (Score Dashboard) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 698 cm
+Q
+q
+1 0 0 1 56 518 cm
+q
+1 0 0 1 0 0 cm
+0 0 0 RG
+1 w
+0 J
+0 j
+[] 0 d
+0 0 0 rg
+BT /F3 10 Tf 12 TL ET
+BT /F3 10 Tf 12 TL ET
+q
+1 0 0 1 0 0 cm
+q
+BT /F1 9 Tf 10.8 TL ET
+BT /F1 9 Tf 10.8 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 5 160 Tm (Technical Strength) Tj T* ET
+Q
+q
+.941176 .956863 .972549 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 155 m
+437 155 l
+438.6584 155 440 156.3416 440 158 c
+440 172 l
+440 173.6584 438.6584 175 437 175 c
+173 175 l
+171.3416 175 170 173.6584 170 172 c
+170 158 l
+170 156.3416 171.3416 155 173 155 c
+h
+f*
+Q
+q
+1 .090196 .266667 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 155 m
+269.6 155 l
+271.2584 155 272.6 156.3416 272.6 158 c
+272.6 172 l
+272.6 173.6584 271.2584 175 269.6 175 c
+173 175 l
+171.3416 175 170 173.6584 170 172 c
+170 158 l
+170 156.3416 171.3416 155 173 155 c
+h
+f*
+Q
+q
+BT /F2 10 Tf 12 TL ET
+BT /F2 10 Tf 12 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 450 160 Tm (38/100) Tj T* ET
+Q
+q
+BT /F1 9 Tf 10.8 TL ET
+BT /F1 9 Tf 10.8 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 5 128 Tm (Fundamental \(On-Chain\)) Tj T* ET
+Q
+q
+.941176 .956863 .972549 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 123 m
+437 123 l
+438.6584 123 440 124.3416 440 126 c
+440 140 l
+440 141.6584 438.6584 143 437 143 c
+173 143 l
+171.3416 143 170 141.6584 170 140 c
+170 126 l
+170 124.3416 171.3416 123 173 123 c
+h
+f*
+Q
+q
+1 .596078 0 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 123 m
+339.8 123 l
+341.4584 123 342.8 124.3416 342.8 126 c
+342.8 140 l
+342.8 141.6584 341.4584 143 339.8 143 c
+173 143 l
+171.3416 143 170 141.6584 170 140 c
+170 126 l
+170 124.3416 171.3416 123 173 123 c
+h
+f*
+Q
+q
+BT /F2 10 Tf 12 TL ET
+BT /F2 10 Tf 12 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 450 128 Tm (64/100) Tj T* ET
+Q
+q
+BT /F1 9 Tf 10.8 TL ET
+BT /F1 9 Tf 10.8 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 5 96 Tm (Sentiment & Positioning) Tj T* ET
+Q
+q
+.941176 .956863 .972549 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 91 m
+437 91 l
+438.6584 91 440 92.3416 440 94 c
+440 108 l
+440 109.6584 438.6584 111 437 111 c
+173 111 l
+171.3416 111 170 109.6584 170 108 c
+170 94 l
+170 92.3416 171.3416 91 173 91 c
+h
+f*
+Q
+q
+1 .596078 0 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 91 m
+291.2 91 l
+292.8584 91 294.2 92.3416 294.2 94 c
+294.2 108 l
+294.2 109.6584 292.8584 111 291.2 111 c
+173 111 l
+171.3416 111 170 109.6584 170 108 c
+170 94 l
+170 92.3416 171.3416 91 173 91 c
+h
+f*
+Q
+q
+BT /F2 10 Tf 12 TL ET
+BT /F2 10 Tf 12 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 450 96 Tm (46/100) Tj T* ET
+Q
+q
+BT /F1 9 Tf 10.8 TL ET
+BT /F1 9 Tf 10.8 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 5 64 Tm (Risk Profile) Tj T* ET
+Q
+q
+.941176 .956863 .972549 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 59 m
+437 59 l
+438.6584 59 440 60.3416 440 62 c
+440 76 l
+440 77.6584 438.6584 79 437 79 c
+173 79 l
+171.3416 79 170 77.6584 170 76 c
+170 62 l
+170 60.3416 171.3416 59 173 59 c
+h
+f*
+Q
+q
+1 .596078 0 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 59 m
+275 59 l
+276.6584 59 278 60.3416 278 62 c
+278 76 l
+278 77.6584 276.6584 79 275 79 c
+173 79 l
+171.3416 79 170 77.6584 170 76 c
+170 62 l
+170 60.3416 171.3416 59 173 59 c
+h
+f*
+Q
+q
+BT /F2 10 Tf 12 TL ET
+BT /F2 10 Tf 12 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 450 64 Tm (40/100) Tj T* ET
+Q
+q
+BT /F1 9 Tf 10.8 TL ET
+BT /F1 9 Tf 10.8 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 5 32 Tm (Thesis Conviction) Tj T* ET
+Q
+q
+.941176 .956863 .972549 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 27 m
+437 27 l
+438.6584 27 440 28.3416 440 30 c
+440 44 l
+440 45.6584 438.6584 47 437 47 c
+173 47 l
+171.3416 47 170 45.6584 170 44 c
+170 30 l
+170 28.3416 171.3416 27 173 27 c
+h
+f*
+Q
+q
+1 .596078 0 rg
+1 w
+0 J
+0 j
+[] 0 d
+n
+173 27 m
+293.9 27 l
+295.5584 27 296.9 28.3416 296.9 30 c
+296.9 44 l
+296.9 45.6584 295.5584 47 293.9 47 c
+173 47 l
+171.3416 47 170 45.6584 170 44 c
+170 30 l
+170 28.3416 171.3416 27 173 27 c
+h
+f*
+Q
+q
+BT /F2 10 Tf 12 TL ET
+BT /F2 10 Tf 12 TL ET
+.117647 .160784 .231373 rg
+BT 1 0 0 1 450 32 Tm (47/100) Tj T* ET
+Q
+Q
+Q
+Q
+q
+1 0 0 1 56 502 cm
+Q
+q
+1 0 0 1 56 488 cm
+q
+BT 1 0 0 1 0 2 Tm 62.92 0 Td 14 TL /F2 12 Tf .117647 .160784 .231373 rg (Composite Trade Score: ) Tj 1 .596078 0 rg (48/100) Tj .117647 .160784 .231373 rg (   |   Grade: ) Tj 1 .596078 0 rg (C) Tj .117647 .160784 .231373 rg (   |   Signal: ) Tj 1 .596078 0 rg (CAUTION) Tj T* -62.92 0 Td ET
+Q
+Q
+q
+1 0 0 1 106 332 cm
+q
+.039216 .054902 .152941 rg
+n 0 144 400 -24 re f*
+1 1 1 rg
+n 0 120 400 -24 re f*
+.941176 .956863 .972549 rg
+n 0 96 400 -24 re f*
+1 1 1 rg
+n 0 72 400 -24 re f*
+.941176 .956863 .972549 rg
+n 0 48 400 -24 re f*
+1 1 1 rg
+n 0 24 400 -24 re f*
+1 1 1 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 6 129 Tm (Category) Tj T* ET
+BT 1 0 0 1 187.4945 129 Tm (Score) Tj T* ET
+BT 1 0 0 1 255.0015 129 Tm (Weight) Tj T* ET
+BT 1 0 0 1 336.248 129 Tm (Status) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 105 Tm (Technical Strength) Tj T* ET
+BT 1 0 0 1 186.239 105 Tm (38/100) Tj T* ET
+BT 1 0 0 1 260.9955 105 Tm (25%) Tj T* ET
+1 .090196 .266667 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 338.246 105 Tm (Weak) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 81 Tm (Fundamental \(On-Chain\)) Tj T* ET
+BT 1 0 0 1 186.239 81 Tm (64/100) Tj T* ET
+BT 1 0 0 1 260.9955 81 Tm (25%) Tj T* ET
+1 .596078 0 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 337.247 81 Tm (Mixed) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 57 Tm (Sentiment & Positioning) Tj T* ET
+BT 1 0 0 1 186.239 57 Tm (46/100) Tj T* ET
+BT 1 0 0 1 260.9955 57 Tm (20%) Tj T* ET
+1 .596078 0 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 337.247 57 Tm (Mixed) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 33 Tm (Risk Profile) Tj T* ET
+BT 1 0 0 1 186.239 33 Tm (40/100) Tj T* ET
+BT 1 0 0 1 260.9955 33 Tm (15%) Tj T* ET
+1 .596078 0 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 337.247 33 Tm (Mixed) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 9 Tm (Thesis Conviction) Tj T* ET
+BT 1 0 0 1 186.239 9 Tm (47/100) Tj T* ET
+BT 1 0 0 1 260.9955 9 Tm (15%) Tj T* ET
+1 .596078 0 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 337.247 9 Tm (Mixed) Tj T* ET
+q
+1 J
+1 j
+.796078 .835294 .882353 RG
+.5 w
+n 0 144 m 400 144 l S
+n 0 0 m 400 0 l S
+n 0 0 m 0 144 l S
+n 400 0 m 400 144 l S
+n 0 120 m 400 120 l S
+n 0 96 m 400 96 l S
+n 0 72 m 400 72 l S
+n 0 48 m 400 48 l S
+n 0 24 m 400 24 l S
+n 160 0 m 160 144 l S
+n 240 0 m 240 144 l S
+n 300 0 m 300 144 l S
+Q
+Q
+Q
+ 
+
+Q
+
+endstream
+endobj
+67 0 obj
+<<
+/Length 401
+>>
+stream
+q
+0.0 0.0 612 792 re
+W
+n
+1 0 0 1 0 0 cm
+BT
+/F1-1 12 Tf
+14.4 TL
+ET
+1 1 1 rg
+n
+0 0 612 30 re
+f*
+0.886275 0.909804 0.941176 RG
+n
+40 30 m
+572 30 l
+S
+BT
+/F1-1 7 Tf
+8.4 TL
+ET
+0.443137 0.501961 0.588235 rg
+BT
+1 0 0 1 40 18 Tm
+(DISCLAIMER\072 For educational\057research purposes only\056 Not financial advice\056  \174  Generated 2026\05510\05527) Tj
+T*
+ET
+BT
+1 0 0 1 532.303 18 Tm
+(Page 9 of 13) Tj
+T*
+ET
+Q
+
+endstream
+endobj
+68 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+69 0 obj
+<<
+/Length 5129
+>>
+stream
+q
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 56 714 cm
+q
+.039216 .054902 .152941 rg
+BT 1 0 0 1 0 2 Tm /F2 20 Tf 22 TL (Technical Overview) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 698 cm
+Q
+q
+1 0 0 1 56 668 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Key Levels) Tj T* ET
+Q
+Q
+q
+1 0 0 1 71 470 cm
+q
+.039216 .054902 .152941 rg
+n 0 192 470 -24 re f*
+1 1 1 rg
+n 0 168 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 144 470 -24 re f*
+1 1 1 rg
+n 0 120 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 96 470 -24 re f*
+1 1 1 rg
+n 0 72 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 48 470 -24 re f*
+1 1 1 rg
+n 0 24 470 -24 re f*
+1 1 1 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 6 177 Tm (Level) Tj T* ET
+BT 1 0 0 1 158.993 177 Tm (Price) Tj T* ET
+BT 1 0 0 1 226 177 Tm (Notes) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 153 Tm (Resistance 3) Tj T* ET
+BT 1 0 0 1 133.4735 153 Tm ($86,600 - $87,400) Tj T* ET
+BT 1 0 0 1 226 153 Tm (Triple top \(9/21, 10/2, 10/5\)) Tj T* ET
+BT 1 0 0 1 6 129 Tm (Resistance 2) Tj T* ET
+BT 1 0 0 1 133.4735 129 Tm ($84,000 - $84,840) Tj T* ET
+BT 1 0 0 1 226 129 Tm (Upper band, 10/21 high, triangle top) Tj T* ET
+BT 1 0 0 1 6 105 Tm (Resistance 1) Tj T* ET
+BT 1 0 0 1 133.4735 105 Tm ($81,300 - $81,900) Tj T* ET
+BT 1 0 0 1 226 105 Tm (ETF cost basis, EMA20, SMA20/50) Tj T* ET
+BT 1 0 0 1 6 81 Tm (Current Price) Tj T* ET
+BT 1 0 0 1 153.737 81 Tm ($80,820) Tj T* ET
+BT 1 0 0 1 226 81 Tm (10/27/2026 UTC close) Tj T* ET
+BT 1 0 0 1 6 57 Tm (Support 1) Tj T* ET
+BT 1 0 0 1 133.4735 57 Tm ($79,100 - $80,000) Tj T* ET
+BT 1 0 0 1 226 57 Tm (Triangle base \(5 tests\), Fib 0.236) Tj T* ET
+BT 1 0 0 1 6 33 Tm (Support 2) Tj T* ET
+BT 1 0 0 1 133.4735 33 Tm ($74,900 - $75,900) Tj T* ET
+BT 1 0 0 1 226 33 Tm (Strongest: 9/15 low, Fib 0.382, 50w SMA) Tj T* ET
+BT 1 0 0 1 6 9 Tm (Support 3) Tj T* ET
+BT 1 0 0 1 133.4735 9 Tm ($72,600 - $73,100) Tj T* ET
+BT 1 0 0 1 226 9 Tm (SMA200, Fib 0.5) Tj T* ET
+q
+1 J
+1 j
+.796078 .835294 .882353 RG
+.5 w
+n 0 192 m 470 192 l S
+n 0 0 m 470 0 l S
+n 0 0 m 0 192 l S
+n 470 0 m 470 192 l S
+n 0 168 m 470 168 l S
+n 0 144 m 470 144 l S
+n 0 120 m 470 120 l S
+n 0 96 m 470 96 l S
+n 0 72 m 470 72 l S
+n 0 48 m 470 48 l S
+n 0 24 m 470 24 l S
+n 120 0 m 120 192 l S
+n 220 0 m 220 192 l S
+Q
+Q
+Q
+q
+1 0 0 1 56 456 cm
+Q
+q
+1 0 0 1 56 426 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Indicator Readings) Tj T* ET
+Q
+Q
+q
+1 0 0 1 71 194 cm
+q
+.039216 .054902 .152941 rg
+n 0 226 470 -24 re f*
+1 1 1 rg
+n 0 202 470 -34 re f*
+.941176 .956863 .972549 rg
+n 0 168 470 -24 re f*
+1 1 1 rg
+n 0 144 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 120 470 -24 re f*
+1 1 1 rg
+n 0 96 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 72 470 -24 re f*
+1 1 1 rg
+n 0 48 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 24 470 -24 re f*
+1 1 1 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 6 211 Tm (Indicator) Tj T* ET
+BT 1 0 0 1 126 211 Tm (Value) Tj T* ET
+BT 1 0 0 1 246 211 Tm (Interpretation) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 187 Tm (Trend) Tj T* ET
+BT 1 0 0 1 126 187 Tm (Mixed) Tj T* ET
+q
+1 0 0 1 246 174 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 14 Tm /F1 8 Tf 11 TL (Below EMA20/SMA50 \(~81.8k\), above rising EMA200 76.3k;) Tj T* (golden cross intact) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 153 Tm (RSI \(14\)) Tj T* ET
+BT 1 0 0 1 126 153 Tm (45.5) Tj T* ET
+q
+1 0 0 1 246 151 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Down from 52.8 twenty days ago) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 129 Tm (MACD) Tj T* ET
+BT 1 0 0 1 126 129 Tm (-456 vs -148) Tj T* ET
+q
+1 0 0 1 246 127 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Bearish; histogram improving but negative) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 105 Tm (Stochastic) Tj T* ET
+BT 1 0 0 1 126 105 Tm (%K 29 / %D 20) Tj T* ET
+q
+1 0 0 1 246 103 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Turning up from oversold, unconfirmed) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 81 Tm (Volume / OBV) Tj T* ET
+BT 1 0 0 1 126 81 Tm (OBV -65B \(20d\)) Tj T* ET
+q
+1 0 0 1 246 79 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Bearish divergence; volume shrinking) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 57 Tm (Bollinger) Tj T* ET
+BT 1 0 0 1 126 57 Tm (Width 0.053) Tj T* ET
+q
+1 0 0 1 246 55 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Squeeze vs 0.089 median; FOMC likely trigger) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 33 Tm (Pattern) Tj T* ET
+BT 1 0 0 1 126 33 Tm (Desc. triangle) Tj T* ET
+q
+1 0 0 1 246 31 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Break of $79.1k targets ~$71k; close > $84.9k cancels) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 9 Tm (28d momentum rule) Tj T* ET
+BT 1 0 0 1 126 9 Tm (CASH since 10/25) Tj T* ET
+q
+1 0 0 1 246 7 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Repo's tested rule; 28d return -5.25%) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+.796078 .835294 .882353 RG
+.5 w
+n 0 226 m 470 226 l S
+n 0 0 m 470 0 l S
+n 0 0 m 0 226 l S
+n 470 0 m 470 226 l S
+n 0 202 m 470 202 l S
+n 0 168 m 470 168 l S
+n 0 144 m 470 144 l S
+n 0 120 m 470 120 l S
+n 0 96 m 470 96 l S
+n 0 72 m 470 72 l S
+n 0 48 m 470 48 l S
+n 0 24 m 470 24 l S
+n 120 0 m 120 226 l S
+n 240 0 m 240 226 l S
+Q
+Q
+Q
+ 
+
+Q
+
+endstream
+endobj
+70 0 obj
+<<
+/Length 402
+>>
+stream
+q
+0.0 0.0 612 792 re
+W
+n
+1 0 0 1 0 0 cm
+BT
+/F1-2 12 Tf
+14.4 TL
+ET
+1 1 1 rg
+n
+0 0 612 30 re
+f*
+0.886275 0.909804 0.941176 RG
+n
+40 30 m
+572 30 l
+S
+BT
+/F1-2 7 Tf
+8.4 TL
+ET
+0.443137 0.501961 0.588235 rg
+BT
+1 0 0 1 40 18 Tm
+(DISCLAIMER\072 For educational\057research purposes only\056 Not financial advice\056  \174  Generated 2026\05510\05527) Tj
+T*
+ET
+BT
+1 0 0 1 528.411 18 Tm
+(Page 10 of 13) Tj
+T*
+ET
+Q
+
+endstream
+endobj
+71 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+72 0 obj
+<<
+/Length 4613
+>>
+stream
+q
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 56 714 cm
+q
+.039216 .054902 .152941 rg
+BT 1 0 0 1 0 2 Tm /F2 20 Tf 22 TL (Fundamental Overview) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 698 cm
+Q
+q
+1 0 0 1 56 668 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Key Metrics) Tj T* ET
+Q
+Q
+q
+1 0 0 1 71 422 cm
+q
+.039216 .054902 .152941 rg
+n 0 240 470 -24 re f*
+1 1 1 rg
+n 0 216 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 192 470 -24 re f*
+1 1 1 rg
+n 0 168 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 144 470 -24 re f*
+1 1 1 rg
+n 0 120 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 96 470 -24 re f*
+1 1 1 rg
+n 0 72 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 48 470 -24 re f*
+1 1 1 rg
+n 0 24 470 -24 re f*
+1 1 1 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 6 225 Tm (Metric) Tj T* ET
+BT 1 0 0 1 162.994 225 Tm (Value) Tj T* ET
+BT 1 0 0 1 241.2445 225 Tm (Sector Avg) Tj T* ET
+BT 1 0 0 1 316 225 Tm (Assessment) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 201 Tm (MVRV) Tj T* ET
+BT 1 0 0 1 166.117 201 Tm (~1.5) Tj T* ET
+BT 1 0 0 1 239.737 201 Tm (Tops 2.5-3.5) Tj T* ET
+BT 1 0 0 1 316 201 Tm (Fair; far from top) Tj T* ET
+BT 1 0 0 1 6 177 Tm (Mayer multiple) Tj T* ET
+BT 1 0 0 1 166.243 177 Tm (1.11) Tj T* ET
+BT 1 0 0 1 243.6115 177 Tm (Tops > 2.4) Tj T* ET
+BT 1 0 0 1 316 177 Tm (Neutral) Tj T* ET
+BT 1 0 0 1 6 153 Tm (Realized price) Tj T* ET
+BT 1 0 0 1 162.616 153 Tm (~$54k) Tj T* ET
+BT 1 0 0 1 235.8625 153 Tm (STH ~$74-75k) Tj T* ET
+BT 1 0 0 1 316 153 Tm (Spot ~8% above STH cost) Tj T* ET
+BT 1 0 0 1 6 129 Tm (Miner all-in cost) Tj T* ET
+BT 1 0 0 1 156.1135 129 Tm (~$78-80k) Tj T* ET
+BT 1 0 0 1 240.9835 129 Tm (Spot $80.8k) Tj T* ET
+BT 1 0 0 1 316 129 Tm (Near soft floor) Tj T* ET
+BT 1 0 0 1 6 105 Tm (Exchange reserves) Tj T* ET
+BT 1 0 0 1 149.6155 105 Tm (~2.68M BTC) Tj T* ET
+BT 1 0 0 1 244.246 105 Tm (3-year low) Tj T* ET
+BT 1 0 0 1 316 105 Tm (Constructive) Tj T* ET
+BT 1 0 0 1 6 81 Tm (Hash rate \(7d\)) Tj T* ET
+BT 1 0 0 1 157.8685 81 Tm (> 1 ZH/s) Tj T* ET
+BT 1 0 0 1 235.498 81 Tm (First since Mar) Tj T* ET
+BT 1 0 0 1 316 81 Tm (Security recovered) Tj T* ET
+BT 1 0 0 1 6 57 Tm (Active addresses) Tj T* ET
+BT 1 0 0 1 162.616 57 Tm (~660k) Tj T* ET
+BT 1 0 0 1 234.7285 57 Tm (939k Aug 2025) Tj T* ET
+BT 1 0 0 1 316 57 Tm (Usage weak) Tj T* ET
+BT 1 0 0 1 6 33 Tm (Stablecoin supply) Tj T* ET
+BT 1 0 0 1 150.358 33 Tm (~$301-308B) Tj T* ET
+BT 1 0 0 1 232.483 33 Tm ($322B high May) Tj T* ET
+BT 1 0 0 1 316 33 Tm (Dry powder shrinking) Tj T* ET
+BT 1 0 0 1 6 9 Tm (Spot ETF AUM) Tj T* ET
+BT 1 0 0 1 155.6095 9 Tm (~$108.9B) Tj T* ET
+BT 1 0 0 1 238.864 9 Tm (Oct flows < 0) Tj T* ET
+BT 1 0 0 1 316 9 Tm (Holders underwater) Tj T* ET
+q
+1 J
+1 j
+.796078 .835294 .882353 RG
+.5 w
+n 0 240 m 470 240 l S
+n 0 0 m 470 0 l S
+n 0 0 m 0 240 l S
+n 470 0 m 470 240 l S
+n 0 216 m 470 216 l S
+n 0 192 m 470 192 l S
+n 0 168 m 470 168 l S
+n 0 144 m 470 144 l S
+n 0 120 m 470 120 l S
+n 0 96 m 470 96 l S
+n 0 72 m 470 72 l S
+n 0 48 m 470 48 l S
+n 0 24 m 470 24 l S
+n 130 0 m 130 240 l S
+n 220 0 m 220 240 l S
+n 310 0 m 310 240 l S
+Q
+Q
+Q
+q
+1 0 0 1 56 408 cm
+Q
+q
+1 0 0 1 56 378 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Valuation Assessment) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 316 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 46 Tm /F1 10 Tf 14 TL (No earnings or P/E, so valuation uses on-chain measures. MVRV ~1.5 and a Mayer multiple of 1.11 put BTC at) Tj T* (fair-to-slightly-cheap versus its own history, with price near miner all-in cost \(~$78-80k\). Adoption is the weak) Tj T* (spot: active addresses are down 30%+ from 2025, fees are near decade lows, stablecoin supply is shrinking, and) Tj T* (the CLARITY Act failed cloture 49-50 on 9/15.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 300 cm
+Q
+q
+1 0 0 1 56 270 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Competitive Moat) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 250 cm
+q
+BT 1 0 0 1 0 4 Tm 14 TL /F2 10 Tf .117647 .160784 .231373 rg (Moat Rating:) Tj /F1 10 Tf ( Wide) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 230 cm
+q
+BT 1 0 0 1 16 4 Tm 14 TL /F1 10 Tf .117647 .160784 .231373 rg (\177 17-year Lindy, largest network effect, liquidity and hash power) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 212 cm
+q
+BT 1 0 0 1 16 4 Tm 14 TL /F1 10 Tf .117647 .160784 .231373 rg (\177 Regulated ETF wrappers and 'digital gold' brand) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 194 cm
+q
+BT 1 0 0 1 16 4 Tm 14 TL /F1 10 Tf .117647 .160784 .231373 rg (\177 Store-of-value role not directly contested by ETH or stablecoins) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 176 cm
+q
+BT 1 0 0 1 16 4 Tm 14 TL /F1 10 Tf .117647 .160784 .231373 rg (\177 Main long-run threat: quantum \(BIP-360 draft, BIP-361 contested\)) Tj T* ET
+Q
+Q
+ 
+
+Q
+
+endstream
+endobj
+73 0 obj
+<<
+/Length 402
+>>
+stream
+q
+0.0 0.0 612 792 re
+W
+n
+1 0 0 1 0 0 cm
+BT
+/F1-3 12 Tf
+14.4 TL
+ET
+1 1 1 rg
+n
+0 0 612 30 re
+f*
+0.886275 0.909804 0.941176 RG
+n
+40 30 m
+572 30 l
+S
+BT
+/F1-3 7 Tf
+8.4 TL
+ET
+0.443137 0.501961 0.588235 rg
+BT
+1 0 0 1 40 18 Tm
+(DISCLAIMER\072 For educational\057research purposes only\056 Not financial advice\056  \174  Generated 2026\05510\05527) Tj
+T*
+ET
+BT
+1 0 0 1 528.411 18 Tm
+(Page 11 of 13) Tj
+T*
+ET
+Q
+
+endstream
+endobj
+74 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+75 0 obj
+<<
+/Length 5404
+>>
+stream
+q
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 56 714 cm
+q
+.039216 .054902 .152941 rg
+BT 1 0 0 1 0 2 Tm /F2 20 Tf 22 TL (Investment Thesis) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 698 cm
+Q
+q
+1 0 0 1 56 668 cm
+q
+0 .784314 .32549 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Bull Case) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 648 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (1. On-chain valuation fair/cheap \(MVRV ~1.5\) with price near miner cost) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 628 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (2. Long-term trend intact: golden cross, above rising 200-day and 50-week MAs) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 608 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (3. Exchange reserves at 3-year low; long-term holders accumulating) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 588 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (4. Post-10/30 expiry unpins price; call-heavy OI at $95k can fuel a squeeze) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 568 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (5. Mt. Gox overhang pushed to 10/2027; strategic-reserve hints) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 552 cm
+Q
+q
+1 0 0 1 56 522 cm
+q
+1 .090196 .266667 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Bear Case) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 502 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (1. Descending triangle on $79.1k with falling OBV; measured move ~$71k) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 482 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (2. Fed hiking \(3.75-4.00%\), December hike priced ~76-94%; beta ~1.6) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 462 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (3. October ETF outflows, holders below ~$81.3k cost basis; Strategy slowing) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 442 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (4. ~69.5% of Binance accounts long: liquidation cascade risk below $79.25k) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 422 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 4 Tm /F1 10 Tf 14 TL (5. CLARITY Act failed 49-50; fees and active addresses weak) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 406 cm
+Q
+q
+1 0 0 1 56 376 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Catalyst Timeline) Tj T* ET
+Q
+Q
+q
+1 0 0 1 71 226 cm
+q
+.039216 .054902 .152941 rg
+n 0 144 470 -24 re f*
+1 1 1 rg
+n 0 120 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 96 470 -24 re f*
+1 1 1 rg
+n 0 72 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 48 470 -24 re f*
+1 1 1 rg
+n 0 24 470 -24 re f*
+1 1 1 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 6 129 Tm (Event) Tj T* ET
+BT 1 0 0 1 166 129 Tm (Expected Date) Tj T* ET
+BT 1 0 0 1 266 129 Tm (Potential Impact) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 105 Tm (FOMC decision + presser) Tj T* ET
+BT 1 0 0 1 166 105 Tm (Oct 28, 2026) Tj T* ET
+q
+1 0 0 1 266 103 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Very high) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 81 Tm (Deribit monthly expiry \(~$11B\)) Tj T* ET
+BT 1 0 0 1 166 81 Tm (Oct 30, 2026) Tj T* ET
+q
+1 0 0 1 266 79 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (High: max pain $76-79k) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 57 Tm (Momentum checks \(Sun closes\)) Tj T* ET
+BT 1 0 0 1 166 57 Tm (Nov 1 / 8 / 15) Tj T* ET
+q
+1 0 0 1 266 55 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Need > $86.5k / $83.7k / $82.0k) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 33 Tm (October CPI) Tj T* ET
+BT 1 0 0 1 166 33 Tm (Nov 10, 2026) Tj T* ET
+q
+1 0 0 1 266 31 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (High: Dec hike odds) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 9 Tm (FOMC) Tj T* ET
+BT 1 0 0 1 166 9 Tm (Dec 8-9, 2026) Tj T* ET
+q
+1 0 0 1 266 7 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (High) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+.796078 .835294 .882353 RG
+.5 w
+n 0 144 m 470 144 l S
+n 0 0 m 470 0 l S
+n 0 0 m 0 144 l S
+n 470 0 m 470 144 l S
+n 0 120 m 470 120 l S
+n 0 96 m 470 96 l S
+n 0 72 m 470 72 l S
+n 0 48 m 470 48 l S
+n 0 24 m 470 24 l S
+n 160 0 m 160 144 l S
+n 260 0 m 260 144 l S
+Q
+Q
+Q
+q
+1 0 0 1 56 212 cm
+Q
+q
+1 0 0 1 56 182 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Entry / Exit Strategy) Tj T* ET
+Q
+Q
+q
+1 0 0 1 126 56 cm
+q
+.039216 .054902 .152941 rg
+n 0 120 360 -24 re f*
+1 1 1 rg
+n 0 96 360 -24 re f*
+.941176 .956863 .972549 rg
+n 0 72 360 -24 re f*
+1 1 1 rg
+n 0 48 360 -24 re f*
+.941176 .956863 .972549 rg
+n 0 24 360 -24 re f*
+1 1 1 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 6 105 Tm (Parameter) Tj T* ET
+BT 1 0 0 1 248.4935 105 Tm (Level) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 81 Tm (Entry Zone) Tj T* ET
+.129412 .588235 .952941 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 188.468 81 Tm (On trigger only: $82,000 - $84,500) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 57 Tm (Price Target) Tj T* ET
+0 .784314 .32549 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 211.967 57 Tm (T1 $86,600, T2 $95,000) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 33 Tm (Stop Loss) Tj T* ET
+1 .090196 .266667 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 219.473 33 Tm ($78,500 daily close) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 9 Tm (Timeframe) Tj T* ET
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 236.2355 9 Tm (4-10 weeks) Tj T* ET
+q
+1 J
+1 j
+.796078 .835294 .882353 RG
+.5 w
+n 0 120 m 360 120 l S
+n 0 0 m 360 0 l S
+n 0 0 m 0 120 l S
+n 360 0 m 360 120 l S
+n 0 96 m 360 96 l S
+n 0 72 m 360 72 l S
+n 0 48 m 360 48 l S
+n 0 24 m 360 24 l S
+n 160 0 m 160 120 l S
+Q
+Q
+Q
+ 
+
+Q
+
+endstream
+endobj
+76 0 obj
+<<
+/Length 402
+>>
+stream
+q
+0.0 0.0 612 792 re
+W
+n
+1 0 0 1 0 0 cm
+BT
+/F1-4 12 Tf
+14.4 TL
+ET
+1 1 1 rg
+n
+0 0 612 30 re
+f*
+0.886275 0.909804 0.941176 RG
+n
+40 30 m
+572 30 l
+S
+BT
+/F1-4 7 Tf
+8.4 TL
+ET
+0.443137 0.501961 0.588235 rg
+BT
+1 0 0 1 40 18 Tm
+(DISCLAIMER\072 For educational\057research purposes only\056 Not financial advice\056  \174  Generated 2026\05510\05527) Tj
+T*
+ET
+BT
+1 0 0 1 528.411 18 Tm
+(Page 12 of 13) Tj
+T*
+ET
+Q
+
+endstream
+endobj
+77 0 obj
+<<
+/BaseFont /Helvetica
+/Encoding /WinAnsiEncoding
+/Name /F1
+/Subtype /Type1
+/Type /Font
+>>
+endobj
+78 0 obj
+<<
+/Length 4886
+>>
+stream
+q
+1 0 0 1 0 0 cm  BT /F1 12 Tf 14.4 TL ET
+q
+1 0 0 1 56 714 cm
+q
+BT 1 0 0 1 0 2 Tm 22 TL /F2 20 Tf .039216 .054902 .152941 rg (Risk & Position Sizing) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 698 cm
+Q
+q
+1 0 0 1 56 668 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Risk / Reward Analysis) Tj T* ET
+Q
+Q
+q
+1 0 0 1 71 518 cm
+q
+.039216 .054902 .152941 rg
+n 0 144 470 -24 re f*
+1 1 1 rg
+n 0 120 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 96 470 -24 re f*
+1 1 1 rg
+n 0 72 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 48 470 -24 re f*
+1 1 1 rg
+n 0 24 470 -24 re f*
+1 1 1 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 6 129 Tm (Risk Metric) Tj T* ET
+BT 1 0 0 1 206 129 Tm (Value) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 105 Tm (Risk/Reward Ratio) Tj T* ET
+0 .784314 .32549 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 206 105 Tm (~0.7:1 to T1, ~2.5:1 to T2) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 81 Tm (Recommended Position Size) Tj T* ET
+BT 1 0 0 1 206 81 Tm (2-3% \(cap 5%\), spot only, no leverage) Tj T* ET
+BT 1 0 0 1 6 57 Tm (Max Drawdown Scenario) Tj T* ET
+1 .090196 .266667 rg
+BT 1 0 0 1 206 57 Tm (-27.5% to 2026 low; -75% to -85% cycle tail) Tj T* ET
+0 0 0 rg
+BT 1 0 0 1 6 33 Tm (Volatility Profile) Tj T* ET
+BT 1 0 0 1 206 33 Tm (ATR 2.45%, HV30 25.3%, HV1y 44.2%) Tj T* ET
+BT 1 0 0 1 6 9 Tm (Market Correlation) Tj T* ET
+BT 1 0 0 1 206 9 Tm (Beta ~1.55-1.60 vs SPY, corr ~0.45) Tj T* ET
+q
+1 J
+1 j
+.796078 .835294 .882353 RG
+.5 w
+n 0 144 m 470 144 l S
+n 0 0 m 470 0 l S
+n 0 0 m 0 144 l S
+n 470 0 m 470 144 l S
+n 0 120 m 470 120 l S
+n 0 96 m 470 96 l S
+n 0 72 m 470 72 l S
+n 0 48 m 470 48 l S
+n 0 24 m 470 24 l S
+n 200 0 m 200 144 l S
+Q
+Q
+Q
+q
+1 0 0 1 56 502 cm
+Q
+q
+1 0 0 1 56 472 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Position Sizing Methodology) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 410 cm
+q
+BT 1 0 0 1 0 46 Tm 14 TL /F1 10 Tf .117647 .160784 .231373 rg (Enter only on trigger A \(a Sunday close with a positive 28-day return\) or trigger B \(a daily close above $84k after) Tj T* (FOMC\). Risk at most 0.5-0.75% of equity and allow 1.5x the stop distance for slippage \(weekend books,) Tj T* (liquidation cascades\). Half of standard size because the momentum backtest \(Sharpe 1.42 vs 0.93, max) Tj T* (drawdown -48% vs -76%\) missed its pre-set p < 0.0167 bar \(p = 0.025\). Kelly not computed.) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 390 cm
+Q
+q
+1 0 0 1 56 360 cm
+q
+.129412 .588235 .952941 rg
+BT 1 0 0 1 0 4 Tm /F2 14 Tf 18 TL (Scenario Analysis) Tj T* ET
+Q
+Q
+q
+1 0 0 1 71 258 cm
+q
+.039216 .054902 .152941 rg
+n 0 96 470 -24 re f*
+1 1 1 rg
+n 0 72 470 -24 re f*
+.941176 .956863 .972549 rg
+n 0 48 470 -24 re f*
+1 1 1 rg
+n 0 24 470 -24 re f*
+1 1 1 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 6 81 Tm (Scenario) Tj T* ET
+BT 1 0 0 1 101.744 81 Tm (Probability) Tj T* ET
+BT 1 0 0 1 184.243 81 Tm (Expected Return) Tj T* ET
+BT 1 0 0 1 281 81 Tm (Trigger) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+BT 1 0 0 1 6 57 Tm (Bull Case) Tj T* ET
+BT 1 0 0 1 115.9955 57 Tm (25%) Tj T* ET
+0 .784314 .32549 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 189.985 57 Tm (+18% to +24%) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+q
+1 0 0 1 281 55 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Dovish FOMC, expiry unpins, reclaim $84k) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 33 Tm (Base Case) Tj T* ET
+BT 1 0 0 1 115.9955 33 Tm (45%) Tj T* ET
+.129412 .588235 .952941 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 184.981 33 Tm ($75k-$88k range) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+q
+1 0 0 1 281 31 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Hold priced in, chop into CPI) Tj T* ET
+Q
+Q
+BT 1 0 0 1 6 9 Tm (Bear Case) Tj T* ET
+BT 1 0 0 1 115.9955 9 Tm (30%) Tj T* ET
+1 .090196 .266667 rg
+BT /F2 9 Tf 12 TL ET
+BT 1 0 0 1 188.7385 9 Tm (-10% \($72-73k\)) Tj T* ET
+0 0 0 rg
+BT /F1 9 Tf 12 TL ET
+q
+1 0 0 1 281 7 cm
+q
+.117647 .160784 .231373 rg
+BT 1 0 0 1 0 3 Tm /F1 8 Tf 11 TL (Hawkish Fed, $79.1k breaks, ETF outflows) Tj T* ET
+Q
+Q
+q
+1 J
+1 j
+.796078 .835294 .882353 RG
+.5 w
+n 0 96 m 470 96 l S
+n 0 0 m 470 0 l S
+n 0 0 m 0 96 l S
+n 470 0 m 470 96 l S
+n 0 72 m 470 72 l S
+n 0 48 m 470 48 l S
+n 0 24 m 470 24 l S
+n 85 0 m 85 96 l S
+n 165 0 m 165 96 l S
+n 275 0 m 275 96 l S
+Q
+Q
+Q
+q
+1 0 0 1 56 234 cm
+Q
+q
+1 0 0 1 56 224 cm
+q
+.470588 .564706 .611765 rg
+BT 1 0 0 1 0 3 Tm /F1 7 Tf 10 TL (Generated by AI Trading Analyst for Claude Code) Tj T* ET
+Q
+Q
+q
+1 0 0 1 56 189 cm
+q
+.470588 .564706 .611765 rg
+BT 1 0 0 1 0 20.5 Tm /F1 6.5 Tf 9 TL (DISCLAIMER: This report is generated by AI for educational and research purposes only. It is NOT financial advice. It does NOT constitute a recommendation to buy, sell, or) Tj T* (hold any security. Past performance does not guarantee future results. Always do your own due diligence and consult a licensed financial advisor before making investment) Tj T* (decisions. The authors and creators of this tool accept no liability for any losses incurred.) Tj T* ET
+Q
+Q
+ 
+
+Q
+
+endstream
+endobj
+79 0 obj
+<<
+/Length 402
+>>
+stream
+q
+0.0 0.0 612 792 re
+W
+n
+1 0 0 1 0 0 cm
+BT
+/F1-5 12 Tf
+14.4 TL
+ET
+1 1 1 rg
+n
+0 0 612 30 re
+f*
+0.886275 0.909804 0.941176 RG
+n
+40 30 m
+572 30 l
+S
+BT
+/F1-5 7 Tf
+8.4 TL
+ET
+0.443137 0.501961 0.588235 rg
+BT
+1 0 0 1 40 18 Tm
+(DISCLAIMER\072 For educational\057research purposes only\056 Not financial advice\056  \174  Generated 2026\05510\05527) Tj
+T*
+ET
+BT
+1 0 0 1 528.411 18 Tm
+(Page 13 of 13) Tj
+T*
+ET
+Q
+
+endstream
 endobj
 xref
-0 20
+0 80
 0000000000 65535 f 
-0000000061 00000 n 
-0000000112 00000 n 
-0000000219 00000 n 
-0000000331 00000 n 
-0000000440 00000 n 
-0000000635 00000 n 
-0000000830 00000 n 
-0000001025 00000 n 
-0000001220 00000 n 
-0000001415 00000 n 
-0000001611 00000 n 
-0000001681 00000 n 
-0000001962 00000 n 
-0000002053 00000 n 
-0000003440 00000 n 
-0000005274 00000 n 
-0000007167 00000 n 
-0000009170 00000 n 
-0000011338 00000 n 
+0000000015 00000 n 
+0000000054 00000 n 
+0000000197 00000 n 
+0000000246 00000 n 
+0000000435 00000 n 
+0000000468 00000 n 
+0000000522 00000 n 
+0000000629 00000 n 
+0000000741 00000 n 
+0000000932 00000 n 
+0000000966 00000 n 
+0000001099 00000 n 
+0000001207 00000 n 
+0000001320 00000 n 
+0000001430 00000 n 
+0000001622 00000 n 
+0000001656 00000 n 
+0000001848 00000 n 
+0000001882 00000 n 
+0000002074 00000 n 
+0000002108 00000 n 
+0000002300 00000 n 
+0000002334 00000 n 
+0000002526 00000 n 
+0000002560 00000 n 
+0000002752 00000 n 
+0000002786 00000 n 
+0000002919 00000 n 
+0000003027 00000 n 
+0000003140 00000 n 
+0000003250 00000 n 
+0000003442 00000 n 
+0000003476 00000 n 
+0000003668 00000 n 
+0000003702 00000 n 
+0000003894 00000 n 
+0000003928 00000 n 
+0000004120 00000 n 
+0000004154 00000 n 
+0000004346 00000 n 
+0000004380 00000 n 
+0000004488 00000 n 
+0000011672 00000 n 
+0000012125 00000 n 
+0000012233 00000 n 
+0000015012 00000 n 
+0000015465 00000 n 
+0000015573 00000 n 
+0000021905 00000 n 
+0000022358 00000 n 
+0000022466 00000 n 
+0000027702 00000 n 
+0000028155 00000 n 
+0000028263 00000 n 
+0000032937 00000 n 
+0000033390 00000 n 
+0000033498 00000 n 
+0000039128 00000 n 
+0000039581 00000 n 
+0000039689 00000 n 
+0000044631 00000 n 
+0000045084 00000 n 
+0000045192 00000 n 
+0000047990 00000 n 
+0000048443 00000 n 
+0000048551 00000 n 
+0000054865 00000 n 
+0000055318 00000 n 
+0000055426 00000 n 
+0000060608 00000 n 
+0000061062 00000 n 
+0000061170 00000 n 
+0000065836 00000 n 
+0000066290 00000 n 
+0000066398 00000 n 
+0000071855 00000 n 
+0000072309 00000 n 
+0000072417 00000 n 
+0000077356 00000 n 
 trailer
 <<
-/ID 
-[<dd34c49fdf8996ff57582581c71818dc><dd34c49fdf8996ff57582581c71818dc>]
-% ReportLab generated PDF document -- digest (opensource)
-
-/Info 12 0 R
-/Root 11 0 R
-/Size 20
+/Size 80
+/Root 3 0 R
+/Info 1 0 R
 >>
 startxref
-13559
+77810
 %%EOF
