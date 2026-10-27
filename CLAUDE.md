@@ -41,3 +41,13 @@ It added `.claude/{skills,agents,commands,helpers}`, hooks and a status line in
 config in `.claude-flow/`. Its local databases (`.swarm/`, `ruvector.db`) are
 gitignored. Update with `npx ruflo@latest init upgrade --settings`, and keep the
 trading-desk entries in `settings.json` when you do.
+
+## AI Trading Analyst skills
+
+The `trade` and `trade-*` skills and the five `trade-*` agents in `.claude/` come
+from zubair-trabzada/ai-trading-claude (commit c6d7252). Its `install.sh` copies
+into `~/.claude`; they were copied into the project instead so cloud sessions
+keep them, with the PDF script path changed to
+`.claude/skills/trade/scripts/generate_trade_pdf.py`. PDF reports need
+`pip3 install 'reportlab>=4.0'`. These are research prompts that use web data;
+they don't place trades.
