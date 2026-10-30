@@ -1,0 +1,198 @@
+//@version=6
+// Anti-Climax pattern strategy, from Galen Woods, "Day Trading with the Anti-Climax
+// Pattern" (Trading Setups Review, 2014), chapter 2.
+//
+// Pattern (fig. 2-1): consecutive bars whose highs each rise above the previous
+// high by an increasing distance (A < B < C). The bearish version is an upswing that
+// accelerates into exhaustion; the bullish version mirrors it with lows. The extreme
+// of the pattern is the limit line.
+//
+// Short setup (fig. 2-6), the long setup mirrors it (fig. 2-5):
+//   1. Bearish Anti-climax pattern.
+//   2. If its last bar is bearish, sell stop one tick below that bar's low.
+//   3. If not, sell stop one tick below the next bearish bar (here: the most recent
+//      bearish bar, so the order follows later setup bars as in fig. 2-9).
+//   4. If any bar's low clears above the limit line, the setup is invalid.
+//
+// Context (ch. 2.2.2 and 2.4): trade it with the market bias, as a counter-bias thrust
+// that fails. A bearish pattern must not close above the last pivot high, and a
+// bullish one must not close below the last pivot low. The book reads bias from swings
+// and trend lines; this script offers an EMA slope or swing structure as stand-ins.
+//
+// Exits: the book leaves targets to support/resistance (Volume IV), so this uses a
+// stop one tick beyond the limit line, an R-multiple target, and the opposite
+// Anti-climax as an exit signal (figs. 2-10, 2-11).
+strategy("Anti-Climax Strategy", overlay=true, process_orders_on_close=true,
+     initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=100,
+     commission_type=strategy.commission.percent, commission_value=0.05, slippage=1)
+
+grpPat  = "Pattern"
+incN    = input.int(3, "Accelerating Increments", minval=2, maxval=6, group=grpPat,
+     tooltip="Number of rising highs (falling lows) that must grow in size. The book's figure 2-1 shows three (A < B < C), i.e. four bars.")
+expiry  = input.int(10, "Setup Expiry (bars)", minval=1, group=grpPat)
+tradeDir = input.string("Both", "Direction", options=["Both", "Long", "Short"], group=grpPat)
+
+grpCtx   = "Context"
+useStruct = input.bool(true, "Pattern Must Not Close Beyond Last Pivot", group=grpCtx)
+pivLen    = input.int(5, "Pivot Strength (bars each side)", minval=1, group=grpCtx)
+biasMode  = input.string("EMA Slope", "Market Bias Filter", options=["None", "EMA Slope", "Swing Structure"], group=grpCtx)
+emaLen    = input.int(50, "EMA Length", minval=1, group=grpCtx)
+slopeLen  = input.int(5, "EMA Slope Lookback", minval=1, group=grpCtx)
+
+grpExit  = "Exits"
+stopTicks = input.int(1, "Stop Ticks Beyond Limit Line", minval=0, group=grpExit)
+targetR   = input.float(2.0, "Target (R multiple, 0 = none)", minval=0.0, step=0.25, group=grpExit)
+exitOpp   = input.bool(true, "Exit on Opposite Anti-Climax", group=grpExit)
+
+grpSess  = "Day Trading Session"
+useSess  = input.bool(false, "Restrict to Session and Flatten at End", group=grpSess)
+sess     = input.session("0930-1600", "Session (exchange time)", group=grpSess)
+flatMins = input.int(5, "Flatten Minutes Before Session End", minval=0, group=grpSess)
+
+grpVis   = "Visuals"
+showLvls = input.bool(true, "Show Limit Line, Trigger, Stop and Target", group=grpVis)
+
+tick = syminfo.mintick
+
+// --- Pattern detection: the last incN increments are positive and strictly growing ---
+bool bearAC = true
+bool bullAC = true
+for i = 0 to incN - 1
+    float upInc   = high[i] - high[i + 1]
+    float downInc = low[i + 1] - low[i]
+    if upInc <= 0
+        bearAC := false
+    if downInc <= 0
+        bullAC := false
+    if i < incN - 1
+        if upInc <= high[i + 1] - high[i + 2]
+            bearAC := false
+        if downInc <= low[i + 2] - low[i + 1]
+            bullAC := false
+
+// --- Structure: last confirmed pivots ---
+ph = ta.pivothigh(high, pivLen, pivLen)
+pl = ta.pivotlow(low, pivLen, pivLen)
+var float lastPH = na
+var float prevPH = na
+var float lastPL = na
+var float prevPL = na
+if not na(ph)
+    prevPH := lastPH
+    lastPH := ph
+if not na(pl)
+    prevPL := lastPL
+    lastPL := pl
+
+patHiClose = ta.highest(close, incN + 1)
+patLoClose = ta.lowest(close, incN + 1)
+bearStructOK = not useStruct or (not na(lastPH) and patHiClose <= lastPH)
+bullStructOK = not useStruct or (not na(lastPL) and patLoClose >= lastPL)
+
+// --- Market bias ---
+ema = ta.ema(close, emaLen)
+bearBias = switch biasMode
+    "EMA Slope"       => ema < ema[slopeLen]
+    "Swing Structure" => lastPH < prevPH and lastPL < prevPL
+    => true
+bullBias = switch biasMode
+    "EMA Slope"       => ema > ema[slopeLen]
+    "Swing Structure" => lastPH > prevPH and lastPL > prevPL
+    => true
+
+// --- Session ---
+inSess  = not useSess or not na(time(timeframe.period, sess))
+// Flatten when the bar closes within flatMins of the session's end (HHMM after the dash)
+endHHMM  = str.substring(sess, 5, 9)
+endMins  = int(str.tonumber(str.substring(endHHMM, 0, 2))) * 60 + int(str.tonumber(str.substring(endHHMM, 2, 4)))
+barMins  = hour(time_close, syminfo.timezone) * 60 + minute(time_close, syminfo.timezone)
+flatNow  = useSess and inSess and barMins >= endMins - flatMins
+canTrade = inSess and not flatNow
+
+allowLong  = tradeDir != "Short"
+allowShort = tradeDir != "Long"
+
+bearSignal = bearAC and bearStructOK and bearBias
+bullSignal = bullAC and bullStructOK and bullBias
+
+// --- Pending setup state ---
+var int   pend     = 0      // -1 short setup pending, 1 long setup pending, 0 none
+var float limitLn  = na
+var float trigger  = na
+var int   pendBar  = na
+var float stopLvl  = na
+var float tgtLvl   = na
+
+// A filled entry ends the pending setup
+if pend == -1 and strategy.position_size < 0
+    pend := 0
+if pend == 1 and strategy.position_size > 0
+    pend := 0
+
+// Opposite Anti-climax exits (patterns only need to exist, not pass the bias filter)
+if exitOpp and strategy.position_size > 0 and bearAC
+    strategy.close("Long", comment="Opp AC")
+if exitOpp and strategy.position_size < 0 and bullAC
+    strategy.close("Short", comment="Opp AC")
+
+// Manage an existing pending setup (bars after the pattern bar)
+if pend == -1
+    if low > limitLn or bar_index - pendBar > expiry or not canTrade
+        pend := 0
+    else if close < open
+        trigger := low - tick
+else if pend == 1
+    if high < limitLn or bar_index - pendBar > expiry or not canTrade
+        pend := 0
+    else if close > open
+        trigger := high + tick
+
+// A new pattern replaces any pending setup
+if canTrade and bearSignal and allowShort
+    pend    := -1
+    limitLn := high
+    pendBar := bar_index
+    trigger := close < open ? low - tick : na
+else if canTrade and bullSignal and allowLong
+    pend    := 1
+    limitLn := low
+    pendBar := bar_index
+    trigger := close > open ? high + tick : na
+
+// --- Orders ---
+if pend == 0
+    strategy.cancel("Short")
+    strategy.cancel("Long")
+if pend == -1 and not na(trigger) and strategy.position_size >= 0
+    strategy.cancel("Long")
+    stopLvl := limitLn + stopTicks * tick
+    tgtLvl  := targetR > 0 ? trigger - targetR * (stopLvl - trigger) : na
+    strategy.entry("Short", strategy.short, stop=trigger)
+    strategy.exit("Short X", "Short", stop=stopLvl, limit=tgtLvl, comment_loss="Stop", comment_profit="Target")
+if pend == 1 and not na(trigger) and strategy.position_size <= 0
+    strategy.cancel("Short")
+    stopLvl := limitLn - stopTicks * tick
+    tgtLvl  := targetR > 0 ? trigger + targetR * (trigger - stopLvl) : na
+    strategy.entry("Long", strategy.long, stop=trigger)
+    strategy.exit("Long X", "Long", stop=stopLvl, limit=tgtLvl, comment_loss="Stop", comment_profit="Target")
+
+if flatNow
+    strategy.close_all(comment="Session end")
+
+// --- Visuals ---
+plot(biasMode == "EMA Slope" ? ema : na, "EMA", color.new(color.gray, 30))
+plotshape(bearSignal, "Bearish Anti-Climax", shape.triangledown, location.abovebar, color.red, text="AC")
+plotshape(bullSignal, "Bullish Anti-Climax", shape.triangleup, location.belowbar, color.green, text="AC")
+plotshape(bearAC and not bearSignal, "Bearish AC (filtered out)", shape.xcross, location.abovebar, color.new(color.red, 60), size=size.tiny)
+plotshape(bullAC and not bullSignal, "Bullish AC (filtered out)", shape.xcross, location.belowbar, color.new(color.green, 60), size=size.tiny)
+
+inPos = strategy.position_size != 0
+plot(showLvls and pend != 0 ? limitLn : na, "Limit Line", color.orange, 1, plot.style_linebr)
+plot(showLvls and pend != 0 ? trigger : na, "Entry Trigger", color.blue, 1, plot.style_linebr)
+plot(showLvls and (inPos or (pend != 0 and not na(trigger))) ? stopLvl : na, "Stop", color.red, 1, plot.style_linebr)
+plot(showLvls and (inPos or (pend != 0 and not na(trigger))) ? tgtLvl : na, "Target", color.green, 1, plot.style_linebr)
+
+if bearSignal and allowShort and canTrade
+    alert("Bearish Anti-Climax on " + syminfo.ticker + ", limit line " + str.tostring(high, format.mintick), alert.freq_once_per_bar_close)
+if bullSignal and allowLong and canTrade
+    alert("Bullish Anti-Climax on " + syminfo.ticker + ", limit line " + str.tostring(low, format.mintick), alert.freq_once_per_bar_close)
