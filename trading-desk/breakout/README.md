@@ -56,4 +56,4 @@ limit.
 Verdict: no edge over random entry in the same stocks. Not worth trading as
 coded.
 
-Audit: see the line below, filled in from `breakout/audit.py`.
+Audit: every logged trade satisfies the rules as written: rules 22,247/22,247 and 22,243/22,243, gated 11,644/11,644 and 11,636/11,636, random 20,633/20,633 and 20,633/20,633 (worst and best readings).
