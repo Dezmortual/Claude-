@@ -1,0 +1,131 @@
+//@version=6
+// Flat-base breakout strategy, from Sinisa Persic, "Successful Breakout Trading:
+// A Practical Guide" (2013), as fixed rules on daily bars. The author reads
+// triangles, rectangles and flags by eye and fine-tunes entries on 5-60 minute
+// charts; this is the mechanical core. Python port and results:
+// trading-desk/breakout/.
+//
+// Scan:     price 2-2000, 63-day average volume >= 400k, close above its level
+//           21 sessions ago, close above the 50-day SMA.
+// Base:     resistance R = highest high of the last 15 sessions, tested at least
+//           twice (highs within 1% of R), the oldest test 5+ sessions back; the
+//           base is no deeper than 12%; the close sits within 3% under R.
+// Entry:    buy stop just above R for the next session only, renewed each day
+//           the base still holds (the book's order "expires the following day").
+// Stop:     just under the lowest low of the last 10 sessions.
+// Exits:    two halves. Half 1 targets 1R; if it has not got there within 3
+//           sessions it is sold ("up or out"). Half 2 targets 2R, keeps the
+//           initial stop until T1 is hit, then trails under the 5-session low.
+//           Anything left after 20 sessions is sold.
+// Gated:    the book's context filters: S&P 500 above its 50-day SMA, and
+//           Bollinger Band (20, 2) width in the bottom 30% of its last 126 days.
+strategy("Breakout Strategy", overlay=true, process_orders_on_close=true, pyramiding=0,
+     initial_capital=10000, default_qty_type=strategy.percent_of_equity, default_qty_value=25,
+     commission_type=strategy.commission.percent, commission_value=0.0, slippage=2)
+
+grpBase  = "Base"
+baseLen  = input.int(15, "Base Length (sessions)", minval=5, group=grpBase)
+touchN   = input.int(2, "Tests of Resistance", minval=1, group=grpBase)
+touchTol = input.float(1.0, "Test Tolerance %", minval=0.0, step=0.1, group=grpBase) / 100
+minAge   = input.int(5, "Oldest Test At Least (sessions ago)", minval=0, group=grpBase)
+maxDepth = input.float(12.0, "Max Base Depth %", minval=1.0, step=0.5, group=grpBase) / 100
+nearPct  = input.float(3.0, "Close Within % of Resistance", minval=0.1, step=0.1, group=grpBase) / 100
+entryBuf = input.float(0.1, "Entry/Stop Buffer %", minval=0.0, step=0.05, group=grpBase) / 100
+
+grpScan  = "Scan"
+minVol   = input.float(400000, "Min 63-Day Avg Volume", minval=0, group=grpScan)
+useGate  = input.bool(false, "Book's Market and Bollinger Filters", group=grpScan)
+mktSym   = input.symbol("AMEX:SPY", "Market Index", group=grpScan)
+bbQ      = input.float(30, "Bollinger Width Percentile Max", minval=1, maxval=100, group=grpScan)
+
+grpExit  = "Exits"
+stopLen  = input.int(10, "Stop: Lowest Low of (sessions)", minval=2, group=grpExit)
+t1R      = input.float(1.0, "Target 1 (R)", minval=0.1, step=0.1, group=grpExit)
+t2R      = input.float(2.0, "Target 2 (R)", minval=0.1, step=0.1, group=grpExit)
+accelN   = input.int(3, "Up or Out: Sessions to Reach T1", minval=1, group=grpExit)
+trailLen = input.int(5, "Trail Half 2 Under Low of (sessions)", minval=1, group=grpExit)
+maxHold  = input.int(20, "Max Hold (sessions)", minval=1, group=grpExit)
+minRisk  = input.float(1.0, "Skip If Stop Closer Than %", minval=0.0, step=0.1, group=grpExit) / 100
+
+// --- Scan and base ---
+sma50 = ta.sma(close, 50)
+scan  = close >= 2 and close <= 2000 and ta.sma(volume, 63) >= minVol and close > close[21] and close > sma50
+
+R     = ta.highest(high, baseLen)
+int touches = 0
+int oldest  = -1
+for k = 0 to baseLen - 1
+    if high[k] >= R * (1 - touchTol)
+        touches += 1
+        oldest := k
+depth = (R - ta.lowest(low, baseLen)) / R
+base  = touches >= touchN and oldest >= minAge and depth <= maxDepth and close >= R * (1 - nearPct) and close < R
+
+// --- Book's context filters ---
+basis = ta.sma(close, 20)
+bbw   = 4 * ta.stdev(close, 20) / basis
+bbCut = ta.percentile_linear_interpolation(bbw, 126, bbQ)
+mktUp = request.security(mktSym, "D", close > ta.sma(close, 50), lookahead=barmerge.lookahead_off)
+gateOK = not useGate or (bbw <= bbCut and mktUp)
+
+stopLvl = ta.lowest(low, stopLen) * (1 - entryBuf)
+trig    = R * (1 + entryBuf)
+setup   = scan and base and gateOK and (trig - stopLvl) >= minRisk * trig
+
+// --- Trade state ---
+var float stop0  = na
+var float s2     = na
+var float tgt1   = na
+var float tgt2   = na
+var float size0  = na
+var int   inBar  = na
+var bool  t1Hit  = false
+var bool  noAcc  = false
+trailLow = ta.lowest(low, trailLen)
+
+flat = strategy.position_size == 0
+if flat
+    t1Hit := false
+    noAcc := false
+if strategy.position_size > 0 and strategy.position_size[1] == 0
+    inBar := bar_index          // the buy stop filled during this bar
+    size0 := strategy.position_size
+
+if flat and setup
+    stop0 := stopLvl
+    s2    := stopLvl
+    tgt1  := trig + t1R * (trig - stopLvl)
+    tgt2  := trig + t2R * (trig - stopLvl)
+    strategy.entry("Long", strategy.long, stop=trig)
+    strategy.exit("Half 1", "Long", qty_percent=50, stop=stop0, limit=tgt1, comment_loss="Stop", comment_profit="T1")
+    strategy.exit("Half 2", "Long", stop=s2, limit=tgt2, comment_loss="Stop", comment_profit="T2")
+else if flat
+    strategy.cancel("Long")
+
+if strategy.position_size > 0
+    held = bar_index - inBar
+    half1Open = strategy.position_size > size0 * 0.75
+    if not half1Open and not noAcc and high >= tgt1
+        t1Hit := true
+    if half1Open and held >= accelN
+        strategy.close("Long", qty_percent=50, comment="No accel")
+        strategy.cancel("Half 1")
+        noAcc := true
+    if t1Hit
+        s2 := math.max(s2, trailLow)
+        strategy.exit("Half 2", "Long", stop=s2, limit=tgt2, comment_loss="Trail", comment_profit="T2")
+    if held >= maxHold
+        strategy.close_all(comment="Time")
+
+// --- Visuals ---
+plot(sma50, "SMA 50", color.new(color.gray, 40))
+plot(setup and flat ? trig : na, "Buy Stop", color.blue, 2, plot.style_linebr)
+plot(setup and flat ? stopLvl : na, "Planned Stop", color.red, 1, plot.style_linebr)
+plot(strategy.position_size > 0 ? (t1Hit ? s2 : stop0) : na, "Stop", color.red, 2, plot.style_linebr)
+plot(strategy.position_size > 0 ? tgt1 : na, "Target 1", color.new(color.green, 40), 1, plot.style_linebr)
+plot(strategy.position_size > 0 ? tgt2 : na, "Target 2", color.green, 1, plot.style_linebr)
+bgcolor(setup and flat ? color.new(color.blue, 90) : na, title="Base Ready")
+
+if setup and flat
+    alert("Breakout setup on " + syminfo.ticker + ": buy stop " + str.tostring(trig, format.mintick)
+         + ", stop " + str.tostring(stopLvl, format.mintick), alert.freq_once_per_bar_close)
