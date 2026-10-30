@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-audit.py  --  re-verify every trade in out/trades_<arm>.csv against the rules as
+audit.py  --  re-verify every trade in out/trades_<arm>_<intrabar>.csv against the rules as
 written, from the cached candles, sharing no code with strategy.py.
 
 For each symbol it recomputes the patterns, pivots and EMA by loop, replays the
@@ -11,7 +11,8 @@ rules produce, and that none is missing:
     within the expiry window of a pattern that passed the arm's filters, and no
     bar in between cleared the limit line
   - each exit is the limit-line stop, the R target, an opposite pattern's close,
-    or a reversal by the opposite entry
+    or a reversal by the opposite entry, with the run's worst/best reading of
+    a bar's high/low order
   - trades follow each other with no overlap
 
   python3 anticlimax/audit.py [--out anticlimax/out]
@@ -36,7 +37,7 @@ def same(a: float, b: float) -> bool:
     return math.isclose(a, b, rel_tol=1e-7, abs_tol=1e-9)
 
 
-def replay(bars: pd.DataFrame, gated: bool, target_r: float, opp_exit: bool) -> list:
+def replay(bars: pd.DataFrame, gated: bool, target_r: float, opp_exit: bool, best: bool) -> list:
     o, h, l, c = (bars[k].tolist() for k in ("open", "high", "low", "close"))
     n = len(c)
 
@@ -88,16 +89,36 @@ def replay(bars: pd.DataFrame, gated: bool, target_r: float, opp_exit: bool) -> 
     setup = None                      # dict(side, limit, trig, born)
     order = None                      # order resting through the next bar
 
+    def exit_on(i: int, entry_bar: bool):
+        if side == 1:
+            stop_hit, tgt_hit = l[i] <= t_stop, t_tgt is not None and h[i] >= t_tgt
+            stop_gap, tgt_gap = o[i] <= t_stop, t_tgt is not None and o[i] >= t_tgt
+        else:
+            stop_hit, tgt_hit = h[i] >= t_stop, t_tgt is not None and l[i] <= t_tgt
+            stop_gap, tgt_gap = o[i] >= t_stop, t_tgt is not None and o[i] <= t_tgt
+        if entry_bar:
+            if not best and stop_hit:
+                return t_stop, "STOP"
+            if best and tgt_hit:
+                return t_tgt, "TARGET"
+            return None
+        if stop_hit and stop_gap:
+            return o[i], "STOP"
+        if tgt_hit and tgt_gap:
+            return o[i], "TARGET"
+        if stop_hit and tgt_hit:
+            return (t_tgt, "TARGET") if best else (t_stop, "STOP")
+        if stop_hit:
+            return t_stop, "STOP"
+        if tgt_hit:
+            return t_tgt, "TARGET"
+        return None
+
     for i in range(WARMUP, n):
         if side and i > t_in:
-            if side == 1 and l[i] <= t_stop:
-                out.append((t_in, i, side, t_entry, min(o[i], t_stop), "STOP")); side = 0
-            elif side == 1 and t_tgt is not None and h[i] >= t_tgt:
-                out.append((t_in, i, side, t_entry, max(o[i], t_tgt), "TARGET")); side = 0
-            elif side == -1 and h[i] >= t_stop:
-                out.append((t_in, i, side, t_entry, max(o[i], t_stop), "STOP")); side = 0
-            elif side == -1 and t_tgt is not None and l[i] <= t_tgt:
-                out.append((t_in, i, side, t_entry, min(o[i], t_tgt), "TARGET")); side = 0
+            r = exit_on(i, False)
+            if r:
+                out.append((t_in, i, side, t_entry, r[0], r[1])); side = 0
 
         if order and order["side"] != side:
             s = order["side"]
@@ -106,8 +127,9 @@ def replay(bars: pd.DataFrame, gated: bool, target_r: float, opp_exit: bool) -> 
                 if side:
                     out.append((t_in, i, side, t_entry, px, "REVERSE"))
                 side, t_in, t_entry, t_stop, t_tgt = s, i, px, order["stop"], order["tgt"]
-                if (s == 1 and l[i] <= t_stop) or (s == -1 and h[i] >= t_stop):
-                    out.append((t_in, i, side, t_entry, t_stop, "STOP")); side = 0
+                r = exit_on(i, True)
+                if r:
+                    out.append((t_in, i, side, t_entry, r[0], r[1])); side = 0
 
         if setup and setup["side"] == side:
             setup = None
@@ -143,8 +165,8 @@ def main() -> None:
     out_dir = Path(ap.parse_args().out)
     st = json.loads((out_dir / "settings.json").read_text())
     failed = False
-    for arm in st["arms"]:
-        log = pd.read_csv(out_dir / f"trades_{arm}.csv", parse_dates=["entry_time", "exit_time"])
+    for arm, mode in [(a, m) for m in st["intrabar"] for a in st["arms"]]:
+        log = pd.read_csv(out_dir / f"trades_{arm}_{mode}.csv", parse_dates=["entry_time", "exit_time"])
         ok = total = 0
         for sym in st["symbols"]:
             g = log[log["symbol"] == sym]
@@ -152,7 +174,7 @@ def main() -> None:
             bars = bars[bars.index >= pd.Timestamp(st["start"], tz="UTC")]
             if len(g):
                 bars = bars[bars.index <= g["exit_time"].max()]
-            exp = replay(bars, arm == "gated", st["target_r"], not st["no_opposite_exit"])
+            exp = replay(bars, arm == "gated", st["target_r"], not st["no_opposite_exit"], mode == "best")
             idx = bars.index
             want = [(idx[a], idx[b], "long" if p > 0 else "short", e, x, r) for a, b, p, e, x, r in exp]
             got = list(g.sort_values(["entry_time", "exit_time"])[
@@ -162,11 +184,11 @@ def main() -> None:
                         and same(w[3], t[3]) and same(w[4], t[4])):
                     ok += 1
                 elif total - ok < 10:
-                    print("  FAIL %s %s #%d: expected %s, logged %s" % (arm, sym, k, w, t))
+                    print("  FAIL %s %s #%d: expected %s, logged %s" % (arm + "/" + mode, sym, k, w, t))
             if len(want) != len(got):
-                print("  FAIL %s %s: rules produce %d trades, log has %d" % (arm, sym, len(want), len(got)))
+                print("  FAIL %s %s: rules produce %d trades, log has %d" % (arm + "/" + mode, sym, len(want), len(got)))
             total += max(len(want), len(got))
-        print("[%s] %d/%d trades satisfy the rules as written" % (arm, ok, total))
+        print("[%s, %s] %d/%d trades satisfy the rules as written" % (arm, mode, ok, total))
         failed |= ok != total
     sys.exit(1 if failed else 0)
 

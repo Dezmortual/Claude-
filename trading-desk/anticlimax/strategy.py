@@ -31,9 +31,13 @@ Arms (the gated filters are the book's context rules, ch. 2.2.2 and 2.4):
 Orders follow Pine with process_orders_on_close=true: everything is decided at
 a bar's close and stop orders rest from the next bar's open. Fills:
   - a stop order fills at its price, or at the open if the bar gaps through it
-  - on the entry bar only the protective stop is checked after the fill, since
-    the bar's high/low order is unknown (the worse case for the trade)
-  - when a later bar touches both stop and target, the stop is taken
+  - a bar's high and low carry no order, so where it matters there are two
+    readings, run separately to bracket the truth:
+      worst  on the entry bar only the stop can be hit after the fill; a later
+             bar touching both stop and target takes the stop
+      best   on the entry bar only the target can be hit; a later bar touching
+             both takes the target
+    A gap through either level at the open fills there in both readings.
   - the exit orders keep the levels set when the entry was placed, so a gap
     fill changes the realised risk, which R uses
 
@@ -62,6 +66,7 @@ class ACConfig:
     target_r: float = 2.0
     exit_opposite: bool = True
     gated: bool = True
+    intrabar: str = "worst"      # order of a bar's high and low when it matters: worst or best
     warmup: int = 200            # bars skipped before any signal
 
 
@@ -131,7 +136,7 @@ def simulate(df: pd.DataFrame, cfg: ACConfig, symbol: str = "") -> List[dict]:
     bear_sig, bull_sig = x["bear_sig"].to_numpy(), x["bull_sig"].to_numpy()
 
     trades: List[dict] = []
-    pos, entry, stop, tgt, i_in, plan_stop = 0, np.nan, np.nan, np.nan, -1, np.nan
+    pos, entry, stop, tgt, i_in = 0, np.nan, np.nan, np.nan, -1
     pend, limit, trig, pend_bar = 0, np.nan, np.nan, -1
     # The order resting during the current bar (placed at the previous close).
     o_side, o_trig, o_stop, o_tgt = 0, np.nan, np.nan, np.nan
@@ -142,20 +147,36 @@ def simulate(df: pd.DataFrame, cfg: ACConfig, symbol: str = "") -> List[dict]:
                        "entry": entry, "exit": px, "stop": stop, "target": tgt,
                        "reason": reason, "bars": i - i_in})
 
+    def exit_hit(i: int, entry_bar: bool):
+        """Exit price and reason on bar i, or (nan, "") if the trade survives it."""
+        hs = l[i] <= stop if pos > 0 else h[i] >= stop
+        ht = not np.isnan(tgt) and (h[i] >= tgt if pos > 0 else l[i] <= tgt)
+        if entry_bar:
+            # The fill came somewhere inside the bar; which extreme came after it is unknown.
+            if cfg.intrabar == "worst" and hs:
+                return stop, "STOP"
+            if cfg.intrabar == "best" and ht:
+                return tgt, "TARGET"
+            return np.nan, ""
+        if hs and (o[i] <= stop if pos > 0 else o[i] >= stop):
+            return o[i], "STOP"                      # gapped through the stop
+        if ht and (o[i] >= tgt if pos > 0 else o[i] <= tgt):
+            return o[i], "TARGET"                    # gapped through the target
+        if hs and ht:
+            return (stop, "STOP") if cfg.intrabar == "worst" else (tgt, "TARGET")
+        if hs:
+            return stop, "STOP"
+        if ht:
+            return tgt, "TARGET"
+        return np.nan, ""
+
     pat_i = -1
     for i in range(cfg.warmup, len(x)):
         # --- 1. resting exit orders of a trade entered on an earlier bar ---
         if pos != 0 and i > i_in:
-            if pos > 0:
-                if l[i] <= stop:
-                    close(i, min(o[i], stop), "STOP"); pos = 0
-                elif not np.isnan(tgt) and h[i] >= tgt:
-                    close(i, max(o[i], tgt), "TARGET"); pos = 0
-            else:
-                if h[i] >= stop:
-                    close(i, max(o[i], stop), "STOP"); pos = 0
-                elif not np.isnan(tgt) and l[i] <= tgt:
-                    close(i, min(o[i], tgt), "TARGET"); pos = 0
+            px, why = exit_hit(i, False)
+            if why:
+                close(i, px, why); pos = 0
 
         # --- 2. resting entry order ---
         if o_side != 0 and o_side != pos:
@@ -166,9 +187,9 @@ def simulate(df: pd.DataFrame, cfg: ACConfig, symbol: str = "") -> List[dict]:
                     close(i, fill, "REVERSE")
                 pos, entry, stop, tgt, i_in = o_side, fill, o_stop, o_tgt, i
                 pat_i = o_pat
-                # Same bar: only the protective stop, the worse case.
-                if (pos > 0 and l[i] <= stop) or (pos < 0 and h[i] >= stop):
-                    close(i, stop, "STOP"); pos = 0
+                px, why = exit_hit(i, True)
+                if why:
+                    close(i, px, why); pos = 0
 
         # --- 3. decisions at the close, in the Pine script's order ---
         if pend != 0 and pend == pos:

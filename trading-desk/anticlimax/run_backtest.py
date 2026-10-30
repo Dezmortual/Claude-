@@ -14,6 +14,9 @@ Two arms over the same patterns (strategy.py):
   rules   every Anti-climax pattern
   gated   the book's context rules: pivot structure and EMA slope
 
+Each arm runs under two readings of a bar's high/low order (strategy.py), worst
+and best, which bracket what the candles cannot tell.
+
 Every trade is reported in R (realised risk, entry to stop) and in percent of
 notional, before costs and after 0.05% commission plus slippage per side.
 """
@@ -49,6 +52,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--commission-pct", type=float, default=0.05, help="per side, as in the Pine script")
     p.add_argument("--slippage-bps", type=float, default=2.0, help="per side")
     p.add_argument("--arms", nargs="+", default=["rules", "gated"], choices=["rules", "gated"])
+    p.add_argument("--intrabar", nargs="+", default=["worst", "best"], choices=["worst", "best"],
+                   help="order of a bar's high and low when both matter (strategy.py)")
     p.add_argument("--target-r", type=float, default=2.0)
     p.add_argument("--no-opposite-exit", action="store_true")
     p.add_argument("--out", default=str(OUT))
@@ -95,17 +100,17 @@ def main() -> None:
     cut = pd.Timestamp(args.split, tz="UTC")
     summary = {}
 
-    for arm in args.arms:
-        cfg = ACConfig(gated=(arm == "gated"), target_r=args.target_r,
+    for arm, mode in [(a, m) for m in args.intrabar for a in args.arms]:
+        cfg = ACConfig(gated=(arm == "gated"), target_r=args.target_r, intrabar=mode,
                        exit_opposite=not args.no_opposite_exit)
         rows = []
         for s, b in bars.items():
             rows += simulate(b, cfg, symbol=s)
         t = costs(pd.DataFrame(rows), args.commission_pct, args.slippage_bps)
-        t.to_csv(out / ("trades_%s.csv" % arm), index=False)
+        t.to_csv(out / ("trades_%s_%s.csv" % (arm, mode)), index=False)
         test = t[t["entry_time"] >= cut]
 
-        print("\n=== arm=%s, split=%s ===" % (arm, args.split))
+        print("\n=== arm=%s, intrabar=%s, split=%s ===" % (arm, mode, args.split))
         print(line("all", t))
         print(line("train", t[t["entry_time"] < cut]))
         print(line("test", test))
@@ -130,7 +135,7 @@ def main() -> None:
         nr = account(t.assign(one=t["ret_net"]), bars, 1.0, "one")
         print("  account at full notional per trade (the Pine default): net %+.1f%%, max drawdown %.1f%%"
               % ((nr.iloc[-1] - 1) * 100, (nr / nr.cummax() - 1).min() * 100))
-        summary[arm] = {"trades": len(t), "win": float((t["r_net"] > 0).mean()),
+        summary["%s_%s" % (arm, mode)] = {"trades": len(t), "win": float((t["r_net"] > 0).mean()),
                         "net_R": float(t["r_net"].mean()), "net_t": tstat(t["r_net"]),
                         "gross_R": float(t["r_gross"].mean()), "gross_t": tstat(t["r_gross"]),
                         "test_trades": len(test), "test_net_R": float(test["r_net"].mean()),
