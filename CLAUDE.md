@@ -30,6 +30,10 @@ Run everything from inside `trading-desk/`:
   flat-base breakout from `breakout_strategy.pine` on today's S&P 500 (daily,
   yfinance, needs `pip install yfinance`); results in `breakout/README.md`,
   charts in `breakout/report.html`
+- `python3 carter20/fx_data.py`, `carter20/run_backtest.py`, `carter20/audit.py`:
+  Thomas Carter's 20 five-minute forex systems on HistData 1-minute bars (2018+,
+  6 pairs, cached in `core/cache/fx_1m/`); results in `carter20/README.md`,
+  charts in `carter20/report.html`. None is profitable, so no Pine scripts
 - `--arms rules gated ta` adds a TradingAgents filter (`tradingagents_gate/`):
   needs `bash tradingagents_gate/setup.sh` and `ANTHROPIC_API_KEY` in `.env`. It
   costs money per decision: price it with `--ta-estimate` and always pass

@@ -1,0 +1,260 @@
+<title>20 Forex Systems Tested</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one narrow reading column, a verdict band, then one chart per finding. Phone first. */
+:root {
+  --bg: #f6f7f8; --surface: #ffffff; --fg: #121417; --fg-2: #4f5560; --muted: #7d838e;
+  --rule: #dfe2e6; --grid: #eceef1;
+  --before: #2a78d6; --after: #eb6834;
+  --bad: #c23a3a; --bad-bg: #fdecec;
+  --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111317; --surface: #1a1d22; --fg: #eef0f3; --fg-2: #b6bcc6; --muted: #8b919c;
+    --rule: #2c3038; --grid: #23272e;
+    --before: #3987e5; --after: #d95926;
+    --bad: #f07a7a; --bad-bg: #3a1f22;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111317; --surface: #1a1d22; --fg: #eef0f3; --fg-2: #b6bcc6; --muted: #8b919c;
+  --rule: #2c3038; --grid: #23272e;
+  --before: #3987e5; --after: #d95926;
+  --bad: #f07a7a; --bad-bg: #3a1f22;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.5; }
+main {
+  max-width: 720px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 48px;
+  display: flex; flex-direction: column; gap: 28px;
+}
+h1, h2 { font-family: var(--display); font-weight: 700; letter-spacing: .01em; text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: 2.4rem; }
+h2 { font-size: 1.55rem; }
+p { margin: 0; max-width: 65ch; }
+.eyebrow { font-family: var(--mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+header { display: flex; flex-direction: column; gap: 8px; }
+.lede { color: var(--fg-2); }
+section { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.verdict { background: var(--bad-bg); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.pill { align-self: flex-start; font-family: var(--mono); font-size: .75rem; font-weight: 600; letter-spacing: .06em; color: var(--bad); border: 1.5px solid var(--bad); border-radius: 999px; padding: 2px 10px; }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.stat { background: var(--surface); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stat b { font-family: var(--mono); font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.stat span { font-size: .82rem; color: var(--fg-2); }
+.figure { background: var(--surface); border-radius: 10px; padding: 14px 12px 10px; position: relative; min-width: 0; }
+.figure svg { display: block; width: 100%; height: auto; overflow: visible; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .82rem; color: var(--fg-2); margin-bottom: 8px; }
+.legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.note { font-size: .85rem; color: var(--fg-2); }
+.tip { position: absolute; pointer-events: none; background: var(--fg); color: var(--bg); font-family: var(--mono); font-size: .75rem; line-height: 1.4; padding: 6px 8px; border-radius: 6px; white-space: nowrap; z-index: 2; }
+ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; max-width: 65ch; }
+.tablewrap { overflow-x: auto; background: var(--surface); border-radius: 10px; }
+table { border-collapse: collapse; font-size: .8rem; font-variant-numeric: tabular-nums; width: 100%; }
+th, td { padding: 7px 9px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--rule); }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+th { font-weight: 600; color: var(--fg-2); font-size: .72rem; }
+td { font-family: var(--mono); }
+td.name { font-family: var(--body); white-space: normal; min-width: 150px; }
+td.neg { color: var(--bad); }
+details summary { cursor: pointer; font-weight: 600; }
+details summary:focus-visible { outline: 2px solid var(--before); outline-offset: 2px; }
+code { font-family: var(--mono); font-size: .85em; }
+.ax { fill: var(--muted); font-family: var(--mono); font-size: 11px; }
+.lbl { fill: var(--fg); font-family: var(--body); font-size: 13px; font-weight: 500; }
+.lbl2 { fill: var(--fg-2); font-family: var(--mono); font-size: 11px; }
+</style>
+
+<main>
+  <header>
+    <div class="eyebrow">Backtest · Thomas Carter, 20 Forex Trading Strategies (5 Minute Time Frame)</div>
+    <h1>20 Forex Systems Tested</h1>
+    <p class="lede">All 20 systems from the book, coded as written and run on 5-minute charts of the pairs the book names, from February 2018 to October 2026. <span id="ntrades"></span> trades in all, with stops and targets settled on 1-minute prices.</p>
+  </header>
+
+  <section class="verdict" aria-label="Verdict">
+    <span class="pill">VERDICT · 0 OF 20 PROFITABLE</span>
+    <p>Every system loses money after a normal retail spread, in both 2018–2022 and 2022–2026. Sixteen lose even before costs. The usual edge is a fraction of a pip per trade, while a round trip costs 1–3 pips. Because none passed, no Pine scripts were made.</p>
+    <div class="stats">
+      <div class="stat"><b>0 / 20</b><span>systems profitable after costs</span></div>
+      <div class="stat"><b id="s-best">−0.8%</b><span>best result per trade after costs, as a share of the amount risked (system 6)</span></div>
+      <div class="stat"><b id="s-worst">−33%</b><span>worst per trade after costs (system 15)</span></div>
+      <div class="stat"><b id="s-acct">19 / 20</b><span>accounts below −95% after 8.7 years at 1% risk per trade</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Profit or loss per trade</h2>
+    <p>As a percentage of the amount risked on each trade (stop distance). +10% means each trade earned a tenth of what it risked. Sorted best to worst after costs.</p>
+    <div class="figure" id="bars"></div>
+  </section>
+
+  <section>
+    <h2>The closest call: system 3</h2>
+    <p>Bollinger close outside the bands with a stochastic extreme. Before costs it really does win: +0.4 pips a trade, 68% winners. At 1% risk per trade that compounds to about 52 times the account. Each round trip costs 1.0–1.6 pips, which turns the same trades into a wipe-out.</p>
+    <div class="figure" id="cum"></div>
+    <p class="note">Account balance as a percent of the starting balance, log scale, risking 1% of the current balance on each trade.</p>
+  </section>
+
+  <section>
+    <h2>Why they fail</h2>
+    <ul>
+      <li><b>No edge to begin with.</b> 19 of 20 lose or only break even before any costs. Only system 3 has a gain before costs that isn't chance (t = 4.2), and it's under half a pip.</li>
+      <li><b>Small targets, fixed costs.</b> Many systems aim for 7–15 pips. A 1–1.5 pip spread takes 10–20% of every winner, and these systems trade hundreds to thousands of times a year.</li>
+      <li><b>High win rates don't help.</b> Systems 3 and 19 win two trades in three, but their losers are twice the size of their winners.</li>
+      <li><b>Same in both halves.</b> Train (2018 to mid-2022) and test (mid-2022 to 2026) results agree for every system. These are stable losses, not bad luck.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>All 20 systems</h2>
+    <div class="tablewrap"><table id="tbl"></table></div>
+    <p class="note">"Per trade" is profit or loss as a % of the amount risked. "Account" is the change in balance over 8.7 years risking 1% per trade, compounded. Costs per round trip: EUR/USD 1.0 pip, USD/JPY 1.2, AUD/USD 1.3, GBP/USD 1.5, USD/CHF 1.6, GBP/JPY 2.8.</p>
+  </section>
+
+  <section>
+    <details>
+      <summary>How the rules were read, and what isn't covered</summary>
+      <ul style="margin-top:10px">
+        <li>Each system runs on the pairs the book lists. "Any pair" means EUR/USD, GBP/USD, USD/JPY and AUD/USD.</li>
+        <li>Where the book gives a range, like a "10–15 pip stop", the midpoint is used. "Recent swing low/high" is the lowest low or highest high of the last 10 bars.</li>
+        <li>System 5 needs two custom indicators (GHL and QTI) that the book doesn't define, so it runs on its moving averages alone. System 15's arrow indicator is replaced by the close crossing the 15 EMA.</li>
+        <li>System 6 has no stop in the book. It uses a 100-pip emergency stop, so its "per trade" figure is measured against 100 pips.</li>
+        <li>Prices are HistData 1-minute bid quotes. Within a 5-minute bar, stops and targets fill in the order the minutes reached them. In the 1,179 cases where both fell inside one minute, the stop was taken.</li>
+        <li>No commissions, swaps, or news filters. Real trading would cost a little more, not less.</li>
+      </ul>
+      <p class="note" style="margin-top:10px">Code: <code>trading-desk/carter20/</code></p>
+    </details>
+  </section>
+</main>
+
+<script>
+const D = {"years": 8.7, "end": "2026-10-23", "rows": [{"n": 1, "name": "Stochastic + MACD + EMA5 close/open", "pairs": ["EURUSD"], "trades": 20930, "per_year": 2399.5, "win": 21.7, "gross": -1.4, "net": -6.4, "gt": -7.09, "nt": -32.82, "train": -6.4, "test": -6.4, "acct": -100.0, "acct_g": -94.9, "pips_g": -0.28, "pips_n": -1.28, "risk": 20.0}, {"n": 2, "name": "EMA 10/21 zone pullback", "pairs": ["EURUSD"], "trades": 12623, "per_year": 1447.1, "win": 37.7, "gross": 0.4, "net": -16.2, "gt": 0.38, "nt": -13.8, "train": -15.9, "test": -16.5, "acct": -100.0, "acct_g": -40.9, "pips_g": 0.03, "pips_n": -0.97, "risk": 6.0}, {"n": 3, "name": "Bollinger close outside + stochastic", "pairs": ["EURUSD", "GBPUSD", "USDJPY", "USDCHF"], "trades": 22573, "per_year": 2587.8, "win": 68.0, "gross": 2.0, "net": -4.6, "gt": 4.21, "nt": -9.74, "train": -3.6, "test": -5.7, "acct": -100.0, "acct_g": 5061.5, "pips_g": 0.4, "pips_n": -0.93, "risk": 20.0}, {"n": 4, "name": "Bollinger middle-band touch", "pairs": ["EURUSD", "GBPUSD", "GBPJPY"], "trades": 76100, "per_year": 8724.3, "win": 46.8, "gross": -0.7, "net": -23.5, "gt": -1.49, "nt": -46.78, "train": -22.4, "test": -24.5, "acct": -100.0, "acct_g": -100.0, "pips_g": -0.09, "pips_n": -1.91, "risk": 10.6}, {"n": 5, "name": "Shifted EMA ribbon, 15m/5m (no GHL/QTI)", "pairs": ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD"], "trades": 37103, "per_year": 4253.6, "win": 47.6, "gross": -5.0, "net": -25.0, "gt": -9.23, "nt": -46.12, "train": -25.9, "test": -24.1, "acct": -100.0, "acct_g": -100.0, "pips_g": -0.41, "pips_n": -1.66, "risk": 7.6}, {"n": 6, "name": "EMA 14/21/50 on 5m and 1h", "pairs": ["EURUSD"], "trades": 4105, "per_year": 470.6, "win": 29.7, "gross": 0.2, "net": -0.8, "gt": 0.87, "nt": -2.64, "train": -1.0, "test": -0.5, "acct": -27.1, "acct_g": 9.9, "pips_g": 0.25, "pips_n": -0.75, "risk": 100.0}, {"n": 7, "name": "New York 08:00 box breakout", "pairs": ["GBPJPY", "GBPUSD"], "trades": 3089, "per_year": 354.1, "win": 31.5, "gross": -1.7, "net": -10.5, "gt": -1.13, "nt": -6.96, "train": -8.2, "test": -13.0, "acct": -96.6, "acct_g": -47.2, "pips_g": -0.54, "pips_n": -2.69, "risk": 25.2}, {"n": 8, "name": "Bollinger 50 + RSI 3 + stochastic reversal", "pairs": ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD"], "trades": 23558, "per_year": 2700.7, "win": 46.1, "gross": 0.8, "net": -18.6, "gt": 1.11, "nt": -25.02, "train": -20.6, "test": -16.7, "acct": -100.0, "acct_g": 51.2, "pips_g": 0.08, "pips_n": -1.17, "risk": 7.7}, {"n": 9, "name": "EMA 50/100 + MACD, half at 2R", "pairs": ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD"], "trades": 13827, "per_year": 1585.2, "win": 32.9, "gross": -1.3, "net": -8.0, "gt": -1.08, "nt": -6.82, "train": -6.8, "test": -9.0, "acct": -100.0, "acct_g": -95.2, "pips_g": -0.3, "pips_n": -1.58, "risk": 19.7}, {"n": 10, "name": "EMA 40/80 + CCI zero cross", "pairs": ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD"], "trades": 48878, "per_year": 5603.5, "win": 48.9, "gross": -2.4, "net": -13.0, "gt": -5.19, "nt": -27.8, "train": -12.5, "test": -13.4, "acct": -100.0, "acct_g": -100.0, "pips_g": -0.29, "pips_n": -1.55, "risk": 12.0}, {"n": 11, "name": "4h trend + EMA 5/10 cross + RSI/stoch/MACD", "pairs": ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD"], "trades": 18839, "per_year": 2159.7, "win": 49.2, "gross": -1.5, "net": -6.6, "gt": -2.03, "nt": -8.86, "train": -5.5, "test": -7.6, "acct": -100.0, "acct_g": -97.8, "pips_g": -0.38, "pips_n": -1.64, "risk": 25.0}, {"n": 12, "name": "EMA 16/48 + Laguerre", "pairs": ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD"], "trades": 23753, "per_year": 2723.1, "win": 54.1, "gross": -0.9, "net": -5.1, "gt": -1.52, "nt": -8.56, "train": -4.5, "test": -5.7, "acct": -100.0, "acct_g": -95.9, "pips_g": -0.27, "pips_n": -1.54, "risk": 30.0}, {"n": 13, "name": "CCI 100 break + MACD", "pairs": ["EURUSD", "GBPUSD", "AUDUSD"], "trades": 64560, "per_year": 7401.3, "win": 59.7, "gross": -1.7, "net": -11.6, "gt": -5.1, "nt": -35.39, "train": -11.6, "test": -11.6, "acct": -100.0, "acct_g": -100.0, "pips_g": -0.22, "pips_n": -1.5, "risk": 13.0}, {"n": 14, "name": "WMA/SMA + slow stoch + RSI 28 + MACD", "pairs": ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD"], "trades": 49457, "per_year": 5669.9, "win": 48.5, "gross": -3.0, "net": -16.5, "gt": -6.52, "nt": -35.58, "train": -16.1, "test": -17.0, "acct": -100.0, "acct_g": -100.0, "pips_g": -0.3, "pips_n": -1.55, "risk": 11.6}, {"n": 15, "name": "EMA 15 over EMA 50 high/low channel + MACD", "pairs": ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD"], "trades": 73452, "per_year": 8420.7, "win": 47.2, "gross": -4.1, "net": -33.4, "gt": -10.73, "nt": -84.23, "train": -35.1, "test": -31.5, "acct": -100.0, "acct_g": -100.0, "pips_g": -0.27, "pips_n": -1.52, "risk": 5.3}, {"n": 16, "name": "WMA 5/SMA 11 + Parabolic SAR + DI", "pairs": ["EURUSD", "GBPUSD", "AUDUSD", "USDCHF"], "trades": 98243, "per_year": 11262.8, "win": 29.7, "gross": -5.2, "net": -25.3, "gt": -12.87, "nt": -61.9, "train": -25.4, "test": -25.3, "acct": -100.0, "acct_g": -100.0, "pips_g": -0.44, "pips_n": -1.79, "risk": 8.4}, {"n": 17, "name": "EMA 3/8 + SAR + MACD + stoch + std dev", "pairs": ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD"], "trades": 11050, "per_year": 1266.8, "win": 30.2, "gross": -2.5, "net": -8.8, "gt": -4.25, "nt": -14.56, "train": -8.7, "test": -8.8, "acct": -100.0, "acct_g": -95.1, "pips_g": -0.41, "pips_n": -1.71, "risk": 23.2}, {"n": 18, "name": "EMA 20 cross + MACD, half at 1R", "pairs": ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD"], "trades": 12281, "per_year": 1407.9, "win": 49.6, "gross": -1.5, "net": -5.7, "gt": -1.52, "nt": -5.87, "train": -4.5, "test": -6.6, "acct": -100.0, "acct_g": -91.8, "pips_g": -0.48, "pips_n": -1.75, "risk": 30.0}, {"n": 19, "name": "EMA 100 + SAR + MACD 64/128", "pairs": ["EURUSD", "GBPUSD", "AUDUSD"], "trades": 19100, "per_year": 2189.7, "win": 66.6, "gross": -0.4, "net": -7.4, "gt": -0.67, "nt": -13.53, "train": -5.8, "test": -9.2, "acct": -100.0, "acct_g": -71.3, "pips_g": -0.14, "pips_n": -1.42, "risk": 21.5}, {"n": 20, "name": "EMA 3 through Bollinger middle + MACD", "pairs": ["EURUSD", "GBPUSD", "USDJPY", "AUDUSD"], "trades": 61335, "per_year": 7031.6, "win": 49.7, "gross": -0.4, "net": -11.0, "gt": -1.07, "nt": -26.51, "train": -11.8, "test": -10.2, "acct": -100.0, "acct_g": -99.7, "pips_g": -0.05, "pips_n": -1.32, "risk": 12.0}], "curves": {"3": {"net": [["2018-02", 80.2304], ["2018-03", 72.8195], ["2018-04", 74.8228], ["2018-05", 65.4307], ["2018-06", 54.3308], ["2018-07", 47.2676], ["2018-08", 39.9471], ["2018-09", 38.9844], ["2018-10", 31.8391], ["2018-11", 30.1458], ["2018-12", 25.0282], ["2019-01", 20.3513], ["2019-02", 17.9753], ["2019-03", 16.4221], ["2019-04", 15.0297], ["2019-05", 15.1623], ["2019-06", 12.4993], ["2019-07", 14.9542], ["2019-08", 13.4289], ["2019-09", 12.6426], ["2019-10", 14.2204], ["2019-11", 13.8728], ["2019-12", 11.4273], ["2020-01", 10.8951], ["2020-02", 10.6228], ["2020-03", 9.6281], ["2020-04", 8.23], ["2020-05", 7.6784], ["2020-06", 8.0884], ["2020-07", 7.5863], ["2020-08", 6.7536], ["2020-09", 6.236], ["2020-10", 6.0861], ["2020-11", 4.9951], ["2020-12", 4.7827], ["2021-01", 5.2802], ["2021-02", 4.8131], ["2021-03", 4.2347], ["2021-04", 4.4759], ["2021-05", 4.3168], ["2021-06", 3.8433], ["2021-07", 3.0965], ["2021-08", 2.8861], ["2021-09", 2.6519], ["2021-10", 2.7712], ["2021-11", 2.6941], ["2021-12", 2.2279], ["2022-01", 2.0529], ["2022-02", 2.0763], ["2022-03", 1.7101], ["2022-04", 1.8159], ["2022-05", 1.4626], ["2022-06", 1.4792], ["2022-07", 1.1769], ["2022-08", 1.1002], ["2022-09", 1.1185], ["2022-10", 1.0231], ["2022-11", 0.8001], ["2022-12", 0.7405], ["2023-01", 0.7643], ["2023-02", 0.5996], ["2023-03", 0.5453], ["2023-04", 0.4773], ["2023-05", 0.405], ["2023-06", 0.3646], ["2023-07", 0.3107], ["2023-08", 0.2609], ["2023-09", 0.265], ["2023-10", 0.2129], ["2023-11", 0.19], ["2023-12", 0.1726], ["2024-01", 0.1414], ["2024-02", 0.1204], ["2024-03", 0.11], ["2024-04", 0.1131], ["2024-05", 0.1001], ["2024-06", 0.1008], ["2024-07", 0.0914], ["2024-08", 0.091], ["2024-09", 0.0695], ["2024-10", 0.0651], ["2024-11", 0.0538], ["2024-12", 0.0482], ["2025-01", 0.0413], ["2025-02", 0.0346], ["2025-03", 0.0255], ["2025-04", 0.0203], ["2025-05", 0.0196], ["2025-06", 0.0171], ["2025-07", 0.0129], ["2025-08", 0.0116], ["2025-09", 0.0115], ["2025-10", 0.0075], ["2025-11", 0.0071], ["2025-12", 0.0061], ["2026-01", 0.0048], ["2026-02", 0.0044], ["2026-03", 0.0042], ["2026-04", 0.004], ["2026-05", 0.0039], ["2026-06", 0.0033], ["2026-07", 0.0025], ["2026-08", 0.002], ["2026-09", 0.0017], ["2026-10", 0.0016]], "gross": [["2018-02", 93.75], ["2018-03", 98.52], ["2018-04", 116.66], ["2018-05", 120.27], ["2018-06", 116.78], ["2018-07", 114.42], ["2018-08", 112.63], ["2018-09", 123.32], ["2018-10", 116.64], ["2018-11", 126.83], ["2018-12", 121.96], ["2019-01", 115.35], ["2019-02", 114.55], ["2019-03", 120.01], ["2019-04", 121.37], ["2019-05", 138.33], ["2019-06", 128.49], ["2019-07", 174.56], ["2019-08", 180.41], ["2019-09", 191.21], ["2019-10", 248.25], ["2019-11", 269.77], ["2019-12", 244.69], ["2020-01", 265.15], ["2020-02", 291.39], ["2020-03", 313.36], ["2020-04", 311.66], ["2020-05", 334.3], ["2020-06", 410.72], ["2020-07", 454.33], ["2020-08", 471.3], ["2020-09", 503.52], ["2020-10", 567.68], ["2020-11", 533.5], ["2020-12", 599.4], ["2021-01", 758.65], ["2021-02", 791.46], ["2021-03", 818.9], ["2021-04", 995.43], ["2021-05", 1105.78], ["2021-06", 1117.86], ["2021-07", 1031.7], ["2021-08", 1093.14], ["2021-09", 1141.06], ["2021-10", 1360.76], ["2021-11", 1536.88], ["2021-12", 1468.52], ["2022-01", 1547.41], ["2022-02", 1783.42], ["2022-03", 1745.33], ["2022-04", 2134.94], ["2022-05", 2052.86], ["2022-06", 2447.97], ["2022-07", 2308.41], ["2022-08", 2614.65], ["2022-09", 3216.47], ["2022-10", 3413.55], ["2022-11", 3170.6], ["2022-12", 3509.32], ["2023-01", 4310.51], ["2023-02", 3850.59], ["2023-03", 3957.29], ["2023-04", 3868.01], ["2023-05", 3733.6], ["2023-06", 3756.81], ["2023-07", 3605.85], ["2023-08", 3568.35], ["2023-09", 4139.15], ["2023-10", 3922.88], ["2023-11", 4076.07], ["2023-12", 4320.46], ["2024-01", 4149.36], ["2024-02", 4001.33], ["2024-03", 4103.24], ["2024-04", 4786.05], ["2024-05", 4804.62], ["2024-06", 5424.36], ["2024-07", 5613.79], ["2024-08", 6414.93], ["2024-09", 5734.93], ["2024-10", 6231.65], ["2024-11", 5982.89], ["2024-12", 6231.35], ["2025-01", 6334.0], ["2025-02", 6167.06], ["2025-03", 5236.2], ["2025-04", 4974.44], ["2025-05", 5681.11], ["2025-06", 5769.59], ["2025-07", 5155.33], ["2025-08", 5343.55], ["2025-09", 6148.64], ["2025-10", 4601.76], ["2025-11", 5007.58], ["2025-12", 4944.62], ["2026-01", 4490.86], ["2026-02", 4705.79], ["2026-03", 5441.33], ["2026-04", 5873.8], ["2026-05", 6643.43], ["2026-06", 6412.89], ["2026-07", 5517.84], ["2026-08", 4838.15], ["2026-09", 4893.67], ["2026-10", 5161.45]]}}, "trades": 694856, "amb": 1179};
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text != null) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function svgFor(box, h) {
+  box.querySelectorAll("svg,.tip").forEach(n => n.remove());
+  const w = Math.max(280, box.clientWidth - 24);
+  const s = el("svg", { viewBox: `0 0 ${w} ${h}`, role: "img" }, null);
+  box.appendChild(s);
+  const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; box.appendChild(tip);
+  return { s, w, tip };
+}
+function legend(box, items) {
+  box.querySelectorAll(".legend").forEach(n => n.remove());
+  const lg = document.createElement("div"); lg.className = "legend";
+  lg.innerHTML = items.map(([c, t]) => `<span><i style="background:var(${c})"></i>${t}</span>`).join("");
+  box.prepend(lg);
+}
+function showTip(box, tip, html, evt) {
+  const r = box.getBoundingClientRect();
+  tip.innerHTML = html; tip.hidden = false;
+  const x = (evt.touches ? evt.touches[0].clientX : evt.clientX) - r.left;
+  const y = (evt.touches ? evt.touches[0].clientY : evt.clientY) - r.top;
+  const tw = tip.offsetWidth;
+  tip.style.left = Math.min(Math.max(4, x - tw / 2), r.width - tw - 4) + "px";
+  tip.style.top = Math.max(4, y - 56) + "px";
+}
+function hover(box, tip, node, html) {
+  ["pointermove", "pointerdown"].forEach(ev => node.addEventListener(ev, e => showTip(box, tip, html, e)));
+  node.addEventListener("pointerleave", () => tip.hidden = true);
+}
+const fmt = (v, d = 1) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d);
+const pct = v => fmt(v, 1) + "%";
+
+function drawBars() {
+  const box = document.getElementById("bars");
+  legend(box, [["--before", "Before costs"], ["--after", "After costs"]]);
+  const rows = [...D.rows].sort((a, b) => b.net - a.net);
+  const rowH = 34, padL = 30, top = 4, h = top + rows.length * rowH + 24;
+  const { s, w, tip } = svgFor(box, h);
+  const lo = -35, hi = 12, X = v => padL + (v - lo) / (hi - lo) * (w - padL - 8);
+  [-30, -20, -10, 0].forEach(v => {
+    el("line", { x1: X(v), x2: X(v), y1: top, y2: h - 20, stroke: v === 0 ? css("--fg-2") : css("--grid") }, s);
+    el("text", { x: X(v), y: h - 4, "text-anchor": "middle", class: "ax" }, s, (v === 0 ? "0" : fmt(v, 0)) + "%");
+  });
+  rows.forEach((r, i) => {
+    const y = top + i * rowH;
+    el("text", { x: padL - 8, y: y + 20, "text-anchor": "end", class: "lbl" }, s, "#" + r.n);
+    [["gross", "--before", 6], ["net", "--after", 18]].forEach(([k, c, dy]) => {
+      const v = r[k], x1 = X(Math.min(0, v)), x2 = X(Math.max(0, v));
+      el("rect", { x: x1, y: y + dy, width: Math.max(2, x2 - x1), height: 9, rx: 2, fill: css(c) }, s);
+    });
+    el("text", { x: Math.max(X(0), X(r.gross)) + 6, y: y + 26, "text-anchor": "start", class: "lbl2" }, s, pct(r.net));
+    hover(box, tip, el("rect", { x: 0, y, width: w, height: rowH, fill: "transparent" }, s),
+      `#${r.n} ${r.name}<br>before ${pct(r.gross)} · after ${pct(r.net)} per trade<br>win ${r.win}% · ${r.trades.toLocaleString()} trades`);
+  });
+}
+
+function drawCum() {
+  const box = document.getElementById("cum");
+  legend(box, [["--before", "Before costs"], ["--after", "After costs"]]);
+  const h = 250, padL = 58, padB = 24, padT = 10, padR = 10;
+  const { s, w, tip } = svgFor(box, h);
+  const G = D.curves["3"].gross, N = D.curves["3"].net;
+  const t0 = Date.parse(G[0][0] + "-01"), t1 = Date.parse(G[G.length - 1][0] + "-01");
+  const lo = -2, hi = 4;             // log10 of % of start: 0.01% .. 10,000%
+  const X = d => padL + (Date.parse(d + "-01") - t0) / (t1 - t0) * (w - padL - padR);
+  const Y = v => padT + (hi - Math.log10(Math.max(v, 0.01))) / (hi - lo) * (h - padT - padB);
+  [0.01, 1, 100, 10000].forEach(v => {
+    el("line", { x1: padL, x2: w - padR, y1: Y(v), y2: Y(v), stroke: v === 100 ? css("--fg-2") : css("--grid") }, s);
+    el("text", { x: padL - 6, y: Y(v) + 4, "text-anchor": "end", class: "ax" }, s, v.toLocaleString() + "%");
+  });
+  for (let yr = 2018; yr <= 2026; yr += (w < 420 ? 2 : 1))
+    el("text", { x: X(`${yr}-01`), y: h - 6, "text-anchor": "middle", class: "ax" }, s, String(yr));
+  const path = a => a.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1)).join("");
+  el("path", { d: path(G), fill: "none", stroke: css("--before"), "stroke-width": 2 }, s);
+  el("path", { d: path(N), fill: "none", stroke: css("--after"), "stroke-width": 2 }, s);
+  const g1 = G[G.length - 1][1], n1 = N[N.length - 1][1];
+  el("text", { x: w - padR, y: Y(g1) + 16, "text-anchor": "end", class: "lbl2" }, s, `${Math.round(g1).toLocaleString()}% of start`);
+  el("text", { x: w - padR, y: Y(n1) - 8, "text-anchor": "end", class: "lbl2" }, s, "wiped out");
+  const cross = el("line", { y1: padT, y2: h - padB, stroke: css("--muted"), visibility: "hidden" }, s);
+  const hit = el("rect", { x: padL, y: padT, width: w - padL - padR, height: h - padT - padB, fill: "transparent" }, s);
+  const move = e => {
+    const r = s.getBoundingClientRect(), cx = ((e.touches ? e.touches[0].clientX : e.clientX) - r.left) * (w / r.width);
+    const t = t0 + (cx - padL) / (w - padL - padR) * (t1 - t0);
+    let i = 0; while (i < G.length - 1 && Date.parse(G[i][0] + "-01") < t) i++;
+    cross.setAttribute("x1", X(G[i][0])); cross.setAttribute("x2", X(G[i][0])); cross.setAttribute("visibility", "visible");
+    const nv = N[Math.min(i, N.length - 1)][1];
+    showTip(box, tip, `${G[i][0]}<br>before costs ${Math.round(G[i][1]).toLocaleString()}%<br>after costs ${nv < 0.01 ? "&lt;0.01" : nv.toFixed(2)}%`, e);
+  };
+  ["pointermove", "pointerdown"].forEach(ev => hit.addEventListener(ev, move));
+  hit.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); });
+}
+
+function drawTable() {
+  const t = document.getElementById("tbl");
+  const c = v => v < 0 ? "neg" : "";
+  let h = "<thead><tr><th>#</th><th>System</th><th>Trades/yr</th><th>Win %</th><th>Per trade before</th><th>Per trade after</th><th>2018–22</th><th>2022–26</th><th>Account</th></tr></thead><tbody>";
+  [...D.rows].sort((a, b) => a.n - b.n).forEach(r => {
+    h += `<tr><td>${r.n}</td><td class="name">${r.name}</td><td>${Math.round(r.per_year).toLocaleString()}</td><td>${r.win}</td>`
+      + `<td class="${c(r.gross)}">${pct(r.gross)}</td><td class="${c(r.net)}">${pct(r.net)}</td>`
+      + `<td class="${c(r.train)}">${pct(r.train)}</td><td class="${c(r.test)}">${pct(r.test)}</td><td class="${c(r.acct)}">${pct(r.acct)}</td></tr>`;
+  });
+  t.innerHTML = h + "</tbody>";
+}
+
+document.getElementById("ntrades").textContent = D.trades.toLocaleString();
+function drawAll() { drawBars(); drawCum(); }
+drawTable(); drawAll();
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(drawAll, 150); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", drawAll);
+new MutationObserver(drawAll).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+</script>
