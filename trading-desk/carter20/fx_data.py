@@ -31,11 +31,17 @@ GET = "https://www.histdata.com/get.php"
 PAIRS = ["EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD", "GBPJPY"]
 
 
+INDICES = {"NSXUSD", "SPXUSD", "UDXUSD"}       # HistData index CFDs, quoted to 3 decimals
+
+
 def point(pair: str) -> float:
-    return 1e-3 if pair.endswith("JPY") else 1e-5
+    return 1e-3 if pair.endswith("JPY") or pair in INDICES else 1e-5
 
 
 def pip(pair: str) -> float:
+    """One pip; for an index, one index point."""
+    if pair in INDICES:
+        return 1.0
     return 0.01 if pair.endswith("JPY") else 0.0001
 
 

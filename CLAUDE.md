@@ -38,6 +38,10 @@ Run everything from inside `trading-desk/`:
   notes (2B pokebar, RSI divergence, footprint with adds) on the carter20 FX
   data at 15m/1h/4h; results in `mmc/README.md`, charts in `mmc/report.html`.
   None is profitable, so no Pine script
+- `python3 goat/run_backtest.py` then `python3 goat/audit.py`: the FX GOAT
+  NASDAQ notes (V, Z, S/R rejection) on HistData NSXUSD 1-minute bars at
+  15m/1h/4h; results in `goat/README.md`, charts in `goat/report.html`. None is
+  profitable, so no Pine script
 - `--arms rules gated ta` adds a TradingAgents filter (`tradingagents_gate/`):
   needs `bash tradingagents_gate/setup.sh` and `ANTHROPIC_API_KEY` in `.env`. It
   costs money per decision: price it with `--ta-estimate` and always pass
