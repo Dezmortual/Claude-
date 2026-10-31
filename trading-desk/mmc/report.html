@@ -1,0 +1,270 @@
+<title>MMC Footprint Tested</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one narrow reading column, a verdict band, then one chart per finding. Phone first. */
+:root {
+  --bg: #f6f7f8; --surface: #ffffff; --fg: #121417; --fg-2: #4f5560; --muted: #7d838e;
+  --rule: #dfe2e6; --grid: #eceef1;
+  --before: #2a78d6; --after: #eb6834;
+  --bad: #c23a3a; --bad-bg: #fdecec;
+  --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111317; --surface: #1a1d22; --fg: #eef0f3; --fg-2: #b6bcc6; --muted: #8b919c;
+    --rule: #2c3038; --grid: #23272e;
+    --before: #3987e5; --after: #d95926;
+    --bad: #f07a7a; --bad-bg: #3a1f22;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111317; --surface: #1a1d22; --fg: #eef0f3; --fg-2: #b6bcc6; --muted: #8b919c;
+  --rule: #2c3038; --grid: #23272e;
+  --before: #3987e5; --after: #d95926;
+  --bad: #f07a7a; --bad-bg: #3a1f22;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.5; }
+main {
+  max-width: 720px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 48px;
+  display: flex; flex-direction: column; gap: 28px;
+}
+h1, h2 { font-family: var(--display); font-weight: 700; letter-spacing: .01em; text-wrap: balance; margin: 0; line-height: 1.1; }
+h1 { font-size: 2.4rem; }
+h2 { font-size: 1.55rem; }
+p { margin: 0; max-width: 65ch; }
+.eyebrow { font-family: var(--mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+header { display: flex; flex-direction: column; gap: 8px; }
+.lede { color: var(--fg-2); }
+section { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.verdict { background: var(--bad-bg); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.pill { align-self: flex-start; font-family: var(--mono); font-size: .75rem; font-weight: 600; letter-spacing: .06em; color: var(--bad); border: 1.5px solid var(--bad); border-radius: 999px; padding: 2px 10px; }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.stat { background: var(--surface); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stat b { font-family: var(--mono); font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.stat span { font-size: .82rem; color: var(--fg-2); }
+.figure { background: var(--surface); border-radius: 10px; padding: 14px 12px 10px; position: relative; min-width: 0; }
+.figure svg { display: block; width: 100%; height: auto; overflow: visible; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .82rem; color: var(--fg-2); margin-bottom: 8px; }
+.legend i { display: inline-block; width: 14px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.note { font-size: .85rem; color: var(--fg-2); }
+.tip { position: absolute; pointer-events: none; background: var(--fg); color: var(--bg); font-family: var(--mono); font-size: .75rem; line-height: 1.4; padding: 6px 8px; border-radius: 6px; white-space: nowrap; z-index: 2; }
+ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; max-width: 65ch; }
+.tablewrap { overflow-x: auto; background: var(--surface); border-radius: 10px; }
+table { border-collapse: collapse; font-size: .8rem; font-variant-numeric: tabular-nums; width: 100%; }
+th, td { padding: 7px 9px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--rule); }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+th { font-weight: 600; color: var(--fg-2); font-size: .72rem; }
+td { font-family: var(--mono); }
+td.name { font-family: var(--body); white-space: normal; min-width: 150px; text-align: left; }
+th:first-child { text-align: left; }
+td.neg { color: var(--bad); }
+details summary { cursor: pointer; font-weight: 600; }
+details summary:focus-visible { outline: 2px solid var(--before); outline-offset: 2px; }
+code { font-family: var(--mono); font-size: .85em; }
+.ax { fill: var(--muted); font-family: var(--mono); font-size: 11px; }
+.lbl { fill: var(--fg); font-family: var(--body); font-size: 13px; font-weight: 500; }
+.lbl2 { fill: var(--fg-2); font-family: var(--mono); font-size: 11px; }
+</style>
+
+<main>
+  <header>
+    <div class="eyebrow">Backtest · MMC Footprint (D'Operandi Capital notes)</div>
+    <h1>MMC Footprint Tested</h1>
+    <p class="lede">The three setups in the notes with rules firm enough to code, on six currency pairs and three timeframes, February 2018 to October 2026. <span id="ntrades"></span> trades, with stops and targets settled on 1-minute prices and every fill re-checked by an independent audit.</p>
+  </header>
+
+  <section class="verdict" aria-label="Verdict">
+    <span class="pill">VERDICT · 0 OF 12 PROFITABLE</span>
+    <p>None of the setups makes money after a normal retail spread on any timeframe. The only after-cost profit, the 2B with the daily trend on 4-hour charts, is small enough to be luck and lost money in 2018–2022. Adding positions to winners ("leverage") made the footprint worse. Because none passed, no Pine script was made.</p>
+    <div class="stats">
+      <div class="stat"><b>0 / 12</b><span>setup and timeframe combinations profitable after costs</span></div>
+      <div class="stat"><b>+2.7%</b><span>best per trade after costs: 2B with the daily trend, 4h (t = 0.4, not significant)</span></div>
+      <div class="stat"><b>+3.8%</b><span>RSI divergence on 15m before costs: a real edge (t = 3.4) that costs erase</span></div>
+      <div class="stat"><b>25%</b><span>footprint campaigns that end in profit on 1h charts, even with adds</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The setups</h2>
+    <ul>
+      <li><b>2B false breakout + pokebar.</b> The pokebar is the first bar to close above a recent swing high (no more than one ATR above it). Then a bearish candle closes below the pokebar's low: sell. Stop at the second top, target 2R. Buys mirror it.</li>
+      <li><b>2B with the daily trend.</b> The same, but only selling false highs when the daily close is under its 50-day EMA, and only buying false lows above it. The notes call this the best way to trade them.</li>
+      <li><b>RSI divergence, second swing.</b> A higher swing high with a lower RSI(14): sell at the close that confirms the swing. Stop above it, target 2R.</li>
+      <li><b>MMC footprint + leverage.</b> A trendline touched twice, then a close through the previous high starts the trade. While it is in profit, each new high adds a unit (up to five). One stop trails under each new swing low, with no target.</li>
+    </ul>
+    <p class="note">The notes give no profit targets for the first three, so 2R is used. A swing point is a high or low above or below the three bars on each side.</p>
+  </section>
+
+  <section>
+    <h2>Profit or loss per trade</h2>
+    <p>As a percentage of the amount risked on each trade (stop distance). Sorted best to worst after costs.</p>
+    <div class="figure" id="bars"></div>
+  </section>
+
+  <section>
+    <h2>Real edge, eaten by costs</h2>
+    <p>RSI divergence on 15-minute charts wins about a third of its trades at 2R. Before costs that is a real edge: risking 1% a trade would have grown an account about 137 times. Its stops are only 11 pips on average, so a 1–3 pip spread costs about a fifth of the risk on every trade, and the same trades wipe the account out.</p>
+    <div class="figure" id="cum"></div>
+    <p class="note">Account balance as a percent of the starting balance, log scale, risking 1% of the current balance on each trade.</p>
+  </section>
+
+  <section>
+    <h2>What the tests show</h2>
+    <ul>
+      <li><b>Short timeframes lose most.</b> Every setup loses heavily on 15-minute charts, where stops are about 11–20 pips and the spread is a big share of each one.</li>
+      <li><b>4-hour charts come closest.</b> Stops are 45–90 pips, so costs matter less, but the edge left over is close to zero.</li>
+      <li><b>The daily-trend filter helps the 2B a little,</b> from −0.9% to +2.7% per trade on 4h, but not enough to be distinguishable from chance.</li>
+      <li><b>Leverage doesn't rescue the footprint.</b> Most campaigns never get to add a unit (about 2 in 3 stay at one), and three in four lose overall.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>All runs</h2>
+    <div class="tablewrap"><table id="tbl"></table></div>
+    <p class="note">"Per trade" is profit or loss as a % of the amount risked. "Account" is the change in balance over 8.7 years risking 1% per trade, compounded. For the footprint, each added unit counts as a trade. Costs per round trip: EUR/USD 1.0 pip, USD/JPY 1.2, AUD/USD 1.3, GBP/USD 1.5, USD/CHF 1.6, GBP/JPY 2.8.</p>
+  </section>
+
+  <section>
+    <details>
+      <summary>What isn't covered</summary>
+      <ul style="margin-top:10px">
+        <li>The notes also use hand-drawn support and resistance zones and reversal candlesticks as extra confirmation. Those depend on judgement and aren't coded here.</li>
+        <li>The notes contradict themselves on divergence ("enter on the 2nd touch", then "always use the 3rd touch"). The second touch is tested.</li>
+        <li>The 30-minute/5-minute "chord" pairing isn't modelled. Each timeframe is tested on its own.</li>
+        <li>Prices are HistData 1-minute bid quotes, with no commission, swaps or news filter.</li>
+      </ul>
+      <p class="note" style="margin-top:10px">Code: <code>trading-desk/mmc/</code></p>
+    </details>
+  </section>
+</main>
+
+<script>
+const D = {"years": 8.7, "end": "2026-10-23", "runs": [{"key": "2b_15min", "system": "2b", "name": "2B false breakout + pokebar", "tf": "15m", "trades": 17212, "per_year": 1973.2, "win": 33.1, "gross": -0.8, "gt": -0.73, "net": -16.3, "nt": -14.7, "train": -15.2, "test": -17.4, "acct": -100.0, "acct_g": -95.9, "risk": 11.5, "camp": null}, {"key": "2b_1h", "system": "2b", "name": "2B false breakout + pokebar", "tf": "1h", "trades": 4167, "per_year": 477.7, "win": 32.2, "gross": -3.6, "gt": -1.63, "net": -10.5, "nt": -4.77, "train": -11.0, "test": -9.9, "acct": -99.2, "acct_g": -85.0, "risk": 25.3, "camp": null}, {"key": "2b_4h", "system": "2b", "name": "2B false breakout + pokebar", "tf": "4h", "trades": 1047, "per_year": 120.0, "win": 34.3, "gross": 2.4, "gt": 0.54, "net": -0.9, "nt": -0.19, "train": -7.1, "test": 5.7, "acct": -17.8, "acct_g": 15.6, "risk": 52.7, "camp": null}, {"key": "2b_gated_15min", "system": "2b_gated", "name": "2B with the daily trend", "tf": "15m", "trades": 10528, "per_year": 1207.0, "win": 33.5, "gross": -0.1, "gt": -0.1, "net": -15.8, "nt": -11.18, "train": -14.9, "test": -16.7, "acct": -100.0, "acct_g": -71.2, "risk": 11.3, "camp": null}, {"key": "2b_gated_1h", "system": "2b_gated", "name": "2B with the daily trend", "tf": "1h", "trades": 2440, "per_year": 279.7, "win": 31.9, "gross": -4.5, "gt": -1.56, "net": -11.3, "nt": -3.98, "train": -10.9, "test": -11.8, "acct": -95.1, "acct_g": -73.5, "risk": 25.2, "camp": null}, {"key": "2b_gated_4h", "system": "2b_gated", "name": "2B with the daily trend", "tf": "4h", "trades": 540, "per_year": 61.9, "win": 35.4, "gross": 6.0, "gt": 0.96, "net": 2.7, "nt": 0.44, "train": -2.3, "test": 7.6, "acct": 9.5, "acct_g": 30.7, "risk": 53.9, "camp": null}, {"key": "div_15min", "system": "div", "name": "RSI divergence, 2nd swing", "tf": "15m", "trades": 18553, "per_year": 2127.0, "win": 34.4, "gross": 3.8, "gt": 3.43, "net": -17.9, "nt": -15.86, "train": -18.7, "test": -17.0, "acct": -100.0, "acct_g": 13604.4, "risk": 10.9, "camp": null}, {"key": "div_1h", "system": "div", "name": "RSI divergence, 2nd swing", "tf": "1h", "trades": 5226, "per_year": 599.1, "win": 34.5, "gross": 4.0, "gt": 2.0, "net": -6.1, "nt": -3.02, "train": -6.3, "test": -5.9, "acct": -97.6, "acct_g": 372.4, "risk": 23.2, "camp": null}, {"key": "div_4h", "system": "div", "name": "RSI divergence, 2nd swing", "tf": "4h", "trades": 1455, "per_year": 166.8, "win": 34.0, "gross": 2.1, "gt": 0.56, "net": -3.1, "nt": -0.83, "train": -5.4, "test": -0.5, "acct": -44.9, "acct_g": 17.2, "risk": 46.2, "camp": null}, {"key": "footprint_15min", "system": "footprint", "name": "MMC footprint + leverage", "tf": "15m", "trades": 23685, "per_year": 2715.3, "win": 28.7, "gross": -4.0, "gt": -4.69, "net": -13.5, "nt": -15.46, "train": -14.0, "test": -13.0, "acct": -100.0, "acct_g": -100.0, "risk": 19.9, "camp": {"n": 15225, "mean_units": 1.56, "net_R": -0.21, "net_t": -11.56, "gross_R": -0.063, "win_pct": 21.3}}, {"key": "footprint_1h", "system": "footprint", "name": "MMC footprint + leverage", "tf": "1h", "trades": 6761, "per_year": 775.1, "win": 32.9, "gross": -1.7, "gt": -1.15, "net": -5.9, "nt": -3.95, "train": -1.5, "test": -10.9, "acct": -98.8, "acct_g": -80.5, "risk": 43.5, "camp": {"n": 4193, "mean_units": 1.61, "net_R": -0.094, "net_t": -3.0, "gross_R": -0.027, "win_pct": 24.6}}, {"key": "footprint_4h", "system": "footprint", "name": "MMC footprint + leverage", "tf": "4h", "trades": 1827, "per_year": 209.5, "win": 33.7, "gross": -4.0, "gt": -1.66, "net": -5.8, "nt": -2.41, "train": -3.7, "test": -8.2, "acct": -68.7, "acct_g": -56.4, "risk": 92.2, "camp": {"n": 1067, "mean_units": 1.71, "net_R": -0.1, "net_t": -1.66, "gross_R": -0.069, "win_pct": 24.0}}], "trades": 93441, "curve": {"net": [["2018-02", 67.2067], ["2018-03", 51.7639], ["2018-04", 44.4527], ["2018-05", 25.6959], ["2018-06", 12.4526], ["2018-07", 10.7875], ["2018-08", 7.4596], ["2018-09", 4.9317], ["2018-10", 2.2804], ["2018-11", 1.7338], ["2018-12", 1.5357], ["2019-01", 1.4073], ["2019-02", 0.9767], ["2019-03", 0.7952], ["2019-04", 0.584], ["2019-05", 0.4614], ["2019-06", 0.1597], ["2019-07", 0.0615], ["2019-08", 0.0619], ["2019-09", 0.0402], ["2019-10", 0.0478], ["2019-11", 0.0323], ["2019-12", 0.0233], ["2020-01", 0.0149], ["2020-02", 0.0089], ["2020-03", 0.0093], ["2020-04", 0.008], ["2020-05", 0.0041], ["2020-06", 0.0023], ["2020-07", 0.0013], ["2020-08", 0.0006], ["2020-09", 0.0004], ["2020-10", 0.0003], ["2020-11", 0.0002], ["2020-12", 0.0001], ["2021-01", 0.0001], ["2021-02", 0.0001], ["2021-03", 0.0], ["2021-04", 0.0], ["2021-05", 0.0], ["2021-06", 0.0], ["2021-07", 0.0], ["2021-08", 0.0], ["2021-09", 0.0], ["2021-10", 0.0], ["2021-11", 0.0], ["2021-12", 0.0], ["2022-01", 0.0], ["2022-02", 0.0], ["2022-03", 0.0], ["2022-04", 0.0], ["2022-05", 0.0], ["2022-06", 0.0], ["2022-07", 0.0], ["2022-08", 0.0], ["2022-09", 0.0], ["2022-10", 0.0], ["2022-11", 0.0], ["2022-12", 0.0], ["2023-01", 0.0], ["2023-02", 0.0], ["2023-03", 0.0], ["2023-04", 0.0], ["2023-05", 0.0], ["2023-06", 0.0], ["2023-07", 0.0], ["2023-08", 0.0], ["2023-09", 0.0], ["2023-10", 0.0], ["2023-11", 0.0], ["2023-12", 0.0], ["2024-01", 0.0], ["2024-02", 0.0], ["2024-03", 0.0], ["2024-04", 0.0], ["2024-05", 0.0], ["2024-06", 0.0], ["2024-07", 0.0], ["2024-08", 0.0], ["2024-09", 0.0], ["2024-10", 0.0], ["2024-11", 0.0], ["2024-12", 0.0], ["2025-01", 0.0], ["2025-02", 0.0], ["2025-03", 0.0], ["2025-04", 0.0], ["2025-05", 0.0], ["2025-06", 0.0], ["2025-07", 0.0], ["2025-08", 0.0], ["2025-09", 0.0], ["2025-10", 0.0], ["2025-11", 0.0], ["2025-12", 0.0], ["2026-01", 0.0], ["2026-02", 0.0], ["2026-03", 0.0], ["2026-04", 0.0], ["2026-05", 0.0], ["2026-06", 0.0], ["2026-07", 0.0], ["2026-08", 0.0], ["2026-09", 0.0], ["2026-10", 0.0]], "gross": [["2018-02", 89.6719], ["2018-03", 100.6202], ["2018-04", 137.0956], ["2018-05", 114.185], ["2018-06", 91.0465], ["2018-07", 114.8552], ["2018-08", 122.0708], ["2018-09", 128.404], ["2018-10", 97.3843], ["2018-11", 103.1255], ["2018-12", 129.9016], ["2019-01", 171.4542], ["2019-02", 203.6401], ["2019-03", 246.5581], ["2019-04", 280.3892], ["2019-05", 345.3058], ["2019-06", 192.3488], ["2019-07", 128.4953], ["2019-08", 195.1738], ["2019-09", 189.1801], ["2019-10", 334.5213], ["2019-11", 331.1125], ["2019-12", 380.5022], ["2020-01", 359.8713], ["2020-02", 324.1569], ["2020-03", 430.9961], ["2020-04", 528.4854], ["2020-05", 397.1772], ["2020-06", 306.1742], ["2020-07", 284.1834], ["2020-08", 210.6112], ["2020-09", 194.4057], ["2020-10", 228.1708], ["2020-11", 249.771], ["2020-12", 251.8767], ["2021-01", 310.4642], ["2021-02", 274.2414], ["2021-03", 325.7171], ["2021-04", 405.8604], ["2021-05", 459.8549], ["2021-06", 553.4873], ["2021-07", 571.0722], ["2021-08", 594.7247], ["2021-09", 605.7878], ["2021-10", 751.5154], ["2021-11", 643.7367], ["2021-12", 822.7193], ["2022-01", 1287.9235], ["2022-02", 1519.1891], ["2022-03", 1593.2662], ["2022-04", 1616.739], ["2022-05", 1485.0592], ["2022-06", 1605.2935], ["2022-07", 1900.8413], ["2022-08", 2731.8724], ["2022-09", 2583.7507], ["2022-10", 2264.097], ["2022-11", 3860.6498], ["2022-12", 4439.6888], ["2023-01", 4672.3492], ["2023-02", 3754.4877], ["2023-03", 3298.5581], ["2023-04", 3430.5732], ["2023-05", 2725.3279], ["2023-06", 3532.6176], ["2023-07", 2969.2446], ["2023-08", 4152.9928], ["2023-09", 4125.3052], ["2023-10", 3760.6336], ["2023-11", 3922.7543], ["2023-12", 4861.8844], ["2024-01", 4979.0296], ["2024-02", 5146.5812], ["2024-03", 4830.8939], ["2024-04", 5350.8807], ["2024-05", 5043.0863], ["2024-06", 5615.3938], ["2024-07", 5848.4414], ["2024-08", 7914.8421], ["2024-09", 6467.0995], ["2024-10", 7680.656], ["2024-11", 8127.2976], ["2024-12", 10021.1235], ["2025-01", 8854.7165], ["2025-02", 11123.3777], ["2025-03", 12911.0564], ["2025-04", 14302.2555], ["2025-05", 17023.5927], ["2025-06", 16979.2596], ["2025-07", 16569.0463], ["2025-08", 25121.7004], ["2025-09", 20462.0219], ["2025-10", 13977.3639], ["2025-11", 12233.9296], ["2025-12", 11457.4488], ["2026-01", 11284.2357], ["2026-02", 13305.1906], ["2026-03", 9701.5944], ["2026-04", 10718.7988], ["2026-05", 8142.1601], ["2026-06", 11606.5466], ["2026-07", 13580.4959], ["2026-08", 13302.6615], ["2026-09", 12500.6537], ["2026-10", 13704.4437]]}};
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text != null) e.textContent = text;
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function svgFor(box, h) {
+  box.querySelectorAll("svg,.tip").forEach(n => n.remove());
+  const w = Math.max(280, box.clientWidth - 24);
+  const s = el("svg", { viewBox: `0 0 ${w} ${h}`, role: "img" }, null);
+  box.appendChild(s);
+  const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; box.appendChild(tip);
+  return { s, w, tip };
+}
+function legend(box, items) {
+  box.querySelectorAll(".legend").forEach(n => n.remove());
+  const lg = document.createElement("div"); lg.className = "legend";
+  lg.innerHTML = items.map(([c, t]) => `<span><i style="background:var(${c})"></i>${t}</span>`).join("");
+  box.prepend(lg);
+}
+function showTip(box, tip, html, evt) {
+  const r = box.getBoundingClientRect();
+  tip.innerHTML = html; tip.hidden = false;
+  const x = (evt.touches ? evt.touches[0].clientX : evt.clientX) - r.left;
+  const y = (evt.touches ? evt.touches[0].clientY : evt.clientY) - r.top;
+  const tw = tip.offsetWidth;
+  tip.style.left = Math.min(Math.max(4, x - tw / 2), r.width - tw - 4) + "px";
+  tip.style.top = Math.max(4, y - 56) + "px";
+}
+function hover(box, tip, node, html) {
+  ["pointermove", "pointerdown"].forEach(ev => node.addEventListener(ev, e => showTip(box, tip, html, e)));
+  node.addEventListener("pointerleave", () => tip.hidden = true);
+}
+const fmt = (v, d = 1) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d);
+const pct = v => fmt(v, 1) + "%";
+
+function drawBars() {
+  const box = document.getElementById("bars");
+  legend(box, [["--before", "Before costs"], ["--after", "After costs"]]);
+  const rows = [...D.runs].sort((a, b) => b.net - a.net);
+  const rowH = 44, padL = 8, top = 4, h = top + rows.length * rowH + 24;
+  const { s, w, tip } = svgFor(box, h);
+  const lo = -20, hi = 8, X = v => padL + (v - lo) / (hi - lo) * (w - padL - 8);
+  [-20, -10, 0, 5].forEach(v => {
+    el("line", { x1: X(v), x2: X(v), y1: top, y2: h - 20, stroke: v === 0 ? css("--fg-2") : css("--grid") }, s);
+    el("text", { x: X(v), y: h - 4, "text-anchor": "middle", class: "ax" }, s, (v === 0 ? "0" : fmt(v, 0)) + "%");
+  });
+  rows.forEach((r, i) => {
+    const y = top + i * rowH;
+    el("text", { x: padL, y: y + 12, class: "lbl" }, s, `${r.name} · ${r.tf}`);
+    [["gross", "--before", 17], ["net", "--after", 29]].forEach(([k, c, dy]) => {
+      const v = r[k], x1 = X(Math.min(0, v)), x2 = X(Math.max(0, v));
+      el("rect", { x: x1, y: y + dy, width: Math.max(2, x2 - x1), height: 9, rx: 2, fill: css(c) }, s);
+    });
+    el("text", { x: w - 4, y: y + 38, "text-anchor": "end", class: "lbl2" }, s, pct(r.net));
+    hover(box, tip, el("rect", { x: 0, y, width: w, height: rowH, fill: "transparent" }, s),
+      `${r.name} · ${r.tf}<br>before ${pct(r.gross)} · after ${pct(r.net)} per trade<br>win ${r.win}% · ${r.trades.toLocaleString()} trades`);
+  });
+}
+
+function drawCum() {
+  const box = document.getElementById("cum");
+  legend(box, [["--before", "Before costs"], ["--after", "After costs"]]);
+  const h = 250, padL = 58, padB = 24, padT = 10, padR = 10;
+  const { s, w, tip } = svgFor(box, h);
+  const G = D.curve.gross, N = D.curve.net;
+  const t0 = Date.parse(G[0][0] + "-01"), t1 = Date.parse(G[G.length - 1][0] + "-01");
+  const lo = -2, hi = 5;             // log10 of % of start: 0.01% .. 100,000%
+  const X = d => padL + (Date.parse(d + "-01") - t0) / (t1 - t0) * (w - padL - padR);
+  const Y = v => padT + (hi - Math.log10(Math.max(v, 0.01))) / (hi - lo) * (h - padT - padB);
+  [0.01, 1, 100, 10000].forEach(v => {
+    el("line", { x1: padL, x2: w - padR, y1: Y(v), y2: Y(v), stroke: v === 100 ? css("--fg-2") : css("--grid") }, s);
+    el("text", { x: padL - 6, y: Y(v) + 4, "text-anchor": "end", class: "ax" }, s, v.toLocaleString() + "%");
+  });
+  for (let yr = 2018; yr <= 2026; yr += (w < 420 ? 2 : 1))
+    el("text", { x: X(`${yr}-01`), y: h - 6, "text-anchor": "middle", class: "ax" }, s, String(yr));
+  const path = a => a.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1)).join("");
+  el("path", { d: path(G), fill: "none", stroke: css("--before"), "stroke-width": 2 }, s);
+  el("path", { d: path(N), fill: "none", stroke: css("--after"), "stroke-width": 2 }, s);
+  const g1 = G[G.length - 1][1], n1 = N[N.length - 1][1];
+  el("text", { x: w - padR, y: Y(g1) + 30, "text-anchor": "end", class: "lbl2" }, s, `${Math.round(g1).toLocaleString()}% of start`);
+  el("text", { x: w - padR, y: Y(n1) - 8, "text-anchor": "end", class: "lbl2" }, s, "wiped out");
+  const cross = el("line", { y1: padT, y2: h - padB, stroke: css("--muted"), visibility: "hidden" }, s);
+  const hit = el("rect", { x: padL, y: padT, width: w - padL - padR, height: h - padT - padB, fill: "transparent" }, s);
+  const move = e => {
+    const r = s.getBoundingClientRect(), cx = ((e.touches ? e.touches[0].clientX : e.clientX) - r.left) * (w / r.width);
+    const t = t0 + (cx - padL) / (w - padL - padR) * (t1 - t0);
+    let i = 0; while (i < G.length - 1 && Date.parse(G[i][0] + "-01") < t) i++;
+    cross.setAttribute("x1", X(G[i][0])); cross.setAttribute("x2", X(G[i][0])); cross.setAttribute("visibility", "visible");
+    const nv = N[Math.min(i, N.length - 1)][1];
+    showTip(box, tip, `${G[i][0]}<br>before costs ${Math.round(G[i][1]).toLocaleString()}%<br>after costs ${nv < 0.01 ? "&lt;0.01" : nv.toFixed(2)}%`, e);
+  };
+  ["pointermove", "pointerdown"].forEach(ev => hit.addEventListener(ev, move));
+  hit.addEventListener("pointerleave", () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); });
+}
+
+function drawTable() {
+  const t = document.getElementById("tbl");
+  const c = v => v < 0 ? "neg" : "";
+  let h = "<thead><tr><th>Setup</th><th>TF</th><th>Trades/yr</th><th>Win %</th><th>Per trade before</th><th>Per trade after</th><th>t</th><th>2018–22</th><th>2022–26</th><th>Account</th></tr></thead><tbody>";
+  D.runs.forEach(r => {
+    h += `<tr><td class="name">${r.name}</td><td>${r.tf}</td><td>${Math.round(r.per_year).toLocaleString()}</td><td>${r.win}</td>`
+      + `<td class="${c(r.gross)}">${pct(r.gross)}</td><td class="${c(r.net)}">${pct(r.net)}</td><td>${fmt(r.nt, 1)}</td>`
+      + `<td class="${c(r.train)}">${pct(r.train)}</td><td class="${c(r.test)}">${pct(r.test)}</td><td class="${c(r.acct)}">${pct(r.acct)}</td></tr>`;
+  });
+  t.innerHTML = h + "</tbody>";
+}
+
+document.getElementById("ntrades").textContent = D.trades.toLocaleString();
+function drawAll() { drawBars(); drawCum(); }
+drawTable(); drawAll();
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(drawAll, 150); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", drawAll);
+new MutationObserver(drawAll).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+</script>

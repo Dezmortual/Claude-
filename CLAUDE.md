@@ -34,6 +34,10 @@ Run everything from inside `trading-desk/`:
   Thomas Carter's 20 five-minute forex systems on HistData 1-minute bars (2018+,
   6 pairs, cached in `core/cache/fx_1m/`); results in `carter20/README.md`,
   charts in `carter20/report.html`. None is profitable, so no Pine scripts
+- `python3 mmc/run_backtest.py` then `python3 mmc/audit.py`: the MMC Footprint
+  notes (2B pokebar, RSI divergence, footprint with adds) on the carter20 FX
+  data at 15m/1h/4h; results in `mmc/README.md`, charts in `mmc/report.html`.
+  None is profitable, so no Pine script
 - `--arms rules gated ta` adds a TradingAgents filter (`tradingagents_gate/`):
   needs `bash tradingagents_gate/setup.sh` and `ANTHROPIC_API_KEY` in `.env`. It
   costs money per decision: price it with `--ta-estimate` and always pass

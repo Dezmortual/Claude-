@@ -1,6 +1,6 @@
 """
-engine.py  --  one position at a time, decisions at 5-minute closes, fills on
-the 1-minute path.
+engine.py  --  one position at a time, decisions at bar closes (5-minute by
+default, any bar length via `bar`), fills on the 1-minute path.
 
 A system hands over, per 5-minute bar (all decided at that bar's close):
   long / short          enter at this close (market order)
@@ -34,7 +34,7 @@ EPS = 1e-8          # prices are on a 1e-5 / 1e-3 grid; levels built from pips c
 
 
 def run(x: pd.DataFrame, sig: Dict[str, pd.Series], m1: pd.DataFrame, pair: str, system: int,
-        start: pd.Timestamp, pend_bars: int = 1) -> List[dict]:
+        start: pd.Timestamp, pend_bars: int = 1, bar: str = "5min") -> List[dict]:
     n = len(x)
     ts = x.index
     c5 = x["close"].to_numpy()
@@ -55,7 +55,7 @@ def run(x: pd.DataFrame, sig: Dict[str, pd.Series], m1: pd.DataFrame, pair: str,
 
     mt = m1.index.as_unit("ns").asi8
     mo, mh, ml, mc = (m1[k].to_numpy() for k in ("open", "high", "low", "close"))
-    bar_ns = pd.Timedelta("5min").value
+    bar_ns = pd.Timedelta(bar).value
     tns = ts.as_unit("ns").asi8
     lo_idx = np.searchsorted(mt, tns)
     hi_idx = np.searchsorted(mt, tns + bar_ns)
