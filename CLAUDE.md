@@ -72,5 +72,6 @@ markets, options and SEC fundamentals (`src/lib/data/macro.ts`), and the researc
 Claude through `@anthropic-ai/sdk` with the owner's `ANTHROPIC_API_KEY`, capped by `AI_DAILY_LIMIT_USD`; its tools are
 read-only and conversations are stored append-only, never edited). The e2e suite never calls a real service:
 `e2e/fake-alpaca.mjs` stands in for Alpaca (trading, news, options), Claude, the RSS feeds, FRED, the World Bank,
-Polymarket and SEC EDGAR, pointed at by the `*_URL` variables in `playwright.config.ts`. Apply new migrations to the
-Neon database before the deploy that needs them (the build doesn't run them).
+Polymarket and SEC EDGAR, pointed at by the `*_URL` variables in `playwright.config.ts`. On Vercel the production build runs
+`npm run db:setup` (migrations and seed) first, so a build fails while the database is unreachable or over Neon's
+free quota (5 GB of transfer a month): redeploy once it's back.
