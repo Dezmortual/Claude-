@@ -48,5 +48,37 @@ Verdict: no edge after costs, before or after 2025. Do not trade it on hourly
 crypto. A slower timeframe would cut costs per unit of move, but it would be
 a new hypothesis to test on its own, not a fix to tune this one.
 
+## 5-minute bars (2026-11-01)
+
+```bash
+python3 vwapema/run_backtest.py --interval 5m --start 2023-01-01 --out vwapema/out_5m
+python3 vwapema/audit.py 5m out_5m
+```
+
+Same coins, costs and split. It starts in 2023 because 5-minute history from
+2020 is about 12 times the download. That gives about 400,000 bars per coin,
+with two years before the split and nearly two after.
+
+| Arm | Trades | Win | Net per trade (t) | Before costs (t) | Train net | Test net (t) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| rules | 225,949 | 16.8% | −0.135% (−75.5) | +0.005% (+2.7) | −0.135% | −0.135% (−53.2) |
+| gated | 100,350 | 18.0% | −0.130% (−42.9) | +0.010% (+3.3) | −0.131% | −0.129% (−29.8) |
+
+- **Worse than hourly, as expected.** It trades about 16 times a day per coin
+  with a median hold of 30 minutes. The average move before costs is
+  +0.005%, against 0.14% in costs. Every coin loses in both halves (20 of 20,
+  both arms), and the equal-weight account goes to zero.
+- **The before-costs account (+11,129%) is one coin.** TRX makes +0.036% gross
+  per trade over about 20,000 trades, which compounds to roughly 1,100 times;
+  the other nine coins range from −97% to +791% before costs. TRX's tick is
+  large relative to its price, so part of that is likely price discreteness
+  rather than signal. It's still −0.10% per trade after costs.
+- **Win rate 17%.** Most trades are stopped by the next disagreement within a
+  few bars. The reel's "just using" these two conditions on a fast chart is a
+  way to pay commission, not a strategy.
+
+Audit (5m): 225,949/225,949 rules-arm and 100,350/100,350 gated-arm trades
+satisfy the rules as written.
+
 Audit: 71,820/71,820 rules-arm and 27,806/27,806 gated-arm trades satisfy the
 rules as written.
