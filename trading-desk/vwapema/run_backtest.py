@@ -87,11 +87,11 @@ def main() -> None:
         for tag, sub in (("all", t), ("train", tr), ("test", te),
                          ("long", t[t["side"] == "long"]), ("short", t[t["side"] == "short"])):
             print(line(tag, sub))
-        print("  by coin, net %% per trade (t), before | from split:")
+        print("  by coin, net % per trade (t), before | from split:")
         neg = 0
         for s in bars:
             a, b_ = tr[tr["symbol"] == s], te[te["symbol"] == s]
-            neg += (a["ret_net"].mean() < 0) + (b_["ret_net"].mean() < 0)
+            neg += int(a["ret_net"].mean() < 0) + int(b_["ret_net"].mean() < 0)
             print("    %-9s %5d trades  %+.3f%% (t=%+.2f) | %+.3f%% (t=%+.2f)"
                   % (s, len(a) + len(b_), a["ret_net"].mean(), tstat(a["ret_net"]),
                      b_["ret_net"].mean(), tstat(b_["ret_net"])))

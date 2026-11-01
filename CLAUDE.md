@@ -19,6 +19,8 @@ Run everything from inside `trading-desk/`:
 - `python3 sweep/run_backtest.py` then `python3 sweep/audit.py`: the Sweep port
   of `sweep_indicator.pine` on hourly Binance candles (cached in `core/cache/`,
   never committed); results in `sweep/README.md`
+- `python3 vwapema/run_backtest.py` then `python3 vwapema/audit.py`: the port of
+  `vwap_ema_indicator.pine` (VWAP + 9/20 EMA); results in `vwapema/README.md`
 - `python3 trend/run_backtest.py`, `trend/audit.py`, `trend/robustness.py`: three
   published strategies (Faber SMA, crypto time-series momentum, dual momentum)
   tested after their publication dates; results in `trend/README.md`
