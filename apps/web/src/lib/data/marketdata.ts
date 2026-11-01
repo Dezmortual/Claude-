@@ -148,10 +148,17 @@ async function readBars(id: string, slug: string, tf: Timeframe, wrote: boolean)
   let bars: Bar[] | null = null;
   if (!snapshotsMissing) {
     try {
-      const [s] = await sql()<{ data: Buffer }[]>`select data from bar_snapshots where asset_id = ${id} and timeframe = ${tf}`;
+      // base64, not the raw bytea: the driver receives bytea as hex text, twice its size.
+      const [s] = await sql()<{ data: string }[]>`select encode(data, 'base64') as data from bar_snapshots where asset_id = ${id} and timeframe = ${tf}`;
       if (s) {
-        const snap = unpack(JSON.parse(gunzipSync(s.data).toString()));
-        bars = snap.length ? merge(snap, await rowsSince(id, tf, snap.at(-1)!.ts), KEEP[tf]) : null;
+        const snap = unpack(JSON.parse(gunzipSync(Buffer.from(s.data, "base64")).toString()));
+        if (snap.length) {
+          const fresh = await rowsSince(id, tf, snap.at(-1)!.ts);
+          bars = merge(snap, fresh, KEEP[tf]);
+          // A copy that has fallen behind (bars written by a server that didn't rewrite it) is brought up to date,
+          // so later reads don't fetch the same gap again.
+          if (fresh.length > 12 && !wrote) await saveSnapshot(id, tf, bars);
+        }
       }
     } catch (e) {
       if ((e as { code?: string }).code === "42P01") snapshotsMissing = true; // undefined table

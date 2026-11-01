@@ -43,9 +43,12 @@ export async function ingest() {
 
 /** One market's live series. The scheduled run calls these in turn, so no single request carries every asset
  *  (Netlify's synchronous functions stop at about 10 s). */
-export async function ingestMarket(market: MarketCode, part = 1, parts = 1) {
+export async function ingestMarket(market: MarketCode, part = 1, parts = 1, now = new Date()) {
   const slugs = liveSlugs().filter((s) => ASSET_BY_SLUG.get(s)!.market === market).filter((_, i) => i % parts === part - 1);
-  await Promise.all([ensure(slugs, ["5m", "30m", "1h", "1d", "1w"]), market === "crypto" && part === 1 ? ensureCrosscheck() : null]);
+  // Weekly bars refresh every 6 hours, so the other runs leave them alone: every read counts against the
+  // database's data-transfer allowance.
+  const tfs: Timeframe[] = now.getUTCHours() % 6 === 0 && now.getUTCMinutes() < 30 ? ["5m", "30m", "1h", "1d", "1w"] : ["5m", "30m", "1h", "1d"];
+  await Promise.all([ensure(slugs, tfs), market === "crypto" && part === 1 ? ensureCrosscheck() : null]);
   return { market, part: `${part}/${parts}`, assets: slugs.length };
 }
 
@@ -350,7 +353,7 @@ export async function cleanup() {
 async function tick() {
   const now = new Date();
   const out: Record<string, unknown> = {};
-  for (const m of MARKETS) out[`ingest-${m.code}`] = await ingestMarket(m.code);
+  for (const m of MARKETS) out[`ingest-${m.code}`] = await ingestMarket(m.code, 1, 1, now);
   out.health = await recordHealth(sourceProblems(now)); // this run is itself proof the scheduler works
   await recordHealth({ checked: ["scheduler"], problems: [] });
   out.alerts = { ...(await evaluateAlerts()), ...(await deliverAlerts()) };
