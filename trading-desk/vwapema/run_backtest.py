@@ -67,9 +67,11 @@ def main() -> None:
     p.add_argument("--split", default="2025-01-01")
     p.add_argument("--commission-pct", type=float, default=0.05)
     p.add_argument("--slippage-bps", type=float, default=2.0)
+    p.add_argument("--out", default=str(OUT))
     args = p.parse_args()
 
-    OUT.mkdir(exist_ok=True)
+    out = Path(args.out)
+    out.mkdir(exist_ok=True)
     cfg = VwapEmaConfig()
     bars = {s: data.candles(s, args.start, args.interval) for s in args.symbols}
     bars = {s: b for s, b in bars.items() if len(b) > cfg.warmup}
@@ -81,7 +83,7 @@ def main() -> None:
         for s, b in bars.items():
             rows += simulate(b, cfg, arm=arm, symbol=s)
         t = costs(pd.DataFrame(rows), args.commission_pct, args.slippage_bps)
-        t.to_csv(OUT / ("trades_%s.csv" % arm), index=False)
+        t.to_csv(out / ("trades_%s.csv" % arm), index=False)
         tr, te = t[t["entry_time"] < cut], t[t["entry_time"] >= cut]
         print("\n=== arm=%s, %s, split=%s ===" % (arm, args.interval, args.split))
         for tag, sub in (("all", t), ("train", tr), ("test", te),
@@ -110,9 +112,9 @@ def main() -> None:
                         "account_net_pct": float((eq.iloc[-1] - 1) * 100), "max_dd_pct": float(dd),
                         "account_gross_pct": float((eqg.iloc[-1] - 1) * 100)}
 
-    (OUT / "summary.json").write_text(json.dumps(summary, indent=1))
-    (OUT / "settings.json").write_text(json.dumps(vars(args), indent=1))
-    print("\nwrote %s" % OUT)
+    (out / "summary.json").write_text(json.dumps(summary, indent=1))
+    (out / "settings.json").write_text(json.dumps(vars(args), indent=1))
+    print("\nwrote %s" % out)
 
 
 if __name__ == "__main__":

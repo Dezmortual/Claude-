@@ -43,8 +43,9 @@ def states(b: pd.DataFrame) -> pd.DataFrame:
 
 def main() -> None:
     interval = sys.argv[1] if len(sys.argv) > 1 else "1h"
+    outdir = HERE / (sys.argv[2] if len(sys.argv) > 2 else "out")
     for arm in ("rules", "gated"):
-        t = pd.read_csv(HERE / "out" / f"trades_{arm}.csv", parse_dates=["entry_time", "exit_time"])
+        t = pd.read_csv(outdir / f"trades_{arm}.csv", parse_dates=["entry_time", "exit_time"])
         ok, bad = 0, []
         for sym, g in t.groupby("symbol"):
             b = pd.read_csv(CACHE / f"{sym}_{interval}.csv", index_col=0, parse_dates=True)
