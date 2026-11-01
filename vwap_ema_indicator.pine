@@ -41,5 +41,11 @@ bgcolor(showBg and state == 1 ? color.new(color.green, 88) : showBg and state ==
 plotshape(showSigs and longSig, "LONG", shape.labelup, location.belowbar, color.green, text="LONG", textcolor=color.white, size=size.small)
 plotshape(showSigs and shortSig, "SHORT", shape.labeldown, location.abovebar, color.red, text="SHORT", textcolor=color.white, size=size.small)
 
+// Say so on the chart when VWAP can't be calculated, instead of failing silently.
+var label noVol = na
+if barstate.islast and na(vwap)
+    label.delete(noVol)
+    noVol := label.new(bar_index, high, "No volume data on this symbol, so there's no VWAP and no signals.\nSwitch to an exchange symbol, e.g. BINANCE:BTCUSDT or COINBASE:BTCUSD.", style=label.style_label_down, color=color.purple, textcolor=color.white)
+
 alertcondition(longSig, "LONG", "VWAP EMA Trend: LONG on {{ticker}} at {{close}}")
 alertcondition(shortSig, "SHORT", "VWAP EMA Trend: SHORT on {{ticker}} at {{close}}")
