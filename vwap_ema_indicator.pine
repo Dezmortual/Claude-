@@ -1,0 +1,45 @@
+//@version=6
+// VWAP + EMA trend filter, from the "kylehtrades" reel.
+// Long when price is above VWAP and the 9 EMA is above the 20 EMA.
+// Short when price is below VWAP and the 9 EMA is below the 20 EMA.
+// When the two disagree there is no signal.
+// A LONG or SHORT label prints only on the bar where both conditions first
+// agree, and only once that bar has closed, so the signals don't repaint.
+indicator("VWAP EMA Trend", overlay=true)
+
+fastLen  = input.int(9, "Fast EMA", minval=1)
+slowLen  = input.int(20, "Slow EMA", minval=1)
+vwapSrc  = input.source(hlc3, "VWAP Source")
+showBg   = input.bool(true, "Shade Background While Aligned")
+showSigs = input.bool(true, "Show LONG / SHORT Labels")
+
+fastEma = ta.ema(close, fastLen)
+slowEma = ta.ema(close, slowLen)
+// Resets each session (each UTC day on 24/7 markets). Needs volume data:
+// on a symbol without volume, VWAP is na and no signal ever fires.
+vwap    = ta.vwap(vwapSrc)
+
+bullish = close > vwap and fastEma > slowEma
+bearish = close < vwap and fastEma < slowEma
+
+// 1 = long, -1 = short, 0 = neither. Only confirmed bars move it,
+// so a signal can't appear and then vanish inside a live bar.
+var int state = 0
+int prevState = state
+if barstate.isconfirmed
+    state := bullish ? 1 : bearish ? -1 : 0
+
+longSig  = barstate.isconfirmed and state == 1 and prevState != 1
+shortSig = barstate.isconfirmed and state == -1 and prevState != -1
+
+plot(fastEma, "9 EMA", color.yellow, 2)
+plot(slowEma, "20 EMA", color.blue, 2)
+plot(vwap, "VWAP", color.purple, 2)
+
+bgcolor(showBg and state == 1 ? color.new(color.green, 88) : showBg and state == -1 ? color.new(color.red, 88) : na)
+
+plotshape(showSigs and longSig, "LONG", shape.labelup, location.belowbar, color.green, text="LONG", textcolor=color.white, size=size.small)
+plotshape(showSigs and shortSig, "SHORT", shape.labeldown, location.abovebar, color.red, text="SHORT", textcolor=color.white, size=size.small)
+
+alertcondition(longSig, "LONG", "VWAP EMA Trend: LONG on {{ticker}} at {{close}}")
+alertcondition(shortSig, "SHORT", "VWAP EMA Trend: SHORT on {{ticker}} at {{close}}")
