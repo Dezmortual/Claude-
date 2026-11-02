@@ -60,7 +60,7 @@ export function MonitorManager({ monitors }: { monitors: Monitor[] }) {
           ))}
         </ul>
       )}
-      <p className="text-xs text-muted">New stories are checked every 30 minutes. A match is listed below and sent as a push notification (mute and quiet hours apply). Keywords match whole words, any case.</p>
+      <p className="text-xs text-muted">New stories are checked every hour. A match is listed below and sent as a push notification (mute and quiet hours apply). Keywords match whole words, any case.</p>
     </div>
   );
 }

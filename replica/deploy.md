@@ -124,7 +124,7 @@ All of this works in a phone browser. If a Netlify page looks cramped, use the b
    - Deploy previews: **Don't deploy**
    - Branch deploys: **Deploy only the production branch**
 6. **Fill the prices once.** Go to Logs, then Functions, then **jobs**, then **Run now**. The function also
-   runs by itself every 30 minutes (alerts every run, forecasts hourly, cleanup daily). You don't need
+   runs by itself every hour (alerts and forecasts every run, cleanup daily). You don't need
    GitHub secrets, and the GitHub workflow is an alternative that stays idle without them.
 7. **Sign in.**
    - Open your URL and choose "Set up the owner account".
@@ -171,7 +171,7 @@ CLI 62.7.0) on a fresh clone:
 
    Prices themselves load fresh whenever you open a page.
 8. **Optional: run them more often, free.** Use cron-job.org, which works in a phone browser:
-   - **alerts:** `https://<project-name>.vercel.app/api/cron/alerts`, every 30 minutes
+   - **alerts:** `https://<project-name>.vercel.app/api/cron/alerts`, every hour
    - **publish:** `…/api/cron/publish`, every hour, at minute 5
    - For both: method GET, and in Advanced → Headers add `Authorization` = `Bearer <your CRON_SECRET>`.
 9. **Tidy up Netlify.** Delete the Netlify project (Project configuration → General → Danger zone), or at least
@@ -259,7 +259,7 @@ the listing in `launch/listing.json` waits for one.
 - **Install:** Android Chrome shows Install under Account → App and notifications. iPhone: Safari → Share →
   Add to Home Screen. iOS delivers web push only to the installed app (iOS 16.4 or later).
 - **Push:** set `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` in Vercel (all environments), redeploy, then tap Turn
-  on under Account on each phone. Alerts with "Push notification" ticked arrive within one tick (30 minutes).
+  on under Account on each phone. Alerts with "Push notification" ticked arrive within one tick (an hour). The tick runs hourly, not every 30 minutes, to stay inside Neon's free 5 GB of transfer a month.
   Never change the pair once phones are subscribed: every subscription is tied to the public key.
 - A failed push isn't retried, because a late price alert is worse than none. Devices the push service reports
   gone are removed.

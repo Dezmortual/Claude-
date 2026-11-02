@@ -82,7 +82,7 @@ export function AlertForm({ options, preset, limitText, indicators = [] }: { opt
               </select>
             </div>
           </div>
-          <p className="text-xs text-muted">Fires when the rule turns true on a closed bar, checked every 30 minutes.</p>
+          <p className="text-xs text-muted">Fires when the rule turns true on a closed bar, checked every hour.</p>
         </div>
       ) : cond === "signal_becomes" ? (
         <div className="grid grid-cols-2 gap-3">

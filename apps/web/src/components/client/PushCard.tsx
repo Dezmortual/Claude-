@@ -110,7 +110,7 @@ export function PushCard() {
               : sub ? `On for this device. ${status.devices} device${status.devices === 1 ? "" : "s"} in total.`
               : `Off for this device.${status.devices ? ` On for ${status.devices} other device${status.devices === 1 ? "" : "s"}.` : ""}`}
           </p>
-          <p className="text-xs text-muted">Alerts that use &ldquo;Push notification&rdquo; arrive here within 30 minutes of firing.</p>
+          <p className="text-xs text-muted">Alerts that use &ldquo;Push notification&rdquo; arrive here within an hour of firing.</p>
         </div>
         {supported && status?.configured && (
           // Its own row on a phone, so the buttons don't squeeze the text into a narrow column.

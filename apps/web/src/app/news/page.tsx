@@ -27,7 +27,7 @@ export default async function News({ searchParams }: { searchParams: Promise<Rec
         <Label>News</Label>
         <h1 className="text-xl md:text-display">Market news</h1>
         <p className="max-w-prose text-muted">
-          Stories from {builtInFeedNames().join(", ")}, plus any feeds you add, checked every 30 minutes and tagged with the assets they
+          Stories from {builtInFeedNames().join(", ")}, plus any feeds you add, checked every hour and tagged with the assets they
           mention. Set a monitor to get a push notification when a story matches your keywords.
         </p>
       </div>
@@ -50,7 +50,7 @@ export default async function News({ searchParams }: { searchParams: Promise<Rec
         <MoodSummary day={mood.day} week={mood.week} what={f.slug ? assets.find((a) => a.slug === f.slug)?.name ?? "this asset" : "every asset"} />
         {items.length ? <NewsList items={items} tz={tz} /> : (
           <Card><EmptyState icon={<Newspaper aria-hidden className="h-6 w-6" />} title={filtered ? "Nothing matches" : "No stories yet"}>
-            {filtered ? "Try fewer filters." : "Stories arrive with the next scheduled run, within 30 minutes."}</EmptyState></Card>
+            {filtered ? "Try fewer filters." : "Stories arrive with the next scheduled run, within the hour."}</EmptyState></Card>
         )}
       </Section>
 

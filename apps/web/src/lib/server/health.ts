@@ -41,13 +41,13 @@ export function sourceProblems(now = new Date()): { checked: string[]; problems:
   return { checked, problems };
 }
 
-/** The scheduler (cron-job.org calling /api/cron/tick every 30 minutes) has gone quiet. */
+/** The scheduler (cron-job.org calling /api/cron/tick every hour) has gone quiet: two runs missed in a row. */
 export async function schedulerProblem(now = new Date()): Promise<{ checked: string[]; problems: Problem[] }> {
   const [r] = await sql()<{ at: Date | null }[]>`select max(started_at) as at from job_runs where job = 'tick' and status = 'ok'`;
   const at = r?.at;
   // Never ticked at all: nothing to compare with (a fresh database or a host without the outside scheduler).
-  if (!at || now.getTime() - at.getTime() < 75 * MIN) return { checked: ["scheduler"], problems: [] };
-  return { checked: ["scheduler"], problems: [{ key: "scheduler", detail: `No successful 30-minute update since ${at.toISOString().slice(0, 16).replace("T", " ")} UTC: check cron-job.org` }] };
+  if (!at || now.getTime() - at.getTime() < 135 * MIN) return { checked: ["scheduler"], problems: [] };
+  return { checked: ["scheduler"], problems: [{ key: "scheduler", detail: `No successful hourly update since ${at.toISOString().slice(0, 16).replace("T", " ")} UTC: check cron-job.org` }] };
 }
 
 async function tellOwners(subject: string, text: string) {

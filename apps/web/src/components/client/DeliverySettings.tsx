@@ -98,7 +98,7 @@ export function DeliverySettings({ initial, tz }: { initial: Settings; tz: strin
             onChange={(e) => save({ topSignalPush: e.target.checked }, e.target.checked ? "Top signal notifications on" : "Top signal notifications off")} />
           Notify me about new top buys and sells
         </label>
-        <p className="text-xs text-muted">Strong and very strong entries only, each asset at most once a day, all in one notification. Checked every 30 minutes; mute and quiet hours apply.</p>
+        <p className="text-xs text-muted">Strong and very strong entries only, each asset at most once a day, all in one notification. Checked every hour; mute and quiet hours apply.</p>
       </fieldset>
       <p className="text-xs text-muted">Times are in your time zone, {tz}. Change it under <Link href="/account" className="font-semibold text-accent underline">Account</Link>.</p>
     </div>

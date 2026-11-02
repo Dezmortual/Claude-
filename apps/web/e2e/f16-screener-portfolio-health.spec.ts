@@ -106,7 +106,7 @@ base.describe("Data health", () => {
       expect(mails("FXDEZ: data back to normal")).toBe(fixedBefore + 1);
       await page.reload();
       await expect(page.getByRole("status").filter({ hasText: "Everything is running" })).toBeVisible();
-      await expect(page.locator("#history")).toContainText("No successful 30-minute update since");
+      await expect(page.locator("#history")).toContainText("No successful hourly update since");
     } finally {
       await sql`delete from job_runs where job = 'tick'`;
       await sql.end();

@@ -347,7 +347,7 @@ export async function cleanup() {
   return { sessionsRemoved: s.n };
 }
 
-/** Everything a scheduled run does, in one request, for an outside scheduler hitting a single URL every 30 minutes
+/** Everything a scheduled run does, in one request, for an outside scheduler hitting a single URL every hour
  *  (cron-job.org on Vercel's free plan, where a function may run for minutes): prices market by market and alerts
  *  every run, publish and score on the run in the first half of the hour, cleanup on the 03:00 UTC run. */
 async function tick() {
