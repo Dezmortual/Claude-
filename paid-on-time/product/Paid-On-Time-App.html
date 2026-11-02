@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paid On Time</title>
+<style>
+  :root{--orange:#FF7A00;--orange-soft:#FFF1E4;--ink:#161616;--muted:#5d5d5d;--line:#e8e8e8;--bg:#fafafa;--card:#fff;
+        --red:#d92d20;--red-soft:#fdecea;--amber:#b54708;--amber-soft:#fef3e2;--green:#067647;--green-soft:#e7f6ec;--blue-soft:#eef2ff;--blue:#3538cd}
+  @media (prefers-color-scheme:dark){:root{--ink:#f2f2f2;--muted:#a8a8a8;--line:#2c2c2c;--bg:#111;--card:#1a1a1a;--orange-soft:#3a2410;
+        --red-soft:#3b1512;--amber-soft:#3a2a10;--green-soft:#0f2e1d;--blue-soft:#1d1f3d;--red:#ff6b5e;--amber:#f5a524;--green:#3ccf7f;--blue:#9aa0ff}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  header{background:var(--card);border-bottom:1px solid var(--line);padding:14px 16px;position:sticky;top:0;z-index:5}
+  .hwrap,main{max-width:1000px;margin:0 auto}
+  .hwrap{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .logo{font-weight:800;font-size:22px;letter-spacing:-.5px}.logo span{color:var(--orange)}
+  nav{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+  button{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px}
+  button.primary{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:600}
+  button.tab.active,button.tab2.active,button.tab3.active{background:var(--ink);color:var(--card);border-color:var(--ink)}
+  button.small{padding:5px 10px;font-size:14px}
+  main{padding:20px 16px 60px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .stat .l{color:var(--muted);font-size:14px}.stat .v{font-size:28px;font-weight:800;letter-spacing:-.5px}
+  .stat.over .v{color:var(--red)}
+  h2{font-size:20px;margin:24px 0 10px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .todo{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+  .todo:first-child{border-top:0}
+  .todo .who{flex:1;min-width:200px}.todo .who b{display:block}
+  .muted{color:var(--muted);font-size:14px}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:10px 8px;border-top:1px solid var(--line);vertical-align:middle}
+  th{font-size:13px;color:var(--muted);font-weight:600;border-top:0}
+  td.amt{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+  .tablewrap{overflow-x:auto}
+  .pill{display:inline-block;font-size:13px;font-weight:600;padding:2px 10px;border-radius:20px;white-space:nowrap}
+  .p-paid{background:var(--green-soft);color:var(--green)}.p-over{background:var(--red-soft);color:var(--red)}
+  .p-soon{background:var(--amber-soft);color:var(--amber)}.p-ok{background:var(--blue-soft);color:var(--blue)}
+  .actions{display:flex;gap:6px;flex-wrap:wrap}
+  form .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+  label{display:block;font-size:14px;font-weight:600}
+  input,textarea,select{width:100%;font:inherit;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);margin-top:4px}
+  textarea{min-height:90px}
+  .empty{text-align:center;padding:30px 10px;color:var(--muted)}
+  dialog{border:0;border-radius:16px;padding:0;width:min(680px,calc(100vw - 32px));background:var(--card);color:var(--ink)}
+  dialog::backdrop{background:rgba(0,0,0,.45)}
+  .dlg{padding:20px}.dlg h3{margin:0 0 4px}
+  .seg{display:flex;gap:6px;margin:12px 0}
+  .msg{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:15px;max-height:46vh;overflow:auto}
+  .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:14px}
+  .stage{font-size:13px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px}
+  .hidden{display:none}
+  .note{background:var(--orange-soft);border-radius:12px;padding:12px 14px;font-size:14px;margin-bottom:16px}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--card);padding:10px 18px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header><div class="hwrap">
+  <div class="logo">Paid<span>On</span>Time</div>
+  <nav>
+    <button class="tab active" data-view="today">Today</button>
+    <button class="tab" data-view="invoices">Invoices</button>
+    <button class="tab" data-view="settings">Settings</button>
+    <button class="primary" id="addBtn">+ New invoice</button>
+  </nav>
+</div></header>
+
+<main>
+  <div id="storageWarn" class="note hidden">Your browser is blocking storage, so data won't be saved after you close this tab. Use <b>Settings → Export backup</b> before closing.</div>
+
+  <!-- TODAY -->
+  <section id="view-today">
+    <div class="stats">
+      <div class="stat"><div class="l">Outstanding</div><div class="v" id="sOut">0</div></div>
+      <div class="stat over"><div class="l">Overdue</div><div class="v" id="sOver">0</div></div>
+      <div class="stat"><div class="l">Paid this month</div><div class="v" id="sPaid">0</div></div>
+      <div class="stat"><div class="l">Avg. days to get paid</div><div class="v" id="sDays">–</div></div>
+    </div>
+    <h2>Reminders to send today</h2>
+    <div class="card" id="todoList"></div>
+    <p class="muted">Paid On Time works out which reminder each unpaid invoice needs from its due date: a heads-up 3 days before, then on the due day, then 3, 7, 14 and 30 days late. Each one is a little firmer than the last. Copy it, send it, tick it off.</p>
+  </section>
+
+  <!-- INVOICES -->
+  <section id="view-invoices" class="hidden">
+    <div class="seg">
+      <button class="small tab2 active" data-f="unpaid">Unpaid</button>
+      <button class="small tab2" data-f="paid">Paid</button>
+      <button class="small tab2" data-f="all">All</button>
+    </div>
+    <div class="card tablewrap"><table>
+      <thead><tr><th>Client</th><th>Invoice</th><th>Amount</th><th>Due</th><th>Status</th><th></th></tr></thead>
+      <tbody id="invRows"></tbody>
+    </table></div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="view-settings" class="hidden">
+    <form id="settingsForm" class="card">
+      <div class="grid">
+        <label>Your name<input name="name" placeholder="Sara Khan"></label>
+        <label>Business name (optional)<input name="business" placeholder="Sara Designs"></label>
+        <label>Currency symbol<input name="currency" placeholder="$" maxlength="4"></label>
+        <label>Late fee (shown in final reminders, optional)<input name="lateFee" placeholder="2% per month"></label>
+      </div>
+      <label style="margin-top:12px">How clients pay you (added to every reminder)<textarea name="payment" placeholder="Bank: ...&#10;Account: ...&#10;Or PayPal: you@email.com"></textarea></label>
+      <div class="row"><button class="primary" type="submit">Save settings</button></div>
+    </form>
+    <h2>Backup</h2>
+    <div class="card">
+      <p class="muted" style="margin-top:0">Your data lives only in this browser on this device. Export a backup regularly, and import it to move to another device.</p>
+      <div class="actions">
+        <button id="exportJson">Export backup (.json)</button>
+        <button id="importBtn">Import backup</button>
+        <button id="exportCsv">Export to spreadsheet (.csv)</button>
+        <input type="file" id="importFile" accept=".json" class="hidden">
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- invoice dialog -->
+<dialog id="invDlg"><form class="dlg" id="invForm" method="dialog">
+  <h3 id="invTitle">New invoice</h3>
+  <div class="grid" style="margin-top:12px">
+    <label>Client name<input name="client" required placeholder="Ali Ahmed"></label>
+    <label>Client email or phone<input name="contact" placeholder="ali@company.com"></label>
+    <label>Invoice number<input name="num" required placeholder="INV-001"></label>
+    <label>Amount<input name="amount" type="number" step="0.01" min="0" required></label>
+    <label>Date sent<input name="issued" type="date" required></label>
+    <label>Due date<input name="due" type="date" required></label>
+    <label>What it was for (optional)<input name="project" placeholder="Logo design"></label>
+  </div>
+  <div class="row"><button type="button" id="invCancel">Cancel</button><button class="primary" type="submit">Save</button></div>
+</form></dialog>
+
+<!-- reminder dialog -->
+<dialog id="remDlg"><div class="dlg">
+  <div class="stage" id="remStage"></div>
+  <h3 id="remTitle"></h3>
+  <div class="seg">
+    <button class="small tab3 active" data-ch="email">Email</button>
+    <button class="small tab3" data-ch="chat">WhatsApp / DM</button>
+    <select id="remPick" style="width:auto;margin:0 0 0 auto;padding:5px 8px;font-size:14px"></select>
+  </div>
+  <div class="msg" id="remMsg"></div>
+  <div class="row">
+    <button id="remClose">Close</button>
+    <button id="remCopy">Copy</button>
+    <button id="remOpen">Open in email</button>
+    <button class="primary" id="remSent">Mark as sent</button>
+  </div>
+</div></dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- storage ----------
+const KEY = 'paid-on-time-v1';
+let state = { invoices: [], settings: { currency: '$' } };
+let canStore = true;
+function load(){ try{ const s = localStorage.getItem(KEY); if(s) state = JSON.parse(s); state.settings ||= {currency:'$'}; state.invoices ||= []; }catch(e){ canStore=false; } }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){ canStore=false; document.getElementById('storageWarn').classList.remove('hidden'); } }
+
+// ---------- dates ----------
+const todayStr = () => { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+const toUTC = s => { const [y,m,d]=s.split('-').map(Number); return Date.UTC(y,m-1,d); };
+const daysBetween = (a,b) => Math.round((toUTC(b)-toUTC(a))/86400000); // b - a
+const addDays = (s,n) => { const d=new Date(toUTC(s)+n*86400000); return d.toISOString().slice(0,10); };
+const nice = s => s ? new Date(toUTC(s)).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}) : '';
+
+// ---------- money ----------
+const money = n => (state.settings.currency||'$') + Number(n||0).toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:2});
+
+// ---------- reminder ladder ----------
+// offset = days relative to due date when the reminder becomes due
+const STAGES = [
+  {id:'heads', offset:-3, label:'Heads-up (3 days before)'},
+  {id:'due',   offset:0,  label:'Due today'},
+  {id:'nudge', offset:3,  label:'Friendly nudge (3 days late)'},
+  {id:'firm',  offset:7,  label:'Firm reminder (7 days late)'},
+  {id:'final', offset:14, label:'Final notice (14 days late)'},
+  {id:'pause', offset:30, label:'Pause work (30 days late)'},
+];
+function nextStage(inv){
+  if(inv.paid) return null;
+  const late = daysBetween(inv.due, todayStr());
+  const sent = inv.sent || {};
+  // the most advanced stage that is due and not yet sent (skip earlier ones that no longer make sense)
+  let pick = null;
+  for(const st of STAGES){ if(late >= st.offset && !sent[st.id]) pick = st; }
+  return pick;
+}
+
+function first(name){ return (name||'').trim().split(/\s+/)[0] || 'there'; }
+
+function template(stageId, inv, ch){
+  const s = state.settings, me = s.name || '[Your name]', biz = s.business ? `\n${s.business}` : '';
+  const amt = money(inv.amount), num = inv.num, due = nice(inv.due), hi = first(inv.client);
+  const forWhat = inv.project ? ` for ${inv.project}` : '';
+  const late = Math.max(0, daysBetween(inv.due, todayStr()));
+  const by = nice(addDays(todayStr(), 3));
+  const pay = s.payment ? `\n\nPayment details:\n${s.payment}` : '';
+  const fee = s.lateFee;
+  const T = {
+    heads: {
+      subject:`Invoice ${num} due ${due}`,
+      email:`Hi ${hi},\n\nA quick heads-up that invoice ${num}${forWhat} (${amt}) is due on ${due}.\n\nThanks again, I really enjoyed working on this with you. Let me know if you need anything from me to process it.${pay}\n\nBest,\n${me}${biz}`,
+      chat:`Hi ${hi}! Quick heads-up: invoice ${num} (${amt}) is due on ${due}. Let me know if you need anything to process it. Thanks!`},
+    due: {
+      subject:`Invoice ${num} is due today`,
+      email:`Hi ${hi},\n\nJust a reminder that invoice ${num}${forWhat} for ${amt} is due today, ${due}.\n\nIf it's already on its way, thank you, and please ignore this.${pay}\n\nBest,\n${me}${biz}`,
+      chat:`Hi ${hi}, invoice ${num} (${amt}) is due today. If it's already sent, thank you and please ignore this!`},
+    nudge: {
+      subject:`Friendly reminder: invoice ${num} (${amt})`,
+      email:`Hi ${hi},\n\nI hope you're well. I haven't seen payment for invoice ${num} (${amt}, due ${due}) come through yet, so I wanted to check it hasn't slipped through the cracks.\n\nCould you let me know when it's scheduled? I've attached the invoice again in case it's useful.${pay}\n\nThanks,\n${me}${biz}`,
+      chat:`Hi ${hi}, hope you're well! I haven't received payment for invoice ${num} (${amt}, due ${due}) yet. Could you check when it's scheduled? Happy to resend the invoice.`},
+    firm: {
+      subject:`Invoice ${num} is now ${late} days overdue`,
+      email:`Hi ${hi},\n\nInvoice ${num} for ${amt} was due on ${due} and is now ${late} days overdue.\n\nPlease arrange payment, or reply with the date it will be paid, by ${by}. If there's a problem with the invoice or the work, tell me and I'll sort it out quickly.${pay}\n\nThank you,\n${me}${biz}`,
+      chat:`Hi ${hi}, invoice ${num} (${amt}) is now ${late} days overdue. Could you pay it, or tell me the payment date, by ${by}? If there's an issue with it, let me know and I'll fix it.`},
+    final: {
+      subject:`Final reminder: invoice ${num} (${amt})`,
+      email:`Hi ${hi},\n\nThis is a final reminder that invoice ${num} for ${amt}, due on ${due}, is still unpaid ${late} days later.\n\n${fee ? `As set out in our agreed terms, a late fee of ${fee} now applies. ` : ''}Please make payment by ${by}. If I don't hear back by then I'll need to look at next steps, which I'd much rather avoid.${pay}\n\nRegards,\n${me}${biz}`,
+      chat:`Hi ${hi}, final reminder: invoice ${num} (${amt}) is ${late} days overdue.${fee ? ` Per our terms a late fee of ${fee} now applies.` : ''} Please pay by ${by}, or I'll need to look at next steps.`},
+    pause: {
+      subject:`Invoice ${num}: work paused until payment`,
+      email:`Hi ${hi},\n\nInvoice ${num} for ${amt} is now ${late} days overdue, and I haven't been able to get a payment date.\n\nI'm pausing any further work and deliverables until the balance is settled. If it's not paid by ${by}, I'll move to formal recovery.\n\nI'd still like to resolve this directly. If you can't pay in full, reply and propose a payment plan and I'll consider it.${pay}\n\nRegards,\n${me}${biz}`,
+      chat:`Hi ${hi}, invoice ${num} (${amt}) is now ${late} days overdue. I'm pausing further work until it's settled. If it's not paid by ${by} I'll move to formal recovery. If you need a payment plan, reply and we can agree one.`},
+  };
+  const t = T[stageId];
+  return { subject:t.subject, body: ch==='email' ? t.email : t.chat };
+}
+
+// ---------- status ----------
+function status(inv){
+  if(inv.paid) return {cls:'p-paid', text:'Paid'};
+  const late = daysBetween(inv.due, todayStr());
+  if(late > 0) return {cls:'p-over', text:`${late} day${late>1?'s':''} overdue`};
+  if(late === 0) return {cls:'p-soon', text:'Due today'};
+  if(late >= -3) return {cls:'p-soon', text:`Due in ${-late} day${late<-1?'s':''}`};
+  return {cls:'p-ok', text:`Due in ${-late} days`};
+}
+const esc = s => String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// ---------- render ----------
+let filter = 'unpaid';
+function render(){
+  const t = todayStr(), month = t.slice(0,7);
+  const unpaid = state.invoices.filter(i=>!i.paid);
+  const over = unpaid.filter(i=>daysBetween(i.due,t)>0);
+  const paidM = state.invoices.filter(i=>i.paid && (i.paidOn||'').startsWith(month));
+  const paidAll = state.invoices.filter(i=>i.paid && i.paidOn);
+  document.getElementById('sOut').textContent = money(unpaid.reduce((a,i)=>a+ +i.amount,0));
+  document.getElementById('sOver').textContent = money(over.reduce((a,i)=>a+ +i.amount,0));
+  document.getElementById('sPaid').textContent = money(paidM.reduce((a,i)=>a+ +i.amount,0));
+  document.getElementById('sDays').textContent = paidAll.length ? Math.round(paidAll.reduce((a,i)=>a+daysBetween(i.issued,i.paidOn),0)/paidAll.length) : '–';
+
+  // today list
+  const todos = unpaid.map(i=>({i, st:nextStage(i)})).filter(x=>x.st).sort((a,b)=>daysBetween(b.i.due,a.i.due));
+  const tl = document.getElementById('todoList');
+  tl.innerHTML = todos.length ? todos.map(({i,st})=>`
+    <div class="todo"><div class="who"><b>${esc(i.client)} · ${money(i.amount)}</b>
+      <span class="muted">${esc(i.num)} · ${st.label}</span></div>
+      <span class="pill ${status(i).cls}">${status(i).text}</span>
+      <button class="primary small" data-rem="${i.id}">Write reminder</button>
+      <button class="small" data-paid="${i.id}">Paid</button></div>`).join('')
+    : `<div class="empty">${state.invoices.length ? 'Nothing to chase today. Nice.' : 'Add your first unpaid invoice with <b>+ New invoice</b>.'}</div>`;
+
+  // table
+  let rows = state.invoices.slice();
+  if(filter==='unpaid') rows = rows.filter(i=>!i.paid);
+  if(filter==='paid') rows = rows.filter(i=>i.paid);
+  rows.sort((a,b)=> a.paid-b.paid || toUTC(a.due)-toUTC(b.due));
+  document.getElementById('invRows').innerHTML = rows.length ? rows.map(i=>{ const s=status(i); return `
+    <tr><td><b>${esc(i.client)}</b><div class="muted">${esc(i.project||'')}</div></td><td>${esc(i.num)}</td>
+    <td class="amt">${money(i.amount)}</td><td>${nice(i.due)}</td><td><span class="pill ${s.cls}">${s.text}</span></td>
+    <td><div class="actions">
+      ${i.paid ? `<button class="small" data-unpaid="${i.id}">Undo paid</button>` : `<button class="small" data-rem="${i.id}">Reminder</button><button class="small" data-paid="${i.id}">Paid</button>`}
+      <button class="small" data-edit="${i.id}">Edit</button><button class="small" data-del="${i.id}">Delete</button></div></td></tr>`}).join('')
+    : `<tr><td colspan="6" class="empty">No invoices here.</td></tr>`;
+}
+
+// ---------- views ----------
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===b));
+  ['today','invoices','settings'].forEach(v=>document.getElementById('view-'+v).classList.toggle('hidden', v!==b.dataset.view));
+});
+document.querySelectorAll('.tab2').forEach(b=>b.onclick=()=>{ filter=b.dataset.f; document.querySelectorAll('.tab2').forEach(x=>x.classList.toggle('active',x===b)); render(); });
+
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
+
+// ---------- invoice dialog ----------
+const invDlg = document.getElementById('invDlg'), invForm = document.getElementById('invForm');
+let editing = null;
+function openInv(inv){
+  editing = inv ? inv.id : null;
+  document.getElementById('invTitle').textContent = inv ? 'Edit invoice' : 'New invoice';
+  invForm.reset();
+  const t = todayStr();
+  const d = inv || { issued:t, due:addDays(t,14), num:'INV-'+String(state.invoices.length+1).padStart(3,'0') };
+  for(const k of ['client','contact','num','amount','issued','due','project']) if(d[k]!=null) invForm.elements[k].value = d[k];
+  invDlg.showModal();
+}
+document.getElementById('addBtn').onclick = ()=>openInv(null);
+document.getElementById('invCancel').onclick = ()=>invDlg.close();
+invForm.onsubmit = e=>{
+  e.preventDefault();
+  const f = Object.fromEntries(new FormData(invForm));
+  if(daysBetween(f.issued,f.due) < 0){ toast('Due date is before the date sent'); return; }
+  if(editing){ Object.assign(state.invoices.find(i=>i.id===editing), f); }
+  else state.invoices.push({ id: Date.now().toString(36)+Math.random().toString(36).slice(2,6), ...f, paid:false, sent:{} });
+  save(); render(); invDlg.close(); toast('Saved');
+};
+
+// ---------- reminder dialog ----------
+const remDlg = document.getElementById('remDlg');
+let rem = { inv:null, stage:null, ch:'email' };
+const pick = document.getElementById('remPick');
+pick.innerHTML = STAGES.map(s=>`<option value="${s.id}">${s.label}</option>`).join('');
+function drawRem(){
+  const st = STAGES.find(s=>s.id===rem.stage);
+  const t = template(rem.stage, rem.inv, rem.ch);
+  document.getElementById('remStage').textContent = st.label + (rem.inv.sent?.[st.id] ? ' · sent '+nice(rem.inv.sent[st.id]) : '');
+  document.getElementById('remTitle').textContent = `${rem.inv.client} · ${rem.inv.num} · ${money(rem.inv.amount)}`;
+  document.getElementById('remMsg').textContent = rem.ch==='email' ? `Subject: ${t.subject}\n\n${t.body}` : t.body;
+  document.getElementById('remOpen').textContent = rem.ch==='email' ? 'Open in email' : 'Open WhatsApp';
+  pick.value = rem.stage;
+}
+function openRem(id){
+  const inv = state.invoices.find(i=>i.id===id);
+  rem = { inv, stage:(nextStage(inv)||STAGES.find(s=>daysBetween(inv.due,todayStr())>=s.offset)||STAGES[0]).id, ch: rem.ch };
+  document.querySelectorAll('.tab3').forEach(x=>x.classList.toggle('active',x.dataset.ch===rem.ch));
+  drawRem(); remDlg.showModal();
+}
+pick.onchange = ()=>{ rem.stage = pick.value; drawRem(); };
+document.querySelectorAll('.tab3').forEach(b=>b.onclick=()=>{ rem.ch=b.dataset.ch; document.querySelectorAll('.tab3').forEach(x=>x.classList.toggle('active',x===b)); drawRem(); });
+document.getElementById('remClose').onclick = ()=>remDlg.close();
+document.getElementById('remCopy').onclick = async ()=>{
+  const txt = document.getElementById('remMsg').textContent;
+  try{ await navigator.clipboard.writeText(txt); toast('Copied'); }
+  catch(e){ const r=document.createRange(); r.selectNodeContents(document.getElementById('remMsg')); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast('Selected: press Ctrl/Cmd+C'); }
+};
+document.getElementById('remOpen').onclick = ()=>{
+  const t = template(rem.stage, rem.inv, rem.ch), c = (rem.inv.contact||'').trim();
+  if(rem.ch==='email'){
+    const to = c.includes('@') ? encodeURIComponent(c) : '';
+    location.href = `mailto:${to}?subject=${encodeURIComponent(t.subject)}&body=${encodeURIComponent(t.body)}`;
+  } else {
+    const phone = c.replace(/[^\d]/g,'');
+    window.open(`https://wa.me/${c.includes('@')?'':phone}?text=${encodeURIComponent(t.body)}`,'_blank');
+  }
+};
+document.getElementById('remSent').onclick = ()=>{
+  rem.inv.sent ||= {}; rem.inv.sent[rem.stage] = todayStr();
+  // mark earlier stages done too so the ladder moves forward
+  const idx = STAGES.findIndex(s=>s.id===rem.stage);
+  STAGES.slice(0,idx).forEach(s=>{ rem.inv.sent[s.id] ||= 'skipped'; });
+  save(); render(); remDlg.close(); toast('Marked as sent');
+};
+
+// ---------- row actions ----------
+document.body.addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  const d = b.dataset;
+  if(d.rem) openRem(d.rem);
+  if(d.paid){ const i=state.invoices.find(x=>x.id===d.paid); i.paid=true; i.paidOn=todayStr(); save(); render(); toast('Marked paid 🎉'); }
+  if(d.unpaid){ const i=state.invoices.find(x=>x.id===d.unpaid); i.paid=false; delete i.paidOn; save(); render(); }
+  if(d.edit) openInv(state.invoices.find(x=>x.id===d.edit));
+  if(d.del && confirm('Delete this invoice?')){ state.invoices = state.invoices.filter(x=>x.id!==d.del); save(); render(); }
+});
+
+// ---------- settings ----------
+const sf = document.getElementById('settingsForm');
+function fillSettings(){ for(const k of ['name','business','currency','lateFee','payment']) sf.elements[k].value = state.settings[k]||''; }
+sf.onsubmit = e=>{ e.preventDefault(); state.settings = {...state.settings, ...Object.fromEntries(new FormData(sf))}; if(!state.settings.currency) state.settings.currency='$'; save(); render(); toast('Settings saved'); };
+
+function download(name, text, type){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
+document.getElementById('exportJson').onclick = ()=>download(`paid-on-time-backup-${todayStr()}.json`, JSON.stringify(state,null,2), 'application/json');
+document.getElementById('exportCsv').onclick = ()=>{
+  const cols = ['client','contact','num','project','amount','issued','due','paid','paidOn'];
+  const q = v => `"${String(v??'').replace(/"/g,'""')}"`;
+  download(`invoices-${todayStr()}.csv`, [cols.join(','), ...state.invoices.map(i=>cols.map(c=>q(i[c])).join(','))].join('\n'), 'text/csv');
+};
+document.getElementById('importBtn').onclick = ()=>document.getElementById('importFile').click();
+document.getElementById('importFile').onchange = async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  try{ const d = JSON.parse(await f.text()); if(!Array.isArray(d.invoices)) throw 0;
+    if(confirm(`Replace current data with ${d.invoices.length} invoices from the backup?`)){ state = d; state.settings ||= {currency:'$'}; save(); fillSettings(); render(); toast('Backup imported'); } }
+  catch(err){ toast('That file is not a Paid On Time backup'); }
+  e.target.value='';
+};
+
+// ---------- boot ----------
+load();
+if(!canStore) document.getElementById('storageWarn').classList.remove('hidden');
+fillSettings(); render();
+</script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Paid On Time visuals</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--o:#FF7A00;--os:#FFF1E4;--ink:#141414;--m:#4a4a4a;--l:#ECECEC}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#ddd;font-family:Poppins,system-ui,sans-serif;color:var(--ink);display:flex;flex-direction:column;gap:30px;padding:30px;align-items:flex-start}
+.slide{width:1080px;height:1350px;background:#fff;position:relative;display:flex;flex-direction:column;align-items:center;padding:56px 90px 0;overflow:hidden}
+.top{display:flex;align-items:center;gap:22px;font-size:30px;align-self:center}
+.brand{font-weight:800;font-size:40px;letter-spacing:-1px}.brand span{color:var(--o)}
+.handle{color:#333;font-weight:500}.page{border:2.5px solid #333;border-radius:30px;padding:4px 18px;font-weight:600;font-size:28px}
+h1{color:var(--o);font-weight:900;font-size:118px;line-height:.98;letter-spacing:-5px;text-align:center;margin-top:40px}
+h1.ink{color:var(--ink)} h1 .o{color:var(--o)}
+.tag{font-size:36px;font-weight:500;margin-top:30px;text-align:center;line-height:1.35}
+.steps{margin-top:36px;width:100%;display:flex;flex-direction:column;align-items:center}
+.card{width:100%;border:2px solid var(--l);border-radius:22px;box-shadow:0 6px 18px rgba(0,0,0,.06);display:flex;align-items:center;gap:30px;padding:22px 30px;background:#fff}
+.ic{width:92px;height:92px;flex:none;background:var(--os);border-radius:18px;display:grid;place-items:center;font-size:44px;font-weight:900;color:var(--o)}
+.ic svg{width:54px;height:54px;stroke:var(--o);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.num{color:var(--o);font-weight:600;font-size:23px;line-height:1.2}
+.title{font-weight:800;font-size:42px;letter-spacing:-1px;line-height:1.15}
+.desc{font-size:23px;color:var(--m);line-height:1.4;margin-top:4px}
+.link{width:4px;height:20px;background:var(--o);border-radius:2px}
+.pill{margin-top:28px;border:2px solid var(--l);border-radius:40px;padding:10px 40px;font-size:30px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.05)}
+.pill b{color:var(--o)}
+.swipe{position:absolute;bottom:56px;font-size:30px;font-weight:600;color:var(--o)}
+.big{white-space:nowrap;font-size:230px;font-weight:900;color:var(--o);letter-spacing:-12px;line-height:1;margin-top:150px}
+/* ladder slide */
+.lad{width:100%;margin-top:34px;display:flex;flex-direction:column;gap:12px}
+.lr{display:flex;align-items:center;gap:22px;border:2px solid var(--l);border-radius:18px;padding:16px 24px}
+.lr .d{width:170px;flex:none;font-weight:700;color:var(--o);font-size:24px}
+.lr .n{font-weight:800;font-size:34px;letter-spacing:-.5px;flex:1}
+.lr .t{font-size:22px;color:var(--m)}
+.bar{height:10px;border-radius:5px;background:var(--o)}
+/* product */
+.shot{margin-top:40px;width:100%;border-radius:20px;overflow:hidden;border:2px solid var(--l);box-shadow:0 20px 50px rgba(0,0,0,.15)}
+.shot .chrome{height:40px;background:#f1f1f1;display:flex;gap:10px;align-items:center;padding:0 18px}
+.shot .chrome i{width:14px;height:14px;border-radius:50%;background:#d4d4d4;display:block}
+.shot img{display:block;width:100%}
+.list{width:100%;margin-top:30px;display:grid;grid-template-columns:1fr;gap:14px}
+.li{display:flex;gap:20px;align-items:center;font-size:32px;font-weight:600}
+.li .ck{width:52px;height:52px;border-radius:14px;background:var(--os);display:grid;place-items:center;flex:none}
+.li .ck svg{width:30px;height:30px;stroke:var(--o);fill:none;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+.li small{display:block;font-size:22px;color:var(--m);font-weight:400}
+.price{margin-top:40px;display:flex;align-items:baseline;gap:22px}
+.price .now{font-size:110px;font-weight:900;color:var(--o);letter-spacing:-4px}
+.price .was{font-size:50px;color:#999;text-decoration:line-through;font-weight:600}
+.cta{margin-top:18px;background:var(--ink);color:#fff;border-radius:50px;padding:22px 50px;font-size:36px;font-weight:700}
+.cta b{color:var(--o)}
+/* covers */
+.cover{width:1280px;height:720px;background:#fff;display:flex;align-items:center;gap:40px;padding:0 70px;overflow:hidden;position:relative}
+.cover .l{flex:0 0 520px}
+.cover h1{text-align:left;margin:0;font-size:120px}
+.cover .tag{text-align:left;font-size:30px;margin-top:22px}
+.cover .chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}
+.chip{background:var(--os);color:var(--o);font-weight:700;border-radius:30px;padding:8px 18px;font-size:20px}
+.cover .shot{margin:0;width:640px;flex:none;transform:rotate(-2deg)}
+.thumb{width:600px;height:600px;background:var(--o);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+.thumb .t1{font-size:120px;font-weight:900;line-height:.95;letter-spacing:-5px;text-align:center}
+.thumb .t2{margin-top:24px;font-size:28px;font-weight:600;background:#fff;color:var(--o);border-radius:30px;padding:8px 26px}
+</style></head><body>
+
+<!-- 1 HOOK -->
+<div class="slide s">
+  <div class="top"><div class="brand">YourBrand</div><div class="handle">@yourhandle</div><div class="page">01/06</div></div>
+  <div class="big">20 days</div>
+  <h1 class="ink" style="font-size:84px;letter-spacing:-3px;margin-top:10px">a year, chasing<br>invoices.</h1>
+  <div class="tag" style="margin-top:44px">That's how long the average freelancer<br>loses to clients who pay late.</div>
+  <div class="pill" style="margin-top:50px">Here's how to <b>get it back</b> →</div>
+  <div class="swipe">Swipe →</div><div style="position:absolute;bottom:20px;font-size:18px;color:#999">Source: UK freelancer survey on late payments</div>
+</div>
+
+<!-- 2 WHY -->
+<div class="slide s">
+  <div class="top"><div class="brand">YourBrand</div><div class="handle">@yourhandle</div><div class="page">02/06</div></div>
+  <h1>It's not the<br>client.</h1>
+  <div class="tag">It's the process. Most late payments come from:</div>
+  <div class="steps">
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>
+      <div><div class="num">01</div><div class="title">No real due date.</div><div class="desc">"Net 30" isn't a date. Nobody acts on it.</div></div></div>
+    <div class="link"></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+      <div><div class="num">02</div><div class="title">The wrong inbox.</div><div class="desc">Your contact isn't the one who pays.</div></div></div>
+    <div class="link"></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+      <div><div class="num">03</div><div class="title">Chasing when angry.</div><div class="desc">You wait weeks, then send a sharp email.<br>Now it's awkward.</div></div></div>
+  </div>
+  <div class="pill">Fix the process. <b>Get paid.</b></div>
+</div>
+
+<!-- 3 RULES -->
+<div class="slide s">
+  <div class="top"><div class="brand">YourBrand</div><div class="handle">@yourhandle</div><div class="page">03/06</div></div>
+  <h1>The 3 Rules.</h1>
+  <div class="tag">Simple. Boring. They work.</div>
+  <div class="steps">
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></div>
+      <div><div class="num">01</div><div class="title">Agree first.</div><div class="desc">Deposit, due date and late fee in writing,<br>before you start any work.</div></div></div>
+    <div class="link"></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20M6 15h4"/></svg></div>
+      <div><div class="num">02</div><div class="title">Make paying easy.</div><div class="desc">A real date, the right person, and every<br>way to pay, all on one page.</div></div></div>
+    <div class="link"></div>
+    <div class="card"><div class="ic"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.5-4.5M4 4v3.5h3.5"/><path d="M4 13a8 8 0 0 0 14.5 4.5M20 20v-3.5h-3.5"/></svg></div>
+      <div><div class="num">03</div><div class="title">Remind on a schedule.</div><div class="desc">Not when you're annoyed.<br>The calendar does the awkward part.</div></div></div>
+  </div>
+  <div class="pill">Here's the schedule →</div>
+</div>
+
+<!-- 4 LADDER -->
+<div class="slide s">
+  <div class="top"><div class="brand">YourBrand</div><div class="handle">@yourhandle</div><div class="page">04/06</div></div>
+  <h1 style="font-size:104px">The Reminder<br>Ladder.</h1>
+  <div class="tag" style="font-size:32px">Each step a little firmer than the last.</div>
+  <div class="lad">
+    <div class="lr"><div class="d">3 days before</div><div class="n">Heads-up</div><div class="t">warm</div></div>
+    <div class="lr"><div class="d">Due day</div><div class="n">Due today</div><div class="t">neutral</div></div>
+    <div class="lr"><div class="d">3 days late</div><div class="n">Friendly nudge</div><div class="t">"it slipped?"</div></div>
+    <div class="lr"><div class="d">7 days late</div><div class="n">Firm reminder</div><div class="t">clear deadline</div></div>
+    <div class="lr"><div class="d">14 days late</div><div class="n">Final notice</div><div class="t">late fee applies</div></div>
+    <div class="lr" style="border-color:var(--o)"><div class="d">30 days late</div><div class="n">Pause work</div><div class="t">escalate</div></div>
+  </div>
+  <div class="pill">Save this. <b>Use it on every invoice.</b></div>
+</div>
+
+<!-- 5 PRODUCT -->
+<div class="slide s">
+  <div class="top"><div class="brand">YourBrand</div><div class="handle">@yourhandle</div><div class="page">05/06</div></div>
+  <h1 style="font-size:100px">I built it<br>for you.</h1>
+  <div class="tag" style="font-size:32px"><b style="color:var(--o)">Paid On Time</b> tells you who to chase today<br>and writes the message for you.</div>
+  <div class="shot"><div class="chrome"><i></i><i></i><i></i></div><img src="../sell/img/app-screenshot.png"></div>
+  <div class="pill" style="margin-top:40px">Copy. Send. <b>Get paid.</b></div>
+</div>
+
+<!-- 6 CTA -->
+<div class="slide s">
+  <div class="top"><div class="brand">YourBrand</div><div class="handle">@yourhandle</div><div class="page">06/06</div></div>
+  <h1 style="font-size:104px">Get the kit.</h1>
+  <div class="list">
+    <div class="li"><div class="ck"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></div><div>The Paid On Time app<small>Works offline. No account, no subscription.</small></div></div>
+    <div class="li"><div class="ck"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></div><div>Invoice tracker spreadsheet<small>Excel and Google Sheets. Flags overdue invoices itself.</small></div></div>
+    <div class="li"><div class="ck"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></div><div>12 reminder scripts<small>Email and WhatsApp, for every step of the ladder.</small></div></div>
+    <div class="li"><div class="ck"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg></div><div>The 9-page playbook<small>Payment terms to copy, and what to say to every excuse.</small></div></div>
+  </div>
+  <div class="price"><div class="now">$12</div><div class="was">$19</div></div>
+  <div class="cta">Comment <b>PAID</b> and I'll DM you the link</div>
+</div>
+
+<!-- GUMROAD COVER 1280x720 -->
+<div class="cover">
+  <div class="l">
+    <h1>Paid On<br>Time.</h1>
+    <div class="tag">Stop chasing invoices.<br>Start getting paid.</div>
+    <div class="chips"><span class="chip">App</span><span class="chip">Tracker</span><span class="chip">12 scripts</span><span class="chip">Playbook</span></div>
+  </div>
+  <div class="shot"><div class="chrome"><i></i><i></i><i></i></div><img src="../sell/img/app-screenshot.png"></div>
+</div>
+
+<!-- THUMB 600x600 -->
+<div class="thumb"><div class="t1">Paid<br>On Time.</div><div class="t2">Freelancer kit</div></div>
+</body></html>
