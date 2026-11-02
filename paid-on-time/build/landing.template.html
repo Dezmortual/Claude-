@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paid On Time: The Freelancer's Invoice-Chasing Kit</title>
+<meta name="description" content="An app, a tracker and 12 reminder scripts that tell you who to chase today and write the message for you.">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: an "overdue ledger". The hero chase cartoon, then the 6-step reminder ladder as the centrepiece. */
+:root{
+  --orange:#FF7A00; --orange-ink:#B85600; --orange-soft:#FFF1E4;
+  --ink:#16120E; --muted:#5E554D; --line:#ECE5DE; --bg:#FFFCF9; --card:#FFFFFF;
+  --red:#C8281C; --red-soft:#FDECEA; --green:#0B7A45;
+  --display:'Poppins',system-ui,-apple-system,"Segoe UI",sans-serif;
+  --body:'Inter',system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --orange:#FF8A1F; --orange-ink:#FFB066; --orange-soft:#33210F;
+    --ink:#F6F0EA; --muted:#BDB2A8; --line:#332B24; --bg:#14110E; --card:#1D1915;
+    --red:#FF7B6E; --red-soft:#3A1914; --green:#4FD18E; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --orange:#FF8A1F; --orange-ink:#FFB066; --orange-soft:#33210F;
+  --ink:#F6F0EA; --muted:#BDB2A8; --line:#332B24; --bg:#14110E; --card:#1D1915;
+  --red:#FF7B6E; --red-soft:#3A1914; --green:#4FD18E; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+img,svg{max-width:100%;display:block}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--orange);outline-offset:3px;border-radius:6px}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.skip{position:absolute;left:-9999px}.skip:focus{left:16px;top:16px;z-index:50;background:var(--card);padding:10px 14px;border-radius:10px}
+h1,h2,h3{font-family:var(--display);line-height:1.05;letter-spacing:-.03em;margin:0;text-wrap:balance}
+h2{font-size:clamp(34px,5vw,54px);font-weight:900}
+h3{font-size:22px;font-weight:800;letter-spacing:-.01em}
+.eyebrow{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--orange-ink)}
+.lead{font-size:clamp(18px,2.2vw,21px);color:var(--muted);max-width:56ch}
+section{padding-block:clamp(64px,9vw,112px)}
+
+/* buttons */
+.buy{display:inline-flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;text-decoration:none;
+  font-family:var(--display);font-weight:800;font-size:19px;color:#fff;background:var(--orange);border:0;border-radius:16px;
+  padding:16px 26px;box-shadow:0 6px 0 var(--orange-ink);transition:transform .12s,box-shadow .12s}
+.buy:hover{transform:translateY(-2px);box-shadow:0 8px 0 var(--orange-ink)}
+.buy:active{transform:translateY(4px);box-shadow:0 2px 0 var(--orange-ink)}
+.buy .p{background:rgba(0,0,0,.18);border-radius:10px;padding:2px 10px;font-variant-numeric:tabular-nums}
+.buy.small{font-size:15px;padding:10px 16px;border-radius:12px;box-shadow:0 4px 0 var(--orange-ink)}
+.ghost{font-family:var(--display);font-weight:700;text-decoration:none;color:var(--ink);border-bottom:2px solid var(--orange);padding-bottom:2px}
+
+/* top bar */
+.bar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.bar .wrap{display:flex;align-items:center;gap:14px;min-height:64px}
+.logo{font-family:var(--display);font-weight:900;font-size:22px;letter-spacing:-.04em;text-decoration:none}
+.logo span{color:var(--orange)}
+.bar nav{margin-left:auto;display:flex;align-items:center;gap:22px}
+.bar nav a.l{font-weight:500;text-decoration:none;color:var(--muted);font-size:15px}
+.bar nav a.l:hover{color:var(--ink)}
+@media (max-width:720px){.bar nav a.l{display:none}}
+
+/* hero */
+.hero{padding-block:clamp(36px,6vw,72px) clamp(56px,8vw,96px)}
+.hero .wrap{display:grid;grid-template-columns:1.02fr 1fr;gap:clamp(28px,5vw,64px);align-items:center}
+.hero .copy{min-width:0}
+.hero h1{font-size:clamp(46px,7.4vw,92px);font-weight:900;margin-top:14px}
+.hero h1 em{font-style:normal;color:var(--orange)}
+.hero .lead{margin:22px 0 30px}
+.cta-row{display:flex;flex-wrap:wrap;align-items:center;gap:16px 24px}
+.trust{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:22px;font-size:14.5px;color:var(--muted)}
+.trust span{display:inline-flex;align-items:center;gap:6px}
+.trust svg{width:17px;height:17px;stroke:var(--green);fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.rating{display:inline-flex;align-items:center;gap:8px;font-size:14.5px;color:var(--muted)}
+.rating b{color:var(--ink)}
+.stage{position:relative;background:#FFF7EF;border:2px solid var(--line);border-radius:28px;padding:10px 6px 0;overflow:hidden;box-shadow:0 30px 60px -30px rgba(80,40,0,.35)}
+.stage svg{width:100%;height:auto}
+.tag-late{position:absolute;right:14px;bottom:14px;background:var(--red);color:#fff;font-family:var(--display);font-weight:800;font-size:13px;letter-spacing:.06em;border-radius:999px;padding:6px 12px}
+.tag-late output{font-variant-numeric:tabular-nums}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.stage .runner{animation:bob .5s ease-in-out infinite}
+.stage .runner2{animation:bob .45s ease-in-out infinite .1s}
+@media (max-width:860px){.hero .wrap{grid-template-columns:1fr}.stage{order:-1}}
+
+/* problem: overdue ledger */
+.problem{background:var(--card);border-block:1px solid var(--line)}
+.ledger{margin-top:40px;display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:2px solid var(--ink);border-radius:20px;overflow:hidden}
+.ledger>div{padding:22px 20px;border-right:2px solid var(--ink);min-width:0}
+.ledger>div:last-child{border-right:0;background:var(--red-soft)}
+.ledger .d{font-family:var(--display);font-weight:900;font-size:30px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.ledger>div:last-child .d{color:var(--red)}
+.ledger p{margin:6px 0 0;color:var(--muted);font-size:15.5px}
+@media (max-width:820px){.ledger{grid-template-columns:1fr 1fr}.ledger>div:nth-child(2){border-right:0}.ledger>div:nth-child(-n+2){border-bottom:2px solid var(--ink)}}
+@media (max-width:460px){.ledger{grid-template-columns:1fr}.ledger>div{border-right:0;border-bottom:2px solid var(--ink)}.ledger>div:last-child{border-bottom:0}}
+.turn{margin-top:36px;font-family:var(--display);font-weight:800;font-size:clamp(22px,3vw,30px);letter-spacing:-.02em;max-width:30ch}
+.turn span{color:var(--orange)}
+
+/* ladder */
+.ladder-wrap{margin-top:40px;display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:28px;align-items:start}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.step{width:100%;text-align:left;cursor:pointer;display:grid;grid-template-columns:96px 1fr;align-items:center;gap:12px;
+  font:inherit;color:var(--ink);background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px 14px;transition:border-color .15s,background .15s}
+.step .when{font-family:var(--display);font-weight:700;font-size:13px;color:var(--orange-ink)}
+.step .name{font-family:var(--display);font-weight:800;font-size:18px;letter-spacing:-.01em}
+.step:hover{border-color:var(--orange)}
+.step[aria-selected="true"]{border-color:var(--orange);background:var(--orange-soft)}
+.heat{display:block;height:6px;border-radius:3px;background:var(--line);grid-column:1/-1;overflow:hidden}
+.heat i{display:block;height:100%;background:var(--orange);border-radius:3px}
+.letter{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:26px 28px;min-width:0;position:relative}
+.letter .meta{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:14px;color:var(--muted);border-bottom:1px dashed var(--line);padding-bottom:14px;margin-bottom:16px}
+.letter .meta b{color:var(--ink)}
+.chip{display:inline-block;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:4px 10px;background:var(--orange-soft);color:var(--orange-ink)}
+.letter pre{margin:0;white-space:pre-wrap;font:16px/1.65 var(--body);color:var(--ink)}
+.letter .wa{margin-top:18px;background:var(--orange-soft);border-radius:14px 14px 14px 4px;padding:12px 16px;font-size:15px}
+.letter .wa b{display:block;font-family:var(--display);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--orange-ink);margin-bottom:2px}
+@media (max-width:820px){.ladder-wrap{grid-template-columns:1fr}.steps{flex-direction:row;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x mandatory}.steps li{flex:0 0 200px;scroll-snap-align:start}}
+
+/* inside */
+.inside{background:var(--card);border-block:1px solid var(--line)}
+.inside .grid{margin-top:40px;display:grid;grid-template-columns:1.15fr 1fr;gap:40px;align-items:center}
+.items{display:grid;gap:14px;min-width:0}
+.item{display:grid;grid-template-columns:52px 1fr;gap:16px;align-items:start;padding:18px;border:2px solid var(--line);border-radius:18px;background:var(--bg)}
+.item .ic{width:52px;height:52px;border-radius:14px;background:var(--orange-soft);display:grid;place-items:center}
+.item .ic svg{width:28px;height:28px;stroke:var(--orange);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.item p{margin:4px 0 0;color:var(--muted);font-size:15.5px}
+.shot{border-radius:18px;overflow:hidden;border:2px solid var(--line);box-shadow:0 30px 60px -30px rgba(0,0,0,.35);background:#fff;min-width:0}
+.shot .chrome{height:30px;background:#EFEAE5;display:flex;gap:7px;align-items:center;padding:0 12px}
+.shot .chrome i{width:10px;height:10px;border-radius:50%;background:#CFC6BD;display:block}
+.shot img{width:100%;height:auto}
+.caption{font-size:14px;color:var(--muted);margin-top:10px;text-align:center}
+@media (max-width:900px){.inside .grid{grid-template-columns:1fr}}
+
+/* who */
+.who{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.who span{border:2px solid var(--line);border-radius:999px;padding:8px 16px;font-weight:600;font-size:15.5px;background:var(--card)}
+
+/* faq */
+.faq{margin-top:34px;display:grid;gap:10px;max-width:780px}
+.faq details{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:0 20px}
+.faq summary{cursor:pointer;list-style:none;font-family:var(--display);font-weight:700;font-size:18px;padding:18px 32px 18px 0;position:relative}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";position:absolute;right:0;top:12px;font-size:28px;color:var(--orange);transition:transform .2s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq details p{margin:0 0 18px;color:var(--muted)}
+
+/* final */
+.final{text-align:center}
+.final .box{background:var(--ink);color:var(--bg);border-radius:32px;padding:clamp(40px,7vw,80px) clamp(22px,5vw,60px);position:relative;overflow:hidden}
+.final h2{color:var(--bg)}
+.final h2 span{color:var(--orange)}
+.final p{color:color-mix(in srgb,var(--bg) 75%,transparent);max-width:52ch;margin:18px auto 30px}
+.final .price-big{font-family:var(--display);font-weight:900;font-size:clamp(56px,9vw,96px);letter-spacing:-.04em;color:var(--orange);line-height:1;margin-bottom:6px}
+.final .once{font-size:15px;color:color-mix(in srgb,var(--bg) 70%,transparent);margin-bottom:28px}
+.guarantee{display:inline-flex;align-items:center;gap:10px;margin-top:26px;font-size:15px;color:color-mix(in srgb,var(--bg) 80%,transparent)}
+.guarantee svg{width:22px;height:22px;stroke:var(--orange);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+footer{padding-block:34px 50px;color:var(--muted);font-size:14px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:10px 24px;justify-content:space-between}
+
+/* mobile sticky buy */
+.mbuy{display:none}
+@media (max-width:720px){
+  .mbuy{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;gap:12px;align-items:center;justify-content:space-between;
+    background:var(--card);border-top:1px solid var(--line);padding:10px max(16px,env(safe-area-inset-right,0px)) max(10px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+    transform:translateY(110%);transition:transform .25s}
+  .mbuy.show{transform:none}
+  .mbuy .t{font-family:var(--display);font-weight:800;font-size:15px;line-height:1.2;min-width:0}
+  .mbuy .t small{display:block;font-family:var(--body);font-weight:500;color:var(--muted);font-size:12.5px}
+  footer{padding-bottom:110px}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="Paid On Time, back to top">Paid<span>On</span>Time</a>
+    <nav aria-label="Page">
+      <a class="l" href="#ladder">How it works</a>
+      <a class="l" href="#inside">What's inside</a>
+      <a class="l" href="#faq">FAQ</a>
+      <a class="buy small" data-gumroad-action="buy" href="#buy">Get it · <span data-gumroad-field="price">$19</span></a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <!-- HERO -->
+  <section class="hero" id="top">
+    <div class="wrap">
+      <div class="copy">
+        <div class="eyebrow">For freelancers who are tired of chasing</div>
+        <h1>Make your invoices <em>stop running away.</em></h1>
+        <p class="lead"><span data-gumroad-field="name">Paid On Time</span> tells you exactly who to remind today, then writes the email or WhatsApp message for you. Copy it, send it, get paid. Two minutes a day.</p>
+        <div class="cta-row">
+          <a class="buy" data-gumroad-action="buy" href="#buy">I want this! <span class="p" data-gumroad-field="price">$19</span></a>
+          <a class="ghost" href="#ladder">See the 6 reminders</a>
+        </div>
+        <div class="trust">
+          <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>One-time payment</span>
+          <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>Works on your phone</span>
+          <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5 9-10"/></svg>30-day refund</span>
+        </div>
+        <p class="rating" style="margin-top:14px"><b>★</b> <span data-gumroad-field="rating">Be the first to review</span> <span aria-hidden="true">·</span> <span data-gumroad-field="review-count">New this month</span></p>
+      </div>
+      <figure class="stage" style="margin:0" aria-label="Cartoon: a freelancer with a butterfly net chases an overdue invoice that is running away and shouting that it will pay next week">
+        {{SCENE_SVG}}
+        <span class="tag-late" aria-hidden="true">OVERDUE · DAY <output id="days">47</output></span>
+      </figure>
+    </div>
+  </section>
+
+  <!-- PROBLEM -->
+  <section class="problem" aria-labelledby="p-h">
+    <div class="wrap">
+      <div class="eyebrow">Sound familiar?</div>
+      <h2 id="p-h" style="margin-top:12px">The life of an unpaid invoice.</h2>
+      <div class="ledger reveal" role="list">
+        <div role="listitem"><div class="d">Day 0</div><p>You deliver great work and send the invoice. Easy.</p></div>
+        <div role="listitem"><div class="d">Day 14</div><p>It's due. Nothing arrives. You don't want to seem pushy, so you wait.</p></div>
+        <div role="listitem"><div class="d">Day 30</div><p>"It's with accounts." You check your banking app far too often.</p></div>
+        <div role="listitem"><div class="d">Day 47</div><p>You finally snap and send a sharp email. Now it's awkward, and still unpaid.</p></div>
+      </div>
+      <p class="turn reveal">Late payment is rarely about the client. <span>It's a missing routine.</span> This kit gives you one.</p>
+    </div>
+  </section>
+
+  <!-- LADDER -->
+  <section id="ladder" aria-labelledby="l-h">
+    <div class="wrap">
+      <div class="eyebrow">How it works</div>
+      <h2 id="l-h" style="margin-top:12px">Six reminders. Each one a little firmer.</h2>
+      <p class="lead" style="margin-top:16px">You send them on the calendar, not on your mood. The app picks the right one for every invoice, every morning. Tap a step to read the real script.</p>
+      <div class="ladder-wrap">
+        <ul class="steps" role="tablist" aria-label="Reminder steps" aria-orientation="vertical"></ul>
+        <article class="letter" id="letter" role="tabpanel" aria-live="polite">
+          <div class="meta"><span class="chip" id="l-chip">3 days before</span><span>To: <b>Ali</b></span><span>Subject: <b id="l-subj">Invoice INV-014 due 16 Nov</b></span></div>
+          <pre id="l-body">Hi Ali,
+
+A quick heads-up that invoice INV-014 for the logo design ($450) is due on 16 November.
+
+Thanks again, I really enjoyed working on this with you. Let me know if you need anything from me to process it.
+
+Best,
+Sara</pre>
+          <div class="wa"><b>WhatsApp version</b><span id="l-wa">Hi Ali! Quick heads-up: invoice INV-014 ($450) is due on 16 November. Let me know if you need anything to process it. Thanks!</span></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSIDE -->
+  <section class="inside" id="inside" aria-labelledby="i-h">
+    <div class="wrap">
+      <div class="eyebrow">What's inside</div>
+      <h2 id="i-h" style="margin-top:12px">Everything you need. Nothing to subscribe to.</h2>
+      <div class="grid">
+        <div class="items">
+          <div class="item reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M11 18h2"/></svg></div>
+            <div><h3>The Paid On Time app</h3><p>Opens in any browser on your phone or computer. No account, no internet needed. Shows who to chase today and writes the message.</p></div></div>
+          <div class="item reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+            <div><h3>Invoice tracker spreadsheet</h3><p>For Excel, Google Sheets and Numbers. Flags overdue invoices and names the reminder each one needs.</p></div></div>
+          <div class="item reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg></div>
+            <div><h3>12 reminder scripts</h3><p>An email and a WhatsApp version for all six steps, from a friendly heads-up to "work is paused".</p></div></div>
+          <div class="item reveal"><div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg></div>
+            <div><h3>The 9-page Playbook</h3><p>A payment-terms clause to copy, the invoice checklist, and word-for-word replies to "it's with accounts" and "cash is tight".</p></div></div>
+        </div>
+        <figure style="margin:0" class="reveal">
+          <div class="shot"><div class="chrome" aria-hidden="true"><i></i><i></i><i></i></div>
+            <img src="{{APP_IMG}}" width="1200" height="768" alt="The Paid On Time app's Today screen: $1,950 outstanding, $1,650 overdue, and three clients listed with the reminder each one needs and a Write reminder button.">
+          </div>
+          <figcaption class="caption">The Today screen. Example data.</figcaption>
+        </figure>
+      </div>
+      <h3 style="margin-top:56px">Made for anyone who sends invoices</h3>
+      <div class="who"><span>Designers</span><span>Writers</span><span>Developers</span><span>Virtual assistants</span><span>Social media managers</span><span>Video editors</span><span>Photographers</span><span>Consultants</span></div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" aria-labelledby="f-h">
+    <div class="wrap">
+      <div class="eyebrow">Questions</div>
+      <h2 id="f-h" style="margin-top:12px">Before you buy.</h2>
+      <div class="faq">
+        <details><summary>Is it a subscription?</summary><p>No. You pay once and keep it forever. Updates are free.</p></details>
+        <details><summary>Does it work on my phone?</summary><p>Yes. Open the app file in your phone's browser (Chrome or Safari). The spreadsheet also works in the Google Sheets app.</p></details>
+        <details><summary>Does it send emails for me?</summary><p>No, and that's on purpose. It writes each message, and you press send from your own email or WhatsApp. Clients reply to a real message from you far more than to an automated bot.</p></details>
+        <details><summary>Where is my data stored?</summary><p>Only on your own device. Nothing is uploaded anywhere. You can export a backup whenever you like.</p></details>
+        <details><summary>I run a small agency, not solo. Will it work?</summary><p>Yes. It works for anyone who sends invoices to clients, in any currency.</p></details>
+        <details><summary>What if it doesn't help?</summary><p>Ask for a refund within 30 days. No questions asked.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL -->
+  <section class="final" id="buy" aria-labelledby="b-h">
+    <div class="wrap">
+      <div class="box">
+        <h2 id="b-h">Stop chasing. <span>Start getting paid.</span></h2>
+        <p>The app, the tracker, 12 scripts and the playbook. Set it up tonight, and send your first reminder tomorrow morning.</p>
+        <div class="price-big" data-gumroad-field="price">$19</div>
+        <div class="once">One-time payment · instant download</div>
+        <a class="buy" data-gumroad-action="buy" href="#buy">I want this!</a><br>
+        <span class="guarantee"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>30-day "it didn't help" refund</span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><span>Paid On Time by Dezlin Oliver · @dezlinoliver</span><span>Your data never leaves your device.</span></div>
+</footer>
+
+<div class="mbuy" id="mbuy" aria-hidden="true">
+  <div class="t">Paid On Time<small>App · tracker · 12 scripts · playbook</small></div>
+  <a class="buy small" data-gumroad-action="buy" href="#buy" tabindex="-1">Get it · <span data-gumroad-field="price">$19</span></a>
+</div>
+
+<script>
+(function(){
+  document.documentElement.classList.add('js');
+  var STEPS=[
+    {when:'3 days before',name:'Heads-up',heat:12,subj:'Invoice INV-014 due 16 Nov',
+     body:"Hi Ali,\n\nA quick heads-up that invoice INV-014 for the logo design ($450) is due on 16 November.\n\nThanks again, I really enjoyed working on this with you. Let me know if you need anything from me to process it.\n\nBest,\nSara",
+     wa:"Hi Ali! Quick heads-up: invoice INV-014 ($450) is due on 16 November. Let me know if you need anything to process it. Thanks!"},
+    {when:'Due day',name:'Due today',heat:28,subj:'Invoice INV-014 is due today',
+     body:"Hi Ali,\n\nJust a reminder that invoice INV-014 for $450 is due today, 16 November.\n\nIf it's already on its way, thank you, and please ignore this.\n\nBest,\nSara",
+     wa:"Hi Ali, invoice INV-014 ($450) is due today. If it's already sent, thank you and please ignore this!"},
+    {when:'3 days late',name:'Friendly nudge',heat:45,subj:'Friendly reminder: invoice INV-014 ($450)',
+     body:"Hi Ali,\n\nI hope you're well. I haven't seen payment for invoice INV-014 ($450, due 16 November) come through yet, so I wanted to check it hasn't slipped through the cracks.\n\nCould you let me know when it's scheduled? I've attached the invoice again in case it's useful.\n\nThanks,\nSara",
+     wa:"Hi Ali, hope you're well! I haven't received payment for invoice INV-014 yet. Could you check when it's scheduled? Happy to resend it."},
+    {when:'7 days late',name:'Firm reminder',heat:64,subj:'Invoice INV-014 is now 7 days overdue',
+     body:"Hi Ali,\n\nInvoice INV-014 for $450 was due on 16 November and is now 7 days overdue.\n\nPlease arrange payment, or reply with the date it will be paid, by 26 November. If there's a problem with the invoice or the work, tell me and I'll sort it out quickly.\n\nThank you,\nSara",
+     wa:"Hi Ali, invoice INV-014 ($450) is now 7 days overdue. Could you pay it, or tell me the payment date, by 26 November?"},
+    {when:'14 days late',name:'Final notice',heat:84,subj:'Final reminder: invoice INV-014 ($450)',
+     body:"Hi Ali,\n\nThis is a final reminder that invoice INV-014 for $450, due on 16 November, is still unpaid 14 days later.\n\nAs set out in our agreed terms, a late fee of 2% per month now applies. Please make payment by 3 December. If I don't hear back by then I'll need to look at next steps, which I'd much rather avoid.\n\nRegards,\nSara",
+     wa:"Hi Ali, final reminder: invoice INV-014 is 14 days overdue. Per our terms a late fee now applies. Please pay by 3 December."},
+    {when:'30 days late',name:'Pause work',heat:100,subj:'Invoice INV-014: work paused until payment',
+     body:"Hi Ali,\n\nInvoice INV-014 for $450 is now 30 days overdue, and I haven't been able to get a payment date.\n\nI'm pausing any further work until the balance is settled. If it's not paid by 19 December, I'll move to formal recovery.\n\nIf you can't pay in full, reply and propose a payment plan and I'll consider it.\n\nRegards,\nSara",
+     wa:"Hi Ali, invoice INV-014 is now 30 days overdue. I'm pausing further work until it's settled. Need a payment plan? Reply and we can agree one."}
+  ];
+  var list=document.querySelector('.steps'), panel=document.getElementById('letter');
+  function el(id){return document.getElementById(id)}
+  STEPS.forEach(function(s,i){
+    var li=document.createElement('li'); li.setAttribute('role','presentation');
+    var b=document.createElement('button'); b.type='button'; b.className='step'; b.id='step-'+i;
+    b.setAttribute('role','tab'); b.setAttribute('aria-controls','letter'); b.setAttribute('aria-selected',i===0?'true':'false'); b.tabIndex=i===0?0:-1;
+    b.innerHTML='<span class="when">'+s.when+'</span><span class="name">'+s.name+'</span><span class="heat" aria-hidden="true"><i style="width:'+s.heat+'%"></i></span>';
+    b.addEventListener('click',function(){select(i,false)});
+    b.addEventListener('keydown',function(e){
+      var k=e.key, n=null;
+      if(k==='ArrowDown'||k==='ArrowRight') n=(i+1)%STEPS.length;
+      if(k==='ArrowUp'||k==='ArrowLeft') n=(i-1+STEPS.length)%STEPS.length;
+      if(k==='Home') n=0; if(k==='End') n=STEPS.length-1;
+      if(n!==null){e.preventDefault(); select(n,true);}
+    });
+    li.appendChild(b); list.appendChild(li);
+  });
+  function select(i,focus){
+    var s=STEPS[i];
+    [].forEach.call(list.querySelectorAll('.step'),function(b,j){b.setAttribute('aria-selected',j===i?'true':'false'); b.tabIndex=j===i?0:-1;});
+    var b=el('step-'+i); panel.setAttribute('aria-labelledby',b.id); if(focus) b.focus();
+    el('l-chip').textContent=s.when; el('l-subj').textContent=s.subj; el('l-body').textContent=s.body; el('l-wa').textContent=s.wa;
+  }
+  panel.setAttribute('aria-labelledby','step-0');
+
+  // overdue day counter in the hero
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!reduce){ var d=el('days'), n=40; d.textContent=n; var t=setInterval(function(){ n++; d.textContent=n; if(n>=47) clearInterval(t); },140); }
+
+  // mobile sticky buy bar after the hero
+  var m=el('mbuy'), hero=document.querySelector('.hero');
+  function onScroll(){ var past=hero.getBoundingClientRect().bottom<0, nearEnd=el('buy').getBoundingClientRect().top<innerHeight;
+    var show=past&&!nearEnd; m.classList.toggle('show',show); m.setAttribute('aria-hidden',show?'false':'true');
+    m.querySelector('a').tabIndex=show?0:-1; }
+  addEventListener('scroll',onScroll,{passive:true}); onScroll();
+})();
+</script>
+</body>
+</html>
