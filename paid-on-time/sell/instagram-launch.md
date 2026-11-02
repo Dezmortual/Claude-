@@ -1,7 +1,7 @@
 # Step 3 — Sell: Instagram launch
 
-The carousel is in `sell/img/carousel-1.png` … `carousel-6.png` (1080×1350). Replace
-**YourBrand / @yourhandle** before posting: edit `build/visuals.html` and re-render (see
+The carousel is in `sell/img/carousel-1.png` … `carousel-6.png` (1080×1350), branded
+**Dezlin Oliver · @dezlinoliver**. To change it, edit `build/visuals.html` and re-render (see
 `README.md`), or just ask Claude.
 
 ## Launch post caption

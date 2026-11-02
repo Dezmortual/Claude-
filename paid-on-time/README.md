@@ -10,7 +10,7 @@ The four steps from the "Business Model" card, done for one product:
 | **04 Repeat forever** | [`repeat/`](repeat/): the weekly loop, scorecard and feedback log, the improvement backlog, and the next 3 problems |
 
 ## What you need to do (Claude can't do these for you)
-1. Replace **YourBrand / @yourhandle** on the carousel (`build/visuals.html`).
+1. The carousel is branded **Dezlin Oliver · @dezlinoliver** (edit `build/visuals.html` to change it).
 2. Create the Gumroad/Payhip product with `sell/gumroad-listing.md` and connect payouts.
 3. Post the carousel and answer the DMs using `sell/instagram-launch.md`.
 4. Every Sunday, fill in `repeat/weekly-scorecard.csv` and follow `repeat/playbook.md`.
