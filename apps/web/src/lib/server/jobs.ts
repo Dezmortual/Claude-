@@ -115,10 +115,12 @@ export async function scoreForecasts() {
     select f.id, a.slug, f.base_price, f.mid, f.low, f.high, f.target_at from forecasts f join assets a on a.id = f.asset_id
     where f.target_at <= now() and not exists (select 1 from forecast_outcomes o where o.forecast_id = f.id)
     order by f.target_at limit 5000`;
-  if (!due.length) return { scored: 0 };
-  await ensure([...new Set(due.map((d) => d.slug))], ["1h", "1d"]);
+  // Assets taken off the list keep their scored history but aren't priced any more, so their open forecasts wait.
+  const listed = due.filter((d) => ASSET_BY_SLUG.has(d.slug));
+  if (!listed.length) return { scored: 0 };
+  await ensure([...new Set(listed.map((d) => d.slug))], ["1h", "1d"]);
   const out = [];
-  for (const f of due) {
+  for (const f of listed) {
     const intraday = closedBars(f.slug, "1h");
     const series = intraday.length ? intraday : closedBars(f.slug, "1d");
     const step = intraday.length ? 3_600_000 : 86_400_000;

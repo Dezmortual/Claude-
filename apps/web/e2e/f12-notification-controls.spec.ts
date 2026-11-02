@@ -51,18 +51,18 @@ test.describe.serial("F6 notification controls", () => {
 
   test("F6-E1 muted: the alert fires and is listed, nothing is sent", async ({ page, request }) => {
     await set(page, { muteFor: "24h" });
-    const { alert, run, event } = await fire(page, request, "polkadot");
+    const { alert, run, event } = await fire(page, request, "audusd");
     expect(run.muted).toBeGreaterThanOrEqual(1);
     expect(event.email.status).toBe("muted");
     await page.goto("/alerts");
-    await expect(page.locator("#recent-alerts ~ ul li").filter({ hasText: "Polkadot is at" }).first()).toContainText("email not sent (muted or quiet hours)");
+    await expect(page.locator("#recent-alerts ~ ul li").filter({ hasText: "Australian Dollar / US Dollar is at" }).first()).toContainText("email not sent (muted or quiet hours)");
     await remove(page, alert.id);
   });
 
   test("F6-E2 quiet hours hold the email until they end", async ({ page, request }) => {
     const h = hourIn(await tz(page));
     await set(page, { quiet: { start: h, end: (h + 1) % 24 } });
-    const { alert, run, event } = await fire(page, request, "litecoin");
+    const { alert, run, event } = await fire(page, request, "usdcad");
     expect(run.held).toBeGreaterThanOrEqual(1);
     expect(event.email.status).toBe("pending");
     await set(page, { quiet: null });
@@ -75,7 +75,7 @@ test.describe.serial("F6 notification controls", () => {
   test("F6-E3 the daily summary collects alerts into one email at the chosen hour", async ({ page, request }) => {
     const h = hourIn(await tz(page));
     await set(page, { emailMode: "digest", digestHour: (h + 12) % 24 });
-    const { alert, run, event } = await fire(page, request, "stellar");
+    const { alert, run, event } = await fire(page, request, "googl");
     expect(event.email.status).toBe("digest");
     expect(run.digests).toBe(0); // not the chosen hour
     await set(page, { digestHour: h });
@@ -85,7 +85,7 @@ test.describe.serial("F6 notification controls", () => {
     expect(after.email.status).toBe("sent");
     const summary = fs.readdirSync(OUTBOX).sort().reverse().map((f) => fs.readFileSync(path.join(OUTBOX, f), "utf8"))
       .find((b) => b.startsWith(`To: ${OWNER_A}\n`) && b.includes("Subject: Your alerts:"));
-    expect(summary).toContain("Stellar is at");
+    expect(summary).toContain("Alphabet is at");
     expect(summary).toMatch(/Stop this alert: http\S+\/alerts\/stop\?t=[0-9a-f]{64}/);
     await remove(page, alert.id);
   });
@@ -95,15 +95,15 @@ base.describe("F6-H2 the stop link in an alert email", () => {
   base("works without signing in, asks first, and pauses only that alert", async ({ browser }) => {
     const owner = await browser.newContext({ storageState: ownerState("a") });
     const op = await owner.newPage();
-    const { alert } = await fire(op, op.request, "hedera");
+    const { alert } = await fire(op, op.request, "amzn");
     const mail = fs.readdirSync(OUTBOX).sort().reverse().map((f) => fs.readFileSync(path.join(OUTBOX, f), "utf8"))
-      .find((b) => b.startsWith(`To: ${OWNER_A}\n`) && b.includes("Hedera is at"))!;
+      .find((b) => b.startsWith(`To: ${OWNER_A}\n`) && b.includes("Amazon is at"))!;
     const link = mail.match(/Stop this alert: (http\S+)/)![1];
     const guest = await browser.newContext();
     const g = await guest.newPage();
     await g.goto(new URL(link).pathname + new URL(link).search);
     await expect(g.getByRole("heading", { name: "Stop this alert?" })).toBeVisible();
-    await expect(g.getByText("Hedera: price above 0.000001")).toBeVisible();
+    await expect(g.getByText("Amazon: price above 0.000001")).toBeVisible();
     await g.getByRole("button", { name: "Stop this alert" }).click();
     await expect(g.getByRole("heading", { name: "Stopped" })).toBeVisible();
     const mine = await (await op.request.get("/api/v1/me/alerts", { headers: ipHeaders() })).json();

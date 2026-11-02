@@ -37,7 +37,7 @@ export function LedgerTable({ rows, tz, caption, showAsset = true }: { rows: Led
             return (
               <tr key={r.id} className="border-t">
                 <td className="whitespace-nowrap px-3 py-2">{t(r.generatedAt)}</td>
-                {showAsset && <th scope="row" className="whitespace-nowrap px-3 py-2 text-left font-normal"><Link href={`/assets/${r.slug}`} className="hover:underline">{a?.name ?? r.slug}</Link></th>}
+                {showAsset && <th scope="row" className="whitespace-nowrap px-3 py-2 text-left font-normal">{a ? <Link href={`/assets/${r.slug}`} className="hover:underline">{a.name}</Link> : r.slug}</th>}
                 <td className="whitespace-nowrap px-3 py-2">{H[r.horizon]}</td>
                 {r.outcome ? (
                   <>

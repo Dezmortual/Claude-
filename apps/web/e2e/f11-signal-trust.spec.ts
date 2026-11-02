@@ -18,15 +18,15 @@ test.describe("F11 why, when and how steady", () => {
 
   test("F4 a fired alert shows when its data was from and when it was sent", async ({ page, request }) => {
     const h = ipHeaders();
-    const a = await page.request.post("/api/v1/me/alerts", { headers: h, data: { assetSlug: "cardano", condition: "price_above", threshold: 0.000001, channels: ["email"] } });
+    const a = await page.request.post("/api/v1/me/alerts", { headers: h, data: { assetSlug: "usdjpy", condition: "price_above", threshold: 0.000001, channels: ["email"] } });
     expect(a.ok()).toBe(true);
     const r = await (await request.post("/api/cron/alerts", { headers: CRON })).json();
     expect(r.fired).toBeGreaterThanOrEqual(1);
     expect(r.sent).toBeGreaterThanOrEqual(1);
     await page.goto("/alerts");
-    const item = page.locator("#recent-alerts ~ ul li").filter({ hasText: "Cardano is at" }).first();
+    const item = page.locator("#recent-alerts ~ ul li").filter({ hasText: "US Dollar / Japanese Yen is at" }).first();
     await expect(item).toContainText(/Data up to \d+ \w+, \d\d:\d\d · fired \d+ \w+, \d\d:\d\d · email sent \d+ \w+, \d\d:\d\d/);
-    const ev = (await (await page.request.get("/api/v1/me/alert-events", { headers: h })).json()).find((e: { message: string }) => e.message.startsWith("Cardano"));
+    const ev = (await (await page.request.get("/api/v1/me/alert-events", { headers: h })).json()).find((e: { message: string }) => e.message.startsWith("US Dollar / Japanese Yen"));
     expect(ev.observedAt).toBeTruthy();
     expect(Date.parse(ev.email.sentAt)).toBeGreaterThanOrEqual(Date.parse(ev.firedAt));
     await page.request.delete(`/api/v1/me/alerts/${(await a.json()).id}`, { headers: h });

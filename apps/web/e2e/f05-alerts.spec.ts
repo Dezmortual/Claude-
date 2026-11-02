@@ -4,15 +4,15 @@ test.use({ storageState: ownerState("a") });
 
 test.describe("F05 set an alert", () => {
   test("F05-H1 price alert from an asset page", async ({ page }) => {
-    await page.goto("/assets/solana");
+    await page.goto("/assets/gbpusd");
     await page.getByRole("link", { name: "Set alert" }).click();
-    await expect(page).toHaveURL(/\/alerts\?asset=solana/);
+    await expect(page).toHaveURL(/\/alerts\?asset=gbpusd/);
     await a11y(page, "/alerts");
-    await expect(page.getByLabel("Asset")).toHaveValue("solana");
+    await expect(page.getByLabel("Asset")).toHaveValue("gbpusd");
     await page.getByLabel("When").selectOption("price_above");
     await page.getByLabel("Price", { exact: true }).fill("1000000");
     await page.getByRole("button", { name: "Save alert" }).click();
-    await expect(page.getByText("Solana: price above 1,000,000")).toBeVisible();
+    await expect(page.getByText("British Pound / US Dollar: price above 1,000,000")).toBeVisible();
   });
 
   test("F05-E1 signal alert reads well", async ({ page }) => {
@@ -40,7 +40,7 @@ test.describe("F05 set an alert", () => {
 
   test("F05-E2 pause, resume, delete persist", async ({ page }) => {
     await page.goto("/alerts");
-    const row = page.getByRole("listitem").filter({ hasText: "Solana: price above" });
+    const row = page.getByRole("listitem").filter({ hasText: "British Pound / US Dollar: price above" });
     await row.getByRole("switch").uncheck();
     await expect(page.getByRole("status").filter({ hasText: "Alert paused" })).toBeVisible();
     await page.reload();
@@ -51,6 +51,6 @@ test.describe("F05 set an alert", () => {
     await row.getByRole("button", { name: /Delete alert/ }).click();
     await expect(page.getByRole("status").filter({ hasText: "Alert deleted" })).toBeVisible();
     await page.reload();
-    await expect(page.getByText("Solana: price above")).toHaveCount(0);
+    await expect(page.getByText("British Pound / US Dollar: price above")).toHaveCount(0);
   });
 });

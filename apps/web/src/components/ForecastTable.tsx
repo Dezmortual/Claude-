@@ -130,14 +130,14 @@ export function ForecastTable({ data, tab, visible, base, current, watchlist, st
         {data.rows.map((r) => {
           const h = r.horizons?.[tab === "day_trading" ? "1d" : "7d"];
           return (
-            <li key={r.asset.slug}>
+            <li key={r.asset.slug} className="min-w-0">
               <Link prefetch={false} href={r.locked ? `/pricing?plan=${planFor(r.asset).code}` : `/assets/${r.asset.slug}`}
                 className="flex items-center justify-between gap-3 rounded-lg border bg-surface p-3 hover:bg-surface-sunken">
                 <span className="flex min-w-0 items-center gap-2">
                   <AssetMark ticker={r.asset.ticker} slug={r.asset.slug} />
                   <span className="min-w-0">
                     <span className="block truncate font-semibold">{r.asset.name}</span>
-                    <span className="block font-mono text-xs text-subtle">{r.asset.ticker}{!r.demo && r.asset.meta.proxy && ` via ${r.asset.meta.proxy}`}{!r.locked && ` · ${fmtPrice(r.price, r.asset.quoteUnit)}`}</span>
+                    <span className="block truncate font-mono text-xs text-subtle">{r.asset.ticker}{!r.demo && r.asset.meta.proxy && ` via ${r.asset.meta.proxy}`}{!r.locked && ` · ${fmtPrice(r.price, r.asset.quoteUnit)}`}</span>
                   </span>
                 </span>
                 {r.locked ? (

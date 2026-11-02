@@ -46,14 +46,14 @@ test.describe("F10 indicators", () => {
     const ind = await page.request.post("/api/v1/me/indicators", { headers: h, data: { name: "Always up", lines: ["close"], display: "overlay", buyRule: "close > 0" } });
     expect(ind.ok()).toBe(true);
     const { id } = await ind.json();
-    const a = await page.request.post("/api/v1/me/alerts", { headers: h, data: { assetSlug: "solana", condition: "indicator_signal", indicatorId: id, signal: "buy", timeframe: "1d", channels: ["email"] } });
+    const a = await page.request.post("/api/v1/me/alerts", { headers: h, data: { assetSlug: "usdchf", condition: "indicator_signal", indicatorId: id, signal: "buy", timeframe: "1d", channels: ["email"] } });
     expect(a.ok()).toBe(true);
-    const sellless = await page.request.post("/api/v1/me/alerts", { headers: h, data: { assetSlug: "solana", condition: "indicator_signal", indicatorId: id, signal: "sell", timeframe: "1d" } });
+    const sellless = await page.request.post("/api/v1/me/alerts", { headers: h, data: { assetSlug: "usdchf", condition: "indicator_signal", indicatorId: id, signal: "sell", timeframe: "1d" } });
     expect(sellless.status()).toBe(422);
     const r = await (await request.post("/api/cron/alerts", { headers: CRON })).json();
     expect(r.fired).toBeGreaterThanOrEqual(1);
     await page.goto("/alerts");
-    await expect(page.getByText('Solana: Always up gives a buy signal on the 1 day chart')).toBeVisible();
+    await expect(page.getByText('US Dollar / Swiss Franc: Always up gives a buy signal on the 1 day chart')).toBeVisible();
     expect((await page.request.delete(`/api/v1/me/indicators/${id}`, { headers: h })).ok()).toBe(true);
     await page.reload();
     await expect(page.getByText("Always up gives a buy signal")).toHaveCount(0);

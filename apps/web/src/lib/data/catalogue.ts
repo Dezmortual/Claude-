@@ -13,21 +13,9 @@ export const MARKETS: Market[] = [
 // [slug, ticker, name, anchor price for the demo series, public]
 type Row = [string, string, string, number, boolean?];
 
+// Only the two the owner follows: every listed asset is read on each scheduled run, which costs database transfer.
 const crypto: Row[] = [
   ["bitcoin", "BTC", "Bitcoin", 84500, true], ["ethereum", "ETH", "Ethereum", 3200, true],
-  ["xrp", "XRP", "XRP", 2.4, true], ["bnb", "BNB", "BNB", 610, true], ["solana", "SOL", "Solana", 165, true],
-  ["dogecoin", "DOGE", "Dogecoin", 0.19, true], ["cardano", "ADA", "Cardano", 0.71, true],
-  ["tron", "TRX", "TRON", 0.27, true], ["chainlink", "LINK", "Chainlink", 16.8, true],
-  ["avalanche", "AVAX", "Avalanche", 24.5, true], ["stellar", "XLM", "Stellar", 0.33], ["sui", "SUI", "Sui", 3.1],
-  ["shiba-inu", "SHIB", "Shiba Inu", 0.000012], ["hedera", "HBAR", "Hedera", 0.21], ["polkadot", "DOT", "Polkadot", 4.6],
-  ["litecoin", "LTC", "Litecoin", 92], ["bitcoin-cash", "BCH", "Bitcoin Cash", 410], ["uniswap", "UNI", "Uniswap", 8.9],
-  ["near", "NEAR", "NEAR Protocol", 2.9], ["aptos", "APT", "Aptos", 5.6], ["aave", "AAVE", "Aave", 240],
-  ["internet-computer", "ICP", "Internet Computer", 5.9], ["ethereum-classic", "ETC", "Ethereum Classic", 19.4],
-  ["filecoin", "FIL", "Filecoin", 3.2], ["cosmos", "ATOM", "Cosmos", 4.8], ["arbitrum", "ARB", "Arbitrum", 0.42],
-  ["optimism", "OP", "Optimism", 0.78], ["injective", "INJ", "Injective", 12.6], ["render", "RENDER", "Render", 4.1],
-  ["immutable", "IMX", "Immutable", 0.62], ["the-graph", "GRT", "The Graph", 0.11], ["algorand", "ALGO", "Algorand", 0.24],
-  ["vechain", "VET", "VeChain", 0.028], ["sei", "SEI", "Sei", 0.27], ["pepe", "PEPE", "Pepe", 0.0000098],
-  ["ethena", "ENA", "Ethena", 0.55],
 ];
 const forex: Row[] = [
   ["eurusd", "EUR/USD", "Euro / US Dollar", 1.12], ["gbpusd", "GBP/USD", "British Pound / US Dollar", 1.33],
@@ -92,7 +80,7 @@ export const SCENARIO_CAGR: Record<MarketCode, [number, number, number]> = {
 
 // Draft plans. Prices are placeholders until /replica-launch sets them.
 export const PLANS: Plan[] = [
-  { code: "free", name: "Free", blurb: "The top 10 crypto assets, daily signals.", priceMonthCents: 0, priceYearCents: 0, currency: "usd",
+  { code: "free", name: "Free", blurb: "Bitcoin and Ethereum, daily signals.", priceMonthCents: 0, priceYearCents: 0, currency: "usd",
     markets: ["crypto"], publicOnly: true, dayTrading: false, watchlistAlerts: false, maxAlerts: 0 },
   { code: "crypto", name: "Crypto", blurb: "Every crypto asset, intraday signals, watchlist and alerts.", priceMonthCents: 1500, priceYearCents: 14400, currency: "usd",
     markets: ["crypto"], publicOnly: false, dayTrading: true, watchlistAlerts: true, maxAlerts: 10 },
