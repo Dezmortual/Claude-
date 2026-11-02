@@ -63,8 +63,8 @@ you have right now. Tomorrow morning, open it and send whatever it tells you to.
 Reply to this email if anything is unclear. I read every one.
 
 ## Setup checklist (you do this — about 20 minutes)
-1. Create a free account at gumroad.com (or payhip.com) and connect payouts (bank, Payoneer
-   or PayPal — check which work in your country).
+1. Create a free account at gumroad.com or lemonsqueezy.com and connect payouts. From
+   South Africa, see `payments-south-africa.md`: both list SA bank payouts, with PayPal as backup.
 2. New product → Digital product → paste the fields above.
 3. Upload `Paid-On-Time-Kit.zip`, the cover and the thumbnail.
 4. Create the discount code `LAUNCH` ($7 off, limit 25 uses or 7 days).
