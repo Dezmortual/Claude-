@@ -7,8 +7,10 @@
 <style>
   :root{--orange:#FF7A00;--orange-soft:#FFF1E4;--ink:#161616;--muted:#5d5d5d;--line:#e8e8e8;--bg:#fafafa;--card:#fff;
         --red:#d92d20;--red-soft:#fdecea;--amber:#b54708;--amber-soft:#fef3e2;--green:#067647;--green-soft:#e7f6ec;--blue-soft:#eef2ff;--blue:#3538cd}
-  @media (prefers-color-scheme:dark){:root{--ink:#f2f2f2;--muted:#a8a8a8;--line:#2c2c2c;--bg:#111;--card:#1a1a1a;--orange-soft:#3a2410;
-        --red-soft:#3b1512;--amber-soft:#3a2a10;--green-soft:#0f2e1d;--blue-soft:#1d1f3d;--red:#ff6b5e;--amber:#f5a524;--green:#3ccf7f;--blue:#9aa0ff}}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#f2f2f2;--muted:#a8a8a8;--line:#2c2c2c;--bg:#111;--card:#1a1a1a;--orange-soft:#3a2410;
+        --red-soft:#3b1512;--amber-soft:#3a2a10;--green-soft:#0f2e1d;--blue-soft:#1d1f3d;--red:#ff6b5e;--amber:#f5a524;--green:#3ccf7f;--blue:#9aa0ff;color-scheme:dark}}
+  :root[data-theme="dark"]{--ink:#f2f2f2;--muted:#a8a8a8;--line:#2c2c2c;--bg:#111;--card:#1a1a1a;--orange-soft:#3a2410;
+        --red-soft:#3b1512;--amber-soft:#3a2a10;--green-soft:#0f2e1d;--blue-soft:#1d1f3d;--red:#ff6b5e;--amber:#f5a524;--green:#3ccf7f;--blue:#9aa0ff;color-scheme:dark}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
   header{background:var(--card);border-bottom:1px solid var(--line);padding:14px 16px;position:sticky;top:0;z-index:5}
@@ -156,6 +158,10 @@
   </div>
 </div></dialog>
 
+<dialog id="askDlg"><div class="dlg"><h3 id="askMsg"></h3>
+  <div class="row"><button id="askNo">Cancel</button><button class="primary" id="askYes">Yes</button></div>
+</div></dialog>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -292,6 +298,11 @@ document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
 });
 document.querySelectorAll('.tab2').forEach(b=>b.onclick=()=>{ filter=b.dataset.f; document.querySelectorAll('.tab2').forEach(x=>x.classList.toggle('active',x===b)); render(); });
 
+function ask(msg, yes){ const d=document.getElementById('askDlg'); document.getElementById('askMsg').textContent=msg;
+  document.getElementById('askYes').textContent=yes||'Yes';
+  return new Promise(res=>{ const done=v=>{ d.close(); res(v); };
+    document.getElementById('askYes').onclick=()=>done(true); document.getElementById('askNo').onclick=()=>done(false);
+    d.oncancel=()=>res(false); d.showModal(); }); }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
 
 // ---------- invoice dialog ----------
@@ -371,7 +382,7 @@ document.body.addEventListener('click', e=>{
   if(d.paid){ const i=state.invoices.find(x=>x.id===d.paid); i.paid=true; i.paidOn=todayStr(); save(); render(); toast('Marked paid 🎉'); }
   if(d.unpaid){ const i=state.invoices.find(x=>x.id===d.unpaid); i.paid=false; delete i.paidOn; save(); render(); }
   if(d.edit) openInv(state.invoices.find(x=>x.id===d.edit));
-  if(d.del && confirm('Delete this invoice?')){ state.invoices = state.invoices.filter(x=>x.id!==d.del); save(); render(); }
+  if(d.del) ask('Delete this invoice?','Delete').then(ok=>{ if(ok){ state.invoices = state.invoices.filter(x=>x.id!==d.del); save(); render(); toast('Deleted'); } });
 });
 
 // ---------- settings ----------
@@ -390,7 +401,7 @@ document.getElementById('importBtn').onclick = ()=>document.getElementById('impo
 document.getElementById('importFile').onchange = async e=>{
   const f = e.target.files[0]; if(!f) return;
   try{ const d = JSON.parse(await f.text()); if(!Array.isArray(d.invoices)) throw 0;
-    if(confirm(`Replace current data with ${d.invoices.length} invoices from the backup?`)){ state = d; state.settings ||= {currency:'$'}; save(); fillSettings(); render(); toast('Backup imported'); } }
+    if(await ask(`Replace current data with ${d.invoices.length} invoices from the backup?`,'Replace')){ state = d; state.settings ||= {currency:'$'}; save(); fillSettings(); render(); toast('Backup imported'); } }
   catch(err){ toast('That file is not a Paid On Time backup'); }
   e.target.value='';
 };
