@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Business Model</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* Edit these to rebrand */
+  :root { --orange:#FF7A00; --orange-soft:#FFF1E4; --ink:#141414; --muted:#4a4a4a; --line:#ECECEC; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html,body { background:#fff; }
+  .post { width:1080px; height:1350px; background:#fff; font-family:'Poppins',system-ui,sans-serif; color:var(--ink);
+          display:flex; flex-direction:column; align-items:center; padding:44px 0 0; position:relative; }
+  .top { display:flex; align-items:center; gap:22px; font-size:30px; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:700; font-size:42px; letter-spacing:-1px; }
+  .handle { color:#333; font-weight:500; }
+  .page { border:2.5px solid #333; border-radius:30px; padding:4px 18px; font-weight:600; font-size:28px; }
+  h1 { color:var(--orange); font-weight:900; font-size:116px; line-height:0.96; letter-spacing:-5px; text-align:center; margin-top:26px; }
+  .tag { font-size:34px; font-weight:500; margin-top:20px; }
+  .steps { margin-top:24px; width:780px; display:flex; flex-direction:column; align-items:center; }
+  .card { width:100%; background:#fff; border:2px solid var(--line); border-radius:22px;
+          box-shadow:0 6px 18px rgba(0,0,0,.06); display:flex; align-items:center; gap:34px; padding:15px 30px; }
+  .icon { width:92px; height:92px; flex:none; background:var(--orange-soft); border-radius:18px; display:grid; place-items:center; }
+  .icon svg { width:58px; height:58px; stroke:var(--orange); fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  .num { color:var(--orange); font-weight:600; font-size:23px; line-height:1.2; }
+  .title { font-weight:800; font-size:42px; letter-spacing:-1px; line-height:1.15; }
+  .desc { font-size:22px; color:var(--muted); line-height:1.4; margin-top:4px; }
+  .link { width:4px; height:20px; background:var(--orange); border-radius:2px; }
+  .end { margin-top:20px; border:2px solid var(--line); border-radius:40px; padding:10px 40px; font-size:30px; font-weight:600;
+         display:flex; align-items:center; gap:12px; box-shadow:0 4px 12px rgba(0,0,0,.05); }
+  .end svg { width:40px; height:24px; stroke:var(--orange); fill:none; stroke-width:3; }
+</style>
+</head>
+<body>
+<div class="post">
+  <div class="top">
+    <div class="brand">
+      <svg width="44" height="40" viewBox="0 0 44 40"><path d="M4 26 L22 8 L40 8 L22 26 Z" fill="#7BC043"/><path d="M4 34 L14 24 L30 24 L20 34 Z" fill="#3FA34D"/></svg>
+      YourBrand
+    </div>
+    <div class="handle">@yourhandle</div>
+    <div class="page">02/06</div>
+  </div>
+
+  <h1>The Business<br>Model.</h1>
+  <div class="tag">Simple. Repeatable. Infinite.</div>
+
+  <div class="steps">
+    <div class="card">
+      <div class="icon"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 L21 21"/></svg></div>
+      <div><div class="num">01</div><div class="title">Find problems.</div>
+        <div class="desc">Look for real pain points.<br>The best ideas hide inside problems.</div></div>
+    </div>
+    <div class="link"></div>
+    <div class="card">
+      <div class="icon"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg></div>
+      <div><div class="num">02</div><div class="title">Build solutions.</div>
+        <div class="desc">Make something simple that<br>actually fixes the problem.</div></div>
+    </div>
+    <div class="link"></div>
+    <div class="card">
+      <div class="icon"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="16" rx="2.5"/><path d="M4 9h16"/><path d="M9 12a3 3 0 0 0 6 0"/></svg></div>
+      <div><div class="num">03</div><div class="title">Sell solutions.</div>
+        <div class="desc">Package it. Price it. Share it.<br>Help people. Get paid.</div></div>
+    </div>
+    <div class="link"></div>
+    <div class="card">
+      <div class="icon"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.5-4.5M4 4v3.5h3.5"/><path d="M4 13a8 8 0 0 0 14.5 4.5M20 20v-3.5h-3.5"/></svg></div>
+      <div><div class="num">04</div><div class="title">Repeat forever.</div>
+        <div class="desc">Improve it. Scale it. Reach more people.<br>Then do it all again.</div></div>
+    </div>
+  </div>
+
+  <div class="end"><svg viewBox="0 0 40 24"><path d="M20 12c-4-5-7-7-10-7a7 7 0 0 0 0 14c3 0 6-2 10-7s7-7 10-7a7 7 0 0 1 0 14c-3 0-6-2-10-7z"/></svg>That's it.</div>
+</div>
+</body>
+</html>
