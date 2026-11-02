@@ -13,6 +13,6 @@ Post `slide-1.png` … `slide-6.png` in order. Rebuild after edits:
 >
 > Founding terms for the first 5 paying clients, until 31 January 2027.
 >
-> Link in bio.
+> 🔗 manywright.com (link in bio)
 >
 > #smallbusiness #localbusiness #smallbusinesstips #websitedesign #googlebusinessprofile
