@@ -190,3 +190,25 @@ Missed one? We'll check the lot for free, by email in 3 business days. Comment C
 
 #smallbusinesstips #googlebusinessprofile #localseo #smallbusinessowner #localbusiness
 ```
+
+## Four freelancers carousel (`freelancers-1.png` … `freelancers-7.png`)
+
+Use it in place of the single comparison image on day 6, or as an extra post in week 2.
+
+```
+Four freelancers or one firm? Here's the maths. 🧮
+
+Swipe through all 5 👉
+
+1. Briefs: 4 → 1
+2. Bills: 4 quotes and invoices → 1 proposal, 1 price
+3. Who joins the dots: you → one accountable lead
+4. Price: find out later → published upfront
+5. Limits: "that's extra" → written into your proposal
+
+Every specialist. One firm. Not sure where to start? Comment CHECK for a free "Found on Google" check.
+
+🔗 manywright.com (link in bio)
+
+#smallbusiness #smallbusinessowner #entrepreneur #businesstips #localbusiness
+```
