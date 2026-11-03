@@ -168,3 +168,25 @@ Once Manywright has its own Google Business Profile, post one of these each week
 | 2 | | | | | | |
 
 Do more of whatever got the most "CHECK" DMs, and drop whatever got none.
+
+## Checklist carousel (`checklist-1.png` … `checklist-7.png`)
+
+Use it in place of the single checklist image on day 3, or as an extra post in week 2.
+
+```
+5 things customers check before they call you. How many does your business pass? ✅
+
+Swipe for each one, plus how to fix it in 5 minutes 👉
+
+1. Your hours are right
+2. Your photos are recent
+3. Every review has a reply
+4. Your site works on a phone
+5. One tap to call you
+
+Missed one? We'll check the lot for free, by email in 3 business days. Comment CHECK and I'll send you the link.
+
+📌 Save this for later.
+
+#smallbusinesstips #googlebusinessprofile #localseo #smallbusinessowner #localbusiness
+```

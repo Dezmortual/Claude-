@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Manywright checklist carousel</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Archivo+Expanded:wght@700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0F1A2E;--navy2:#16243D;--line:#2A3A57;--amber:#F5A623;--teal:#2ED3B7;--cyan:#4FC3F7;--coral:#F2675B;
+        --paper:#F4F6FA;--ink:#0F1A2E;--muted:#9AA7BD;--muted2:#5B6577;
+        --sans:'Archivo',system-ui,sans-serif;--wide:'Archivo Expanded','Archivo',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#999;padding:30px;display:flex;flex-direction:column;gap:30px;align-items:flex-start;font-family:var(--sans)}
+  .s{width:1080px;height:1350px;position:relative;overflow:hidden;padding:64px 80px;display:flex;flex-direction:column}
+  .dark{background:radial-gradient(900px 700px at 80% 20%,#1D3350 0%,var(--navy) 60%);color:#fff}
+  .light{background:var(--paper);color:var(--ink)}
+  .blush{background:#FDF0EF;color:var(--ink)}
+  .grid:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:60px 60px;pointer-events:none}
+  .top{display:flex;align-items:center;gap:20px;position:relative}
+  .word{font-family:var(--wide);font-size:30px;letter-spacing:.22em}
+  .word b{font-weight:800}.word span{font-weight:400;font-family:var(--sans);letter-spacing:.24em}
+  .pg{margin-left:auto;font-family:var(--mono);font-size:24px;letter-spacing:.1em;opacity:.7}
+  .sec{position:relative;margin-top:70px;font-family:var(--mono);font-size:26px;letter-spacing:.2em;text-transform:uppercase}
+  .sec i{font-style:normal;font-weight:600}
+  .rule{position:relative;height:2px;background:var(--line);margin-top:22px}
+  .light .rule,.blush .rule{background:#D9DEE8}
+  .rule:before{content:"";position:absolute;left:0;top:-2px;width:110px;height:6px;background:currentColor}
+  h1{position:relative;font-weight:800;font-size:104px;line-height:1;letter-spacing:-.035em;margin-top:44px}
+  h1 .dot{color:var(--amber)}
+  .lead{position:relative;font-size:36px;line-height:1.45;margin-top:34px;max-width:880px}
+  .dark .lead{color:#B9C4D6}.light .lead,.blush .lead{color:var(--muted2)}
+  .foot{position:absolute;left:80px;right:80px;bottom:56px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:24px;letter-spacing:.12em;opacity:.75}
+  .btn{display:inline-flex;align-items:center;gap:16px;background:var(--amber);color:var(--navy);font-weight:700;font-size:36px;border-radius:12px;padding:24px 38px}
+  .btn svg{width:34px;height:34px}
+  /* slide 2/3 diagrams */
+  .node{font-family:var(--mono);font-size:28px;letter-spacing:.18em;text-align:center}
+  .boxes text{font-family:var(--mono);letter-spacing:.18em}
+  /* services list */
+  .svc{position:relative;margin-top:36px;display:flex;flex-direction:column;gap:14px}
+  .row{display:grid;grid-template-columns:70px 1fr auto;align-items:center;gap:20px;background:#fff;border-radius:16px;padding:20px 26px;border:2px solid #E3E7EF;border-top-width:6px}
+  .row .n{font-family:var(--mono);font-size:24px;border-radius:8px;padding:4px 10px;text-align:center}
+  .row .t{font-weight:700;font-size:32px;letter-spacing:-.01em;line-height:1.15}
+  .row .t small{display:block;font-weight:400;font-size:22px;color:var(--muted2);margin-top:4px;letter-spacing:0}
+  .row .p{font-family:var(--wide);font-weight:800;font-size:30px;white-space:nowrap}
+  .row .p small{font-family:var(--sans);font-weight:500;font-size:20px;color:var(--muted2);display:block;text-align:right;letter-spacing:.04em}
+  .c1{border-top-color:var(--cyan)}.c1 .n{background:#E6F7FD;color:#0A7FA8}
+  .c2{border-top-color:var(--teal)}.c2 .n{background:#E3FAF5;color:#0F8A74}
+  .c3{border-top-color:var(--coral)}.c3 .n{background:#FDECEA;color:#C23A2E}
+  .c4{border-top-color:var(--amber)}.c4 .n{background:#FEF4E2;color:#A86A00}
+  /* steps */
+  .steps{position:relative;margin-top:44px;display:flex;flex-direction:column}
+  .st{display:grid;grid-template-columns:120px 1fr;gap:34px;padding-bottom:34px;position:relative}
+  .st:not(:last-child):after{content:"";position:absolute;left:58px;top:110px;bottom:4px;width:3px;background:#D5DBE6}
+  .st .tag{display:inline-block;font-family:var(--mono);font-size:24px;border-radius:8px;padding:4px 12px;margin-bottom:8px}
+  .st h3{font-size:46px;font-weight:700;letter-spacing:-.02em}
+  .st p{font-size:28px;line-height:1.45;color:var(--muted2);margin-top:6px}
+  /* offer */
+  .offer{position:relative;margin-top:40px;background:#fff;color:var(--ink);border-radius:20px;padding:40px 44px;border-left:10px solid var(--amber)}
+  .offer h3{font-size:44px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+  .offer p{font-size:28px;line-height:1.45;color:var(--muted2);margin-top:14px}
+  .found{position:relative;margin-top:22px;border:2px solid var(--line);border-radius:20px;padding:30px 44px}
+  .found .k{font-family:var(--mono);font-size:22px;letter-spacing:.18em;color:var(--amber)}
+  .found p{font-size:30px;line-height:1.4;color:#D5DDEA;margin-top:10px}
+  .found b{color:#fff}
+</style><style>
+  .num{position:relative;font-family:var(--wide);font-weight:800;font-size:220px;line-height:.85;letter-spacing:-.04em;margin-top:40px}
+  .why{position:relative;margin-top:40px;font-size:37px;line-height:1.45;color:var(--muted2);max-width:900px}
+  .why b{color:var(--ink)}
+  .fix{position:relative;margin-top:48px;background:#fff;border:2px solid #E3E7EF;border-radius:20px;padding:40px 44px}
+  .fix .k{font-family:var(--mono);font-size:22px;letter-spacing:.18em;font-weight:600}
+  .fix ol{margin:16px 0 0 0;padding-left:0;list-style:none;counter-reset:f}
+  .fix li{counter-increment:f;position:relative;padding-left:66px;font-size:33px;line-height:1.4;margin-top:22px}
+  .fix li:before{content:counter(f);position:absolute;left:0;top:2px;width:42px;height:42px;border-radius:50%;font-family:var(--mono);font-size:22px;font-weight:600;display:grid;place-items:center;color:#fff}
+  .mini{position:relative;margin-top:44px;display:flex;flex-direction:column;gap:14px}
+  .mi{display:flex;align-items:center;gap:22px;font-size:34px;font-weight:600}
+  .mi .bx{width:48px;height:48px;border:4px solid #fff;border-radius:10px;flex:none}
+  .prog{position:absolute;left:80px;right:80px;bottom:120px;display:flex;gap:10px}
+  .prog i{flex:1;height:8px;border-radius:4px;background:#D9DEE8}
+</style>
+</head><body>
+
+<!-- M mark: four pieces -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="m" viewBox="0 0 100 80">
+      <path d="M0 6 L14 22 V80 H0 Z" fill="currentColor"/>
+      <path d="M2 0 H22 L52 52 L50 78 Z" fill="currentColor"/>
+      <path d="M78 0 H98 L52 78 L52 54 Z" fill="#F5A623"/>
+      <path d="M100 6 V80 H86 V22 Z" fill="currentColor"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="s light">
+  <div class="top"><svg width="62" height="50" style="color:var(--ink)"><use href="#m"/></svg><div class="word"><b>MANY</b><span>WRIGHT</span></div><div class="pg">01/07</div></div>
+  <div class="sec" style="color:#0A7FA8;margin-top:80px"><i>Checklist</i> — <span style="color:var(--muted2)">Save this</span></div>
+  <div class="rule" style="color:var(--cyan)"></div>
+  <h1 style="font-size:112px">5 things customers check before they call you<span class="dot">.</span></h1>
+  <p class="why" style="margin-top:40px">They search, glance at your Google profile for a few seconds, and either tap <b>Call</b> or move on to the next business.</p>
+  <p class="why" style="margin-top:20px">How many does your business pass?</p>
+  <div class="foot" style="color:var(--ink);opacity:1"><span style="opacity:.7">MANYWRIGHT.COM</span><span style="color:#A86A00;font-weight:600">SWIPE →</span></div>
+</div>
+
+<div class="s light">
+  <div class="top"><svg width="62" height="50" style="color:var(--ink)"><use href="#m"/></svg><div class="word"><b>MANY</b><span>WRIGHT</span></div><div class="pg">02/07</div></div>
+  <div class="num" style="color:#4FC3F7">01</div>
+  <h1 style="font-size:92px;margin-top:20px">Your hours are right<span class="dot">.</span></h1>
+  <p class="why">Nothing loses a customer faster than a closed door. If Google says you're open and you're not, <b>they won't give you a second chance.</b></p>
+  <div class="fix"><div class="k" style="color:#0A7FA8">FIX IT IN 5 MINUTES</div><ol><li>Search your business name on Google while signed in, and tap <b>Edit profile</b>.</li><li>Check your opening hours match reality.</li><li>Add <b>special hours</b> for public holidays before they arrive.</li></ol></div>
+  <style>.s:nth-of-type(2) .fix li:before{background:#4FC3F7}</style>
+  <div class="prog"><i style="background:#4FC3F7"></i><i style="background:#D9DEE8"></i><i style="background:#D9DEE8"></i><i style="background:#D9DEE8"></i><i style="background:#D9DEE8"></i></div>
+  <div class="foot" style="color:var(--ink);opacity:1"><span style="opacity:.7">01 OF 05</span><span style="color:#A86A00;font-weight:600">SWIPE →</span></div>
+</div>
+
+<div class="s light">
+  <div class="top"><svg width="62" height="50" style="color:var(--ink)"><use href="#m"/></svg><div class="word"><b>MANY</b><span>WRIGHT</span></div><div class="pg">03/07</div></div>
+  <div class="num" style="color:#2ED3B7">02</div>
+  <h1 style="font-size:92px;margin-top:20px">Your photos are recent<span class="dot">.</span></h1>
+  <p class="why">Photos are how customers judge you before they call. Old or missing photos make a business look <b>closed or careless.</b></p>
+  <div class="fix"><div class="k" style="color:#0F8A74">FIX IT IN 5 MINUTES</div><ol><li>Add a clear photo of your shopfront or sign.</li><li>Add 3–5 photos of your actual work.</li><li>Add one of you or your team. People buy from people.</li></ol></div>
+  <style>.s:nth-of-type(3) .fix li:before{background:#2ED3B7}</style>
+  <div class="prog"><i style="background:#2ED3B7"></i><i style="background:#2ED3B7"></i><i style="background:#D9DEE8"></i><i style="background:#D9DEE8"></i><i style="background:#D9DEE8"></i></div>
+  <div class="foot" style="color:var(--ink);opacity:1"><span style="opacity:.7">02 OF 05</span><span style="color:#A86A00;font-weight:600">SWIPE →</span></div>
+</div>
+
+<div class="s light">
+  <div class="top"><svg width="62" height="50" style="color:var(--ink)"><use href="#m"/></svg><div class="word"><b>MANY</b><span>WRIGHT</span></div><div class="pg">04/07</div></div>
+  <div class="num" style="color:#F2675B">03</div>
+  <h1 style="font-size:92px;margin-top:20px">Every review has a reply<span class="dot">.</span></h1>
+  <p class="why">Customers read your replies as much as the reviews. A calm reply to a bad review <b>is really written for the next customer.</b></p>
+  <div class="fix"><div class="k" style="color:#C23A2E">FIX IT IN 5 MINUTES</div><ol><li>Thank happy customers by name.</li><li>For bad reviews: stay calm, own what went wrong, offer to fix it.</li><li>Reply within a few days, every time.</li></ol></div>
+  <style>.s:nth-of-type(4) .fix li:before{background:#F2675B}</style>
+  <div class="prog"><i style="background:#F2675B"></i><i style="background:#F2675B"></i><i style="background:#F2675B"></i><i style="background:#D9DEE8"></i><i style="background:#D9DEE8"></i></div>
+  <div class="foot" style="color:var(--ink);opacity:1"><span style="opacity:.7">03 OF 05</span><span style="color:#A86A00;font-weight:600">SWIPE →</span></div>
+</div>
+
+<div class="s light">
+  <div class="top"><svg width="62" height="50" style="color:var(--ink)"><use href="#m"/></svg><div class="word"><b>MANY</b><span>WRIGHT</span></div><div class="pg">05/07</div></div>
+  <div class="num" style="color:#F5A623">04</div>
+  <h1 style="font-size:92px;margin-top:20px">Your site works on a phone<span class="dot">.</span></h1>
+  <p class="why">Most local searches happen on a phone. If people have to pinch and zoom, or wait for the page to load, <b>they leave.</b></p>
+  <div class="fix"><div class="k" style="color:#A86A00">FIX IT IN 5 MINUTES</div><ol><li>Open your website on your own phone.</li><li>Try to find your phone number in under 5 seconds.</li><li>If you can't, your customers can't either.</li></ol></div>
+  <style>.s:nth-of-type(5) .fix li:before{background:#F5A623}</style>
+  <div class="prog"><i style="background:#F5A623"></i><i style="background:#F5A623"></i><i style="background:#F5A623"></i><i style="background:#F5A623"></i><i style="background:#D9DEE8"></i></div>
+  <div class="foot" style="color:var(--ink);opacity:1"><span style="opacity:.7">04 OF 05</span><span style="color:#A86A00;font-weight:600">SWIPE →</span></div>
+</div>
+
+<div class="s light">
+  <div class="top"><svg width="62" height="50" style="color:var(--ink)"><use href="#m"/></svg><div class="word"><b>MANY</b><span>WRIGHT</span></div><div class="pg">06/07</div></div>
+  <div class="num" style="color:#4FC3F7">05</div>
+  <h1 style="font-size:92px;margin-top:20px">One tap to call you<span class="dot">.</span></h1>
+  <p class="why">A customer who wants to call shouldn't have to copy and paste a number. <b>Every extra step loses some of them.</b></p>
+  <div class="fix"><div class="k" style="color:#0A7FA8">FIX IT IN 5 MINUTES</div><ol><li>Check your phone number is on your Google profile.</li><li>Put a tap-to-call button at the top of every page of your site.</li><li>Test it on your phone. Tap it. Does it ring?</li></ol></div>
+  <style>.s:nth-of-type(6) .fix li:before{background:#4FC3F7}</style>
+  <div class="prog"><i style="background:#4FC3F7"></i><i style="background:#4FC3F7"></i><i style="background:#4FC3F7"></i><i style="background:#4FC3F7"></i><i style="background:#4FC3F7"></i></div>
+  <div class="foot" style="color:var(--ink);opacity:1"><span style="opacity:.7">05 OF 05</span><span style="color:#A86A00;font-weight:600">ONE MORE →</span></div>
+</div>
+
+<div class="s dark grid">
+  <div class="top"><svg width="62" height="50" style="color:#fff"><use href="#m"/></svg><div class="word"><b>MANY</b><span>WRIGHT</span></div><div class="pg">07/07</div></div>
+  <div class="sec" style="color:var(--amber)"><i>Missed one?</i> — <span style="color:#B9C4D6">We'll check for you</span></div>
+  <div class="rule" style="color:var(--amber)"></div>
+  <h1 style="font-size:96px">Get your free<br>“Found on Google” check<span class="dot">.</span></h1>
+  <div class="mini">
+    <div class="mi"><span class="bx"></span>Your Google profile, reviewed</div>
+    <div class="mi"><span class="bx"></span>Your website, tested on a phone</div>
+    <div class="mi"><span class="bx"></span>A one-page report of what to fix first</div>
+  </div>
+  <p class="lead" style="margin-top:36px">Free, by email in 3 business days.</p>
+  <div style="position:relative;margin-top:36px"><span class="btn">Comment CHECK <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></div>
+  <div class="foot" style="color:#B9C4D6"><span>LINK IN BIO</span><span style="color:#fff;opacity:1;font-weight:600;font-size:34px;letter-spacing:.08em">MANYWRIGHT<span style="color:var(--amber)">.COM</span></span></div>
+</div>
+</body></html>
