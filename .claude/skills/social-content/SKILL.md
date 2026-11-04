@@ -20,7 +20,8 @@ Read `references/brand.md`.
 
 1. Fetch https://manywright.com/ and every page linked from its main
    navigation and footer (about, pricing, features/products, blog, FAQ).
-   Use WebFetch; if the host can't be reached, ask the user to paste the
+   Use WebFetch; if that fails, try `curl -sSL <url>` in Bash and strip the
+   HTML. If the host still can't be reached, ask the user to paste the
    homepage and about-page text, or to allow `manywright.com` in the
    session's network settings.
 2. Fill in every section of `references/brand.md` using only what the site
@@ -57,7 +58,9 @@ hashtag rules. For every post:
 - **Plain, specific language.** No "unlock", "elevate", "game-changer",
   "in today's fast-paced world", "dive in", or emoji walls.
 - **CTA + link.** Link to the page that matches the post, tagged
-  `?utm_source=<platform>&utm_medium=social&utm_campaign=<slug>`.
+  `?utm_source=<platform>&utm_medium=social&utm_campaign=<slug>`. The query
+  goes before any `#anchor` (`https://manywright.com/?utm_…#proposal`),
+  never after it, or the tags are lost.
 - **Visual brief.** For image/video platforms, add a short brief: what's in
   the image or each scene, on-screen text, and alt text.
 
