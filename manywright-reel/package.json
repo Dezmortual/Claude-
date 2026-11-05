@@ -1,0 +1,15 @@
+{
+  "name": "manywright-reel",
+  "private": true,
+  "scripts": {
+    "music": "node scripts/music.mjs",
+    "studio": "remotion studio",
+    "render": "remotion render Reel out/manywright-reel.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.537",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.537"
+  }
+}
