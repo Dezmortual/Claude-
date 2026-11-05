@@ -1,0 +1,979 @@
+<title>Manywright Bench</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+<style>
+/* Layout: a cyanotype drafting sheet. A fixed Three.js "bench" fills the window; numbered sheets scroll over it on the left and drive the scene. */
+:root {
+  --bg: #0A1F33;
+  --panel: rgba(9, 28, 46, 0.82);
+  --ink: #E4EDF3;
+  --muted: #8EA7BB;
+  --line: #2A4964;
+  --accent: #F2B84B;
+  --warn: #E8775E;
+  --display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #E8EDEF; --panel: rgba(240, 244, 246, 0.88); --ink: #0E2438; --muted: #4D6276;
+    --line: #B3C2CC; --accent: #995E00; --warn: #B0432C; color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #E8EDEF; --panel: rgba(240, 244, 246, 0.88); --ink: #0E2438; --muted: #4D6276;
+  --line: #B3C2CC; --accent: #995E00; --warn: #B0432C; color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--ink); }
+body {
+  font-family: var(--body); font-size: 17px; line-height: 1.6;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 48px 48px; background-attachment: fixed;
+  background-color: var(--bg);
+}
+body::after { content: ""; position: fixed; inset: 0; background: var(--bg); opacity: .82; z-index: 0; pointer-events: none; }
+#scene { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1; display: block; }
+#labels { position: fixed; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.lbl {
+  position: absolute; left: 0; top: 0; white-space: nowrap;
+  font: 600 11px/1.2 var(--mono); letter-spacing: .06em; text-transform: uppercase;
+  color: var(--muted); transition: opacity .4s, color .3s; opacity: 0;
+}
+.lbl.on { opacity: 1; }
+.lbl.hot { color: var(--accent); }
+.lbl.big { font-size: 12px; color: var(--ink); }
+.lbl.warn { color: var(--warn); }
+
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 12px); padding-bottom: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: linear-gradient(var(--bg), transparent);
+}
+.mark { font: 800 15px/1 var(--display); font-stretch: 125%; letter-spacing: .02em; }
+.mark span { font-weight: 400; }
+@media (max-width: 520px) { .sheetno { display: none; } }
+.sheetno { font: 400 12px/1 var(--mono); color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.tb-right { display: flex; align-items: center; gap: 14px; }
+.btn {
+  font: 600 13px/1 var(--mono); white-space: nowrap; letter-spacing: .04em; color: var(--ink);
+  background: transparent; border: 1px solid var(--ink); padding: 10px 14px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px; text-decoration: none; border-radius: 0;
+}
+.btn:hover { background: var(--ink); color: var(--bg); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #0A1F33; }
+.btn.primary:hover { filter: brightness(1.08); background: var(--accent); color: #0A1F33; }
+.btn:focus-visible, .chip:focus-visible, .step:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.sound-dot { width: 8px; height: 8px; border: 1px solid currentColor; display: inline-block; }
+.btn[aria-pressed="true"] .sound-dot { background: var(--accent); border-color: var(--accent); }
+.bars { display: inline-flex; gap: 2px; align-items: flex-end; height: 12px; }
+.bars i { width: 2px; background: currentColor; height: 3px; transition: height .2s; }
+.btn[aria-pressed="true"] .bars i { animation: eq 1.1s ease-in-out infinite; }
+.bars i:nth-child(2) { animation-delay: .2s !important; }
+.bars i:nth-child(3) { animation-delay: .45s !important; }
+@keyframes eq { 0%,100% { height: 3px } 50% { height: 12px } }
+
+.fig {
+  position: fixed; z-index: 4; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  font: 400 12px/1.3 var(--mono); color: var(--muted); letter-spacing: .04em; text-align: right; max-width: 60vw;
+}
+.fig b { color: var(--ink); font-weight: 600; }
+
+.story { position: relative; z-index: 3; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.sheet { display: flex; padding-block: 24vh; }
+.sheet:first-child { padding-block: 18vh 22vh; }
+.sheet:last-child { padding-bottom: 16vh; }
+.panel {
+  width: 100%; max-width: 35rem; background: var(--panel); border: 1px solid var(--line);
+  padding: clamp(20px, 3vw, 34px); position: relative; min-width: 0;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+.panel::before, .panel::after { content: ""; position: absolute; width: 10px; height: 10px; border: 0 solid var(--accent); }
+.panel::before { top: -1px; left: -1px; border-top-width: 2px; border-left-width: 2px; }
+.panel::after { bottom: -1px; right: -1px; border-bottom-width: 2px; border-right-width: 2px; }
+@media (min-width: 960px) { .story { padding-left: max(5vw, env(safe-area-inset-left, 0px)); } }
+
+.eyebrow { font: 400 12px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; display: flex; gap: 10px; flex-wrap: wrap; }
+.eyebrow b { color: var(--accent); font-weight: 600; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(40px, 6.4vw, 76px); line-height: .94; font-weight: 850; font-stretch: 118%; letter-spacing: -.01em; }
+h1 em { font-style: normal; font-weight: 400; font-stretch: 78%; display: block; color: var(--accent); }
+h2 { font-size: clamp(28px, 3.6vw, 42px); line-height: 1.02; font-weight: 800; font-stretch: 112%; }
+h3 { font-size: 15px; font-weight: 700; font-stretch: 100%; letter-spacing: .01em; }
+p { margin: 0; max-width: 62ch; }
+.lede { font-size: 19px; }
+.stack { display: grid; gap: 18px; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.stats div { padding: 12px 10px 12px 0; display: grid; gap: 2px; min-width: 0; }
+.stats div + div { padding-left: 12px; border-left: 1px solid var(--line); }
+.stats strong { font: 800 30px/1 var(--display); font-stretch: 110%; font-variant-numeric: tabular-nums; }
+.stats span { font: 400 11px/1.3 var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+@media (max-width: 520px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .stats div:nth-child(3) { padding-left: 0; border-left: 0; } .stats div:nth-child(n+3) { border-top: 1px solid var(--line); } }
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+.slider { display: grid; gap: 8px; }
+.slider label { font: 600 13px/1.3 var(--mono); letter-spacing: .04em; display: flex; justify-content: space-between; }
+.slider output { color: var(--warn); font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; accent-color: var(--warn); }
+.cmp { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.cmp th, .cmp td { text-align: right; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+.cmp th:first-child, .cmp td:first-child { text-align: left; padding-left: 0; }
+.cmp thead th { font: 400 11px/1.3 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.cmp td { font: 700 22px/1.1 var(--display); }
+.cmp td:first-child { font: 600 13px/1.3 var(--mono); }
+.cmp .bad td:not(:first-child) { color: var(--warn); }
+.cmp .good td:not(:first-child) { color: var(--accent); }
+.note { border-left: 2px solid var(--warn); padding-left: 14px; font-size: 15px; }
+.note.ok { border-color: var(--accent); }
+
+.benefits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 22px; margin: 0; }
+.benefits div { display: grid; gap: 4px; min-width: 0; }
+.benefits dt { font: 700 15px/1.2 var(--display); font-stretch: 105%; }
+.benefits dd { margin: 0; font-size: 15px; color: var(--muted); }
+@media (max-width: 520px) { .benefits { grid-template-columns: 1fr; } }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  font: 400 13px/1.25 var(--mono); color: var(--ink); background: transparent; border: 1px solid var(--line);
+  padding: 8px 11px; cursor: pointer; text-align: left; border-radius: 0;
+}
+.chip:hover { border-color: var(--ink); }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #0A1F33; font-weight: 600; }
+.readout { font: 600 13px/1.4 var(--mono); letter-spacing: .03em; display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 10px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.readout span { color: var(--muted); font-weight: 400; }
+.readout b { color: var(--accent); font-variant-numeric: tabular-nums; }
+.lineup { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font: 400 12px/1.2 var(--mono); padding: 5px 8px; border: 1px solid var(--line); color: var(--ink); }
+.tag b { color: var(--accent); }
+.svc { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.svc li { display: flex; justify-content: space-between; gap: 12px; font-size: 15px; border-bottom: 1px dashed var(--line); padding-bottom: 6px; }
+.svc li span:last-child { font: 600 13px/1.6 var(--mono); color: var(--accent); white-space: nowrap; }
+
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.step {
+  width: 100%; text-align: left; cursor: pointer; background: transparent; color: var(--ink);
+  border: 1px solid var(--line); padding: 10px; display: grid; gap: 4px; border-radius: 0;
+}
+.step small { font: 400 11px/1 var(--mono); color: var(--muted); }
+.step strong { font: 700 16px/1.1 var(--display); font-stretch: 108%; }
+.step[aria-current="step"] { border-color: var(--accent); }
+.step[aria-current="step"] small { color: var(--accent); }
+.step.done strong::after { content: " ✓"; color: var(--accent); font-size: 12px; }
+@media (max-width: 460px) { .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stepcopy { min-height: 5.5em; }
+
+.tablewrap { overflow-x: auto; }
+.prices { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 460px; }
+.prices th, .prices td { text-align: left; vertical-align: top; padding: 9px 8px 9px 0; border-bottom: 1px solid var(--line); }
+.prices thead th { font: 400 11px/1.3 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.prices td:first-child { font-family: var(--display); font-weight: 700; font-stretch: 100%; width: 34%; }
+.prices td:last-child { font: 600 13px/1.4 var(--mono); color: var(--accent); white-space: nowrap; text-align: right; padding-right: 0; }
+.prices th:last-child { text-align: right; padding-right: 0; }
+.rules { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; counter-reset: r; }
+.rules li { font-size: 15px; display: grid; grid-template-columns: auto 1fr; gap: 10px; min-width: 0; }
+.rules li::before { counter-increment: r; content: "R" counter(r); font: 600 11px/1.9 var(--mono); color: var(--accent); }
+@media (max-width: 520px) { .rules { grid-template-columns: 1fr; } }
+.seq { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; counter-reset: s; }
+.seq li { display: grid; grid-template-columns: 2.2em 1fr; font-size: 16px; }
+.seq li::before { counter-increment: s; content: "0" counter(s); font: 600 12px/1.9 var(--mono); color: var(--accent); }
+.offer { border: 1px dashed var(--accent); padding: 14px 16px; display: grid; gap: 8px; font-size: 15px; }
+.offer h3 { color: var(--accent); }
+.foot { font: 400 12px/1.5 var(--mono); color: var(--muted); }
+a { color: var(--accent); }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.nogl #scene, .nogl #labels { display: none; }
+@media (prefers-reduced-motion: reduce) { .btn[aria-pressed="true"] .bars i { animation: none; height: 8px; } .lbl { transition: none; } }
+</style>
+
+<canvas id="scene" aria-hidden="true"></canvas>
+<div id="labels" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="mark">MANY<span>WRIGHT</span></div>
+  <div class="tb-right">
+    <span class="sheetno" id="sheetno">Sheet 01 / 07</span>
+    <button class="btn" id="soundBtn" type="button" aria-pressed="false"><span class="bars"><i></i><i></i><i></i></span><span id="soundTxt">Sound off</span></button>
+  </div>
+</header>
+
+<div class="fig" id="fig" aria-live="polite"><b>Fig. 1</b> The bench: 199 specialist roles</div>
+
+<main class="story">
+
+  <section class="sheet" data-state="cloud" data-no="01" id="top">
+    <div class="panel stack">
+      <p class="eyebrow"><b>Sheet 01</b><span>Manywright · Knysna · South Africa and the US</span></p>
+      <h1>Every specialist. <em>One firm.</em></h1>
+      <p class="lede">A local business needs a website, a Google profile, social posts, tidy books, a watched inbox and basic security. Most end up hiring a different supplier for each. This tour shows what changes when one firm takes the whole brief.</p>
+      <div class="stats">
+        <div><strong>199</strong><span>Specialist roles</span></div>
+        <div><strong>13</strong><span>Disciplines</span></div>
+        <div><strong>8</strong><span>Priced services</span></div>
+        <div><strong>1</strong><span>Accountable lead</span></div>
+      </div>
+      <div class="row">
+        <a class="btn primary" href="#usual" id="startTour">Start the tour</a>
+        <button class="btn" type="button" id="soundBtn2" aria-pressed="false">Turn on sound</button>
+      </div>
+      <p class="small muted">Each dot behind this sheet is one specialist role on the bench. Scroll to move through seven sheets; sheets 2, 4 and 5 have controls.</p>
+    </div>
+  </section>
+
+  <section class="sheet" data-state="usual" data-no="02" id="usual">
+    <div class="panel stack">
+      <p class="eyebrow"><b>Sheet 02</b><span>The usual way</span></p>
+      <h2>Four suppliers, four briefs, and nobody joining the dots.</h2>
+      <p>An agency for design, a freelancer for the website, a consultant for security, someone else for the books. Each one needs its own brief, sends its own invoice and sees only its own piece. You end up managing the project between them.</p>
+      <div class="slider">
+        <label for="vendors">Suppliers you work with <output id="vendorsOut" for="vendors">4</output></label>
+        <input type="range" id="vendors" min="2" max="8" step="1" value="4">
+      </div>
+      <table class="cmp" aria-live="polite">
+        <thead><tr><th scope="col"></th><th scope="col">Briefs</th><th scope="col">Invoices</th><th scope="col">Lines to manage</th></tr></thead>
+        <tbody>
+          <tr class="bad"><td>Usual way</td><td id="cBriefs">4</td><td id="cInv">4</td><td id="cLines">10</td></tr>
+          <tr class="good"><td>Manywright</td><td>1</td><td>1</td><td>1</td></tr>
+        </tbody>
+      </table>
+      <p class="note small">"Lines to manage" counts every pair among you and your suppliers who may need to talk to each other: n(n+1)/2 for n suppliers. Four suppliers make 10 lines. Six make 21. Each one is a place where messages get lost.</p>
+    </div>
+  </section>
+
+  <section class="sheet" data-state="one" data-no="03" id="one">
+    <div class="panel stack">
+      <p class="eyebrow"><b>Sheet 03</b><span>The idea</span></p>
+      <h2>One brief. One firm. The right specialists behind it.</h2>
+      <p>A wright is a maker. A shipwright builds ships; a playwright builds plays. Manywright brings many crafts under one name. You describe the work once, to the founder, who stays your single point of contact. Behind that lead sits a bench of 199 specialist roles in 13 disciplines, called in only when your work needs them.</p>
+      <dl class="benefits">
+        <div><dt>One conversation</dt><dd>Brief one person in plain language. Get progress updates in plain English.</dd></div>
+        <div><dt>One proposal, one bill</dt><dd>Scope, deliverables, timeline, price and specialists in a single written proposal.</dd></div>
+        <div><dt>Work that fits together</dt><dd>The specialists work as one team on the agreed scope, coordinated end to end.</dd></div>
+        <div><dt>Named roles</dt><dd>Your proposal lists who is assigned. Named roles, not a black box.</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="sheet" data-state="team" data-no="04" id="team">
+    <div class="panel stack">
+      <p class="eyebrow"><b>Sheet 04</b><span>Build your team</span></p>
+      <h2>Pick a goal. See the line-up.</h2>
+      <p>Choose what you need done and the bench lights up the kinds of roles that goal draws on. Pick several. It is still one brief and one lead.</p>
+      <div class="chips" id="chips" role="group" aria-label="Business goals"></div>
+      <div class="readout" aria-live="polite">
+        <div><span>Roles drawn</span> <b id="rRoles">0</b></div>
+        <div><span>Disciplines</span> <b id="rDisc">0</b></div>
+        <div><span>Briefs</span> <b>1</b></div>
+        <div><span>Leads</span> <b>1</b></div>
+      </div>
+      <div class="lineup" id="lineup"></div>
+      <ul class="svc" id="svc"></ul>
+      <p class="small muted">An example line-up for illustration. Your written proposal names the actual roles assigned.</p>
+    </div>
+  </section>
+
+  <section class="sheet" data-state="make" data-no="05" id="make">
+    <div class="panel stack">
+      <p class="eyebrow"><b>Sheet 05</b><span>How we work</span></p>
+      <h2>Four pieces. One way of working.</h2>
+      <p>The Manywright mark is built from four pieces, and so is every engagement. Pick a step, or watch the assembly.</p>
+      <ol class="steps" id="steps"></ol>
+      <p class="stepcopy" id="stepCopy" aria-live="polite"></p>
+      <div class="row"><button class="btn" type="button" id="replay">Replay assembly</button></div>
+    </div>
+  </section>
+
+  <section class="sheet" data-state="price" data-no="06" id="price">
+    <div class="panel stack">
+      <p class="eyebrow"><b>Sheet 06</b><span>Prices and principles</span></p>
+      <h2>Know the price and the limits before work starts.</h2>
+      <p>Each of the eight services has a published starting price. Every limit is written into your proposal before anything starts, so the budget you approve is the budget you get.</p>
+      <div class="tablewrap">
+        <table class="prices">
+          <thead><tr><th scope="col">Service</th><th scope="col">What you get</th><th scope="col">From (USD)</th></tr></thead>
+          <tbody id="priceRows"></tbody>
+        </table>
+      </div>
+      <p class="small">South African businesses: website from R19,500 and plans from R2,950/mo. <a href="https://manywright.com/za/" target="_blank" rel="noopener">See prices in rand</a>.</p>
+      <h3>What you can hold us to</h3>
+      <ul class="rules">
+        <li>A written scope before any work.</li>
+        <li>Named roles, not a black box.</li>
+        <li>One brief, one accountable lead.</li>
+        <li>Review built in: code review, accessibility audits, fact checks.</li>
+        <li>Plain English, start to finish.</li>
+        <li>Yours to keep: files and source code transfer to you on payment.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sheet" data-state="cta" data-no="07" id="cta">
+    <div class="panel stack">
+      <p class="eyebrow"><b>Sheet 07</b><span>Start</span></p>
+      <h2>Tell us what you need.</h2>
+      <p>Describe the work in your own words. A few sentences is plenty: goals, deadlines and anything you have tried already. No obligation.</p>
+      <ol class="seq">
+        <li>You send the brief.</li>
+        <li>We reply within two business days.</li>
+        <li>You get a written proposal to accept, change or decline.</li>
+      </ol>
+      <div class="offer">
+        <h3>Founding terms, until 31 January 2027</h3>
+        <p>For the first 5 paying clients: 50% off the first month of a monthly plan, or 15% off a fixed package.</p>
+        <p>Free "Found on Google" check: a one-page written review of your Google profile and phone experience, emailed within 3 business days.</p>
+      </div>
+      <div class="row">
+        <a class="btn primary" href="https://manywright.com/#proposal" target="_blank" rel="noopener">Request a proposal</a>
+        <a class="btn" href="https://manywright.com/" target="_blank" rel="noopener">Ask for your free check</a>
+      </div>
+      <p class="foot">Legal, healthcare and tax-related work is research and drafting support, not professional advice. Bookkeeping includes no tax filing or tax advice.</p>
+    </div>
+  </section>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+"use strict";
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------------- Content ---------------- */
+// Ordered so small disciplines sit between large ones and their labels don't collide.
+const DISC = [
+  ["Engineering", 57], ["Research", 1], ["Marketing", 25], ["Finance", 5],
+  ["Specialized", 45], ["Product", 6], ["Security", 11], ["Support", 7],
+  ["Design", 10], ["Project management", 7], ["Sales", 9], ["Paid media", 7], ["Testing", 9]
+];
+const GOALS = [
+  { id: "web", label: "Build or refresh our website", svc: "Website build or refresh", price: "$3,500",
+    mix: { Design: 2, Engineering: 4, Testing: 2, "Project management": 1, Product: 1 } },
+  { id: "google", label: "Get found on Google", svc: "Get found locally", price: "$549/mo",
+    mix: { Marketing: 4, Engineering: 1, Research: 1, "Project management": 1 } },
+  { id: "social", label: "Post regularly on social and email", svc: "Social posts and email newsletter", price: "$995/mo",
+    mix: { Marketing: 4, Design: 2, "Project management": 1 } },
+  { id: "books", label: "Get our books in order", svc: "Bookkeeping and getting paid", price: "$495/mo",
+    mix: { Finance: 3, Specialized: 1, "Project management": 1 } },
+  { id: "inbox", label: "Answer customers faster", svc: "Customer inbox handling", price: "$450/mo",
+    mix: { Support: 3, Specialized: 1, Engineering: 1, "Project management": 1 } },
+  { id: "booking", label: "Take bookings and payments online", svc: "Online booking, forms and reminders", price: "$1,000",
+    mix: { Engineering: 3, Design: 1, Testing: 1, Security: 1, "Project management": 1 } },
+  { id: "logo", label: "Get a logo and look", svc: "Logo and brand basics", price: "$1,250",
+    mix: { Design: 4, Research: 1, "Project management": 1 } },
+  { id: "secure", label: "Check we're secure", svc: "Security and data check-up", price: "$1,750",
+    mix: { Security: 4, Testing: 1, Engineering: 1, "Project management": 1 } },
+  { id: "grow", label: "Grow demand", svc: "Demand growth", price: "Quoted",
+    mix: { Marketing: 3, "Paid media": 3, Sales: 2, Research: 1, "Project management": 1 } }
+];
+const PRICES = [
+  ["Website build or refresh", "A mobile site you can edit, with quote and contact forms and click-to-call.", "$3,500"],
+  ["Get found locally", "Your Google profile, listings and review replies kept current, with a monthly report.", "$549/mo"],
+  ["Social posts and email newsletter", "A month of posts planned and ready, approved by you first.", "$995/mo"],
+  ["Bookkeeping and getting paid", "Reconciled books, a monthly profit-and-loss and overdue-invoice reminders.", "$495/mo"],
+  ["Customer inbox handling", "Business-hours replies from answers you approve, bookings handed to you the same day.", "$450/mo"],
+  ["Online booking, forms and reminders", "Bookings, forms and automatic reminders for your customers.", "$1,000"],
+  ["Logo and brand basics", "A logo with variations, colors and fonts, a brand sheet and a business card.", "$1,250"],
+  ["Security and data check-up", "Logins, backups, Wi-Fi and card-payment basics checked, with a ranked fix list.", "$1,750"]
+];
+const STEPS = [
+  ["Brief", "Tell us what you need in plain language. If something is unclear, we ask before we assume."],
+  ["Propose", "You receive a written proposal: scope, deliverables, timeline, price and the specialists assigned. You accept it, change it or decline it."],
+  ["Make", "The specialists work as one team on the agreed scope, coordinated end to end, with progress updates in plain English."],
+  ["Deliver", "Work passes the relevant reviews, then it is handed over. You keep what we make."]
+];
+const VENDORS = ["Design agency", "Web freelancer", "Security consultant", "Bookkeeper", "Social media manager", "IT person", "Ads manager", "Copywriter"];
+
+/* ---------------- Sound ---------------- */
+const Snd = (() => {
+  let ctx = null, master, wet, droneGain, droneFilter, droneOsc = [], on = false;
+  function impulse(sec, decay) {
+    const len = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay); }
+    return b;
+  }
+  function init() {
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
+    ctx = new AC();
+    master = ctx.createGain(); master.gain.value = 0;
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3;
+    master.connect(comp); comp.connect(ctx.destination);
+    const conv = ctx.createConvolver(); conv.buffer = impulse(3.2, 2.6);
+    wet = ctx.createGain(); wet.gain.value = 0.45; wet.connect(conv); conv.connect(master);
+    droneFilter = ctx.createBiquadFilter(); droneFilter.type = "lowpass"; droneFilter.frequency.value = 340; droneFilter.Q.value = 0.8;
+    droneGain = ctx.createGain(); droneGain.gain.value = 0;
+    droneFilter.connect(droneGain); droneGain.connect(master); droneGain.connect(wet);
+    [[55, "sine", .55], [82.41, "triangle", .22], [110, "sine", .25], [164.81, "sine", .08]].forEach(([f, type, g], i) => {
+      const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = (i - 1.5) * 3;
+      const gg = ctx.createGain(); gg.gain.value = g; o.connect(gg); gg.connect(droneFilter); o.start(); droneOsc.push(o);
+    });
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 0.06; const lg = ctx.createGain(); lg.gain.value = 150;
+    lfo.connect(lg); lg.connect(droneFilter.frequency); lfo.start();
+    return true;
+  }
+  function set(v) {
+    if (!ctx && !init()) return false;
+    if (ctx.state === "suspended") ctx.resume();
+    on = v; const t = ctx.currentTime;
+    master.gain.cancelScheduledValues(t); master.gain.setTargetAtTime(on ? 0.9 : 0, t, 0.25);
+    droneGain.gain.cancelScheduledValues(t); droneGain.gain.setTargetAtTime(on ? 0.07 : 0, t, on ? 1.4 : 0.2);
+    return on;
+  }
+  function tone(freq, o = {}) {
+    if (!on) return;
+    const { dur = 1.4, type = "sine", gain = 0.1, when = 0, attack = 0.006, send = 0.5, detune = 0 } = o;
+    const t = ctx.currentTime + when;
+    const osc = ctx.createOscillator(); osc.type = type; osc.frequency.value = freq; osc.detune.value = detune;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(g); g.connect(master);
+    if (send) { const s = ctx.createGain(); s.gain.value = send; g.connect(s); s.connect(wet); }
+    osc.start(t); osc.stop(t + dur + 0.05);
+  }
+  function bell(f, o = {}) { tone(f, o); tone(f * 2.76, { ...o, gain: (o.gain || 0.1) * 0.22, dur: (o.dur || 1.4) * 0.45 }); tone(f * 5.4, { ...o, gain: (o.gain || 0.1) * 0.06, dur: (o.dur || 1.4) * 0.25 }); }
+  function clack(when = 0, pitch = 1) {
+    if (!on) return;
+    const t = ctx.currentTime + when, len = Math.floor(ctx.sampleRate * 0.08);
+    const b = ctx.createBuffer(1, len, ctx.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 6);
+    const src = ctx.createBufferSource(); src.buffer = b;
+    const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 1400 * pitch; bp.Q.value = 3;
+    const g = ctx.createGain(); g.gain.value = 0.5;
+    src.connect(bp); bp.connect(g); g.connect(master); const s = ctx.createGain(); s.gain.value = .3; g.connect(s); s.connect(wet);
+    src.start(t);
+    const o = ctx.createOscillator(); o.type = "sine"; o.frequency.setValueAtTime(150 * pitch, t); o.frequency.exponentialRampToValueAtTime(48, t + 0.18);
+    const og = ctx.createGain(); og.gain.setValueAtTime(0.35, t); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+    o.connect(og); og.connect(master); o.start(t); o.stop(t + 0.25);
+  }
+  function mood(m) {
+    if (!ctx) return; const t = ctx.currentTime;
+    const tense = m === "usual";
+    droneOsc.forEach((o, i) => o.detune.setTargetAtTime(tense ? (i - 1.5) * 22 : (i - 1.5) * 3, t, 0.8));
+    droneFilter.Q.setTargetAtTime(tense ? 4 : 0.8, t, 0.8);
+  }
+  function cluster(n) { // beating, detuned tones: one per supplier
+    for (let i = 0; i < n; i++) tone(196 * Math.pow(2, (i * 1.7) / 12), { type: "triangle", gain: 0.035, dur: 1.6, when: i * 0.035, detune: (i % 2 ? 1 : -1) * (12 + i * 5), send: 0.6 });
+  }
+  function cue(state) {
+    if (!on) return;
+    mood(state);
+    if (state === "cloud") bell(392, { gain: 0.06, dur: 2.4 });
+    if (state === "usual") cluster(+document.getElementById("vendors").value);
+    if (state === "one") [220, 277.18, 329.63, 440, 554.37].forEach((f, i) => bell(f, { gain: 0.06, when: i * 0.09, dur: 2.6 }));
+    if (state === "team") bell(587.33, { gain: 0.06, dur: 1.8 });
+    if (state === "price") bell(523.25, { gain: 0.05, dur: 1.8 });
+    if (state === "cta") [261.63, 329.63, 392, 523.25, 659.25].forEach((f, i) => bell(f, { gain: 0.06, when: i * 0.12, dur: 3 }));
+  }
+  const PENT = [440, 523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66];
+  function pluck(i, when) { bell(PENT[i % PENT.length], { gain: 0.045, dur: 0.9, when, send: 0.6 }); }
+  function tick() { tone(1760, { gain: 0.012, dur: 0.05, send: 0 }); }
+  function pause(hidden) { if (ctx && on) master.gain.setTargetAtTime(hidden ? 0 : 0.9, ctx.currentTime, 0.1); }
+  return { set, isOn: () => on, cue, cluster, pluck, clack, bell, tick, tone, pause };
+})();
+
+const soundBtns = [document.getElementById("soundBtn"), document.getElementById("soundBtn2")];
+function syncSound() {
+  const on = Snd.isOn();
+  soundBtns.forEach(b => b.setAttribute("aria-pressed", String(on)));
+  document.getElementById("soundTxt").textContent = on ? "Sound on" : "Sound off";
+  soundBtns[1].textContent = on ? "Turn off sound" : "Turn on sound";
+}
+soundBtns.forEach(b => b.addEventListener("click", () => {
+  const r = Snd.set(!Snd.isOn()); syncSound();
+  if (r) setTimeout(() => Snd.cue(state), 120);
+}));
+document.addEventListener("visibilitychange", () => Snd.pause(document.hidden));
+
+/* ---------------- DOM controls ---------------- */
+const vendorsEl = document.getElementById("vendors");
+let nVendors = 4;
+function updateVendors(sound) {
+  nVendors = +vendorsEl.value;
+  document.getElementById("vendorsOut").textContent = nVendors;
+  document.getElementById("cBriefs").textContent = nVendors;
+  document.getElementById("cInv").textContent = nVendors;
+  document.getElementById("cLines").textContent = nVendors * (nVendors + 1) / 2;
+  if (sound) Snd.cluster(nVendors);
+  updateFig();
+}
+vendorsEl.addEventListener("input", () => updateVendors(true));
+
+const chipsEl = document.getElementById("chips");
+const selGoals = new Set(["web"]);
+GOALS.forEach(g => {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "chip"; b.textContent = g.label; b.id = "goal-" + g.id;
+  b.setAttribute("aria-pressed", selGoals.has(g.id) ? "true" : "false");
+  b.addEventListener("mouseenter", () => Snd.tick());
+  b.addEventListener("click", () => {
+    if (selGoals.has(g.id)) { if (selGoals.size > 1) selGoals.delete(g.id); else return; Snd.tone(196, { gain: 0.05, dur: 0.7 }); }
+    else selGoals.add(g.id);
+    b.setAttribute("aria-pressed", selGoals.has(g.id) ? "true" : "false");
+    if (state !== "team") setState("team");
+    computeSelection(true);
+  });
+  chipsEl.appendChild(b);
+});
+
+const stepsEl = document.getElementById("steps");
+const stepBtns = STEPS.map(([name], i) => {
+  const li = document.createElement("li");
+  const b = document.createElement("button"); b.type = "button"; b.className = "step"; b.id = "step-" + i;
+  b.innerHTML = `<small>0${i + 1}</small><strong>${name}</strong>`;
+  b.addEventListener("click", () => { stopAuto(); setStage(i + 1, true); });
+  li.appendChild(b); stepsEl.appendChild(li); return b;
+});
+document.getElementById("replay").addEventListener("click", () => autoAssemble());
+
+document.getElementById("priceRows").innerHTML = PRICES.map(([a, b, c]) => `<tr><td>${a}</td><td>${b}</td><td>${c}</td></tr>`).join("");
+document.getElementById("startTour").addEventListener("click", e => {
+  e.preventDefault(); document.getElementById("usual").scrollIntoView({ behavior: reduced ? "auto" : "smooth" });
+});
+
+/* ---------------- Three.js scene ---------------- */
+let gl = !!window.THREE;
+let renderer;
+if (gl) { try { renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("scene"), antialias: true, alpha: true }); } catch (e) { gl = false; } }
+if (!gl) document.documentElement.classList.add("nogl");
+
+const C = {};
+let isLight = false;
+function readTheme() {
+  const cs = getComputedStyle(document.documentElement);
+  ["ink", "muted", "accent", "warn", "line", "bg"].forEach(k => { C[k] = new THREE.Color(cs.getPropertyValue("--" + k).trim() || "#888"); });
+  const bg = C.bg; isLight = (0.2126 * bg.r + 0.7152 * bg.g + 0.0722 * bg.b) > 0.5;
+  if (pointsMat) pointsMat.blending = isLight ? THREE.NormalBlending : THREE.AdditiveBlending, pointsMat.needsUpdate = true;
+}
+
+let scene, camera, pointsMat, W = 1, H = 1, camZ = 20, wide = false;
+const N = DISC.reduce((s, d) => s + d[1], 0);
+const nodes = [];
+const discNodes = {};
+const discMid = [];
+let state = "cloud", stage = 4, sel = new Set();
+
+if (gl) {
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(42, 1, 0.1, 200);
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  pointsMat = null;
+  readTheme();
+
+  // --- Bench layout
+  const GAP = 0.045, usable = Math.PI * 2 - GAP * DISC.length;
+  let a0 = Math.PI / 2 + 0.02;
+  DISC.forEach(([name, count], d) => {
+    const span = usable * count / N;
+    const rows = count >= 6 ? 3 : 1;
+    const slots = Math.ceil(count / rows);
+    discNodes[name] = [];
+    for (let k = 0; k < count; k++) {
+      const row = k % rows, slot = Math.floor(k / rows);
+      const ang = a0 - span * (slot + 0.5) / slots;
+      const r = 5.3 + row * 0.55 + (rows === 1 ? 0.55 : 0);
+      const ring = new THREE.Vector3(Math.cos(ang) * r, Math.sin(ang) * r, (Math.random() - 0.5) * 0.4);
+      const u = Math.random() * 2 - 1, th = Math.random() * Math.PI * 2, rr = 3.4 + Math.pow(Math.random(), 0.6) * 5.2;
+      const base = new THREE.Vector3(Math.sqrt(1 - u * u) * Math.cos(th) * rr, u * rr * 0.75, Math.sqrt(1 - u * u) * Math.sin(th) * rr * 0.6);
+      const far = base.clone().multiplyScalar(1.55); far.z -= 7;
+      const n = { d, name, ring, base, far, cur: base.clone(), col: C.muted.clone(), size: 0, alpha: 0,
+        tSize: 7, tAlpha: 0.8, tKey: "muted", start: 0, inkish: Math.random() < 0.22, phase: Math.random() * 6.28 };
+      discNodes[name].push(nodes.length); nodes.push(n);
+    }
+    discMid.push({ name, count, ang: a0 - span / 2 });
+    a0 -= span + GAP;
+  });
+
+  // --- Points
+  const pGeo = new THREE.BufferGeometry();
+  const pPos = new Float32Array(N * 3), pCol = new Float32Array(N * 3), pSize = new Float32Array(N), pAlpha = new Float32Array(N);
+  pGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
+  pGeo.setAttribute("acolor", new THREE.BufferAttribute(pCol, 3));
+  pGeo.setAttribute("asize", new THREE.BufferAttribute(pSize, 1));
+  pGeo.setAttribute("aalpha", new THREE.BufferAttribute(pAlpha, 1));
+  pointsMat = new THREE.ShaderMaterial({
+    uniforms: { uPR: { value: renderer.getPixelRatio() }, uDist: { value: 20 }, uScale: { value: 1 } },
+    vertexShader: `
+      attribute vec3 acolor; attribute float asize; attribute float aalpha;
+      uniform float uPR; uniform float uDist; uniform float uScale;
+      varying vec3 vC; varying float vA;
+      void main(){ vC = acolor; vA = aalpha;
+        vec4 mv = modelViewMatrix * vec4(position,1.0);
+        gl_PointSize = asize * uScale * uPR * (uDist / -mv.z);
+        gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `
+      varying vec3 vC; varying float vA;
+      void main(){ vec2 p = gl_PointCoord - 0.5; float d = length(p);
+        float core = smoothstep(0.5, 0.36, d);
+        float ring = smoothstep(0.5,0.44,d) * smoothstep(0.30,0.38,d);
+        float a = max(core * 0.85, ring) * vA;
+        if (a < 0.01) discard;
+        gl_FragColor = vec4(vC, a); }`,
+    transparent: true, depthWrite: false,
+    blending: isLight ? THREE.NormalBlending : THREE.AdditiveBlending
+  });
+  const points = new THREE.Points(pGeo, pointsMat);
+  scene.add(points);
+
+  // --- "You" and "Lead"
+  const youMat = new THREE.MeshBasicMaterial({ color: C.ink, side: THREE.DoubleSide, transparent: true });
+  const you = new THREE.Group();
+  you.add(new THREE.Mesh(new THREE.RingGeometry(0.4, 0.48, 48), youMat));
+  you.add(new THREE.Mesh(new THREE.CircleGeometry(0.15, 24), youMat));
+  scene.add(you);
+  const leadMat = new THREE.MeshBasicMaterial({ color: C.accent });
+  const leadEdgeMat = new THREE.LineBasicMaterial({ color: C.bg });
+  const haloMat = new THREE.MeshBasicMaterial({ color: C.accent, transparent: true, opacity: 0.6, side: THREE.DoubleSide });
+  const lead = new THREE.Group();
+  const octGeo = new THREE.OctahedronGeometry(0.5);
+  const oct = new THREE.Mesh(octGeo, leadMat); lead.add(oct);
+  const octEdges = new THREE.LineSegments(new THREE.EdgesGeometry(octGeo), leadEdgeMat); lead.add(octEdges);
+  const halo = new THREE.Mesh(new THREE.RingGeometry(0.78, 0.82, 64), haloMat); lead.add(halo);
+  scene.add(lead);
+
+  // --- Vendors
+  const vendMat = new THREE.LineBasicMaterial({ color: C.warn, transparent: true });
+  const vendFill = new THREE.MeshBasicMaterial({ color: C.bg, transparent: true, opacity: 0.92 });
+  const sq = new THREE.BufferGeometry().setFromPoints([[-.45, -.45], [.45, -.45], [.45, .45], [-.45, .45]].map(p => new THREE.Vector3(p[0], p[1], 0)));
+  const vendors = VENDORS.map((name, i) => {
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(new THREE.PlaneGeometry(.9, .9), vendFill));
+    g.add(new THREE.LineLoop(sq, vendMat));
+    const x = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-.2, -.2, 0), new THREE.Vector3(.2, .2, 0), new THREE.Vector3(-.2, .2, 0), new THREE.Vector3(.2, -.2, 0)]), vendMat);
+    g.add(x); g.scale.setScalar(0.001); scene.add(g);
+    return { g, name, cur: new THREE.Vector3(0, 0, 0), s: 0 };
+  });
+
+  // --- Lines
+  function makeLines(max, color, opacity) {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(max * 6), 3));
+    geo.setDrawRange(0, 0);
+    const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false });
+    const l = new THREE.LineSegments(geo, mat); l.frustumCulled = false; scene.add(l);
+    return { geo, mat, arr: geo.attributes.position.array, o: 0 };
+  }
+  const tangle = makeLines(36, C.warn, 0);
+  const fan = makeLines(N + 16, C.muted, 0);
+  const link = makeLines(1, C.accent, 0);
+
+  // --- Four pieces
+  const pieces = new THREE.Group(); scene.add(pieces);
+  const boxGeo = new THREE.BoxGeometry(1.34, 1.34, 0.6), boxEdges = new THREE.EdgesGeometry(boxGeo);
+  const HOME = [[-0.69, 0.69, 0], [0.69, 0.69, 0], [-0.69, -0.69, 0], [0.69, -0.69, 0]];
+  const AWAY = [[-6, 3.6, -2], [6.2, 3.2, 1], [-5.6, -3.8, 1.5], [5.8, -3.6, -1.5]];
+  const pieceObjs = HOME.map((h, i) => {
+    const g = new THREE.Group();
+    const fill = new THREE.MeshBasicMaterial({ color: C.bg, transparent: true, opacity: 0.9 });
+    const edge = new THREE.LineBasicMaterial({ color: C.ink });
+    g.add(new THREE.Mesh(boxGeo, fill)); g.add(new THREE.LineSegments(boxEdges, edge));
+    // notch marks so each piece reads as a distinct part
+    const notch = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-.3, 0, .31), new THREE.Vector3(.3, 0, .31), new THREE.Vector3(0, -.3, .31), new THREE.Vector3(0, .3, .31)]), edge);
+    g.add(notch);
+    g.position.set(...AWAY[i]); g.rotation.set(i * .7, i * 1.1, i * .4);
+    pieces.add(g);
+    return { g, fill, edge, home: new THREE.Vector3(...h), away: new THREE.Vector3(...AWAY[i]), awayRot: new THREE.Euler(i * .7 + .6, i * 1.1 + .4, i * .4) };
+  });
+  pieces.scale.setScalar(0.001);
+  const piecesTgt = { pos: new THREE.Vector3(), s: 0 };
+
+  // --- Labels
+  const labelsEl = document.getElementById("labels");
+  const L = [];
+  function label(text, cls, getPos, isOn, anchor) {
+    const el = document.createElement("div"); el.className = "lbl " + (cls || ""); el.textContent = text; labelsEl.appendChild(el);
+    const o = { el, getPos, isOn, anchor: anchor || "below", hot: null, on: false }; L.push(o); return o;
+  }
+  const v3 = new THREE.Vector3();
+  label("Your business", "big", () => you.position, () => you.scale.x > 0.5, "below");
+  label("One accountable lead", "hot big", () => lead.position, () => lead.scale.x > 0.5, "above");
+  vendors.forEach((v, i) => label(v.name, "warn", () => v.g.position, () => v.s > 0.6, "below"));
+  const discLabels = discMid.map((m, i) => {
+    const pos = new THREE.Vector3(Math.cos(m.ang) * 7.15, Math.sin(m.ang) * 7.15, 0);
+    const ax = Math.cos(m.ang);
+    const o = label(`${m.name === "Project management" ? "Project mgmt" : m.name} ${m.count}`, "", () => pos, () => ["one", "team", "price"].includes(state) && W >= 700, ax > 0.25 ? "right" : ax < -0.25 ? "left" : "center");
+    o.disc = m.name; return o;
+  });
+  pieceObjs.forEach((p, i) => label(`0${i + 1} ${STEPS[i][0]}`, "", () => p.g.getWorldPosition(v3), () => state === "make" && W >= 520, "center").piece = i);
+  label("Yours to keep", "hot", () => pieces.position, () => state === "cta", "below");
+
+  function placeLabels() {
+    const tmp = new THREE.Vector3();
+    L.forEach(o => {
+      const on = o.isOn();
+      if (on !== o.on) { o.el.classList.toggle("on", on); o.on = on; }
+      if (o.disc) o.el.classList.toggle("hot", state === "team" && selDiscs.has(o.disc));
+      if (o.piece !== undefined) o.el.classList.toggle("hot", o.piece < stage);
+      if (!on) return;
+      tmp.copy(o.getPos()).project(camera);
+      const x = (tmp.x * 0.5 + 0.5) * W, y = (-tmp.y * 0.5 + 0.5) * H;
+      const t = { below: "translate(-50%, 16px)", above: "translate(-50%, calc(-100% - 22px))", left: "translate(calc(-100% - 4px), -50%)", right: "translate(4px, -50%)", center: "translate(-50%, -50%)" }[o.anchor];
+      o.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) ${t}`;
+    });
+  }
+
+  // --- Resize / camera fit
+  function resize() {
+    W = window.innerWidth; H = window.innerHeight;
+    renderer.setSize(W, H, false);
+    wide = W >= 960;
+    camera.aspect = W / H;
+    const availW = wide ? W * 0.52 : W;
+    const halfTan = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+    const R = wide ? 9.6 : W >= 700 ? 8.8 : 7.4;
+    camZ = Math.max(R / (halfTan * (availW / H)), R / halfTan);
+    if (wide) camera.setViewOffset(W, H, -W * 0.2, 0, W, H); else camera.clearViewOffset();
+    camera.updateProjectionMatrix();
+    pointsMat.uniforms.uDist.value = camZ;
+    pointsMat.uniforms.uScale.value = Math.min(1.15, Math.max(0.55, Math.sqrt(Math.min(W, H) / 820)));
+  }
+  window.addEventListener("resize", resize);
+  resize();
+  camera.position.set(0, 0, camZ);
+
+  let mx = 0, my = 0;
+  window.addEventListener("pointermove", e => { mx = e.clientX / W * 2 - 1; my = e.clientY / H * 2 - 1; }, { passive: true });
+
+  // theme changes
+  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", readTheme);
+  new MutationObserver(readTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  // --- State targets
+  const P = { you: new THREE.Vector3(), youS: 0, lead: new THREE.Vector3(0, 0.9, 0), leadS: 0 };
+  var applyTargets = function (stagger) {
+    const now = performance.now() / 1000;
+    nodes.forEach((n, i) => {
+      const s = sel.has(i);
+      if (state === "cloud") { n.tSize = n.inkish ? 8 : 6.5; n.tAlpha = 0.85; n.tKey = n.inkish ? "ink" : "muted"; }
+      else if (state === "usual") { n.tSize = 4; n.tAlpha = 0.16; n.tKey = "muted"; }
+      else if (state === "one") { n.tSize = 7; n.tAlpha = 0.92; n.tKey = "ink"; }
+      else if (state === "team") { n.tSize = s ? 13 : 5.5; n.tAlpha = s ? 1 : 0.32; n.tKey = s ? "accent" : "muted"; }
+      else if (state === "make") { n.tSize = 4; n.tAlpha = 0.14; n.tKey = "muted"; }
+      else if (state === "price") { n.tSize = 5.5; n.tAlpha = 0.45; n.tKey = "muted"; }
+      else { n.tSize = 5; n.tAlpha = 0.4; n.tKey = "muted"; }
+      if (stagger !== false) n.start = now + (reduced ? 0 : Math.random() * (stagger === "small" ? 0.25 : 0.6));
+    });
+    P.youS = state === "cloud" ? 0 : 1;
+    P.you.set(0, state === "usual" ? 0 : state === "make" ? -4.4 : -1.7, 0);
+    P.leadS = ["one", "team", "price", "cta"].includes(state) ? 1 : 0;
+    piecesTgt.s = state === "make" ? 1 : state === "cta" ? 0.42 : 0;
+    piecesTgt.pos.set(state === "cta" ? 1.7 : 0, state === "cta" ? -1.7 : 0.9, 0);
+  };
+  window.__applyTargets = applyTargets;
+
+  // --- Frame loop
+  let last = performance.now() / 1000;
+  const tmpT = new THREE.Vector3();
+  const cY = Math.cos(0), sY = Math.sin(0);
+  function frame(ms) {
+    const t = ms / 1000, dt = Math.min(0.05, t - last); last = t;
+    const k = reduced ? 1 : 1 - Math.exp(-dt * 3.0);
+    const kf = reduced ? 1 : 1 - Math.exp(-dt * 5.0);
+
+    // camera
+    const tx = reduced ? 0 : mx * 1.1, ty = reduced ? 0 : -my * 0.7;
+    camera.position.x += (tx - camera.position.x) * kf * 0.5;
+    camera.position.y += (ty - camera.position.y) * kf * 0.5;
+    camera.position.z += (camZ - camera.position.z) * kf;
+    camera.lookAt(0, 0, 0);
+
+    // nodes
+    const rot = reduced ? 0 : t * 0.05, cr = Math.cos(rot), sr = Math.sin(rot);
+    for (let i = 0; i < N; i++) {
+      const n = nodes[i];
+      if (state === "cloud") tmpT.set(n.base.x * cr + n.base.z * sr, n.base.y + (reduced ? 0 : Math.sin(t * 0.6 + n.phase) * 0.12), -n.base.x * sr + n.base.z * cr);
+      else if (state === "usual") tmpT.copy(n.far);
+      else tmpT.copy(n.ring);
+      if (t >= n.start) {
+        n.cur.lerp(tmpT, k);
+        n.size += (n.tSize - n.size) * k;
+        n.alpha += (n.tAlpha - n.alpha) * k;
+      }
+      n.col.lerp(C[n.tKey], kf);
+      let breathe = 1;
+      if (state === "team" && sel.has(i) && !reduced) breathe = 1 + Math.sin(t * 2.2 + n.phase) * 0.12;
+      pPos[i * 3] = n.cur.x; pPos[i * 3 + 1] = n.cur.y; pPos[i * 3 + 2] = n.cur.z;
+      pCol[i * 3] = n.col.r; pCol[i * 3 + 1] = n.col.g; pCol[i * 3 + 2] = n.col.b;
+      pSize[i] = n.size * breathe; pAlpha[i] = n.alpha;
+    }
+    pGeo.attributes.position.needsUpdate = true; pGeo.attributes.acolor.needsUpdate = true;
+    pGeo.attributes.asize.needsUpdate = true; pGeo.attributes.aalpha.needsUpdate = true;
+
+    // you + lead
+    you.position.lerp(P.you, k);
+    const ys = you.scale.x + (P.youS - you.scale.x) * k; you.scale.setScalar(Math.max(0.001, ys));
+    you.lookAt(camera.position);
+    lead.position.lerp(P.lead, k);
+    const ls = lead.scale.x + (P.leadS - lead.scale.x) * k; lead.scale.setScalar(Math.max(0.001, ls));
+    if (!reduced) { oct.rotation.y = t * 0.6; oct.rotation.x = Math.sin(t * 0.4) * 0.3; octEdges.rotation.copy(oct.rotation); }
+    halo.lookAt(camera.position);
+    const hp = reduced ? 1 : 1 + (Math.sin(t * 1.8) * 0.5 + 0.5) * 0.35;
+    halo.scale.setScalar(hp); haloMat.opacity = 0.7 - (hp - 1) * 1.4;
+
+    // vendors
+    vendors.forEach((v, i) => {
+      const active = state === "usual" && i < nVendors;
+      const ang = Math.PI / 2 + i / nVendors * Math.PI * 2 + 0.3;
+      const rad = 4.6 + (i % 2) * 0.9;
+      if (active) tmpT.set(Math.cos(ang) * rad * 1.15, Math.sin(ang) * rad * 0.85, (i % 3 - 1) * 0.8);
+      else if (["one", "team", "price", "cta"].includes(state)) tmpT.copy(P.lead);
+      else tmpT.set(Math.cos(ang) * 9, Math.sin(ang) * 6, -4);
+      v.cur.lerp(tmpT, k);
+      v.s += ((active ? 1 : 0) - v.s) * k;
+      const wob = reduced || !active ? 0 : 0.22;
+      v.g.position.set(v.cur.x + Math.sin(t * 1.3 + i * 1.7) * wob, v.cur.y + Math.cos(t * 1.1 + i * 2.3) * wob, v.cur.z);
+      v.g.scale.setScalar(Math.max(0.001, v.s));
+      v.g.lookAt(camera.position);
+      if (!reduced && active) v.g.rotateZ(Math.sin(t * 0.9 + i) * 0.15);
+    });
+
+    // tangle lines: every pair among you + active vendors
+    {
+      const pts = [you.position].concat(vendors.slice(0, nVendors).map(v => v.g.position));
+      let s = 0; const a = tangle.arr;
+      for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+        a.set([pts[i].x, pts[i].y, pts[i].z, pts[j].x, pts[j].y, pts[j].z], s * 6); s++;
+      }
+      tangle.geo.setDrawRange(0, s * 2); tangle.geo.attributes.position.needsUpdate = true;
+      tangle.o += ((state === "usual" ? 0.55 : 0) - tangle.o) * k; tangle.mat.opacity = tangle.o; tangle.mat.color.copy(C.warn);
+    }
+    // fan lines from lead
+    {
+      let s = 0; const a = fan.arr, lp = lead.position;
+      if (state === "team") sel.forEach(i => { const c = nodes[i].cur; a.set([lp.x, lp.y, lp.z, c.x, c.y, c.z], s * 6); s++; });
+      else discMid.forEach(m => { a.set([lp.x, lp.y, lp.z, Math.cos(m.ang) * 4.9, Math.sin(m.ang) * 4.9, 0], s * 6); s++; });
+      fan.geo.setDrawRange(0, s * 2); fan.geo.attributes.position.needsUpdate = true;
+      const fo = state === "team" ? 0.55 : state === "one" ? 0.35 : state === "price" ? 0.18 : 0;
+      fan.o += (fo - fan.o) * k; fan.mat.opacity = fan.o;
+      fan.mat.color.lerp(state === "team" ? C.accent : C.muted, kf);
+    }
+    // you-lead link
+    {
+      const a = link.arr; a.set([you.position.x, you.position.y, you.position.z, lead.position.x, lead.position.y, lead.position.z], 0);
+      link.geo.setDrawRange(0, 2); link.geo.attributes.position.needsUpdate = true;
+      link.o += ((P.leadS && P.youS ? 0.95 : 0) - link.o) * k; link.mat.opacity = link.o; link.mat.color.copy(C.accent);
+    }
+
+    // pieces
+    pieces.position.lerp(piecesTgt.pos, k);
+    const ps = pieces.scale.x + (piecesTgt.s - pieces.scale.x) * k; pieces.scale.setScalar(Math.max(0.001, ps));
+    pieces.rotation.x = -0.45 + (reduced ? 0 : Math.sin(t * 0.35) * 0.06);
+    pieces.rotation.y = 0.55 + (reduced ? 0 : Math.sin(t * 0.25) * 0.18);
+    pieceObjs.forEach((p, i) => {
+      const home = i < stage;
+      p.g.position.lerp(home ? p.home : p.away, kf * 0.9);
+      const er = home ? 0 : 1;
+      p.g.rotation.x += ((p.awayRot.x * er) - p.g.rotation.x) * kf * 0.9;
+      p.g.rotation.y += ((p.awayRot.y * er) - p.g.rotation.y) * kf * 0.9;
+      p.g.rotation.z += ((p.awayRot.z * er) - p.g.rotation.z) * kf * 0.9;
+      p.edge.color.lerp(i === stage - 1 && state === "make" ? C.accent : (stage >= 4 && state !== "make" ? C.accent : C.ink), kf);
+      p.fill.color.copy(C.bg);
+    });
+
+    youMat.color.copy(C.ink); leadMat.color.copy(C.accent); leadEdgeMat.color.copy(C.bg); haloMat.color.copy(C.accent);
+    vendMat.color.copy(C.warn); vendFill.color.copy(C.bg);
+
+    renderer.render(scene, camera);
+    placeLabels();
+    requestAnimationFrame(frame);
+  }
+  applyTargets();
+  nodes.forEach(n => { n.size = 0; });
+  requestAnimationFrame(frame);
+}
+
+/* ---------------- Selection / state ---------------- */
+let selDiscs = new Set();
+function computeSelection(sound) {
+  const mix = {};
+  selGoals.forEach(id => { const g = GOALS.find(x => x.id === id); Object.entries(g.mix).forEach(([d, c]) => mix[d] = Math.max(mix[d] || 0, c)); });
+  const prev = sel;
+  sel = new Set();
+  Object.entries(mix).forEach(([d, c]) => {
+    const list = discNodes[d] || [];
+    const cnt = Math.min(c, list.length);
+    for (let j = 0; j < cnt; j++) sel.add(list[Math.floor((j + 0.5) * list.length / cnt)]);
+  });
+  selDiscs = new Set(Object.keys(mix));
+  const roles = Object.values(mix).reduce((a, b) => a + b, 0);
+  document.getElementById("rRoles").textContent = roles;
+  document.getElementById("rDisc").textContent = selDiscs.size;
+  document.getElementById("lineup").innerHTML = Object.entries(mix).sort((a, b) => b[1] - a[1]).map(([d, c]) => `<span class="tag"><b>${c}</b> ${d}</span>`).join("");
+  document.getElementById("svc").innerHTML = [...selGoals].map(id => { const g = GOALS.find(x => x.id === id); return `<li><span>${g.svc}</span><span>${g.price === "Quoted" ? "Quoted in proposal" : "from " + g.price}</span></li>`; }).join("");
+  if (gl && state === "team") window.__applyTargets("small");
+  if (sound) { let n = 0; sel.forEach(i => { if (!prev.has(i) && n < 10) { Snd.pluck(n, n * 0.06); n++; } }); }
+  updateFig();
+}
+
+let autoTimer = null;
+function stopAuto() { if (autoTimer) { clearInterval(autoTimer); autoTimer = null; } }
+function setStage(s, sound) {
+  stage = s;
+  stepBtns.forEach((b, i) => {
+    if (i === s - 1) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current");
+    b.classList.toggle("done", i < s - 1);
+  });
+  document.getElementById("stepCopy").textContent = s > 0 ? STEPS[s - 1][1] : "";
+  if (sound) {
+    Snd.clack(0, 0.8 + s * 0.12);
+    Snd.bell([392, 440, 493.88, 587.33][s - 1] || 392, { gain: 0.05, dur: 1.4, when: 0.05 });
+    if (s === 4) [293.66, 369.99, 440, 587.33].forEach((f, i) => Snd.bell(f, { gain: 0.05, when: 0.25 + i * 0.08, dur: 2.4 }));
+  }
+}
+function autoAssemble() {
+  stopAuto();
+  if (reduced) { setStage(4, true); return; }
+  setStage(0, false); let s = 0;
+  autoTimer = setInterval(() => { s++; setStage(s, true); if (s >= 4) stopAuto(); }, 950);
+}
+
+function updateFig() {
+  const fig = document.getElementById("fig");
+  const roles = document.getElementById("rRoles").textContent;
+  const lines = nVendors * (nVendors + 1) / 2;
+  const txt = {
+    cloud: ["Fig. 1", "The bench: 199 specialist roles"],
+    usual: ["Fig. 2", `${nVendors} suppliers, ${lines} lines to keep straight`],
+    one: ["Fig. 3", "One brief, one lead, 13 disciplines"],
+    team: ["Fig. 4", `Example line-up: ${roles} roles, 1 lead`],
+    make: ["Fig. 5", "Assembly, 4 parts"],
+    price: ["Fig. 6", "Published starting prices"],
+    cta: ["Fig. 7", "Handed over. Yours to keep."]
+  }[state];
+  fig.innerHTML = `<b>${txt[0]}</b> ${txt[1]}`;
+}
+
+function setState(s) {
+  if (s === state && gl && nodes[0] && nodes[0].size > 0) return;
+  const prev = state; state = s;
+  if (gl) window.__applyTargets();
+  if (s === "make") { if (prev !== "make") autoAssemble(); }
+  else { stopAuto(); stage = 4; }
+  updateFig();
+  if (prev !== s) Snd.cue(s);
+}
+
+const sheets = [...document.querySelectorAll(".sheet")];
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const el = e.target;
+    document.getElementById("sheetno").textContent = `Sheet ${el.dataset.no} / 07`;
+    setState(el.dataset.state);
+  });
+}, { rootMargin: "-48% 0px -48% 0px" });
+sheets.forEach(s => io.observe(s));
+
+updateVendors(false);
+computeSelection(false);
+setStage(4, false);
+syncSound();
+})();
+</script>
