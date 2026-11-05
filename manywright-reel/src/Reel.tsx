@@ -1,6 +1,6 @@
 import React from "react";
 import { AbsoluteFill, Audio, continueRender, delayRender, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
-import { b, BF, C, MLogo, MONO, shake } from "./lib";
+import { b, BF, C, MLogo, MONO, shake, useL } from "./lib";
 import { Build, Camera, Colour, Disciplines, Hook, Land, Shapes } from "./scenes";
 
 // ---- fonts: local variable files, render waits until both are ready
@@ -20,33 +20,39 @@ const SCENES: [number, number, React.FC<{ f: number; fps: number }>][] = [
 ];
 
 const Hud: React.FC<{ f: number }> = ({ f }) => {
+  const { V } = useL();
+  // portrait: keep clear of the Reels header (top) and caption/buttons (bottom, right)
+  const top = V ? 150 : 30, bottom = V ? 300 : 34;
   const sec = Math.floor(f / 60), fr = f % 60;
   const beat = Math.floor(f / BF), bar = Math.floor(beat / 4) + 1, inBar = beat % 4;
   return (
     <AbsoluteFill style={{ mixBlendMode: "difference", color: "#fff", fontFamily: MONO, fontSize: 17, letterSpacing: "0.1em", pointerEvents: "none" }}>
-      <div style={{ position: "absolute", left: 40, top: 30, opacity: 0.85, display: "flex", alignItems: "center", gap: 12 }}><MLogo height={22} mono="#fff" />MANYWRIGHT / MOTION REEL 2026</div>
-      <div style={{ position: "absolute", right: 40, top: 34, opacity: 0.85, fontVariantNumeric: "tabular-nums" }}>
+      <div style={{ position: "absolute", left: 40, top, opacity: 0.85, display: "flex", alignItems: "center", gap: 12 }}><MLogo height={22} mono="#fff" />{V ? "MANYWRIGHT" : "MANYWRIGHT / MOTION REEL 2026"}</div>
+      <div style={{ position: "absolute", right: 40, top: top + 4, opacity: 0.85, fontVariantNumeric: "tabular-nums" }}>
         00:00:{String(sec).padStart(2, "0")}:{String(fr).padStart(2, "0")}
       </div>
-      <div style={{ position: "absolute", left: 40, bottom: 34, display: "flex", alignItems: "center", gap: 14, opacity: 0.85 }}>
+      <div style={{ position: "absolute", left: 40, bottom, display: "flex", alignItems: "center", gap: 14, opacity: 0.85 }}>
         <span>128 BPM · BAR {bar}/8</span>
         <span style={{ display: "flex", gap: 6 }}>
           {[0, 1, 2, 3].map((i) => <i key={i} style={{ width: 10, height: 10, border: "1.5px solid #fff", background: i === inBar ? "#fff" : "transparent" }} />)}
         </span>
       </div>
-      <div style={{ position: "absolute", right: 40, bottom: 34, opacity: 0.85 }}>MANYWRIGHT.COM</div>
+      {!V && <div style={{ position: "absolute", right: 40, bottom, opacity: 0.85 }}>MANYWRIGHT.COM</div>}
     </AbsoluteFill>
   );
 };
 
-const Grain: React.FC<{ f: number; opacity: number }> = ({ f, opacity }) => (
+const Grain: React.FC<{ f: number; opacity: number }> = ({ f, opacity }) => {
+  const { W, H } = useL();
+  return (
   <AbsoluteFill style={{ opacity, mixBlendMode: "overlay", pointerEvents: "none" }}>
-    <svg width="1920" height="1080">
+    <svg width={W} height={H}>
       <filter id="g"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed={f % 12} stitchTiles="stitch" /></filter>
       <rect width="100%" height="100%" filter="url(#g)" />
     </svg>
   </AbsoluteFill>
-);
+  );
+};
 
 export const Reel: React.FC = () => {
   const f = useCurrentFrame();

@@ -1,5 +1,5 @@
 import React from "react";
-import { Easing, interpolate, random } from "remotion";
+import { Easing, interpolate, random, useVideoConfig } from "remotion";
 
 // ---- timing: 128 BPM at 60 fps. One beat = 28.125 frames; 32 beats = 900 frames = 15 s.
 export const FPS = 60;
@@ -91,3 +91,18 @@ export const MLogo: React.FC<{ height: number; piece?: (i: number) => PieceT; mo
     })}
   </svg>
 );
+
+// ---- layout: one set of scenes, two frames (16:9 landscape, 9:16 portrait for Reels)
+export const useL = () => {
+  const { width: W, height: H } = useVideoConfig();
+  const V = H > W;
+  // Instagram Reels covers ~top 220px (header) and ~bottom 340px + right 140px (caption, buttons)
+  return { W, H, V, CX: W / 2, CY: H / 2, M: V ? 80 : 96, TOP: V ? 230 : 110, BOT: V ? 360 : 120 };
+};
+// several lines of display type, each on its own row
+export const Lines: React.FC<{ lines: string[]; w?: number; g?: number; size: number; color?: string; align?: "left" | "center"; style?: React.CSSProperties; txtStyle?: React.CSSProperties }> = ({ lines, w = 125, g = 900, size, color = C.ice, align = "left", style, txtStyle }) => (
+  <div style={{ display: "flex", flexDirection: "column", alignItems: align === "center" ? "center" : "flex-start", ...style }}>
+    {lines.map((l, i) => <Txt key={i} w={w} g={g} size={size} color={color} style={txtStyle}>{l}</Txt>)}
+  </div>
+);
+export const fitLines = (lines: string[], w: number, target: number, max: number) => Math.min(...lines.map((l) => fit(l, w, target, max)));

@@ -4,7 +4,8 @@
   "scripts": {
     "music": "node scripts/music.mjs",
     "studio": "remotion studio",
-    "render": "remotion render Reel out/manywright-reel.mp4"
+    "render": "remotion render Reel out/manywright-reel.mp4",
+    "render:vertical": "remotion render ReelVertical out/manywright-reel-vertical.mp4"
   },
   "dependencies": {
     "@remotion/cli": "4.0.537",
