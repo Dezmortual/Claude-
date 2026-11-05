@@ -395,15 +395,16 @@ const VENDORS = ["Design agency", "Web freelancer", "Security consultant", "Book
 
 /* ---------------- Sound ---------------- */
 const Snd = (() => {
-  let ctx = null, master, wet, droneGain, droneFilter, droneOsc = [], on = false;
+  let ctx = null, master, wet, droneGain, droneFilter, droneOsc = [], on = false, offs = 0;
+  const T = () => ctx.currentTime + offs;
   function impulse(sec, decay) {
     const len = Math.floor(ctx.sampleRate * sec), b = ctx.createBuffer(2, len, ctx.sampleRate);
     for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay); }
     return b;
   }
-  function init() {
-    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
-    ctx = new AC();
+  function init(given) {
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC && !given) return false;
+    ctx = given || new AC();
     master = ctx.createGain(); master.gain.value = 0;
     const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3;
     master.connect(comp); comp.connect(ctx.destination);
@@ -422,8 +423,8 @@ const Snd = (() => {
   }
   function set(v) {
     if (!ctx && !init()) return false;
-    if (ctx.state === "suspended") ctx.resume();
-    on = v; const t = ctx.currentTime;
+    if (ctx.state === "suspended" && ctx.resume) ctx.resume();
+    on = v; const t = T();
     master.gain.cancelScheduledValues(t); master.gain.setTargetAtTime(on ? 0.9 : 0, t, 0.25);
     droneGain.gain.cancelScheduledValues(t); droneGain.gain.setTargetAtTime(on ? 0.07 : 0, t, on ? 1.4 : 0.2);
     return on;
@@ -431,7 +432,7 @@ const Snd = (() => {
   function tone(freq, o = {}) {
     if (!on) return;
     const { dur = 1.4, type = "sine", gain = 0.1, when = 0, attack = 0.006, send = 0.5, detune = 0 } = o;
-    const t = ctx.currentTime + when;
+    const t = T() + when;
     const osc = ctx.createOscillator(); osc.type = type; osc.frequency.value = freq; osc.detune.value = detune;
     const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(gain, t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     osc.connect(g); g.connect(master);
@@ -441,7 +442,7 @@ const Snd = (() => {
   function bell(f, o = {}) { tone(f, o); tone(f * 2.76, { ...o, gain: (o.gain || 0.1) * 0.22, dur: (o.dur || 1.4) * 0.45 }); tone(f * 5.4, { ...o, gain: (o.gain || 0.1) * 0.06, dur: (o.dur || 1.4) * 0.25 }); }
   function clack(when = 0, pitch = 1) {
     if (!on) return;
-    const t = ctx.currentTime + when, len = Math.floor(ctx.sampleRate * 0.08);
+    const t = T() + when, len = Math.floor(ctx.sampleRate * 0.08);
     const b = ctx.createBuffer(1, len, ctx.sampleRate), d = b.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 6);
     const src = ctx.createBufferSource(); src.buffer = b;
@@ -454,7 +455,7 @@ const Snd = (() => {
     o.connect(og); og.connect(master); o.start(t); o.stop(t + 0.25);
   }
   function mood(m) {
-    if (!ctx) return; const t = ctx.currentTime;
+    if (!ctx) return; const t = T();
     const tense = m === "usual";
     droneOsc.forEach((o, i) => o.detune.setTargetAtTime(tense ? (i - 1.5) * 22 : (i - 1.5) * 3, t, 0.8));
     droneFilter.Q.setTargetAtTime(tense ? 4 : 0.8, t, 0.8);
@@ -462,11 +463,11 @@ const Snd = (() => {
   function cluster(n) { // beating, detuned tones: one per supplier
     for (let i = 0; i < n; i++) tone(196 * Math.pow(2, (i * 1.7) / 12), { type: "triangle", gain: 0.035, dur: 1.6, when: i * 0.035, detune: (i % 2 ? 1 : -1) * (12 + i * 5), send: 0.6 });
   }
-  function cue(state) {
+  function cue(state, nv) {
     if (!on) return;
     mood(state);
     if (state === "cloud") bell(392, { gain: 0.06, dur: 2.4 });
-    if (state === "usual") cluster(+document.getElementById("vendors").value);
+    if (state === "usual") cluster(nv || 4);
     if (state === "one") [220, 277.18, 329.63, 440, 554.37].forEach((f, i) => bell(f, { gain: 0.06, when: i * 0.09, dur: 2.6 }));
     if (state === "team") bell(587.33, { gain: 0.06, dur: 1.8 });
     if (state === "price") bell(523.25, { gain: 0.05, dur: 1.8 });
@@ -475,9 +476,37 @@ const Snd = (() => {
   const PENT = [440, 523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66];
   function pluck(i, when) { bell(PENT[i % PENT.length], { gain: 0.045, dur: 0.9, when, send: 0.6 }); }
   function tick() { tone(1760, { gain: 0.012, dur: 0.05, send: 0 }); }
-  function pause(hidden) { if (ctx && on) master.gain.setTargetAtTime(hidden ? 0 : 0.9, ctx.currentTime, 0.1); }
-  return { set, isOn: () => on, cue, cluster, pluck, clack, bell, tick, tone, pause };
+  function pause(hidden) { if (ctx && on && !window.__sndLog) master.gain.setTargetAtTime(hidden ? 0 : 0.9, T(), 0.1); }
+  // Offline render of a recorded cue log (used to make the video soundtrack).
+  async function renderOffline(log, dur, sr = 48000) {
+    const oc = new OfflineAudioContext(2, Math.ceil(sr * dur), sr);
+    ctx = null; droneOsc = []; on = false; init(oc);
+    const api = { set, cue, cluster, pluck, clack, bell, tick, tone };
+    log.forEach(e => { offs = e.t; api[e.k](...e.a); });
+    const buf = await oc.startRendering();
+    const L = buf.getChannelData(0), R = buf.getChannelData(1), n = L.length;
+    const out = new DataView(new ArrayBuffer(44 + n * 4));
+    const w = (o, str) => [...str].forEach((c, i) => out.setUint8(o + i, c.charCodeAt(0)));
+    w(0, "RIFF"); out.setUint32(4, 36 + n * 4, true); w(8, "WAVEfmt "); out.setUint32(16, 16, true);
+    out.setUint16(20, 1, true); out.setUint16(22, 2, true); out.setUint32(24, sr, true); out.setUint32(28, sr * 4, true);
+    out.setUint16(32, 4, true); out.setUint16(34, 16, true); w(36, "data"); out.setUint32(40, n * 4, true);
+    for (let i = 0; i < n; i++) {
+      out.setInt16(44 + i * 4, Math.max(-1, Math.min(1, L[i])) * 32767, true);
+      out.setInt16(46 + i * 4, Math.max(-1, Math.min(1, R[i])) * 32767, true);
+    }
+    const bytes = new Uint8Array(out.buffer); let bin = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+  const raw = { set, cue, cluster, pluck, clack, bell, tick, tone };
+  const api = { isOn: () => on, pause, renderOffline };
+  Object.keys(raw).forEach(k => api[k] = (...a) => {
+    if (window.__sndLog) window.__sndLog.push({ t: (performance.now() - (window.__t0 || 0)) / 1000, k, a });
+    return raw[k](...a);
+  });
+  return api;
 })();
+window.__Snd = Snd;
 
 const soundBtns = [document.getElementById("soundBtn"), document.getElementById("soundBtn2")];
 function syncSound() {
@@ -488,7 +517,7 @@ function syncSound() {
 }
 soundBtns.forEach(b => b.addEventListener("click", () => {
   const r = Snd.set(!Snd.isOn()); syncSound();
-  if (r) setTimeout(() => Snd.cue(state), 120);
+  if (r) setTimeout(() => Snd.cue(state, nVendors), 120);
 }));
 document.addEventListener("visibilitychange", () => Snd.pause(document.hidden));
 
@@ -957,7 +986,7 @@ function setState(s) {
   if (s === "make") { if (prev !== "make") autoAssemble(); }
   else { stopAuto(); stage = 4; }
   updateFig();
-  if (prev !== s) Snd.cue(s);
+  if (prev !== s) Snd.cue(s, nVendors);
 }
 
 const sheets = [...document.querySelectorAll(".sheet")];
