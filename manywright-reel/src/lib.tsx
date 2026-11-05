@@ -10,11 +10,11 @@ export const DURATION = 900;
 
 // ---- brand palette (from the Manywright explainer) plus a cobalt for colour play
 export const C = {
-  navy: "#0A1F33",
-  deep: "#06131F",
-  amber: "#F2B84B",
+  navy: "#0F1B2D",
+  deep: "#08111D",
+  amber: "#F5A524",
   coral: "#E8775E",
-  ice: "#E4EDF3",
+  ice: "#F4F6FA",
   cobalt: "#2E5BFF",
   muted: "#8EA7BB",
 };
@@ -65,4 +65,29 @@ export const Txt: React.FC<{
 
 export const Mono: React.FC<{ size?: number; color?: string; style?: React.CSSProperties; children: React.ReactNode }> = ({ size = 20, color = C.ice, style, children }) => (
   <div style={{ fontFamily: MONO, fontSize: size, color, letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap", ...style }}>{children}</div>
+);
+
+// ---- the Manywright M, traced from the brand logo (viewBox units of the 512px master).
+// Four pieces: left upright, left diagonal, amber diagonal, right upright.
+export const M_PIECES: { pts: string; amber: boolean; c: [number, number] }[] = [
+  { pts: "122,168 170,249 170,363 122,363", amber: false, c: [146, 290] },
+  { pts: "122,148 178,148 252,274 252,363 249,363", amber: false, c: [190, 245] },
+  { pts: "389,148 333,148 259,276 259,363 262,363", amber: true, c: [321, 245] },
+  { pts: "389,168 341,249 341,363 389,363", amber: false, c: [365, 290] },
+];
+export const M_VIEW = { x: 118, y: 144, w: 275, h: 223 }; // centre = 255.5, 255.5
+export type PieceT = { dx?: number; dy?: number; rot?: number; s?: number; o?: number };
+export const MLogo: React.FC<{ height: number; piece?: (i: number) => PieceT; mono?: string; style?: React.CSSProperties }> = ({ height, piece, mono, style }) => (
+  <svg width={(height * M_VIEW.w) / M_VIEW.h} height={height} viewBox={`${M_VIEW.x} ${M_VIEW.y} ${M_VIEW.w} ${M_VIEW.h}`} style={{ overflow: "visible", ...style }}>
+    {M_PIECES.map((p, i) => {
+      const { dx = 0, dy = 0, rot = 0, s = 1, o = 1 } = piece ? piece(i) : {};
+      const [cx, cy] = p.c;
+      const fill = mono || (p.amber ? C.amber : C.ice);
+      return (
+        <g key={i} opacity={o} transform={`translate(${dx} ${dy}) rotate(${rot} ${cx} ${cy}) translate(${cx} ${cy}) scale(${s}) translate(${-cx} ${-cy})`}>
+          <polygon points={p.pts} fill={fill} stroke={fill} strokeWidth={3} strokeLinejoin="round" />
+        </g>
+      );
+    })}
+  </svg>
 );

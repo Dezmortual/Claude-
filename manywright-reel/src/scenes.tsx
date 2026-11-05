@@ -1,6 +1,6 @@
 import React from "react";
 import { AbsoluteFill, spring } from "remotion";
-import { b, BF, C, DISPLAY, fit, inExpo, inOut, ip, Mono, MONO, outExpo, pulse, Txt, vf } from "./lib";
+import { b, BF, C, DISPLAY, fit, inExpo, inOut, ip, M_PIECES, M_VIEW, MLogo, Mono, MONO, outExpo, pulse, Txt, vf } from "./lib";
 
 const DISCIPLINES: [string, number][] = [
   ["ENGINEERING", 57], ["SPECIALIZED", 45], ["MARKETING", 25], ["SECURITY", 11], ["DESIGN", 10],
@@ -185,7 +185,7 @@ export const Shapes: React.FC<{ f: number }> = ({ f }) => {
   const names = ["BRIEF", "PROPOSE", "MAKE", "DELIVER"];
   const rot = ip(f, [b(0.5), b(1)], [0, 45]);
   const toRow = ip(f, [b(1), b(1.6)], [0, 1]);
-  const toDots = ip(f, [b(3), b(3.4)], [0, 1], inExpo);
+  const toDots = ip(f, [b(3), b(3.16)], [0, 1]);
   const headline = f < b(2) ? "FOUR PIECES." : "ONE WAY OF WORKING.";
   const hf = f < b(2) ? f : f - b(2);
   return (
@@ -204,7 +204,7 @@ export const Shapes: React.FC<{ f: number }> = ({ f }) => {
         x = x + (row[i][0] - x) * toRow; y = y + (row[i][1] - y) * toRow;
         const hit = b(2 + i * 0.25);
         const bounce = f >= hit ? Math.exp(-(f - hit) / 5) : 0;
-        const size = S * (1 - toRow * 0.15) * (1 + bounce * 0.28) * (1 - toDots * 0.96);
+        const size = S * (1 - toRow * 0.15) * (1 + bounce * 0.28) * (1 - toDots);
         const r = ip(f, [b(1), b(1.6)], [0, 50]);
         const spin = (1 - a) * 220 + rot * (1 - toRow);
         return (
@@ -214,7 +214,7 @@ export const Shapes: React.FC<{ f: number }> = ({ f }) => {
               background: col, borderRadius: `${r}%`, transform: `rotate(${spin}deg)`,
               boxShadow: i === 3 ? "none" : undefined,
             }} />
-            {f >= hit && toDots < 0.5 && (
+            {f >= hit && toDots < 0.3 && (
               <Mono size={30} color={col} style={{ position: "absolute", left: 960 + row[i][0], top: 720, transform: `translate(-50%, ${ip(f - hit, [0, 10], [20, 0])}px)`, opacity: ip(f - hit, [0, 6], [0, 1]) }}>
                 0{i + 1} {names[i]}
               </Mono>
@@ -222,10 +222,24 @@ export const Shapes: React.FC<{ f: number }> = ({ f }) => {
           </React.Fragment>
         );
       })}
-      {f >= b(3.2) && Array.from({ length: 199 }, (_, n) => {
+      {f >= b(3) && (() => {
+        const MH = 330, k = MH / M_VIEW.h;
+        const a = ip(f, [b(3), b(3.4)], [0, 1]);
+        const out = ip(f, [b(3.62), b(4)], [0, 1], inExpo);
+        return (
+          <div style={{ position: "absolute", left: 960, top: 560, transform: `translate(-50%, -50%) scale(${1 - out * 0.8})`, opacity: 1 - out }}>
+            <MLogo height={MH} piece={(i) => {
+              const [cx, cy] = M_PIECES[i].c;
+              const fx = row[i][0] / k - (cx - 255.5), fy = row[i][1] / k - (cy - 255.5);
+              return { dx: fx * (1 - a), dy: fy * (1 - a), rot: (i % 2 ? -1 : 1) * 120 * (1 - a), s: 0.35 + 0.65 * a };
+            }} />
+          </div>
+        );
+      })()}
+      {f >= b(3.55) && Array.from({ length: 199 }, (_, n) => {
         const cx = (n % 20) - 9.5, cy = Math.floor(n / 20) - 4.5;
         const d = Math.hypot(cx, cy);
-        const on = ip(f, [b(3.2) + d * 2.2, b(3.2) + d * 2.2 + 8], [0, 1]);
+        const on = ip(f, [b(3.55) + d * 1.25, b(3.55) + d * 1.25 + 7], [0, 1]);
         return <div key={n} style={{ position: "absolute", left: 960 + cx * 86 - 5, top: 560 + cy * 86 - 5, width: 10, height: 10, borderRadius: 5, background: n === 105 ? C.amber : C.ice, opacity: on * 0.9, transform: `scale(${on})` }} />;
       })}
     </AbsoluteFill>
@@ -353,16 +367,12 @@ export const Land: React.FC<{ f: number; fps: number }> = ({ f, fps }) => {
       }} />
       <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 40 }}>
-          <div style={{ position: "relative", width: 112, height: 112 }}>
-            {PIECES.map((col, i) => {
-              const s = spring({ frame: f - i * 2, fps, config: { damping: 14, stiffness: 160 } });
-              return <div key={i} style={{
-                position: "absolute", width: 52, height: 52, background: col,
-                left: (i % 2) * 60 + dirs[i][0] * 300 * (1 - s), top: Math.floor(i / 2) * 60 + dirs[i][1] * 300 * (1 - s),
-                transform: `rotate(${(1 - s) * 180}deg)`,
-              }} />;
-            })}
-          </div>
+          <MLogo height={150} piece={(i) => {
+            const delay = [0, 2, 7, 1][i];
+            const s = spring({ frame: f - delay, fps, config: i === 2 ? { damping: 9, stiffness: 140, mass: 0.8 } : { damping: 15, stiffness: 170 } });
+            const from = [[-520, 260], [-260, -520], [520, -520], [520, 260]][i];
+            return { dx: from[0] * (1 - s), dy: from[1] * (1 - s), rot: [-90, 60, -140, 90][i] * (1 - s), o: Math.min(1, s * 3) };
+          }} />
           <div style={{ fontFamily: DISPLAY, fontSize: 168, lineHeight: 1, color: C.ice, letterSpacing: "0.01em", whiteSpace: "nowrap" }}>
             <span style={{ fontVariationSettings: vf(w, 900) }}>MANY</span>
             <span style={{ fontVariationSettings: vf(w, 260) }}>WRIGHT</span>

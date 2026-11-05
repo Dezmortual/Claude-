@@ -1,6 +1,6 @@
 import React from "react";
 import { AbsoluteFill, Audio, continueRender, delayRender, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
-import { b, BF, C, MONO, shake } from "./lib";
+import { b, BF, C, MLogo, MONO, shake } from "./lib";
 import { Build, Camera, Colour, Disciplines, Hook, Land, Shapes } from "./scenes";
 
 // ---- fonts: local variable files, render waits until both are ready
@@ -24,7 +24,7 @@ const Hud: React.FC<{ f: number }> = ({ f }) => {
   const beat = Math.floor(f / BF), bar = Math.floor(beat / 4) + 1, inBar = beat % 4;
   return (
     <AbsoluteFill style={{ mixBlendMode: "difference", color: "#fff", fontFamily: MONO, fontSize: 17, letterSpacing: "0.1em", pointerEvents: "none" }}>
-      <div style={{ position: "absolute", left: 40, top: 34, opacity: 0.85 }}>MANYWRIGHT / MOTION REEL 2026</div>
+      <div style={{ position: "absolute", left: 40, top: 30, opacity: 0.85, display: "flex", alignItems: "center", gap: 12 }}><MLogo height={22} mono="#fff" />MANYWRIGHT / MOTION REEL 2026</div>
       <div style={{ position: "absolute", right: 40, top: 34, opacity: 0.85, fontVariantNumeric: "tabular-nums" }}>
         00:00:{String(sec).padStart(2, "0")}:{String(fr).padStart(2, "0")}
       </div>
