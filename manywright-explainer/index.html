@@ -730,8 +730,8 @@ if (gl) {
     const o = label(`${m.name === "Project management" ? "Project mgmt" : m.name} ${m.count}`, "", () => pos, () => ["one", "team", "price"].includes(state) && W >= 700, ax > 0.25 ? "right" : ax < -0.25 ? "left" : "center");
     o.disc = m.name; return o;
   });
-  pieceObjs.forEach((p, i) => label(`0${i + 1} ${STEPS[i][0]}`, "", () => p.g.getWorldPosition(v3), () => state === "make" && W >= 520, "center").piece = i);
-  label("Yours to keep", "hot", () => pieces.position, () => state === "cta", "below");
+  pieceObjs.forEach((p, i) => label(`0${i + 1} ${STEPS[i][0]}`, "", () => { v3.copy(p.g.position); if (i < stage) v3.addScaledVector(p.home, 0.9); return pieces.localToWorld(v3); }, () => state === "make" && W >= 520, i % 2 ? "right" : "left").piece = i);
+  label("Yours to keep", "hot", () => v3.copy(pieces.position).add(new THREE.Vector3(0.75, 0, 0)), () => state === "cta", "right");
 
   function placeLabels() {
     const tmp = new THREE.Vector3();
@@ -793,7 +793,7 @@ if (gl) {
     P.you.set(0, state === "usual" ? 0 : state === "make" ? -4.4 : -1.7, 0);
     P.leadS = ["one", "team", "price", "cta"].includes(state) ? 1 : 0;
     piecesTgt.s = state === "make" ? 1 : state === "cta" ? 0.42 : 0;
-    piecesTgt.pos.set(state === "cta" ? 1.7 : 0, state === "cta" ? -1.7 : 0.9, 0);
+    piecesTgt.pos.set(state === "cta" ? 2.6 : 0, state === "cta" ? -1.7 : 0.9, 0);
   };
   window.__applyTargets = applyTargets;
 
