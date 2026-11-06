@@ -1,0 +1,7 @@
+Sound effects: Kenney (www.kenney.nl), CC0 1.0 Universal (public domain).
+From the Kenney starter kits on GitHub:
+  KenneyNL/Starter-Kit-3D-Platformer  sounds/coin, jump, land, break
+  KenneyNL/Starter-Kit-City-Builder   sounds/placement-a..d, removal-a, toggle, rotate
+  KenneyNL/Starter-Kit-Racing         audio/impact
+Each kit's README states: "Assets included in this package (2D sprites, 3D models and sound effects) are CC0 licensed".
+Converted to 48 kHz stereo WAV with ffmpeg; otherwise unmodified.
