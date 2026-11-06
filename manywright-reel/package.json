@@ -5,7 +5,10 @@
     "music": "node scripts/music.mjs",
     "studio": "remotion studio",
     "render": "remotion render Reel out/manywright-reel.mp4",
-    "render:vertical": "remotion render ReelVertical out/manywright-reel-vertical.mp4"
+    "render:vertical": "remotion render ReelVertical out/manywright-reel-vertical.mp4",
+    "music:pixel": "node scripts/pixel-music.mjs",
+    "render:pixel": "remotion render Pixel out/manywright-pixel.mp4",
+    "render:pixel-vertical": "remotion render PixelVertical out/manywright-pixel-vertical.mp4"
   },
   "dependencies": {
     "@remotion/cli": "4.0.537",
