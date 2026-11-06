@@ -34,7 +34,7 @@ const G: Record<string, string> = {
   $: "00100 01111 10100 01110 00101 11110 00100", ">": "01000 00100 00010 00001 00010 00100 01000",
   _: "00000 00000 00000 00000 00000 00000 11111", "-": "00000 00000 00000 11111 00000 00000 00000",
   "+": "00000 00100 00100 11111 00100 00100 00000", "·": "00000 00000 00000 00100 00000 00000 00000",
-  "!": "00100 00100 00100 00100 00100 00000 00100", " ": "00000 00000 00000 00000 00000 00000 00000",
+  "!": "00100 00100 00100 00100 00100 00000 00100", "✓": "00000 00001 00001 00010 10100 01000 00000", "*": "00000 10101 01110 11111 01110 10101 00000", " ": "00000 00000 00000 00000 00000 00000 00000",
 };
 export const glyph = (ch: string): string[] => (G[ch.toUpperCase()] || G[" "]).split(" ");
 export const textWidth = (s: string, sc: number) => s.length * 6 * sc - sc;
@@ -56,6 +56,11 @@ const ICON_ROWS: Record<string, string[]> = {
   mail: ["............", "............", "wwwwwwwwwwww", "wbwwwwwwwwbw", "wwbwwwwwwbww", "wwwbwwwwbwww", "wwwwbwwbwwww", "wwwwwbbwwwww", "wwwwwwwwwwww", "wwwwwwwwwwww", "wwwwwwwwwwww", "............"],
   cal: ["..m......m..", "cccccccccccc", "cccccccccccc", "wwwwwwwwwwww", "wmwmwmwmwmww", "wwwwwwwwwwww", "wmwmwawmwmww", "wwwwwwwwwwww", "wmwmwmwmwmww", "wwwwwwwwwwww", "wwwwwwwwwwww", "............"],
   gem: ["............", "...wwwwww...", "..wawwwwaw..", ".wwwwwwwwww.", "aaaaaaaaaaaa", ".aaaaaaaaaa.", "..aaaaaaaa..", "...aaaaaa...", "....aaaa....", ".....aa.....", "............", "............"],
+  phone: ["..mmmmmmmm..", "..mbbbbbbm..", "..mwwwwwwm..", "..mwaaaawm..", "..mwwwwwwm..", "..mwmmmmwm..", "..mwwwwwwm..", "..mwaaaawm..", "..mwwwwwwm..", "..mmmmmmmm..", "..mmmwwmmm..", "..mmmmmmmm.."],
+  doc: ["wwwwwwww....", "wmmmmmmw....", "wwwwwwww..aa", "wmmmmmmw.aaa", "wwwwwww.aaa.", "wmmmmm.aaa..", "wwwww.aaa...", "wmmm.aaa....", "wwww.ca.....", "wmmmcc......", "wwwwwwww....", "............"],
+  call: ["............", ".aaa........", ".aaaa.......", ".aaa........", "..aa........", "..aaa.......", "...aaa......", "....aaa..aa.", ".....aaaaaaa", "......aaaaa.", "........aa..", "............"],
+  bolt: [".......aaa..", "......aaa...", ".....aaa....", "....aaa.....", "...aaaaaaa..", "..aaaaaaa...", ".....aaa....", "....aaa.....", "...aaa......", "..aaa.......", ".aa.........", "............"],
+  key: ["............", "............", "............", ".aaaa.......", "aa..aa......", "aa..aaaaaaaa", "aa..aa..a.a.", ".aaaa...a.a.", "............", "............", "............", "............"],
   shield: [".bbbbbbbbbb.", "bbbbbbbbbbbb", "bbbbbbbbbbbb", "bbbbbbbbbwbb", "bbbbbbbbwwbb", "bwbbbbbwwbbb", "bwwbbbwwbbbb", ".bwwbwwbbbb.", ".bbwwwbbbbb.", "..bbwbbbbb..", "...bbbbbb...", ".....bb....."],
 };
 export const SERVICES: { icon: string; name: string; price: string }[] = [

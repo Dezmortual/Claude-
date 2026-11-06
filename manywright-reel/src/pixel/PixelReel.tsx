@@ -7,15 +7,15 @@ import { BRAND, glyph, iconPixels, mPixels, P, RGB, SERVICES, sprite, textWidth 
    (320x180, or 180x320 for Reels) and scaled up with hard pixel edges. Particle positions
    are pure functions of the frame, so renders are deterministic. */
 
-const N = 1600;
-type Pt = { x: number; y: number; c: RGB; a: number; s: number };
-type Form = { kind: "static"; pts: Pt[] } | { kind: "dyn"; fn: (i: number, t: number) => Pt };
-type Key = { at: number; form: Form; dur: number; stagger: number };
+export const N = 1600;
+export type Pt = { x: number; y: number; c: RGB; a: number; s: number };
+export type Form = { kind: "static"; pts: Pt[] } | { kind: "dyn"; fn: (i: number, t: number) => Pt };
+export type Key = { at: number; form: Form; dur: number; stagger: number; order?: (p: Pt, i: number) => number };
 
-const hash = (i: number, k = 0) => { const x = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); };
-const outExpo = (t: number) => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t));
-const clamp01 = (t: number) => Math.max(0, Math.min(1, t));
-const mix = (a: RGB, c: RGB, t: number): RGB => [a[0] + (c[0] - a[0]) * t, a[1] + (c[1] - a[1]) * t, a[2] + (c[2] - a[2]) * t];
+export const hash = (i: number, k = 0) => { const x = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); };
+export const outExpo = (t: number) => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t));
+export const clamp01 = (t: number) => Math.max(0, Math.min(1, t));
+export const mix = (a: RGB, c: RGB, t: number): RGB => [a[0] + (c[0] - a[0]) * t, a[1] + (c[1] - a[1]) * t, a[2] + (c[2] - a[2]) * t];
 
 function buildWorld(LW: number, LH: number, V: boolean) {
   const CX = LW / 2, CY = LH / 2;
@@ -141,20 +141,20 @@ function buildWorld(LW: number, LH: number, V: boolean) {
   return { CX, CY, keys, barLabels, gridBottom, digitsBottom: digits.bottom };
 }
 
-const evalForm = (form: Form, i: number, t: number): Pt => (form.kind === "static" ? form.pts[i] : form.fn(i, t));
-function particle(keys: Key[], i: number, f: number): Pt {
+export const evalForm = (form: Form, i: number, t: number): Pt => (form.kind === "static" ? form.pts[i] : form.fn(i, t));
+export function particle(keys: Key[], i: number, f: number): Pt {
   let k = 0;
   while (k + 1 < keys.length && keys[k + 1].at <= f) k++;
   const cur = keys[k], to = evalForm(cur.form, i, (f - cur.at) / FPS);
   if (k === 0 || cur.dur === 0) return to;
   const prev = keys[k - 1], from = evalForm(prev.form, i, (f - prev.at) / FPS);
-  const e = outExpo(clamp01((f - cur.at - cur.stagger * hash(i, 13)) / cur.dur));
+  const e = outExpo(clamp01((f - cur.at - cur.stagger * (cur.order ? cur.order(to, i) : hash(i, 13))) / cur.dur));
   return { x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e, c: mix(from.c, to.c, e), a: from.a + (to.a - from.a) * e, s: e < 0.5 ? from.s : to.s };
 }
 
 // ---------- drawing helpers ----------
-const rgb = (c: RGB, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
-function text(ctx: CanvasRenderingContext2D, s: string, x: number, y: number, sc: number, c: RGB, o: { align?: "center" | "left" | "right"; reveal?: number; cursor?: boolean; a?: number } = {}) {
+export const rgb = (c: RGB, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
+export function text(ctx: CanvasRenderingContext2D, s: string, x: number, y: number, sc: number, c: RGB, o: { align?: "center" | "left" | "right"; reveal?: number; cursor?: boolean; a?: number } = {}) {
   const { align = "center", reveal = s.length, cursor = false, a = 1 } = o;
   const w = textWidth(s, sc), x0 = Math.round(align === "center" ? x - w / 2 : align === "right" ? x - w : x);
   ctx.fillStyle = rgb(c, a);
@@ -164,9 +164,9 @@ function text(ctx: CanvasRenderingContext2D, s: string, x: number, y: number, sc
   })));
   if (cursor && n <= s.length) ctx.fillRect(x0 + Math.min(n, s.length) * 6 * sc, Math.round(y), 5 * sc, 7 * sc);
 }
-const lines = (ctx: CanvasRenderingContext2D, ls: string[], x: number, y: number, sc: number, c: RGB, o: Parameters<typeof text>[6] = {}) =>
+export const lines = (ctx: CanvasRenderingContext2D, ls: string[], x: number, y: number, sc: number, c: RGB, o: Parameters<typeof text>[6] = {}) =>
   ls.forEach((l, k) => text(ctx, l, x, y + k * 9 * sc, sc, c, o));
-function glitch(ctx: CanvasRenderingContext2D, LW: number, LH: number, f: number, amount: number) {
+export function glitch(ctx: CanvasRenderingContext2D, LW: number, LH: number, f: number, amount: number) {
   for (let k = 0; k < 5; k++) {
     const y = Math.floor(hash(f, k) * LH), h = 2 + Math.floor(hash(f, k + 9) * 10), dx = Math.round((hash(f, k + 19) - 0.5) * 30 * amount);
     const img = ctx.getImageData(0, y, LW, h); ctx.putImageData(img, dx, y);
