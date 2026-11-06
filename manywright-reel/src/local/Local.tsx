@@ -1,6 +1,6 @@
 import React from "react";
 import { AbsoluteFill, Audio, continueRender, delayRender, random, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
-import { b, ip } from "../lib";
+import { b, ip, useL } from "../lib";
 import { City, F, Features, Honest, Hud, Land, Packages, Roles, Steps, Warp } from "./future";
 import { Countdown, FilmGate, FilmLook, PaperMap, PhoneBook, SearchTurn, Year } from "./vintage";
 
@@ -28,6 +28,7 @@ const SECTIONS: [number, string][] = [[16, "01 · Near me"], [24, "02 · The mon
 export const Local: React.FC = () => {
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const { V: P } = useL();
   const sp = (fr: number, cfg?: object) => spring({ frame: fr, fps, config: cfg as never });
 
   // the turn: sepia drains, the 4:3 gate opens, the film look fades
@@ -66,9 +67,9 @@ export const Local: React.FC = () => {
       {f < b(55.5) && <Year f={f} />}
       {hud && (
         <>
-          <Hud size={18} color={F.ice} style={{ position: "absolute", right: 40, top: 36, opacity: 0.8 }}>Manywright / Get found locally</Hud>
-          <Hud size={18} color={F.cyan} style={{ position: "absolute", left: 40, bottom: 34, opacity: 0.8 }}>{section ? section[1] : ""}</Hud>
-          <Hud size={18} color={F.ice} style={{ position: "absolute", right: 40, bottom: 34, opacity: 0.6, fontVariantNumeric: "tabular-nums" }}>00:00:{String(sec).padStart(2, "0")}:{String(fr).padStart(2, "0")}</Hud>
+          <Hud size={18} color={F.ice} style={{ position: "absolute", right: 40, top: P ? 150 : 36, opacity: 0.8 }}>Manywright / Get found locally</Hud>
+          <Hud size={18} color={F.cyan} style={{ position: "absolute", left: 40, bottom: P ? 330 : 34, opacity: 0.8 }}>{section ? section[1] : ""}</Hud>
+          <Hud size={18} color={F.ice} style={{ position: "absolute", right: P ? 140 : 40, bottom: P ? 330 : 34, opacity: 0.6, fontVariantNumeric: "tabular-nums" }}>00:00:{String(sec).padStart(2, "0")}:{String(fr).padStart(2, "0")}</Hud>
         </>
       )}
       <Audio src={staticFile("local.wav")} />

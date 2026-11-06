@@ -13,7 +13,8 @@
     "render:web": "remotion render PixelWeb out/manywright-website.mp4",
     "render:web-vertical": "remotion render PixelWebVertical out/manywright-website-vertical.mp4",
     "music:local": "node scripts/local-music.mjs",
-    "render:local": "remotion render LocalFilm out/manywright-get-found-locally.mp4"
+    "render:local": "remotion render LocalFilm out/manywright-get-found-locally.mp4",
+    "render:local-vertical": "remotion render LocalFilmVertical out/manywright-get-found-locally-vertical.mp4"
   },
   "dependencies": {
     "@remotion/cli": "4.0.537",
