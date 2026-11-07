@@ -2,6 +2,7 @@ import React from "react";
 import { AbsoluteFill, Audio, Freeze, Img, interpolate, OffthreadVideo, random, staticFile, useCurrentFrame } from "remotion";
 import { MLogo } from "../lib";
 import events from "../../public/social/events.json";
+import pieceBg from "../../public/social/piece-bg.json";
 
 /* "A glance inside": manywright.com/services/social-and-email/, recorded for real in an iPhone 15 Pro
    emulation (public/social/recording.mp4, see scripts/social/). Every piece that breaks out of the phone is an
@@ -36,9 +37,9 @@ const KEYS: [number, Partial<Pose>][] = [
   [20.9, { y: 1120, s: 0.95, ry: 0 }], [21.6, { y: 1080, s: 0.98 }], [22.35, { y: 1080, s: 0.98 }],
   [23.0, { x: 280, y: 1270, s: 0.6, ry: 18 }], [27.5, { x: 280, y: 1270, s: 0.6, ry: 18 }],
   [28.1, { x: 540, y: 1180, s: 0.74, ry: 0 }], [30.0, { x: 540, y: 1180, s: 0.74 }],
-  [30.5, { y: 1230, s: 0.68, ry: -6 }], [33.5, { y: 1230, s: 0.68, ry: -6 }],
-  [34.0, { y: 1250, s: 0.64, ry: 6 }], [36.4, { y: 1250, s: 0.64, ry: 6 }],
-  [36.9, { y: 1150, s: 0.92, ry: 0 }], [41.3, { y: 1150, s: 0.92 }],
+  [30.5, { x: 820, y: 1420, s: 0.55, ry: -14 }], [33.5, { x: 820, y: 1420, s: 0.55, ry: -14 }],
+  [34.0, { x: 820, y: 1420, s: 0.55, ry: -14 }], [36.4, { x: 820, y: 1420, s: 0.55, ry: -14 }],
+  [36.9, { x: 540, y: 1150, s: 0.92, ry: 0 }], [41.3, { y: 1150, s: 0.92 }],
   [41.8, { y: 1180, s: 0.74 }], [44.4, { y: 1180, s: 0.74 }],
   [45.0, { y: 960, s: 1.02 }], [45.9, { y: 960, s: 1.02 }],
   [46.6, { y: 2700, s: 0.5, rx: -35, rz: 10 }],
@@ -116,32 +117,38 @@ const Taps: React.FC<{ t: number }> = ({ t }) => (
 
 /* ---------------- pieces of the real page breaking out ---------------- */
 type Move = [number, number, number, number]; // [t, cx, cy, width]
-type PieceDef = { src: string; css: [number, number]; tIn: number; tOut: number; from: Rect; at: [number, number]; w: number; rot?: number; moves?: Move[]; exit?: "up" | "left" | "fade"; radius?: number; behind?: boolean; opacity?: number };
+type PieceDef = { src: string; name: string; css: [number, number]; tIn: number; tOut: number; from: Rect; at: [number, number]; w: number; rot?: number; moves?: Move[]; exit?: "up" | "left" | "fade"; radius?: number; behind?: boolean; opacity?: number; pad?: number; bg?: string; feather?: boolean };
 const META: Record<string, [number, number]> = {
   heroH1: [361, 115], heroPrice: [361, 42], heroArt: [361, 289], whoforP: [361, 136], card0: [361, 131], card1: [361, 131], card2: [361, 154], card3: [361, 131], card4: [361, 131], card5: [361, 154],
   starter: [361, 342], plus: [361, 413], founding: [361, 248], step0: [361, 154], step1: [361, 130], step2: [361, 154], step3: [361, 154],
   role0: [361, 100], role1: [361, 100], role2: [361, 100], role3: [361, 100], role4: [361, 100], faq1: [361, 171], faq4: [361, 199], cta: [361, 263],
   starter_price_hi: [104.6, 34.4], plus_price_hi: [132.4, 33.4], starter_limits_hi: [203.6, 39.9], plus_limits_hi: [203.6, 39.9],
 };
-const piece = (name: string, o: Omit<PieceDef, "src" | "css">): PieceDef => ({ src: `social/pieces/${name}.png`, css: META[name], ...o });
+const BGS = pieceBg as Record<string, string>;
+// soft edges for pieces cut from the hero's glowing background, so they melt into the navy card
+// (only the right side: the headline text starts at the image's left edge and ends by ~65% of its width)
+const FEATHER: React.CSSProperties = { WebkitMaskImage: "linear-gradient(to right, #000 0, #000 76%, transparent 100%)" };
+const piece = (name: string, o: Omit<PieceDef, "src" | "css" | "name">): PieceDef => ({ src: `social/pieces/${name}.png`, name, css: META[name], bg: BGS[name], ...o });
 const PIECES: PieceDef[] = [
   piece("heroArt", { tIn: 2.0, tOut: 3.0, from: { x: 16, y: 700, w: 361, h: 289 }, at: [540, 1000], w: 1600, behind: true, opacity: 0.32, exit: "fade" }),
-  piece("heroH1", { tIn: 0.95, tOut: 3.0, from: rectOf("hero"), at: [540, 400], w: 860 }),
-  piece("heroPrice", { tIn: 1.6, tOut: 3.0, from: { x: 16, y: 512, w: 361, h: 42 }, at: [540, 590], w: 820, radius: 0 }),
-  piece("whoforP", { tIn: 3.8, tOut: 6.0, from: rectOf("whofor"), at: [540, 450], w: 860, radius: 0 }),
-  ...[0, 1, 2, 3, 4, 5].map((i) => piece(`card${i}`, { tIn: 6.8 + i * 2.5, tOut: 9.0 + i * 2.5, from: rectOf(`card${i}`), at: [540, 455], w: 860, rot: i % 2 ? 1.5 : -1.5 })),
-  piece("starter", { tIn: 23.2, tOut: 25.45, from: rectOf("starter"), at: [680, 680], w: 600, exit: "left", rot: -2 }),
-  piece("starter_price_hi", { tIn: 23.6, tOut: 25.45, from: { x: 25, y: 154, w: 105, h: 34 }, at: [560, 310], w: 520, radius: 0 }),
-  piece("starter_limits_hi", { tIn: 23.85, tOut: 25.45, from: { x: 121, y: 309, w: 204, h: 40 }, at: [660, 1100], w: 520, radius: 0 }),
-  piece("plus", { tIn: 25.45, tOut: 27.75, from: rectOf("plus"), at: [680, 720], w: 570, rot: 2 }),
-  piece("plus_price_hi", { tIn: 25.85, tOut: 27.75, from: { x: 25, y: 154, w: 132, h: 33 }, at: [560, 310], w: 600, radius: 0 }),
-  piece("plus_limits_hi", { tIn: 26.1, tOut: 27.75, from: { x: 121, y: 380, w: 204, h: 40 }, at: [660, 1100], w: 520, radius: 0 }),
-  piece("founding", { tIn: 27.85, tOut: 30.25, from: rectOf("founding"), at: [540, 500], w: 820 }),
-  ...[0, 1, 2, 3].map((i) => piece(`step${i}`, { tIn: 30.3 + i * 0.3, tOut: 33.55, from: { x: 16, y: 150 + i * 120, w: 361, h: 140 }, at: [[300, 420], [780, 420], [300, 700], [780, 700]][i] as [number, number], w: 440, radius: 0 })),
-  ...[0, 1, 2, 3, 4].map((i) => piece(`role${i}`, { tIn: 33.75 + i * 0.15, tOut: 36.55, from: { x: 16, y: 120 + i * 100, w: 361, h: 100 }, at: [540 + (i % 2 ? 30 : -30), 330 + i * 118], w: 760, rot: i % 2 ? 2 : -2, radius: 0 })),
-  piece("faq1", { tIn: 37.75, tOut: 40.35, from: rectOf("faq1open"), at: [540, 470], w: 820, moves: [[39.75, 540, 360, 600]], radius: 0 }),
-  piece("faq4", { tIn: 39.75, tOut: 42.0, from: rectOf("faq4open"), at: [540, 760], w: 720, moves: [[40.4, 540, 500, 820]], radius: 0 }),
-  piece("cta", { tIn: 41.9, tOut: 44.5, from: rectOf("cta"), at: [540, 515], w: 800 }),
+  piece("heroH1", { tIn: 0.95, tOut: 3.0, from: rectOf("hero"), at: [520, 385], w: 760, pad: 36, bg: "#0F1B2D", feather: true }),
+  piece("heroPrice", { tIn: 1.6, tOut: 3.0, from: { x: 16, y: 512, w: 361, h: 42 }, at: [520, 625], w: 760, pad: 26, bg: "#0F1B2D" }),
+  piece("whoforP", { tIn: 3.8, tOut: 6.0, from: rectOf("whofor"), at: [520, 450], w: 740, pad: 40 }),
+  ...[0, 1, 2, 3, 4, 5].map((i) => piece(`card${i}`, { tIn: 6.8 + i * 2.5, tOut: 9.0 + i * 2.5, from: rectOf(`card${i}`), at: [520, 455], w: 820, rot: i % 2 ? 1.2 : -1.2 })),
+  piece("starter", { tIn: 23.2, tOut: 25.45, from: rectOf("starter"), at: [620, 700], w: 560, exit: "left", rot: -1.5 }),
+  piece("starter_price_hi", { tIn: 23.6, tOut: 25.45, from: { x: 25, y: 154, w: 105, h: 34 }, at: [520, 318], w: 460, pad: 20 }),
+  piece("starter_limits_hi", { tIn: 23.85, tOut: 25.45, from: { x: 121, y: 309, w: 204, h: 40 }, at: [600, 1100], w: 500, pad: 20 }),
+  piece("plus", { tIn: 25.45, tOut: 27.75, from: rectOf("plus"), at: [620, 720], w: 540, rot: 1.5 }),
+  piece("plus_price_hi", { tIn: 25.85, tOut: 27.75, from: { x: 25, y: 154, w: 132, h: 33 }, at: [520, 318], w: 520, pad: 20 }),
+  piece("plus_limits_hi", { tIn: 26.1, tOut: 27.75, from: { x: 121, y: 380, w: 204, h: 40 }, at: [600, 1110], w: 500, pad: 20 }),
+  piece("founding", { tIn: 27.85, tOut: 30.25, from: rectOf("founding"), at: [520, 500], w: 800 }),
+  // how it works: one readable column on the left, the phone bottom-right
+  ...[0, 1, 2, 3].map((i) => piece(`step${i}`, { tIn: 30.3 + i * 0.3, tOut: 33.55, from: { x: 16, y: 150 + i * 120, w: 361, h: 140 }, at: [360, [371, 628, 885, 1157][i]] as [number, number], w: 520, pad: 20 })),
+  // the line-up: five rows, no overlaps
+  ...[0, 1, 2, 3, 4].map((i) => piece(`role${i}`, { tIn: 33.75 + i * 0.15, tOut: 36.55, from: { x: 16, y: 120 + i * 100, w: 361, h: 100 }, at: [360, 322 + i * 196], w: 520, pad: 20, rot: i % 2 ? 1 : -1 })),
+  piece("faq1", { tIn: 37.75, tOut: 40.35, from: rectOf("faq1open"), at: [520, 470], w: 740, pad: 34, moves: [[39.75, 520, 375, 520]] }),
+  piece("faq4", { tIn: 39.75, tOut: 42.0, from: rectOf("faq4open"), at: [520, 760], w: 680, pad: 30, moves: [[40.4, 520, 500, 740]] }),
+  piece("cta", { tIn: 41.9, tOut: 44.5, from: rectOf("cta"), at: [520, 535], w: 760, pad: 36 }),
 ];
 
 const Piece: React.FC<{ d: PieceDef; t: number }> = ({ d, t }) => {
@@ -159,16 +166,20 @@ const Piece: React.FC<{ d: PieceDef; t: number }> = ({ d, t }) => {
     else { ey = -700 * io(out); eo = 1 - out; es = 1 - 0.2 * out; }
   }
   const h = (w * d.css[1]) / d.css[0];
+  const pd = ((d.pad ?? 0) * w) / d.w; // padding scales with the piece as it flies
   const tiltX = (1 - fly) * 38 + Math.sin((t - d.tIn) * 1.7) * 2.2 * fly;
   const tiltY = Math.cos((t - d.tIn) * 1.3) * 3 * fly;
   const shadow = 10 + 50 * fly;
   return (
     <div style={{ position: "absolute", left: cx + ex, top: cy + ey, width: 0, height: 0, perspective: 1600, opacity: (d.opacity ?? 1) * eo * clamp(lift * 3) }}>
-      <Img src={staticFile(d.src)} style={{
-        position: "absolute", left: -w / 2, top: -h / 2, width: w, height: h, borderRadius: d.radius ?? 14,
+      <div style={{
+        position: "absolute", left: -w / 2 - pd, top: -h / 2 - pd, width: w + 2 * pd, height: h + 2 * pd, padding: pd, boxSizing: "border-box",
+        background: pd > 0 ? d.bg : undefined, borderRadius: pd > 0 ? 22 : d.radius ?? 14, overflow: "hidden",
         transform: `scale(${(1 + 0.06 * lift * (1 - fly)) * es}) rotateX(${tiltX}deg) rotateY(${tiltY}deg) rotate(${(d.rot ?? 0) * fly}deg)`,
         boxShadow: d.behind ? undefined : `0 ${shadow * 0.6}px ${shadow * 1.6}px rgba(10,20,34,${0.18 + 0.22 * fly})`,
-      }} />
+      }}>
+        <Img src={staticFile(d.src)} style={{ display: "block", width: w, height: h, borderRadius: pd > 0 ? 0 : d.radius ?? 14, ...(d.feather ? FEATHER : {}) }} />
+      </div>
     </div>
   );
 };
@@ -279,7 +290,7 @@ const World: React.FC<{ t: number; f: number }> = ({ t, f }) => {
   const st = win(t, 30.3, 33.7);
   if (st > 0) layers.push(
     <svg key="path" width="1080" height="1920" style={{ position: "absolute", inset: 0, opacity: st }}>
-      <path d="M 300 420 L 780 420 L 300 700 L 780 700" fill="none" stroke={C.coral} strokeWidth="10" strokeDasharray="28 18" pathLength={1000} strokeDashoffset={1000 - 1000 * clamp((t - 30.4) / 1.2)} />
+      <path d="M 56 260 L 56 1290" fill="none" stroke={C.coral} strokeWidth="8" strokeDasharray="22 16" pathLength={1000} strokeDashoffset={1000 - 1000 * clamp((t - 30.4) / 1.2)} />
     </svg>);
   // line-up: rings radiating behind the deck
   const ln = win(t, 33.7, 36.6);
@@ -310,8 +321,8 @@ const EndCard: React.FC<{ t: number }> = ({ t }) => {
     <AbsoluteFill style={{ alignItems: "center", paddingTop: 330 }}>
       <div style={{ transform: `scale(${0.6 + 0.4 * outBack(a(46.0, 0.5))})`, opacity: a(46.0, 0.2), filter: "drop-shadow(0 0 30px rgba(245,165,36,0.45))" }}><MLogo height={190} /></div>
       <Label style={{ position: "relative", marginTop: 40, color: C.coral, fontSize: 26, opacity: a(46.25) }}>Service — Social posts and email newsletter</Label>
-      <Img src={staticFile("social/pieces/heroH1.png")} style={{ width: 860, height: (860 * 115) / 361, marginTop: 34, borderRadius: 12, opacity: a(46.4), transform: `translateY(${(1 - a(46.4)) * 40}px)` }} />
-      <Img src={staticFile("social/pieces/heroPrice.png")} style={{ width: 820, height: (820 * 42) / 361, marginTop: 26, opacity: a(46.75), transform: `translateY(${(1 - a(46.75)) * 30}px)` }} />
+      <Img src={staticFile("social/pieces/heroH1.png")} style={{ width: 800, height: (800 * 115) / 361, marginTop: 34, opacity: a(46.4), transform: `translateY(${(1 - a(46.4)) * 40}px)`, ...FEATHER }} />
+      <Img src={staticFile("social/pieces/heroPrice.png")} style={{ width: 780, height: (780 * 42) / 361, marginTop: 26, opacity: a(46.75), transform: `translateY(${(1 - a(46.75)) * 30}px)` }} />
       <div style={{ fontFamily: DISPLAY, fontVariationSettings: "'wdth' 110, 'wght' 750", fontSize: 64, color: C.ice, marginTop: 56, opacity: a(47.05) }}>manywright.com</div>
       <div style={{ width: 420 * a(47.2, 0.4), height: 5, background: C.amber, marginTop: 14 }} />
     </AbsoluteFill>

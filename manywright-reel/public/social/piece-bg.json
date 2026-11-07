@@ -1,0 +1,21 @@
+{
+ "heroH1": "#322734",
+ "heroPrice": "#232231",
+ "whoforP": "#F4F6FA",
+ "step0": "#FFF0EF",
+ "step1": "#FFF0EF",
+ "step2": "#FFF0EF",
+ "step3": "#FFF0EF",
+ "role0": "#F4F6FA",
+ "role1": "#F4F6FA",
+ "role2": "#F4F6FA",
+ "role3": "#F4F6FA",
+ "role4": "#F4F6FA",
+ "faq1": "#FFF0EF",
+ "faq4": "#FFF0EF",
+ "cta": "#0F1B2D",
+ "starter_price_hi": "#FFFFFF",
+ "plus_price_hi": "#FFFFFF",
+ "starter_limits_hi": "#FFFFFF",
+ "plus_limits_hi": "#FFFFFF"
+}
