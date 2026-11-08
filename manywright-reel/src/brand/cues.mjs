@@ -32,7 +32,7 @@ export const DRAW = {
   ownQ: [33.1, 0.6, "write"], ownYes: [34.0, 0.35, "marker"],
   logoSketch: [36.2, 0.8, "draw"], logoInk: [37.0, 0.4, "marker"], endLine: [37.4, 0.8, "write"],
 };
-export const POP = [2.8, 3.2, 3.35, 3.5, 3.65, 5.45, 5.95, 6.45, 6.9, 7.35, 8.7, 8.9, 9.1, 10.35, 10.85, 11.35, 11.6, 15.8, 16.9,
+export const POP = [2.8, 3.05, 3.2, 3.35, 3.5, 5.45, 5.95, 6.45, 6.9, 7.2, 8.7, 8.9, 9.1, 10.35, 10.85, 11.35, 11.5, 15.8, 16.9,
   20.1, 20.35, 20.6, 20.85, 21.1, 24.9, 28.25, 28.55, 28.85, 29.15, 30.65, 31.55, 34.8, 38.3];
 export const FLIP = [3.7, 14.6, 21.6, 29.6, 35.6];
 export const PAGE_TICKS = [26.7, 26.9, 27.1, 27.3, 27.5]; // the brand guide's pages flicking
@@ -43,5 +43,5 @@ export const STAMP = [18.9, 19.3, 19.7];
 export const COIN = [30.7, 31.6];
 export const BOING = [0.45, 34.1, 38.8];
 export const SAD = [7.05];
-export const DING = [12.7, 17.75, 38.3];
+export const DING = [12.7, 17.65, 38.3];
 export const CONFETTI = [34.1];

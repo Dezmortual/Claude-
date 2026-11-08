@@ -69,7 +69,7 @@ const Hand: React.FC<{ lines: string[]; x: number; y: number; size: number; colo
     <div style={{ position: "absolute", left: x, top: y, transform: `translate(${align === "center" ? "-50%" : "0"}, 0) translate(${jx}px, ${jy}px) rotate(${rot + jr}deg) scale(${scale})`, transformOrigin: "50% 50%", textAlign: align }}>
       {lines.map((l, i) => {
         const q = clamp(P * lines.length - i);
-        return <div key={i} style={{ fontFamily: HAND, fontWeight: weight, fontSize: size, lineHeight: lh, color, whiteSpace: "nowrap", clipPath: `inset(-30% ${(1 - q) * 100}% -30% -5%)` }}>{l}</div>;
+        return <div key={i} style={{ fontFamily: HAND, fontWeight: weight, fontSize: size, lineHeight: lh, color, whiteSpace: "nowrap", padding: "0 0.18em", clipPath: q >= 1 ? undefined : `inset(-30% ${(1 - q) * 100}% -30% -10%)` }}>{l}</div>;
       })}
     </div>
   );
@@ -158,7 +158,7 @@ const Hook: Sc = ({ t, f }) => (
     <Hand f={f} t={t} lines={["everywhere"]} x={540} y={666} size={150} color={CORAL} start={CUE.DRAW.headline[0] + CUE.DRAW.headline[1] * 0.7} dur={CUE.DRAW.headline[1] * 0.3} seed={2} rot={-3} />
     <S><Ink f={f} seed={6} p={clamp((t - 2.5) / 0.3)} sh={[{ k: "curve", a: [[300, 830], [540, 815], [780, 832]], o: { stroke: AMBER, strokeWidth: 9 } }]} /></S>
     <Tag text="SERVICE — LOGO AND BRAND BASICS" x={540} y={290} at={2.8} t={t} f={f} color={SKY} size={38} rot={-2} />
-    {["MARK", "COLOR", "TYPE", "KIT"].map((w, i) => <Tag key={w} text={w} x={200 + i * 225} y={1040} at={[3.2, 3.35, 3.5, 3.65][i]} t={t} f={f} color={[AMBER, CORAL, MINT, SKY][i]} size={50} rot={i % 2 ? 4 : -4} seed={10 + i} />)}
+    {["MARK", "COLOR", "TYPE", "KIT"].map((w, i) => <Tag key={w} text={w} x={200 + i * 225} y={1040} at={[3.05, 3.2, 3.35, 3.5][i]} t={t} f={f} color={[AMBER, CORAL, MINT, SKY][i]} size={50} rot={i % 2 ? 4 : -4} seed={10 + i} />)}
   </>
 );
 const WhoFor: Sc = ({ t, f }) => {
@@ -180,8 +180,8 @@ const WhoFor: Sc = ({ t, f }) => {
       <Hand f={f} t={t} lines={["the van"]} x={540} y={1010} size={56} popAt={5.95} seed={5} color={CORAL} rot={3} />
       <Hand f={f} t={t} lines={["the website"]} x={830} y={1010} size={56} popAt={6.45} seed={6} color={CORAL} rot={-3} />
       <Hand f={f} t={t} lines={["looks blurry", "on Instagram"]} x={300} y={1385} size={54} popAt={6.9} seed={7} />
-      <Hand f={f} t={t} lines={["doesn't print cleanly", "on a shirt"]} x={720} y={1395} size={50} popAt={7.35} seed={8} />
-      {sad > 0 && <Hand f={f} t={t} lines={["oh no…"]} x={880} y={1150} size={46} popAt={7.05} seed={9} color={GREY} rot={10} />}
+      <Hand f={f} t={t} lines={["doesn't print cleanly", "on a shirt"]} x={720} y={1395} size={50} popAt={7.2} seed={8} />
+      {sad > 0 && <Hand f={f} t={t} lines={["oh no…"]} x={505} y={1180} size={46} popAt={7.05} seed={9} color={GREY} rot={-8} />}
     </>
   );
 };
@@ -210,7 +210,7 @@ const Concepts: Sc = ({ t, f }) => {
         {fly < 1 && <Ink f={f} seed={53} p={prog(t, "conceptC")} sh={crumpleC > 0 ? [{ k: "circle", a: [830, 1060, 150 * (1 - 0.4 * crumpleC)], o: { fill: "#fff", fillStyle: "solid" } }, { k: "path", a: "M 780 1040 L 860 1080 L 800 1100 L 870 1020 L 820 1010", o: { strokeWidth: 3 } }] : [{ k: "rect", a: [720, 950, 220, 220], o: { fill: "#fff", fillStyle: "solid" } }, ...logoC(830, 1060, 0.9)]} tf={`translate(${700 * io(fly)} ${-300 * Math.sin(Math.PI * fly)}) rotate(${200 * fly} 830 1060)`} />}
         {choose && center < 0.2 && <Ink f={f} seed={54} p={ring} sh={[{ k: "ellipse", a: [520, 1060, 300, 300], o: { stroke: CORAL, strokeWidth: 8 } }]} />}
       </S>
-      {!choose && <Hand f={f} t={t} lines={["Three distinct directions"]} x={540} y={1260} size={64} popAt={11.6} seed={13} color={CORAL} />}
+      {!choose && <Hand f={f} t={t} lines={["Three distinct directions"]} x={540} y={1260} size={64} popAt={11.5} seed={13} color={CORAL} />}
       <Hand f={f} t={t} lines={["You choose one"]} x={540} y={1300} size={92} start={CUE.DRAW.chooseText[0]} dur={CUE.DRAW.chooseText[1]} seed={14} color={CORAL} />
     </>
   );
@@ -231,7 +231,7 @@ const Revise: Sc = ({ t, f }) => {
       <Tag text="round 1" x={220} y={620} at={15.8} t={t} f={f} color={AMBER} size={52} rot={-8} seed={70} />
       <Tag text="round 2" x={860} y={620} at={16.9} t={t} f={f} color={MINT} size={52} rot={7} seed={71} />
       <Hand f={f} t={t} lines={["One consolidated", "list of changes"]} x={540} y={1250} size={66} popAt={16.05} seed={16} color={CORAL} />
-      {t > 17.75 && <S><Ink f={f} seed={64} p={clamp((t - 17.75) / 0.2)} sh={[{ k: "path", a: "M 760 1100 L 800 1150 L 900 1030", o: { stroke: "#2E9E5B", strokeWidth: 12 } }]} /></S>}
+      {t > 17.65 && <S><Ink f={f} seed={64} p={clamp((t - 17.65) / 0.2)} sh={[{ k: "path", a: "M 760 1100 L 800 1150 L 900 1030", o: { stroke: "#2E9E5B", strokeWidth: 12 } }]} /></S>}
     </>
   );
 };
@@ -266,8 +266,8 @@ const Palette: Sc = ({ t, f }) => (
       {[AMBER, CORAL, MINT, NAVY].map((c, i) => <Ink key={i} f={f} seed={110 + i} p={prog(t, `sw${i}` as any)} sh={[{ k: "circle", a: [180 + i * 240, 680, 190], o: { fill: c, fillStyle: i % 2 ? "zigzag" : "hachure", hachureGap: 7, fillWeight: 5, stroke: INK } }]} />)}
       <Ink f={f} seed={115} p={prog(t, "aa")} sh={[{ k: "rect", a: [120, 860, 840, 360], o: { stroke: INK, strokeWidth: 4 } }, { k: "line", a: [540, 880, 540, 1200], o: { strokeWidth: 3 } }]} />
     </S>
-    <div style={{ position: "absolute", left: 330, top: 1040, transform: "translate(-50%, -50%)", fontFamily: "'Archivo', sans-serif", fontVariationSettings: "'wdth' 110, 'wght' 850", fontSize: 230, color: NAVY, clipPath: `inset(-20% ${(1 - clamp(prog(t, "aa") * 2)) * 100}% -20% 0)` }}>Aa</div>
-    <div style={{ position: "absolute", left: 750, top: 1040, transform: "translate(-50%, -50%) rotate(-4deg)", fontFamily: HAND, fontWeight: 700, fontSize: 250, color: CORAL, clipPath: `inset(-20% ${(1 - clamp(prog(t, "aa") * 2 - 1)) * 100}% -20% 0)` }}>Aa</div>
+    <div style={{ position: "absolute", left: 330, top: 1040, transform: "translate(-50%, -50%)", fontFamily: "'Archivo', sans-serif", fontVariationSettings: "'wdth' 110, 'wght' 850", fontSize: 230, color: NAVY, padding: "0 0.1em", clipPath: clamp(prog(t, "aa") * 2) >= 1 ? undefined : `inset(-20% ${(1 - clamp(prog(t, "aa") * 2)) * 100}% -20% 0)` }}>Aa</div>
+    <div style={{ position: "absolute", left: 750, top: 1040, transform: "translate(-50%, -50%) rotate(-4deg)", fontFamily: HAND, fontWeight: 700, fontSize: 250, color: CORAL, padding: "0 0.15em", clipPath: clamp(prog(t, "aa") * 2 - 1) >= 1 ? undefined : `inset(-20% ${(1 - clamp(prog(t, "aa") * 2 - 1)) * 100}% -20% 0)` }}>Aa</div>
     <Hand f={f} t={t} lines={["Colors and a font pairing", "on one page"]} x={540} y={1290} size={66} popAt={24.9} seed={20} />
   </>
 );
@@ -282,14 +282,14 @@ const Kit: Sc = ({ t, f }) => {
         <Ink f={f} seed={140} p={clamp((t - 26.5) / 0.3)} sh={logoB(440, 650, 0.45, 2)} />
         <Ink f={f} seed={141} p={prog(t, "card")} sh={[{ k: "rect", a: [110, 1060, 240, 140], o: { fill: AMBER, fillStyle: "hachure" } }, { k: "line", a: [140, 1160, 280, 1160] }]} />
         <Ink f={f} seed={142} p={prog(t, "social")} sh={[{ k: "rect", a: [520, 1050, 400, 150], o: { fill: SKY, fillStyle: "hachure" } }, { k: "circle", a: [600, 1180, 90], o: { fill: MINT, fillStyle: "solid" } }]} />
-        <Ink f={f} seed={143} p={prog(t, "signature")} sh={[{ k: "path", a: "M 120 1390 C 160 1330, 190 1430, 230 1370 S 300 1350, 340 1390" , o: { stroke: NAVY, strokeWidth: 6 } }, { k: "line", a: [110, 1410, 350, 1410] }]} />
-        <Ink f={f} seed={144} p={prog(t, "invoice")} sh={[{ k: "rect", a: [600, 1290, 230, 180], o: { fill: "#fff", fillStyle: "solid" } }, ...[0, 1, 2].map((i) => ({ k: "line", a: [625, 1330 + i * 35, 800, 1330 + i * 35] } as Sh))]} />
+        <Ink f={f} seed={143} p={prog(t, "signature")} sh={[{ k: "path", a: "M 120 1420 C 160 1360, 190 1460, 230 1400 S 300 1380, 340 1420", o: { stroke: NAVY, strokeWidth: 6 } }, { k: "line", a: [110, 1440, 350, 1440] }]} />
+        <Ink f={f} seed={144} p={prog(t, "invoice")} sh={[{ k: "rect", a: [610, 1340, 220, 150], o: { fill: "#fff", fillStyle: "solid" } }, ...[0, 1, 2].map((i) => ({ k: "line", a: [635, 1375 + i * 35, 805, 1375 + i * 35] } as Sh))]} />
       </S>
       <Hand f={f} t={t} lines={["8 to 10 page brand guide"]} x={540} y={850} size={64} popAt={27.6} seed={22} color={CORAL} />
       <Hand f={f} t={t} lines={["business card"]} x={230} y={1215} size={48} popAt={28.25} seed={23} />
       <Hand f={f} t={t} lines={["social profile", "and cover images"]} x={720} y={1210} size={46} popAt={28.55} seed={24} />
-      <Hand f={f} t={t} lines={["email signature"]} x={230} y={1425} size={48} popAt={28.85} seed={25} />
-      <Hand f={f} t={t} lines={["invoice template"]} x={715} y={1475} size={46} popAt={29.15} seed={26} />
+      <Hand f={f} t={t} lines={["email signature"]} x={230} y={1455} size={48} popAt={28.85} seed={25} />
+      <Hand f={f} t={t} lines={["invoice template"]} x={720} y={1500} size={46} popAt={29.15} seed={26} />
     </>
   );
 };
@@ -324,7 +324,7 @@ const Own: Sc = ({ t, f }) => {
   return (
     <>
       <Hand f={f} t={t} lines={["Do I own the logo?"]} x={540} y={420} size={112} start={CUE.DRAW.ownQ[0]} dur={CUE.DRAW.ownQ[1]} seed={28} />
-      <div style={{ position: "absolute", left: 540, top: 820, transform: `translate(-50%, -50%) rotate(-6deg) scale(${0.6 + 0.4 * outBack(yes)})`, fontFamily: HAND, fontWeight: 700, fontSize: 340, color: AMBER, WebkitTextStroke: `6px ${INK}`, clipPath: `inset(-20% ${(1 - yes) * 100}% -20% 0)` }}>Yes.</div>
+      <div style={{ position: "absolute", left: 540, top: 820, transform: `translate(-50%, -50%) rotate(-6deg) scale(${0.6 + 0.4 * outBack(yes)})`, fontFamily: HAND, fontWeight: 700, fontSize: 340, color: AMBER, WebkitTextStroke: `6px ${INK}`, padding: "0 0.15em", clipPath: yes >= 1 ? undefined : `inset(-20% ${(1 - yes) * 100}% -20% 0)` }}>Yes.</div>
       <S>{t > 34.1 && Array.from({ length: 46 }, (_, i) => { const q = clamp((t - 34.1) / 1.4), a = random(`ca${i}`) * Math.PI * 2, sp = 300 + random(`cs${i}`) * 520; const x = 540 + Math.cos(a) * sp * q, y = 820 + Math.sin(a) * sp * q * 0.8 + 700 * q * q; return <Ink key={i} f={f} seed={200 + i} sh={[{ k: "rect", a: [x, y, 22, 12], o: { fill: [AMBER, CORAL, MINT, SKY][i % 4], fillStyle: "solid", strokeWidth: 2 } }]} tf={`rotate(${q * 720 * (i % 2 ? 1 : -1)} ${x + 11} ${y + 6})`} opacity={1 - q * 0.8} />; })}</S>
       <Hand f={f} t={t} lines={["Full rights to the final logo", "and files transfer to you", "on final payment."]} x={540} y={1160} size={58} popAt={34.8} seed={29} />
     </>
@@ -371,10 +371,10 @@ const REG: Record<string, [number, number, number, number]> = { // x, y, w, h of
   phone: [225, 1100, 150, 260], shirt: [630, 1120, 280, 250], clipboard: [150, 280, 280, 360], conceptsHead: [190, 700, 700, 120], conceptA: [100, 950, 220, 220], conceptB: [410, 950, 220, 220],
   conceptC: [720, 950, 220, 220], chooseRing: [370, 910, 300, 300], chooseText: [270, 1300, 540, 100], reviseHead: [170, 300, 740, 120], redraw1: [520, 780, 40, 240], redraw2: [480, 880, 120, 100],
   formatsHead: [190, 300, 700, 120], paletteHead: [200, 300, 680, 120], sw0: [90, 590, 180, 180], sw1: [330, 590, 180, 180], sw2: [570, 590, 180, 180], sw3: [810, 590, 180, 180], aa: [140, 900, 800, 280],
-  kitHead: [320, 290, 440, 140], card: [110, 1060, 240, 140], social: [520, 1050, 400, 150], signature: [110, 1330, 240, 90], invoice: [600, 1290, 230, 180],
+  kitHead: [320, 290, 440, 140], card: [110, 1060, 240, 140], social: [520, 1050, 400, 150], signature: [110, 1360, 240, 90], invoice: [610, 1340, 220, 150],
   tagStarter: [200, 470, 460, 320], tagKit: [420, 900, 460, 320], ownQ: [180, 420, 720, 120], ownYes: [240, 700, 600, 260], logoSketch: [220, 300, 640, 640], logoInk: [220, 300, 640, 640], endLine: [230, 1010, 620, 220],
 };
-const REST: [number, number, number][] = [[0, 880, 1450], [4, 880, 1470], [8, 860, 1470], [15, 850, 1420], [18, 880, 1500], [22, 880, 1480], [26, 880, 1500], [30, 870, 1440], [33, 870, 1420], [36, 870, 1460]];
+const REST: [number, number, number][] = [[0, 880, 1560], [4, 900, 1600], [8, 880, 1560], [15, 860, 1560], [18, 160, 1600], [22, 900, 1580], [26, 900, 1640], [30, 170, 1600], [33, 880, 1560], [36, 880, 1560]];
 const restAt = (t: number) => { let r = REST[0]; for (const x of REST) if (t >= x[0]) r = x; return [r[1], r[2]]; };
 const pencilAt = (t: number, tr: number): [number, number, boolean] => {
   const evs = Object.entries(CUE.DRAW).filter(([k]) => REG[k]).map(([k, [s, d, kind]]) => ({ k, s: s as number, d: d as number, kind }));
@@ -414,7 +414,10 @@ export const BrandFilm: React.FC = () => {
   } else body = <Paper>{sceneAt(idx(t), t)}</Paper>;
 
   // cast
-  const entry = clamp(t / 0.45), [px0, py0, drawing] = pencilAt(t, tr), [px, py] = toFrame(px0, py0);
+  // during a reading hold the pencil steps aside to its resting spot, then returns as the story resumes
+  let [px0, py0, drawing] = pencilAt(t, tr);
+  { let cum = 0; for (const [hp, ex] of CUE.HOLDS) { const a = hp + cum, z = a + ex; if (tr >= a && tr < z) { const k = io(clamp((tr - a) / 0.4)) * io(clamp((z - tr) / 0.4)); const [rx, ry] = restAt(hp); px0 += (rx - px0) * k; py0 += (ry + Math.sin(tr * 3) * 14 - py0) * k; drawing = drawing && k < 0.5; } cum += ex; } }
+  const entry = clamp(t / 0.45), [px, py] = toFrame(px0, py0);
   const pX = t < 0.45 ? 1200 + (px - 1200) * io(entry) : px, pY = t < 0.45 ? 2200 + (py - 2200) * io(entry) : py;
   const boing = CUE.BOING.reduce((m, b) => Math.max(m, t >= b && t < b + 0.5 ? Math.sin((t - b) * 30) * Math.exp(-(t - b) * 8) : 0), 0);
   const mood = t > 7.0 && t < 7.6 ? "sad" : t > 38.8 ? "wink" : "happy";
