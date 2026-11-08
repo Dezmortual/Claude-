@@ -213,10 +213,11 @@ function whistle(f, len) {
 const CH = { C: [60, 64, 67], G: [55, 59, 62], Am: [57, 60, 64], F: [53, 57, 60] };
 const ROOT = { C: 36, G: 43, Am: 45, F: 41 };
 const PROG = ["C", "G", "Am", "F"];
-const chordAt = (b) => (b >= 72 ? "C" : PROG[Math.floor(b / 4) % 4]);
-const stop = (t) => (t >= 13.0 && t < 13.5) || (t >= 33.75 && t < 34.0); // comic stop-time
+const NB = Math.round(DUR / BEAT); // total beats
+const chordAt = (b) => (b >= NB - 8 ? "C" : PROG[Math.floor(b / 4) % 4]);
+const stop = (t) => (t >= CUE.map(13.0) && t < CUE.map(13.0) + 0.5) || (t >= CUE.map(33.75) && t < CUE.map(33.75) + 0.25); // comic stop-time
 const ARP = [0, 1, 2, 3, 2, 1, 2, 3];
-for (let b = 0; b < 78; b++) {
+for (let b = 0; b < NB - 2; b++) {
   const ch = chordAt(b), t = T(b);
   if (stop(t)) continue;
   if (b % 2 === 0 && b >= 2) put("drums", t, kick(0.55), 0.8);
@@ -234,28 +235,29 @@ for (let b = 0; b < 78; b++) {
 // whistled melody over the opening and the ending
 const MEL = [[0, 76, 0.5], [0.5, 79, 0.5], [1, 81, 0.5], [1.5, 79, 0.5], [2, 76, 1], [3, 74, 0.5], [3.5, 72, 0.5], [4, 74, 1.5], [6, 79, 0.5], [6.5, 76, 1.5]];
 MEL.forEach(([b, m, l]) => put("music", T(b), whistle(hzM(m), T(l) * 0.95), 1, 0.1, 0.4));
-MEL.forEach(([b, m, l]) => put("music", T(72 + b), whistle(hzM(m), T(l) * 0.95), 1, 0.1, 0.4));
+MEL.forEach(([b, m, l]) => put("music", T(NB - 8 + b), whistle(hzM(m), T(l) * 0.95), 1, 0.1, 0.4));
 // last chord: marimba roll + bell
-for (let k = 0; k < 16; k++) put("music", T(76) + k * 0.06, marimba(hzM([72, 76, 79, 84][k % 4]), 0.5), 0.25, (k % 4 - 1.5) * 0.2, 0.4);
-put("music", T(76), bell(hzM(84), 2.5), 0.6, 0, 0.5);
+for (let k = 0; k < 16; k++) put("music", T(NB - 4) + k * 0.06, marimba(hzM([72, 76, 79, 84][k % 4]), 0.5), 0.25, (k % 4 - 1.5) * 0.2, 0.4);
+put("music", T(NB - 4), bell(hzM(84), 2.5), 0.6, 0, 0.5);
 
 // ---------- foley from the cue sheet ----------
+const M = CUE.map;
 for (const [start, dur, kind] of Object.values(CUE.DRAW)) {
-  if (kind === "marker") put("fx", start, markerSqueak(dur), 0.9, 0.1, 0.1);
-  else put("fx", start, scribble(dur, kind), kind === "write" ? 0.75 : 0.9, -0.1, 0.08);
+  if (kind === "marker") put("fx", M(start), markerSqueak(dur), 0.9, 0.1, 0.1);
+  else put("fx", M(start), scribble(dur, kind), kind === "write" ? 0.75 : 0.9, -0.1, 0.08);
 }
-CUE.POP.forEach((t, i) => put("fx", t, POPS[i % 4], 0.85, (i % 3 - 1) * 0.3, 0.15));
-CUE.FLIP.forEach((t) => put("fx", t, pageFlip(), 0.9, 0, 0.15));
-CUE.PAGE_TICKS.forEach((t) => put("fx", t, pageTick(), 0.8, 0.2));
-CUE.ERASE.forEach(([t, d]) => put("fx", t, eraserRub(d), 0.85, 0.1, 0.1));
-CUE.CRUMPLE.forEach((t, i) => put("fx", t, crumple(), 0.9, i ? 0.3 : -0.3, 0.1));
-CUE.WHOOSH.forEach((t) => put("fx", t, whoosh(), 0.7, 0, 0.2));
-CUE.STAMP.forEach((t) => put("fx", t, stamp(), 0.9, 0, 0.15));
-CUE.COIN.forEach((t) => put("fx", t, COINWAV, 0.7, 0, 0.3));
-CUE.BOING.forEach((t) => put("fx", t, boing(), 0.8, 0, 0.2));
-CUE.SAD.forEach((t) => put("fx", t, sadTrombone(), 0.8, 0, 0.3));
-CUE.DING.forEach((t) => put("fx", t, bell(hzM(88), 1.2), 0.45, 0.2, 0.4));
-CUE.CONFETTI.forEach((t) => put("fx", t, confetti(), 0.9, 0, 0.4));
+CUE.POP.forEach((t, i) => put("fx", M(t), POPS[i % 4], 0.85, (i % 3 - 1) * 0.3, 0.15));
+CUE.FLIP.forEach((t) => put("fx", M(t), pageFlip(), 0.9, 0, 0.15));
+CUE.PAGE_TICKS.forEach((t) => put("fx", M(t), pageTick(), 0.8, 0.2));
+CUE.ERASE.forEach(([t, d]) => put("fx", M(t), eraserRub(d), 0.85, 0.1, 0.1));
+CUE.CRUMPLE.forEach((t, i) => put("fx", M(t), crumple(), 0.9, i ? 0.3 : -0.3, 0.1));
+CUE.WHOOSH.forEach((t) => put("fx", M(t), whoosh(), 0.7, 0, 0.2));
+CUE.STAMP.forEach((t) => put("fx", M(t), stamp(), 0.9, 0, 0.15));
+CUE.COIN.forEach((t) => put("fx", M(t), COINWAV, 0.7, 0, 0.3));
+CUE.BOING.forEach((t) => put("fx", M(t), boing(), 0.8, 0, 0.2));
+CUE.SAD.forEach((t) => put("fx", M(t), sadTrombone(), 0.8, 0, 0.3));
+CUE.DING.forEach((t) => put("fx", M(t), bell(hzM(88), 1.2), 0.45, 0.2, 0.4));
+CUE.CONFETTI.forEach((t) => put("fx", M(t), confetti(), 0.9, 0, 0.4));
 // ---------- reverb (Freeverb-style) on the send bus ----------
 function reverb([inL, inR]) {
   const sc = SR / 44100, combs = [1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617], aps = [556, 441, 341, 225];
@@ -276,7 +278,7 @@ function reverb([inL, inR]) {
 const [RL, RR] = reverb(bus.send);
 const L = new Float32Array(N), R = new Float32Array(N);
 for (let i = 0; i < N; i++) {
-  const t = i / SR, fadeOut = t > 39.2 ? Math.max(0, (40 - t) / 0.8) : 1;
+  const t = i / SR, fadeOut = t > DUR - 0.8 ? Math.max(0, (DUR - t) / 0.8) : 1;
   const l = bus.drums[0][i] * 0.9 + bus.music[0][i] + bus.fx[0][i] + RL[i];
   const r = bus.drums[1][i] * 0.9 + bus.music[1][i] + bus.fx[1][i] + RR[i];
   L[i] = Math.tanh(l * 0.9) * fadeOut; R[i] = Math.tanh(r * 0.9) * fadeOut;

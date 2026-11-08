@@ -376,7 +376,7 @@ const REG: Record<string, [number, number, number, number]> = { // x, y, w, h of
 };
 const REST: [number, number, number][] = [[0, 880, 1450], [4, 880, 1470], [8, 860, 1470], [15, 850, 1420], [18, 880, 1500], [22, 880, 1480], [26, 880, 1500], [30, 870, 1440], [33, 870, 1420], [36, 870, 1460]];
 const restAt = (t: number) => { let r = REST[0]; for (const x of REST) if (t >= x[0]) r = x; return [r[1], r[2]]; };
-const pencilAt = (t: number): [number, number, boolean] => {
+const pencilAt = (t: number, tr: number): [number, number, boolean] => {
   const evs = Object.entries(CUE.DRAW).filter(([k]) => REG[k]).map(([k, [s, d, kind]]) => ({ k, s: s as number, d: d as number, kind }));
   const cur = evs.find((e) => t >= e.s && t <= e.s + e.d);
   if (cur) {
@@ -392,18 +392,18 @@ const pencilAt = (t: number): [number, number, boolean] => {
   if (prev && next && next.s - (prev.s + prev.d) < 0.9) { const k = io(clamp((t - prev.s - prev.d) / (next.s - prev.s - prev.d))); const [ax, ay] = endOf(prev), [bx, by] = startOf(next); return [ax + (bx - ax) * k, ay + (by - ay) * k - Math.sin(Math.PI * k) * 80, false]; }
   if (prev && t - (prev.s + prev.d) < 0.45) { const k = io(clamp((t - prev.s - prev.d) / 0.45)); const [ax, ay] = endOf(prev); return [ax + (rx - ax) * k, ay + (ry - ay) * k, false]; }
   if (next && next.s - t < 0.45) { const k = io(clamp(1 - (next.s - t) / 0.45)); const [bx, by] = startOf(next); return [rx + (bx - rx) * k, ry + (by - ry) * k, false]; }
-  return [rx, ry + Math.sin(t * 3) * 14, false];
+  return [rx, ry + Math.sin(tr * 3) * 14, false];
 };
 
 export const BrandFilm: React.FC = () => {
-  const f = useCurrentFrame(), t = f / BRAND_FPS;
+  const f = useCurrentFrame(), tr = f / BRAND_FPS, t = CUE.unmap(tr); // t: authoring time (pauses during holds)
   // which scene owns time tt (transitions are handled separately below)
   const idx = (tt: number) => { let i = 0; SCENE_LIST.forEach(([k], j) => { if (tt >= CUE.SCENES[k][0]) i = j; }); return i; };
   const sceneAt = (i: number, tt: number) => { const Sc = SCENE_LIST[i][1]; return <Sc t={tt} f={f} />; };
-  const tr = TRANS.find(([s, d]) => t >= s && t < s + d);
+  const trans = TRANS.find(([s, d]) => t >= s && t < s + d);
   let body: React.ReactNode;
-  if (tr) {
-    const [s, d, kind] = tr, q = io(clamp((t - s) / d));
+  if (trans) {
+    const [s, d, kind] = trans, q = io(clamp((t - s) / d));
     const fromI = idx(s - 0.01), toI = Math.min(SCENE_LIST.length - 1, fromI + 1);
     const out = sceneAt(fromI, t);
     const top = kind === "flip"
@@ -414,7 +414,7 @@ export const BrandFilm: React.FC = () => {
   } else body = <Paper>{sceneAt(idx(t), t)}</Paper>;
 
   // cast
-  const entry = clamp(t / 0.45), [px0, py0, drawing] = pencilAt(t), [px, py] = toFrame(px0, py0);
+  const entry = clamp(t / 0.45), [px0, py0, drawing] = pencilAt(t, tr), [px, py] = toFrame(px0, py0);
   const pX = t < 0.45 ? 1200 + (px - 1200) * io(entry) : px, pY = t < 0.45 ? 2200 + (py - 2200) * io(entry) : py;
   const boing = CUE.BOING.reduce((m, b) => Math.max(m, t >= b && t < b + 0.5 ? Math.sin((t - b) * 30) * Math.exp(-(t - b) * 8) : 0), 0);
   const mood = t > 7.0 && t < 7.6 ? "sad" : t > 38.8 ? "wink" : "happy";
@@ -430,7 +430,7 @@ export const BrandFilm: React.FC = () => {
     <AbsoluteFill style={{ background: PAPER }}>
       {body}
       {eraser}
-      <Pencil x={pX} y={pY} rot={drawing ? 28 + Math.sin(t * 40) * 4 : 28 + Math.sin(t * 2) * 6} f={f} mood={mood} s={0.9} squash={boing} />
+      <Pencil x={pX} y={pY} rot={drawing ? 28 + Math.sin(t * 40) * 4 : 28 + Math.sin(tr * 2) * 6} f={f} mood={mood} s={0.9} squash={boing} />
       <Audio src={staticFile("brand/sound.wav")} />
     </AbsoluteFill>
   );

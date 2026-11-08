@@ -1,7 +1,14 @@
 // One cue sheet drives both the picture (BrandFilm.tsx) and the sound (scripts/brand-music.mjs),
 // so every scribble, pop, flip and stamp is heard on the frame it happens. Times in seconds.
-export const DUR = 40;
+// The scenes are authored on a 40 s timeline. HOLDS then pause the story on each finished page so it can be
+// read: [authoring time, extra seconds]. map() turns an authoring time into film time (used by the sound);
+// unmap() turns film time back into authoring time (used by the picture; it stands still during a hold).
+export const AUTHOR_DUR = 40;
+export const HOLDS = [[3.7, 2.5], [7.6, 3.5], [11.9, 2.5], [14.6, 2.0], [17.9, 2.5], [21.6, 3.0], [25.6, 2.5], [29.6, 3.5], [32.6, 3.0], [35.6, 2.5], [39.0, 2.5]];
+export const DUR = AUTHOR_DUR + HOLDS.reduce((s, h) => s + h[1], 0); // 70 s
 export const BPM = 120;
+export const map = (t) => t + HOLDS.filter(([hp]) => hp <= t).reduce((s, h) => s + h[1], 0);
+export const unmap = (T) => { let cum = 0; for (const [hp, ex] of HOLDS) { if (T < hp + cum) return T - cum; if (T < hp + cum + ex) return hp; cum += ex; } return T - cum; };
 
 // scene boundaries
 export const SCENES = {
