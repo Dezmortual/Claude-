@@ -6,6 +6,7 @@ import { PixelReel } from "./pixel/PixelReel";
 import { PixelWeb } from "./pixel/PixelWeb";
 import { Local } from "./local/Local";
 import { SocialReel, SOCIAL_FPS, SOCIAL_FRAMES } from "./social/SocialReel";
+import { BrandFilm, BRAND_FPS, BRAND_FRAMES } from "./brand/BrandFilm";
 
 export const Root: React.FC = () => (
   <>
@@ -18,5 +19,6 @@ export const Root: React.FC = () => (
     <Composition id="LocalFilm" component={Local} durationInFrames={1800} fps={FPS} width={1920} height={1080} />
     <Composition id="LocalFilmVertical" component={Local} durationInFrames={1800} fps={FPS} width={1080} height={1920} />
     <Composition id="SocialReel" component={SocialReel} durationInFrames={SOCIAL_FRAMES} fps={SOCIAL_FPS} width={1080} height={1920} />
+    <Composition id="BrandFilm" component={BrandFilm} durationInFrames={BRAND_FRAMES} fps={BRAND_FPS} width={1080} height={1920} />
   </>
 );

@@ -16,12 +16,15 @@
     "render:local": "remotion render LocalFilm out/manywright-get-found-locally.mp4",
     "render:local-vertical": "remotion render LocalFilmVertical out/manywright-get-found-locally-vertical.mp4",
     "music:social": "node scripts/social-music.mjs",
-    "render:social": "remotion render SocialReel out/manywright-social-and-email.mp4"
+    "render:social": "remotion render SocialReel out/manywright-social-and-email.mp4",
+    "music:brand": "node scripts/brand-music.mjs",
+    "render:brand": "remotion render BrandFilm out/manywright-brand.mp4"
   },
   "dependencies": {
     "@remotion/cli": "4.0.537",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "remotion": "4.0.537"
+    "remotion": "4.0.537",
+    "roughjs": "^4.6.6"
   }
 }
