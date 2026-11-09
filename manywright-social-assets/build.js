@@ -82,12 +82,11 @@ const designs = {
     </div>`],
 
   // Profile picture: Facebook shows it as a circle, so everything sits inside the inscribed circle.
+  // The logo stays small and quiet: a thin ring and a little wordmark under the photo, nothing over the face.
   'profile-picture-1080x1080': [1080, 1080, `
-    <div class="photo" style="left:-75px;top:40px;width:1230px;height:1230px;-webkit-mask-image:radial-gradient(circle at 50% 42%,#000 46%,transparent 72%);"></div>
-    <div style="position:absolute;inset:18px;border-radius:50%;border:10px solid #F5A524;"></div>
-    <div style="position:absolute;left:713px;top:713px;width:220px;height:220px;border-radius:50%;background:#0F1B2D;border:8px solid #F5A524;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 40px rgba(0,0,0,0.5);">
-      <svg viewBox="118 144 275 223" style="width:128px;height:auto;"><polygon points="122,168 170,249 170,363 122,363" fill="#F4F6FA"/><polygon points="122,148 178,148 252,274 252,363 249,363" fill="#F4F6FA"/><polygon points="389,148 333,148 259,276 259,363 262,363" fill="#F5A524"/><polygon points="389,168 341,249 341,363 389,363" fill="#F4F6FA"/></svg>
-    </div>`],
+    <div class="photo" style="left:-55px;top:30px;width:1190px;height:1190px;-webkit-mask-image:linear-gradient(0deg,transparent 22%,#000 46%),radial-gradient(circle at 50% 40%,#000 50%,transparent 74%);-webkit-mask-composite:source-in;"></div>
+    <div style="position:absolute;inset:26px;border-radius:50%;border:3px solid rgba(245,165,36,0.75);"></div>
+    <div class="wordmark" style="position:absolute;left:0;right:0;top:902px;justify-content:center;font-size:34px;">${M}<div><b>MANY</b><span>WRIGHT</span></div></div>`],
 };
 
 (async () => {
