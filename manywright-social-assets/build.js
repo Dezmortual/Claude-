@@ -86,7 +86,8 @@ const designs = {
   'profile-picture-1080x1080': [1080, 1080, `
     <div class="photo" style="left:-55px;top:30px;width:1190px;height:1190px;-webkit-mask-image:linear-gradient(0deg,transparent 22%,#000 46%),radial-gradient(circle at 50% 40%,#000 50%,transparent 74%);-webkit-mask-composite:source-in;"></div>
     <div style="position:absolute;inset:26px;border-radius:50%;border:3px solid rgba(245,165,36,0.75);"></div>
-    <div class="wordmark" style="position:absolute;left:0;right:0;top:902px;justify-content:center;font-size:34px;">${M}<div><b>MANY</b><span>WRIGHT</span></div></div>`],
+    <div style="position:absolute;left:0;right:0;top:790px;height:290px;background:linear-gradient(180deg,rgba(15,27,45,0) 0%,rgba(15,27,45,0.92) 30%,#0F1B2D 60%);"></div>
+    <div class="wordmark" style="position:absolute;left:0;right:0;top:858px;justify-content:center;font-size:58px;color:#FFFFFF;text-shadow:0 0 28px rgba(245,165,36,0.35),0 2px 10px rgba(0,0,0,0.6);">${M}<div><b>MANY</b><span style="font-weight:500;">WRIGHT</span></div></div>`],
 };
 
 (async () => {
