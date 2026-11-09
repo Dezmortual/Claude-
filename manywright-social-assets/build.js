@@ -81,6 +81,19 @@ const designs = {
       <div style="display:flex;align-items:center;gap:22px;margin-top:34px;"><div class="btn" style="font-size:24px;padding:14px 24px;">Request a proposal</div><div class="url" style="font-size:20px;">manywright.com</div></div>
     </div>`],
 
+  // Facebook cover, services edition: every service listed, the founder blended in like the profile picture.
+  // Phones show only about x 265-1375, so all text and the face sit inside that.
+  'facebook-cover-services-1640x624': [1640, 624, `
+    <div style="position:absolute;left:880px;top:40px;width:640px;height:640px;border-radius:50%;background:radial-gradient(circle,rgba(245,165,36,0.16) 0%,rgba(245,165,36,0) 65%);"></div>
+    <div class="photo" style="left:835px;top:-10px;width:660px;height:660px;-webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 30%,#000 78%,transparent 100%),linear-gradient(0deg,transparent 4%,#000 34%);-webkit-mask-composite:source-in;"></div>
+    <div style="position:absolute;left:300px;top:96px;width:640px;">
+      <div class="wordmark" style="font-size:50px;color:#FFFFFF;text-shadow:0 0 28px rgba(245,165,36,0.35),0 2px 10px rgba(0,0,0,0.6);">${M}<div><b>MANY</b><span style="font-weight:500;">WRIGHT</span></div></div>
+      <div class="tag" style="font-size:40px;margin-top:22px;">Every specialist. <em>One firm.</em></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:34px;row-gap:14px;margin-top:30px;">
+        ${SERVICES.map((s, i) => `<div style="display:flex;align-items:baseline;gap:14px;border-bottom:1.5px solid rgba(244,246,250,0.14);padding-bottom:10px;"><span class="mono" style="font-size:15px;color:#F5A524;letter-spacing:0.06em;">0${i + 1}</span><span style="font-size:27px;font-weight:700;font-stretch:104%;color:#F4F6FA;">${s}</span></div>`).join('')}
+      </div>
+      <div style="display:flex;align-items:center;gap:22px;margin-top:26px;"><div class="url" style="font-size:26px;">manywright.com</div><div class="mono" style="font-size:13px;color:#8EA7BB;">Knysna · South Africa &amp; the US</div></div>
+    </div>`],
   // Profile picture: Facebook shows it as a circle, so everything sits inside the inscribed circle.
   // The logo stays small and quiet: a thin ring and a little wordmark under the photo, nothing over the face.
   'profile-picture-1080x1080': [1080, 1080, `
