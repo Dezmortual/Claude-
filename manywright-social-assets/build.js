@@ -80,6 +80,14 @@ const designs = {
       <div class="mono" style="font-size:17px;color:#C9D3DD;margin-top:24px;line-height:1.6;width:560px;">Websites, local search, social, books, inbox and security. One brief, one accountable lead.</div>
       <div style="display:flex;align-items:center;gap:22px;margin-top:34px;"><div class="btn" style="font-size:24px;padding:14px 24px;">Request a proposal</div><div class="url" style="font-size:20px;">manywright.com</div></div>
     </div>`],
+
+  // Profile picture: Facebook shows it as a circle, so everything sits inside the inscribed circle.
+  'profile-picture-1080x1080': [1080, 1080, `
+    <div class="photo" style="left:-75px;top:40px;width:1230px;height:1230px;-webkit-mask-image:radial-gradient(circle at 50% 42%,#000 46%,transparent 72%);"></div>
+    <div style="position:absolute;inset:18px;border-radius:50%;border:10px solid #F5A524;"></div>
+    <div style="position:absolute;left:713px;top:713px;width:220px;height:220px;border-radius:50%;background:#0F1B2D;border:8px solid #F5A524;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+      <svg viewBox="118 144 275 223" style="width:128px;height:auto;"><polygon points="122,168 170,249 170,363 122,363" fill="#F4F6FA"/><polygon points="122,148 178,148 252,274 252,363 249,363" fill="#F4F6FA"/><polygon points="389,148 333,148 259,276 259,363 262,363" fill="#F5A524"/><polygon points="389,168 341,249 341,363 389,363" fill="#F4F6FA"/></svg>
+    </div>`],
 };
 
 (async () => {
