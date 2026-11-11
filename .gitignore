@@ -1,0 +1,21 @@
+# Ruflo local secrets and runtime data
+.env
+.env.local
+.env.*.local
+.claude-flow/data/
+.claude-flow/logs/
+.claude-flow/sessions/
+.swarm/
+ruvector.db
+*.db-shm
+*.db-wal
+.claude/settings.json.bak-*
+# Ruflo runtime state written by its hooks and daemon
+.claude-flow/daemon-state.json
+.claude-flow/daemon.pid
+.claude-flow/harness-active-policy.json
+.claude-flow/metrics/
+.claude-flow/policy/
+.claude-flow/security/
+.claude/.proven-config-version
+.claude/proven-config.json

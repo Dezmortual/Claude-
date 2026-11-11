@@ -1,0 +1,380 @@
+<title>Ruflo Activity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600&display=swap">
+<style>
+/* Layout: control-room console. Status strip, then what Ruflo has recorded, then what it ships, filterable down to each item. */
+:root {
+  --bg: #f3f5f7;
+  --panel: #ffffff;
+  --line: #dde2e8;
+  --ink: #12161c;
+  --ink-2: #4b5562;
+  --ink-3: #6f7a88;
+  --accent: #1f5fae;
+  --series-1: #2a78d6;
+  --hover: #eef3fa;
+  --good: #0f7b3e;
+  --good-bg: #e3f3ea;
+  --warn: #8a5a00;
+  --warn-bg: #fbf0d6;
+  --idle: #4b5562;
+  --idle-bg: #e9ecf0;
+  --f-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111418; --panel: #181c21; --line: #2b313a; --ink: #eef1f4; --ink-2: #b7c0cb; --ink-3: #8e98a5;
+    --accent: #7fb0f0; --series-1: #3987e5; --hover: #1f2630;
+    --good: #6fd39a; --good-bg: #16301f; --warn: #f0c060; --warn-bg: #352a10; --idle: #b7c0cb; --idle-bg: #232930;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111418; --panel: #181c21; --line: #2b313a; --ink: #eef1f4; --ink-2: #b7c0cb; --ink-3: #8e98a5;
+  --accent: #7fb0f0; --series-1: #3987e5; --hover: #1f2630;
+  --good: #6fd39a; --good-bg: #16301f; --warn: #f0c060; --warn-bg: #352a10; --idle: #b7c0cb; --idle-bg: #232930;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 var(--f-body); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 40px; display: grid; gap: 20px; }
+h1, h2 { font-family: var(--f-display); font-weight: 600; margin: 0; text-wrap: balance; }
+h1 { font-size: 28px; letter-spacing: .2px; }
+h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--ink-2); }
+.mono, .num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--ink-3); }
+
+header { display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline; justify-content: space-between; }
+header .meta { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--ink-3); font-size: 13px; }
+.ver { font-family: var(--f-mono); font-size: 13px; color: var(--accent); margin-left: 8px; }
+
+.strip { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 13px; font-weight: 500; }
+.chip svg { width: 12px; height: 12px; flex: none; }
+.chip.good { color: var(--good); background: var(--good-bg); }
+.chip.warn { color: var(--warn); background: var(--warn-bg); }
+.chip.idle { color: var(--idle); background: var(--idle-bg); }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.tile { background: var(--panel); padding: 14px 16px; display: grid; gap: 2px; }
+.tile .v { font-family: var(--f-mono); font-size: 26px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.tile .l { font-size: 12px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .6px; }
+.tile .s { font-size: 12px; color: var(--ink-3); }
+.tile.zero .v { color: var(--ink-3); }
+button.tile { border: 0; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+button.tile:hover { background: var(--hover); }
+button.tile[aria-pressed="true"] { box-shadow: inset 0 -3px 0 var(--accent); }
+button.tile:focus-visible, .bar-row:focus-visible, th button:focus-visible, select:focus-visible, input:focus-visible, .pager button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.note { font-size: 13px; color: var(--ink-2); margin: 10px 0 0; max-width: 75ch; }
+
+.filters { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; }
+.filters label { display: grid; gap: 4px; font-size: 12px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .6px; }
+.filters select, .filters input { font: 14px var(--f-body); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; min-width: 0; }
+.filters input { width: min(280px, 100%); }
+.filters .count { font-size: 13px; color: var(--ink-3); padding-bottom: 7px; }
+
+.charts { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px; }
+@media (max-width: 820px) { .charts { grid-template-columns: 1fr; } }
+.bars { display: grid; gap: 2px; }
+.bar-row { display: grid; grid-template-columns: minmax(90px, 140px) 1fr 44px; align-items: center; gap: 10px; padding: 3px 4px; border-radius: 3px; outline: none; }
+.bar-row:hover, .bar-row:focus-visible { background: var(--hover); }
+.bar-row .lab { font-size: 13px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-row .track { height: 14px; position: relative; }
+.bar-row .fill { position: absolute; inset: 0 auto 0 0; background: var(--series-1); border-radius: 0 4px 4px 0; min-width: 2px; }
+.bar-row .val { font-family: var(--f-mono); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+.axis { display: grid; grid-template-columns: minmax(90px, 140px) 1fr 44px; gap: 10px; padding: 4px 4px 0; font-size: 11px; color: var(--ink-3); }
+.axis .ticks { display: flex; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 3px; font-family: var(--f-mono); }
+.tip { position: fixed; pointer-events: none; background: var(--panel); border: 1px solid var(--line); box-shadow: 0 4px 14px rgb(0 0 0 / .12); border-radius: 4px; padding: 6px 10px; font-size: 12px; z-index: 10; max-width: 260px; }
+.tip strong { display: block; font-family: var(--f-mono); font-size: 15px; }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; border-bottom: 1px solid var(--line); padding: 0; white-space: nowrap; }
+th button { all: unset; cursor: pointer; display: block; padding: 8px 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--ink-2); }
+th button:hover { color: var(--ink); }
+td { padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+td.name { font-family: var(--f-mono); white-space: nowrap; }
+td.desc { color: var(--ink-2); min-width: 280px; }
+tr:hover td { background: var(--hover); }
+.type { font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+.pager { display: flex; gap: 10px; align-items: center; justify-content: flex-end; margin-top: 10px; font-size: 13px; color: var(--ink-3); }
+.pager button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+.pager button:disabled { opacity: .4; cursor: default; }
+footer { font-size: 12px; color: var(--ink-3); }
+footer code { font-family: var(--f-mono); }
+@media (prefers-reduced-motion: no-preference) { .bar-row .fill { transition: width .25s ease; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Ruflo Activity<span class="ver" id="ver"></span></h1>
+    <div class="meta"><span id="installed"></span><span id="generated"></span></div>
+  </header>
+
+  <div class="strip" id="strip" aria-label="Ruflo status"></div>
+
+  <section class="panel" aria-labelledby="act-h">
+    <div class="panel-head"><h2 id="act-h">Recorded so far</h2><span class="muted mono" id="session"></span></div>
+    <div class="tiles" id="activity"></div>
+    <p class="note" id="act-note"></p>
+  </section>
+
+  <section aria-labelledby="inv-h" style="display:grid;gap:12px">
+    <h2 id="inv-h">What Ruflo adds to Claude Code</h2>
+    <div class="tiles" id="inventory" role="group" aria-label="Filter by type"></div>
+  </section>
+
+  <div class="filters" role="search">
+    <label for="f-type">Type
+      <select id="f-type"><option value="all">All types</option></select>
+    </label>
+    <label for="f-group">Group
+      <select id="f-group"><option value="all">All groups</option></select>
+    </label>
+    <label for="f-q">Search
+      <input id="f-q" type="search" placeholder="Name or description">
+    </label>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="charts">
+    <section class="panel" aria-labelledby="grp-h">
+      <div class="panel-head"><h2 id="grp-h">Items by group</h2><span class="muted" id="grp-sub"></span></div>
+      <div class="bars" id="groups"></div>
+      <div class="axis" aria-hidden="true"><span></span><div class="ticks" id="grp-ticks"></div><span></span></div>
+    </section>
+    <section class="panel" aria-labelledby="hk-h">
+      <div class="panel-head"><h2 id="hk-h">Hook handlers by event</h2><span class="muted" id="hk-sub"></span></div>
+      <div class="bars" id="hooks"></div>
+      <div class="axis" aria-hidden="true"><span></span><div class="ticks" id="hk-ticks"></div><span></span></div>
+    </section>
+  </div>
+
+  <section class="panel" aria-labelledby="tbl-h">
+    <div class="panel-head"><h2 id="tbl-h">Every item</h2><span class="muted">Click a column to sort</span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th><button data-sort="type">Type</button></th>
+          <th><button data-sort="name">Name</button></th>
+          <th><button data-sort="group">Group</button></th>
+          <th><button data-sort="desc">Description</button></th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="pager"><span id="page-info"></span><button id="prev">Previous</button><button id="next">Next</button></div>
+  </section>
+
+  <footer>Built from this repo's <code>.claude/</code>, <code>.claude-flow/</code> and <code>.swarm/</code> plus the claude-flow MCP server's tool list. Rebuild with <code>python3 ruflo-dashboard/build.py</code>.</footer>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const $ = id => document.getElementById(id);
+const TYPES = ["Skill", "Command", "Agent", "MCP tool"];
+const PLURAL = {"Skill": "Skills", "Command": "Commands", "Agent": "Agents", "MCP tool": "MCP tools"};
+const fmt = n => Number(n).toLocaleString();
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const ICON = {
+  good: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5l2.5 2.5L10 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  warn: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.5L11 10.5H1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 5v2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+  idle: '<svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>'
+};
+
+const state = { type: "all", group: "all", q: "", sort: "type", dir: 1, page: 0 };
+try { const t = localStorage.getItem("ruflo-dash-type"); if (t && (t === "all" || TYPES.includes(t))) state.type = t; } catch (e) {}
+
+function header() {
+  $("ver").textContent = "v" + DATA.version;
+  $("installed").textContent = DATA.installed ? "Installed " + DATA.installed : "";
+  $("generated").textContent = "Data as of " + DATA.generated;
+  const a = DATA.activity, hookCount = Object.values(DATA.hooks).reduce((s, v) => s + v, 0);
+  const tools = DATA.items.filter(i => i.type === "MCP tool").length;
+  const chips = [
+    ["good", `Hooks wired: ${hookCount} handlers on ${Object.keys(DATA.hooks).length} events`],
+    [tools ? "good" : "warn", tools ? `MCP server answers: ${fmt(tools)} tools` : "MCP server did not answer"],
+    [DATA.statusLine ? "good" : "idle", DATA.statusLine ? "Status line on" : "Status line off"],
+    [a.swarmActive ? "good" : "idle", a.swarmActive ? `Swarm running: ${a.agentsActive}/${a.maxAgents} agents` : `Swarm idle: 0/${a.maxAgents} agents, ${a.topology}`],
+    [a.securityStatus === "PENDING" ? "warn" : "good", a.lastScan ? `Security scan: ${a.securityStatus.toLowerCase()}` : "Security scan not run yet"],
+    ["good", `${DATA.plugins.length} plugins enabled`]
+  ];
+  const strip = $("strip");
+  chips.forEach(([kind, text]) => { const c = el("span", "chip " + kind); c.innerHTML = ICON[kind]; c.append(document.createTextNode(text)); strip.append(c); });
+}
+
+function activity() {
+  const a = DATA.activity;
+  $("session").textContent = a.session ? a.session : "";
+  const tiles = [
+    ["Edits tracked", a.edits, "this session"],
+    ["Insights queued", a.insights, "waiting to be learned"],
+    ["Memory entries", a.memoryEntries, ".swarm/memory.db"],
+    ["Patterns learned", a.patterns, "from finished tasks"],
+    ["Routing decisions", a.routingDecisions, "agent picks saved"],
+    ["Sessions completed", a.sessionsTotal, "closed by SessionEnd"]
+  ];
+  const box = $("activity");
+  tiles.forEach(([l, v, s]) => {
+    const t = el("div", "tile" + (v ? "" : " zero"));
+    t.append(el("span", "l", l), el("span", "v", fmt(v)), el("span", "s", s));
+    box.append(t);
+  });
+  const total = tiles.reduce((s, t) => s + t[1], 0);
+  $("act-note").textContent = total < 5
+    ? "Ruflo was installed during this session, so it has barely started recording. Hooks log edits, commands and tasks as you work; memory, patterns and routing fill in once sessions end and the daemon runs (npx ruflo daemon start). Rebuild this page to see them grow."
+    : "Counts since Ruflo was installed. Rebuild this page to refresh them.";
+}
+
+function inventory() {
+  const box = $("inventory");
+  const sel = $("f-type");
+  TYPES.forEach(t => {
+    const n = DATA.items.filter(i => i.type === t).length;
+    const b = el("button", "tile");
+    b.dataset.type = t;
+    b.append(el("span", "l", PLURAL[t]), el("span", "v", fmt(n)), el("span", "s", "Show in table"));
+    b.addEventListener("click", () => setType(state.type === t ? "all" : t));
+    box.append(b);
+    const o = el("option", null, PLURAL[t]); o.value = t; sel.append(o);
+  });
+}
+
+function setType(t) {
+  state.type = t; state.group = "all"; state.page = 0;
+  try { localStorage.setItem("ruflo-dash-type", t); } catch (e) {}
+  render();
+}
+
+function filtered() {
+  const q = state.q.trim().toLowerCase();
+  return DATA.items.filter(i =>
+    (state.type === "all" || i.type === state.type) &&
+    (state.group === "all" || i.group === state.group) &&
+    (!q || i.name.toLowerCase().includes(q) || i.desc.toLowerCase().includes(q)));
+}
+
+function niceMax(m) {
+  if (m <= 4) return 4;
+  const p = Math.pow(10, Math.floor(Math.log10(m))), f = m / p;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p;
+}
+
+const tip = $("tip");
+function showTip(e, value, label, extra) {
+  tip.replaceChildren(el("strong", null, value), el("span", null, label));
+  if (extra) tip.append(el("div", "muted", extra));
+  tip.hidden = false;
+  const r = e.currentTarget.getBoundingClientRect();
+  const x = e.clientX ?? (r.left + r.width / 2), y = e.clientY ?? r.top;
+  tip.style.left = Math.min(x + 14, window.innerWidth - tip.offsetWidth - 8) + "px";
+  tip.style.top = Math.max(8, y - tip.offsetHeight - 10) + "px";
+}
+
+function bars(boxId, ticksId, rows, unit, onPick) {
+  const box = $(boxId); box.replaceChildren();
+  const max = niceMax(Math.max(1, ...rows.map(r => r[1])));
+  rows.forEach(([label, v, extra]) => {
+    const r = el("div", "bar-row"); r.tabIndex = 0;
+    r.setAttribute("aria-label", `${label}: ${v} ${unit}`);
+    const track = el("div", "track"), fill = el("div", "fill");
+    fill.style.width = (v / max * 100) + "%"; track.append(fill);
+    r.append(el("span", "lab", label), track, el("span", "val", fmt(v)));
+    const show = e => showTip(e, fmt(v) + " " + unit, label, extra);
+    r.addEventListener("pointermove", show); r.addEventListener("focus", show);
+    r.addEventListener("pointerleave", () => tip.hidden = true); r.addEventListener("blur", () => tip.hidden = true);
+    if (onPick) { r.style.cursor = "pointer"; r.addEventListener("click", () => onPick(label)); r.addEventListener("keydown", e => { if (e.key === "Enter") onPick(label); }); }
+    box.append(r);
+  });
+  const ticks = $(ticksId); ticks.replaceChildren();
+  (max % 2 ? [0, max] : [0, max / 2, max]).forEach(t => ticks.append(el("span", null, fmt(t))));
+}
+
+function renderGroups(items) {
+  if (state.type === "all" && state.group === "all") {
+    $("grp-h").textContent = "Items by type";
+    $("grp-sub").textContent = "Click a bar to see its groups";
+    const rows = TYPES.map(t => [PLURAL[t], items.filter(i => i.type === t).length]).filter(r => r[1]);
+    bars("groups", "grp-ticks", rows, "items", label => setType(TYPES.find(t => PLURAL[t] === label)));
+    return;
+  }
+  $("grp-h").textContent = "Items by group";
+  const c = {};
+  items.forEach(i => c[i.group] = (c[i.group] || 0) + 1);
+  let rows = Object.entries(c).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const TOP = 12;
+  if (rows.length > TOP + 1) {
+    const rest = rows.slice(TOP);
+    rows = rows.slice(0, TOP).concat([["Other (" + rest.length + " groups)", rest.reduce((s, r) => s + r[1], 0), rest.map(r => r[0]).join(", ")]]);
+  }
+  $("grp-sub").textContent = state.type === "all" ? "All types" : PLURAL[state.type];
+  bars("groups", "grp-ticks", rows, "items", g => { if (!g.startsWith("Other (")) { state.group = g; state.page = 0; render(); } });
+}
+
+function renderHooks() {
+  const rows = Object.entries(DATA.hooks).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  $("hk-sub").textContent = "from .claude/settings.json";
+  bars("hooks", "hk-ticks", rows, "handlers");
+}
+
+function renderGroupOptions() {
+  const sel = $("f-group");
+  const groups = [...new Set(DATA.items.filter(i => state.type === "all" || i.type === state.type).map(i => i.group))].sort();
+  sel.replaceChildren(Object.assign(el("option", null, "All groups"), { value: "all" }));
+  groups.forEach(g => { const o = el("option", null, g); o.value = g; sel.append(o); });
+  if (!groups.includes(state.group)) state.group = "all";
+  sel.value = state.group;
+}
+
+const PAGE = 50;
+function renderTable(items) {
+  const k = state.sort, d = state.dir;
+  const sorted = [...items].sort((a, b) => d * (a[k].localeCompare(b[k]) || a.name.localeCompare(b.name)));
+  const pages = Math.max(1, Math.ceil(sorted.length / PAGE));
+  state.page = Math.min(state.page, pages - 1);
+  const body = $("rows"); body.replaceChildren();
+  sorted.slice(state.page * PAGE, state.page * PAGE + PAGE).forEach(i => {
+    const tr = el("tr");
+    tr.append(el("td", "type", i.type), el("td", "name", i.name), el("td", null, i.group), el("td", "desc", i.desc || "—"));
+    body.append(tr);
+  });
+  if (!sorted.length) { const tr = el("tr"), td = el("td", "muted", "Nothing matches. Clear the search or pick another type."); td.colSpan = 4; tr.append(td); body.append(tr); }
+  const from = sorted.length ? state.page * PAGE + 1 : 0, to = Math.min(sorted.length, (state.page + 1) * PAGE);
+  $("page-info").textContent = `${fmt(from)}–${fmt(to)} of ${fmt(sorted.length)}`;
+  $("prev").disabled = state.page === 0; $("next").disabled = state.page >= pages - 1;
+  document.querySelectorAll("th button").forEach(b => {
+    const on = b.dataset.sort === k;
+    b.textContent = b.textContent.replace(/ [▲▼]$/, "") + (on ? (d > 0 ? " ▲" : " ▼") : "");
+    b.closest("th").setAttribute("aria-sort", on ? (d > 0 ? "ascending" : "descending") : "none");
+  });
+}
+
+function render() {
+  $("f-type").value = state.type;
+  document.querySelectorAll("#inventory .tile").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.type === state.type)));
+  renderGroupOptions();
+  const items = filtered();
+  $("count").textContent = `${fmt(items.length)} of ${fmt(DATA.items.length)} items`;
+  renderGroups(items);
+  renderTable(items);
+}
+
+header(); activity(); inventory(); renderHooks();
+$("f-type").addEventListener("change", e => setType(e.target.value));
+$("f-group").addEventListener("change", e => { state.group = e.target.value; state.page = 0; render(); });
+$("f-q").addEventListener("input", e => { state.q = e.target.value; state.page = 0; render(); });
+document.querySelectorAll("th button").forEach(b => b.addEventListener("click", () => {
+  if (state.sort === b.dataset.sort) state.dir *= -1; else { state.sort = b.dataset.sort; state.dir = 1; }
+  render();
+}));
+$("prev").addEventListener("click", () => { state.page--; render(); });
+$("next").addEventListener("click", () => { state.page++; render(); });
+render();
+</script>

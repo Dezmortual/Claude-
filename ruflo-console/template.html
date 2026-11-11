@@ -1,0 +1,432 @@
+<title>Ruflo Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600&display=swap">
+<style>
+/* Layout: one conversation column. Mode switch on top, transcript in the middle, composer pinned under it. */
+:root {
+  --bg: #f3f5f7;
+  --panel: #ffffff;
+  --line: #dde2e8;
+  --ink: #12161c;
+  --ink-2: #4b5562;
+  --ink-3: #6f7a88;
+  --accent: #1f5fae;
+  --accent-ink: #ffffff;
+  --you: #e6eef9;
+  --code-bg: #f0f2f5;
+  --good: #0f7b3e; --good-bg: #e3f3ea;
+  --warn: #8a5a00; --warn-bg: #fbf0d6;
+  --bad: #a3262a; --bad-bg: #fbe5e5;
+  --f-display: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111418; --panel: #181c21; --line: #2b313a; --ink: #eef1f4; --ink-2: #b7c0cb; --ink-3: #8e98a5;
+    --accent: #7fb0f0; --accent-ink: #0d1520; --you: #1d2a3b; --code-bg: #12161b;
+    --good: #6fd39a; --good-bg: #16301f; --warn: #f0c060; --warn-bg: #352a10; --bad: #f09a9a; --bad-bg: #3a1a1b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111418; --panel: #181c21; --line: #2b313a; --ink: #eef1f4; --ink-2: #b7c0cb; --ink-3: #8e98a5;
+  --accent: #7fb0f0; --accent-ink: #0d1520; --you: #1d2a3b; --code-bg: #12161b;
+  --good: #6fd39a; --good-bg: #16301f; --warn: #f0c060; --warn-bg: #352a10; --bad: #f09a9a; --bad-bg: #3a1a1b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 var(--f-body); }
+.wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 32px; display: grid; gap: 16px; }
+h1 { font-family: var(--f-display); font-weight: 600; font-size: 26px; margin: 0; }
+header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 16px; }
+header p { margin: 0; color: var(--ink-3); font-size: 13px; }
+
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.mode { all: unset; cursor: pointer; background: var(--panel); padding: 12px 14px; display: grid; gap: 2px; }
+.mode b { font-weight: 600; font-size: 14px; }
+.mode span { font-size: 12.5px; color: var(--ink-3); }
+.mode[aria-pressed="true"] { box-shadow: inset 0 -3px 0 var(--accent); }
+.mode:hover { background: var(--you); }
+.mode:focus-visible, button:focus-visible, textarea:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.sessionbar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; font-size: 13px; color: var(--ink-2); }
+.sessionbar a { color: var(--accent); }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 500; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.idle { color: var(--ink-2); background: var(--code-bg); }
+.pill.work { color: var(--warn); background: var(--warn-bg); }
+.pill.done { color: var(--good); background: var(--good-bg); }
+.pill.err { color: var(--bad); background: var(--bad-bg); }
+
+.log { display: grid; gap: 14px; min-height: 120px; }
+.empty { color: var(--ink-2); font-size: 14px; display: grid; gap: 10px; }
+.empty .ex { display: flex; flex-wrap: wrap; gap: 8px; }
+.ex button { font: 13px var(--f-body); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; cursor: pointer; text-align: left; }
+.ex button:hover { border-color: var(--accent); }
+.msg { display: grid; gap: 4px; min-width: 0; }
+.msg .who { font-size: 11.5px; text-transform: uppercase; letter-spacing: .7px; color: var(--ink-3); }
+.msg .body { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; min-width: 0; overflow-wrap: anywhere; }
+.msg.you .body { background: var(--you); border-color: transparent; white-space: pre-wrap; }
+.msg .body p { margin: 0 0 8px; } .msg .body p:last-child { margin-bottom: 0; }
+.msg .body ul { margin: 0 0 8px; padding-left: 20px; }
+.msg .body h4 { margin: 10px 0 4px; font-size: 14.5px; }
+.msg .body code { font-family: var(--f-mono); font-size: 13px; background: var(--code-bg); padding: 1px 4px; border-radius: 3px; }
+.code { position: relative; margin: 8px 0; }
+.code pre { margin: 0; background: var(--code-bg); border: 1px solid var(--line); border-radius: 5px; padding: 10px 12px; overflow-x: auto; font: 13px/1.5 var(--f-mono); }
+.code pre code { background: none; padding: 0; }
+.code button { position: absolute; top: 6px; right: 6px; font: 12px var(--f-body); color: var(--ink-2); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 2px 8px; cursor: pointer; }
+.progress { font-size: 13px; color: var(--ink-3); border-left: 2px solid var(--line); padding-left: 10px; display: grid; gap: 2px; max-height: 180px; overflow-y: auto; }
+.thinking { color: var(--ink-3); font-style: italic; }
+.note { font-size: 13px; color: var(--ink-2); }
+.note.err { color: var(--bad); }
+
+.composer { position: sticky; bottom: 0; padding-block: 10px calc(10px + env(safe-area-inset-bottom, 0px)); background: var(--bg); display: grid; gap: 8px; }
+textarea { width: 100%; min-height: 72px; max-height: 40vh; resize: vertical; font: 15px/1.5 var(--f-body); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; align-items: center; }
+.row .hint { font-size: 12.5px; color: var(--ink-3); }
+.btns { display: flex; gap: 8px; }
+.btn { font: 500 14px var(--f-body); border-radius: 5px; padding: 7px 16px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn:disabled { opacity: .45; cursor: default; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Ruflo Console</h1>
+    <p>Dezmortual/claude- · branch <span id="branch"></span></p>
+  </header>
+
+  <div class="modes" role="group" aria-label="How to answer">
+    <button class="mode" id="m-quick" aria-pressed="true"><b>Quick answer</b><span>Claude answers here in seconds. Explains Ruflo and writes code, but can't run anything.</span></button>
+    <button class="mode" id="m-repo" aria-pressed="false"><b>Run in repo</b><span>Starts a Claude Code session on this repo with Ruflo installed. Can run backtests and edit code. Takes minutes.</span></button>
+  </div>
+
+  <div class="sessionbar" id="sessionbar" hidden></div>
+
+  <section class="log" id="log" aria-live="polite"></section>
+
+  <div class="composer">
+    <label for="q" class="note" id="q-label">Ask about Ruflo, or ask for code</label>
+    <textarea id="q" placeholder="How do I start a swarm that reviews my trading-desk code?"></textarea>
+    <div class="row">
+      <span class="hint" id="hint">Ctrl+Enter to send</span>
+      <div class="btns">
+        <button class="btn" id="clear">New conversation</button>
+        <button class="btn" id="stop" hidden>Stop</button>
+        <button class="btn primary" id="send">Ask</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CFG = {
+  repo: "https://github.com/Dezmortual/Claude-",
+  branch: "ccr-da80a50c-fmrj85",
+  env: "env_01H6yckyLjSS8s8QjQYJgq4L",
+  server: "Claude Code Remote",
+  inventory: /*__CTX__*/""
+};
+const RULES = `You answer questions inside the "Ruflo Console", a web page for the GitHub repo Dezmortual/claude- (branch ${CFG.branch}).
+Ruflo 3.56.3 (npm "ruflo", github ruvnet/ruflo, formerly claude-flow) is installed in that repo for Claude Code: skills, slash commands and agents in .claude/, hooks in .claude/settings.json, the claude-flow MCP server in .mcp.json, and the ruflo-mods, ruflo-swarm and ruflo-console plugins.
+The repo also has trading-desk/ (Python backtests: example_sma, orb, donchian, sweep, trend; run from inside trading-desk/; reports must follow the trading-desk-method skill), arf-os-studio/, and three TradingView Pine scripts.
+What Ruflo installed:
+${CFG.inventory}
+
+How to answer:
+- Be direct and practical. Use short paragraphs, "- " bullet lists, and fenced code blocks for any command or code.
+- Name the exact slash command, agent or MCP tool to use when one fits.
+- You cannot run anything or see file contents beyond what is written here. If the person wants something executed (a backtest, a swarm, editing or committing files), say so and tell them to switch to "Run in repo" at the top of the page.
+- Be honest about Ruflo's limits: much of it overlaps with built-in Claude Code features, and its performance claims are unverified.`;
+
+const $ = id => document.getElementById(id);
+const el = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt != null) e.textContent = txt; return e; };
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("ruflo-console:" + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("ruflo-console:" + k, JSON.stringify(v)); } catch (e) {} }
+};
+$("branch").textContent = CFG.branch;
+
+// ---------- Markdown-lite rendering (DOM only, never innerHTML) ----------
+function inline(parent, text) {
+  const re = /(`[^`]+`|\*\*[^*]+\*\*|https?:\/\/[^\s)]+)/g;
+  let last = 0, m;
+  while ((m = re.exec(text))) {
+    if (m.index > last) parent.append(text.slice(last, m.index));
+    const s = m[0];
+    if (s[0] === "`") parent.append(el("code", null, s.slice(1, -1)));
+    else if (s.startsWith("**")) parent.append(el("strong", null, s.slice(2, -2)));
+    else { const a = el("a", null, s); a.href = s; a.target = "_blank"; a.rel = "noopener"; parent.append(a); }
+    last = m.index + s.length;
+  }
+  if (last < text.length) parent.append(text.slice(last));
+}
+function renderMd(box, md) {
+  box.replaceChildren();
+  const parts = md.split(/^```[^\n]*\n?/m);
+  parts.forEach((part, i) => {
+    if (i % 2 === 1) {
+      const wrap = el("div", "code"), pre = el("pre"), code = el("code", null, part.replace(/\n$/, ""));
+      pre.append(code);
+      const b = el("button", null, "Copy");
+      b.onclick = () => {
+        navigator.clipboard.writeText(code.textContent).then(() => { b.textContent = "Copied"; setTimeout(() => b.textContent = "Copy", 1500); })
+          .catch(() => { const r = document.createRange(); r.selectNodeContents(code); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "Selected"; });
+      };
+      wrap.append(pre, b); box.append(wrap); return;
+    }
+    part.split(/\n{2,}/).forEach(block => {
+      const lines = block.split("\n").filter(l => l.trim());
+      if (!lines.length) return;
+      if (lines.every(l => /^\s*([-*]|\d+\.)\s+/.test(l))) {
+        const ul = el("ul");
+        lines.forEach(l => { const li = el("li"); inline(li, l.replace(/^\s*([-*]|\d+\.)\s+/, "")); ul.append(li); });
+        box.append(ul); return;
+      }
+      lines.forEach((l, j) => {
+        const h = l.match(/^#{1,4}\s+(.*)/);
+        if (h) { const e = el("h4"); inline(e, h[1]); box.append(e); }
+        else { const p = el("p"); inline(p, l); box.append(p); }
+      });
+    });
+  });
+}
+
+// ---------- Transcript ----------
+let mode = store.get("mode", "quick");
+const log = $("log");
+function addMsg(who, text, cls) {
+  const m = el("div", "msg " + (cls || "")), body = el("div", "body");
+  m.append(el("span", "who", who), body);
+  if (cls === "you") body.textContent = text; else if (text) renderMd(body, text);
+  log.append(m);
+  return { m, body };
+}
+const EXAMPLES = {
+  quick: ["What's the fastest way to try a Ruflo swarm?", "Which Ruflo command reviews a pull request?", "Write a Ruflo memory command that saves my backtest notes", "What does /sparc:sparc actually do?"],
+  repo: ["Run the Donchian backtest and summarize the results", "Use a Ruflo swarm to compare Donchian, Sweep and Trend", "Run ruflo doctor and tell me what's broken", "List the Ruflo hooks that fire on every prompt"]
+};
+function renderEmpty() {
+  if (log.children.length) return;
+  const e = el("div", "empty");
+  e.append(el("span", null, mode === "quick" ? "Ask anything about Ruflo in this repo. Try:" : "Give the repo session a job. Each message runs in a real Claude Code session and can take a few minutes. Try:"));
+  const ex = el("div", "ex");
+  EXAMPLES[mode].forEach(t => { const b = el("button", null, t); b.onclick = () => { $("q").value = t; $("q").focus(); }; ex.append(b); });
+  e.append(ex); log.append(e);
+}
+function clearEmpty() { log.querySelector(".empty")?.remove(); }
+
+// ---------- Mode switching ----------
+function setMode(m) {
+  mode = m; store.set("mode", m);
+  $("m-quick").setAttribute("aria-pressed", String(m === "quick"));
+  $("m-repo").setAttribute("aria-pressed", String(m === "repo"));
+  $("send").textContent = m === "quick" ? "Ask" : (repo.session ? "Send" : "Start session");
+  $("q-label").textContent = m === "quick" ? "Ask about Ruflo, or ask for code" : "Tell the repo session what to do";
+  $("q").placeholder = m === "quick" ? "How do I start a swarm that reviews my trading-desk code?" : "Run the Sweep backtest and tell me if it beats buy and hold";
+  log.replaceChildren();
+  if (m === "quick") quick.turns.forEach(t => addMsg(t.role === "user" ? "You" : "Claude", t.content, t.role === "user" ? "you" : ""));
+  else repo.history.forEach(h => addMsg(h.who, h.text, h.cls));
+  renderSessionBar(); renderEmpty();
+  const last = repo.history[repo.history.length - 1];
+  if (m === "repo" && repo.session && last?.cls === "you" && !busy) {
+    const b = el("button", "btn", "Check for the answer");
+    b.onclick = async () => {
+      const mcp = await claude.use("mcp");
+      if (!mcp) return;
+      b.remove();
+      const { body } = addMsg("Repo session", "");
+      const thinking = el("p", "thinking", "Checking the session..."), progress = el("div", "progress");
+      body.append(thinking, progress);
+      setBusy(true, true); renderSessionBar({ cls: "work", label: "Working" });
+      poll(mcp, { body, thinking, progress }, Date.parse(last.at || 0) || 0);
+    };
+    log.append(b);
+  }
+}
+$("m-quick").onclick = () => !busy && setMode("quick");
+$("m-repo").onclick = () => !busy && setMode("repo");
+
+// ---------- Quick mode (sample) ----------
+const quick = { turns: store.get("quick-turns", []) };
+let busy = false, ctl = null;
+const SAMPLE_COPY = {
+  not_granted: "Claude isn't allowed on this page. Allow it from the artifact's Permissions menu to ask questions here.",
+  sampling_disabled: "Claude isn't available for this account here.",
+  rate_limited: "Too many questions too quickly, or your usage limit was reached. Wait a bit and try again.",
+  session_expired: "Your sign-in expired. Reload the page and sign in again.",
+  refused: "Claude declined that one. Try rewording the question.",
+  prompt_too_large: "This conversation got too long. Start a new conversation.",
+  empty_completion: "No answer came back. Try asking a simpler question.",
+};
+async function askQuick(text) {
+  const sample = await claude.use("sample");
+  if (!sample) { addMsg("Console", "Quick answers aren't available in this view. Open the page in claude.ai, or use Run in repo.", "note"); return; }
+  quick.turns.push({ role: "user", content: text }); store.set("quick-turns", quick.turns);
+  addMsg("You", text, "you");
+  const { body } = addMsg("Claude", "");
+  body.append(el("span", "thinking", "Thinking..."));
+  ctl = new AbortController(); setBusy(true);
+  const turns = quick.turns.slice(-12);
+  while (turns[0] && turns[0].role !== "user") turns.shift();
+  try {
+    const { text: answer, truncated } = await sample([{ role: "user", content: RULES }, ...turns], {
+      cache: false, signal: ctl.signal, onText: ({ text: t }) => renderMd(body, t)
+    });
+    renderMd(body, answer);
+    if (truncated) body.append(el("p", "note", "The answer was cut short. Ask for less at a time."));
+    quick.turns.push({ role: "assistant", content: answer }); store.set("quick-turns", quick.turns);
+  } catch (e) {
+    if (e.code === "refused") body.replaceChildren(); else if (e.text) renderMd(body, e.text); else body.replaceChildren();
+    if (e.code !== "cancelled") body.append(el("p", "note err", SAMPLE_COPY[e.code] || "The answer was interrupted. Send the question again."));
+    if (e.text) { quick.turns.push({ role: "assistant", content: e.text }); store.set("quick-turns", quick.turns); }
+  } finally { setBusy(false); }
+}
+
+// ---------- Repo mode (Claude Code Remote) ----------
+const repo = { session: store.get("repo-session", null), history: store.get("repo-history", []), cursor: store.get("repo-cursor", null) };
+const MCP_COPY = {
+  server_not_connected: "Claude Code Remote isn't connected for your account. Add it in claude.ai Settings → Connectors, then reload.",
+  needs_reauth: "Reconnect Claude Code Remote in claude.ai Settings → Connectors, then reload.",
+  selection_required: "Choose which Claude Code Remote connector to use in the prompt claude.ai showed, then try again.",
+  not_in_manifest: "You declined Claude Code Remote for this page. Turn it on from the artifact's Permissions menu to use Run in repo.",
+  blocked_by_policy: "Your organization blocks this Claude Code Remote tool.",
+  approval_required: "This needs your approval. Press the button again and choose Allow.",
+  server_unavailable: "Claude Code Remote didn't answer. Wait a moment and try again.",
+  not_granted: "Run in repo isn't available in this view.",
+  capability_disabled: "Run in repo isn't available in this view.",
+};
+function mcpCopy(e) { return MCP_COPY[e?.code] || (e?.code === "tool_error" ? "Claude Code Remote reported: " + (e.message || "an error") : "Something went wrong talking to Claude Code Remote (" + (e?.code || "unknown") + "). Try again."); }
+function saveRepo() { store.set("repo-session", repo.session); store.set("repo-history", repo.history.slice(-60)); store.set("repo-cursor", repo.cursor); }
+function pushHist(who, text, cls) { repo.history.push({ who, text, cls, at: new Date().toISOString() }); saveRepo(); return addMsg(who, text, cls); }
+const unwrap = p => (p && typeof p === "object" && p.ccr) ? p.ccr : p;
+function findSessionId(p) {
+  const o = unwrap(p) || {};
+  const direct = o.id || o.session_id || o.session?.id;
+  if (typeof direct === "string" && direct.startsWith("session_")) return direct;
+  const m = JSON.stringify(p || "").match(/session_[A-Za-z0-9]+/);
+  return m ? m[0] : null;
+}
+function renderSessionBar(state) {
+  const bar = $("sessionbar");
+  if (mode !== "repo" || !repo.session) { bar.hidden = true; return; }
+  bar.hidden = false; bar.replaceChildren();
+  const pill = el("span", "pill " + (state?.cls || "idle"), state?.label || "Ready");
+  const a = el("a", null, "Open the full session"); a.href = "https://claude.ai/code/" + repo.session; a.target = "_blank"; a.rel = "noopener";
+  bar.append(pill, el("span", "mono", repo.session), a);
+}
+
+function eventText(ev) {
+  const kind = ev.assistant ? "assistant" : ev.result ? "result" : null;
+  if (!kind) return null;
+  const c = ev[kind].internal_anthropic_catchall || {};
+  if (kind === "result") return { kind, text: c.result || "", error: c.is_error, subtype: c.subtype };
+  const content = c.message?.content;
+  if (!Array.isArray(content)) return null;
+  const text = content.filter(b => b.type === "text").map(b => b.text).join("\n").trim();
+  const tools = content.filter(b => b.type === "tool_use").map(b => b.input?.description || b.name);
+  return { kind, text, tools, sub: !!c.parent_tool_use_id };
+}
+
+let pollTimer = null;
+async function poll(mcp, view, startedAt) {
+  try {
+    const input = { session_id: repo.session, kinds: ["assistant", "result"], limit: 100 };
+    if (repo.cursor) input.after_id = repo.cursor;
+    const r = await mcp.callTool(CFG.server, "list_events", input, { cache: false });
+    const page = unwrap(r.payload) || {};
+    const events = page.data || [];
+    if (page.last_id) repo.cursor = page.last_id;
+    let finished = null;
+    for (const ev of events) {
+      if (ev.created_at && Date.parse(ev.created_at) < startedAt - 5000) continue;
+      const t = eventText(ev);
+      if (!t) continue;
+      if (t.kind === "result") { finished = t; continue; }
+      if (t.sub) continue;
+      t.tools?.forEach(d => view.progress.append(el("span", null, "• " + d)));
+      if (t.text) view.progress.append(el("span", null, t.text.split("\n")[0].slice(0, 200)));
+      view.progress.scrollTop = view.progress.scrollHeight;
+    }
+    saveRepo();
+    if (finished) {
+      view.thinking.remove();
+      renderMd(view.body, finished.text || "(The session finished without a final message. Open the full session to see what it did.)");
+      repo.history.push({ who: "Repo session", text: finished.text, cls: "" }); saveRepo();
+      renderSessionBar(finished.error ? { cls: "err", label: "Finished with an error" } : { cls: "done", label: "Done. Send a follow-up any time" });
+      setBusy(false); return;
+    }
+    if (Date.now() - startedAt > 45 * 60 * 1000) {
+      view.thinking.textContent = "Still running after 45 minutes. Open the full session to keep watching.";
+      setBusy(false); return;
+    }
+    pollTimer = setTimeout(() => poll(mcp, view, startedAt), 6000);
+  } catch (e) {
+    if (e?.retryable) { pollTimer = setTimeout(() => poll(mcp, view, startedAt), Math.max(e.retryAfterMs || 0, 8000 + Math.random() * 4000)); return; }
+    view.thinking.remove(); view.body.append(el("p", "note err", mcpCopy(e)));
+    renderSessionBar({ cls: "err", label: "Lost contact" }); setBusy(false);
+  }
+}
+
+async function askRepo(text) {
+  const mcp = await claude.use("mcp");
+  if (!mcp) { addMsg("Console", "Run in repo isn't available in this view. Open the page in claude.ai.", "note"); return; }
+  clearEmpty();
+  pushHist("You", text, "you");
+  const { body } = addMsg("Repo session", "");
+  const thinking = el("p", "thinking", repo.session ? "Sending to the session..." : "Starting a Claude Code session on the repo...");
+  const progress = el("div", "progress");
+  body.append(thinking, progress);
+  setBusy(true, true);
+  const startedAt = Date.now();
+  const wrapped = "[Sent from the Ruflo Console artifact. Your final message is shown there, so make it a complete, readable answer.]\n\n" + text;
+  try {
+    if (!repo.session) {
+      const r = await mcp.callTool(CFG.server, "create_session", {
+        source_url: CFG.repo, source_revision: CFG.branch, environment_id: CFG.env,
+        title: "Ruflo Console: " + text.slice(0, 60), prompt: wrapped, tags: ["ruflo-console"]
+      });
+      const id = findSessionId(r.payload);
+      if (!id) throw { code: "tool_error", message: "the session started but its id wasn't in the reply. Check claude.ai/code for a session titled \"Ruflo Console\"." };
+      repo.session = id; repo.cursor = null; saveRepo();
+    } else {
+      await mcp.callTool(CFG.server, "send_message", { session_id: repo.session, message: wrapped });
+    }
+    thinking.textContent = "Working. This usually takes 1–5 minutes; progress shows below.";
+    renderSessionBar({ cls: "work", label: "Working" });
+    $("send").textContent = "Send";
+    pollTimer = setTimeout(() => poll(mcp, { body, thinking, progress }, startedAt), 5000);
+  } catch (e) {
+    thinking.remove(); body.append(el("p", "note err", mcpCopy(e)));
+    renderSessionBar({ cls: "err", label: "Not sent" }); setBusy(false);
+  }
+}
+
+// ---------- Controls ----------
+function setBusy(b, repoMode) {
+  busy = b;
+  $("send").disabled = b; $("q").disabled = b && !repoMode;
+  $("stop").hidden = !(b && mode === "quick");
+  $("hint").textContent = b ? (mode === "quick" ? "Answering..." : "The session is working. You can close this page and come back.") : "Ctrl+Enter to send";
+}
+function send() {
+  const text = $("q").value.trim();
+  if (!text || busy) return;
+  $("q").value = "";
+  clearEmpty();
+  if (mode === "quick") askQuick(text); else askRepo(text);
+}
+$("send").onclick = send;
+$("stop").onclick = () => ctl?.abort();
+$("q").addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); send(); } });
+$("clear").onclick = () => {
+  if (busy) return;
+  if (mode === "quick") { quick.turns = []; store.set("quick-turns", []); }
+  else { clearTimeout(pollTimer); repo.session = null; repo.history = []; repo.cursor = null; saveRepo(); }
+  setMode(mode);
+};
+
+setMode(mode);
+</script>
