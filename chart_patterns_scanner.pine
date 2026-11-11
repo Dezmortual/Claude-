@@ -1,0 +1,923 @@
+//@version=6
+// Automatic scanner for the "10 Powerful Chart Patterns" cheat sheet:
+//   1 Double Bottom (buy)        2 Double Top (sell)
+//   3 Head & Shoulders (sell)    4 Inverse Head & Shoulders (buy)
+//   5 Ascending Triangle (buy)   6 Descending Triangle (sell)
+//   7 Bullish Pennant (buy)      8 Bearish Pennant (sell)
+//   9 Cup & Handle (buy)        10 Wedges (falling = buy, rising = sell)
+//
+// How it follows the sheet's "Key Takeaways":
+//   Identify the pattern  - patterns are built from a swing-pivot zigzag and drawn while they form.
+//   Confirm the signal    - a signal fires only when a bar CLOSES beyond the neckline / resistance /
+//                           support / trendline (optionally with a volume spike).
+//   Manage risk           - every trade gets a stop at the pattern's invalidation level and a
+//                           measured-move (or fixed R:R) target, plus a risk-based position size.
+//   Follow the trend      - reversals need a prior opposite trend, continuations need an existing
+//                           trend in the same direction.
+//   Combine & confluence  - each signal is scored 0-5 on trend EMA, RSI, MACD, volume and whether
+//                           the pattern sits on an older support/resistance swing.
+// Only one simulated position is held at a time. The same engine also runs on a list of other
+// symbols and reports their signals in a scanner table and through alert() calls.
+// Signals are evaluated on bar close and pivots are confirmed after `Swing Pivot Length` bars,
+// so nothing repaints once the bar has closed.
+indicator("10 Chart Patterns Auto Scanner", shorttitle="10 Patterns", overlay=true, max_bars_back=500, max_lines_count=500, max_labels_count=500, max_polylines_count=100)
+
+// --- Patterns ---
+grpPat = "Patterns"
+en1  = input.bool(true, "1. Double Bottom (buy)",              group=grpPat)
+en2  = input.bool(true, "2. Double Top (sell)",                group=grpPat)
+en3  = input.bool(true, "3. Head & Shoulders (sell)",          group=grpPat)
+en4  = input.bool(true, "4. Inverse Head & Shoulders (buy)",   group=grpPat)
+en5  = input.bool(true, "5. Ascending Triangle (buy)",         group=grpPat)
+en6  = input.bool(true, "6. Descending Triangle (sell)",       group=grpPat)
+en7  = input.bool(true, "7. Bullish Pennant (buy)",            group=grpPat)
+en8  = input.bool(true, "8. Bearish Pennant (sell)",           group=grpPat)
+en9  = input.bool(true, "9. Cup & Handle (buy)",               group=grpPat)
+en10 = input.bool(true, "10. Wedges (falling buy, rising sell)", group=grpPat)
+
+// --- Detection ---
+grpDet    = "Detection"
+pivLen    = input.int(5,     "Swing Pivot Length",            minval=2,   maxval=20,  group=grpDet, tooltip="Bars on each side of a swing high/low. Larger = bigger, slower patterns.")
+minorLen  = input.int(3,     "Pennant Pivot Length",          minval=1,   maxval=10,  group=grpDet, tooltip="Pennants are short, so they use their own, smaller swings.")
+atrLen    = input.int(14,    "ATR Length",                    minval=1,               group=grpDet)
+tolAtr    = input.float(0.6, "Equal-Level Tolerance (ATR)",   minval=0.05, step=0.05, group=grpDet, tooltip="How close two tops/bottoms must be to count as equal, and how much a triangle side may tilt and still be flat.")
+minHAtr   = input.float(1.5, "Min Pattern Height (ATR)",      minval=0.1,  step=0.1,  group=grpDet)
+maxBars   = input.int(150,   "Max Pattern Length (bars)",     minval=20,  maxval=400, group=grpDet)
+expiry    = input.int(30,    "Breakout Window (bars)",        minval=1,               group=grpDet, tooltip="A completed pattern is dropped if it does not break out within this many bars.")
+poleAtr   = input.float(3.0, "Min Pennant Pole (ATR)",        minval=0.5,  step=0.5,  group=grpDet)
+poleLen   = input.int(15,    "Pennant Pole Lookback (bars)",  minval=3,               group=grpDet)
+pennMax   = input.int(30,    "Max Pennant Length (bars)",     minval=5,               group=grpDet)
+cupMin    = input.int(20,    "Min Cup Length (bars)",         minval=10,              group=grpDet)
+cupMax    = input.int(250,   "Max Cup Length (bars)",         minval=20,  maxval=300, group=grpDet)
+cupTolAtr = input.float(1.0, "Cup Rim Tolerance (ATR)",       minval=0.1,  step=0.1,  group=grpDet)
+
+// --- Confirmation ---
+grpConf     = "Confirmation"
+confirmMode = input.string("Close", "Breakout Confirmation", options=["Close", "Close + Volume"], group=grpConf)
+breakBuf    = input.float(0.1, "Breakout Buffer (ATR)",        minval=0.0, step=0.05, group=grpConf)
+maxChase    = input.float(1.5, "Max Chase Past Level (ATR)",   minval=0.1, step=0.1,  group=grpConf, tooltip="Skip breakouts that close too far past the level (late entries).")
+volLen      = input.int(20,    "Volume Average Length",        minval=1,              group=grpConf)
+volMult     = input.float(1.2, "Volume Spike Multiplier",      minval=0.1, step=0.1,  group=grpConf)
+
+// --- Trend & confluence ---
+grpTrend   = "Trend & Confluence"
+useContext = input.bool(true, "Require Pattern Trend Context", group=grpTrend, tooltip="Reversal patterns need a prior opposite trend; continuation patterns need an existing trend in the signal direction.")
+ctxLen     = input.int(50,  "Context EMA Length",       minval=2, group=grpTrend)
+emaLen     = input.int(200, "Trend EMA Length",         minval=2, group=grpTrend)
+showEma    = input.bool(false, "Plot Trend EMA",                  group=grpTrend)
+minConf    = input.int(0,   "Min Confluence Score (0-5)", minval=0, maxval=5, group=grpTrend, tooltip="Trend EMA, RSI, MACD, volume spike and key S/R level each add 1.")
+
+// --- Risk management ---
+grpRisk  = "Risk Management"
+stopMode = input.string("Last Swing", "Stop Loss Placement", options=["Last Swing", "Pattern Extreme"], group=grpRisk)
+stopBuf  = input.float(0.25, "Stop Buffer (ATR)",              minval=0.0, step=0.05, group=grpRisk)
+tgtMode  = input.string("Measured Move", "Take Profit", options=["Measured Move", "Risk:Reward"], group=grpRisk)
+rrMult   = input.float(2.0,  "Risk:Reward Target",             minval=0.5, step=0.25, group=grpRisk)
+minRR    = input.float(1.0,  "Min Reward:Risk to Take Trade",  minval=0.0, step=0.25, group=grpRisk)
+allowRev = input.bool(true,  "Reverse on Opposite Signal",                            group=grpRisk)
+initCap  = input.float(10000, "Account Size",                  minval=1,              group=grpRisk)
+riskPct  = input.float(1.0,  "Risk per Trade %",               minval=0.1, maxval=10, step=0.1, group=grpRisk)
+
+// --- Visuals ---
+grpVis     = "Visuals"
+layout     = input.string("Compact", "Layout", options=["Compact", "Full"], group=grpVis, tooltip="Compact suits phones: small tables and short labels. Tap a label to see entry, stop, target and size.")
+showForm   = input.bool(true, "Show Forming Pattern",          group=grpVis)
+showSig    = input.bool(true, "Show Breakout Signals",         group=grpVis)
+maxShown   = input.int(5, "Patterns Kept on Chart", minval=1, maxval=50, group=grpVis, tooltip="Older pattern drawings are removed to keep the chart clean.")
+showTrade  = input.bool(true, "Show Entry / Stop / Target",    group=grpVis)
+keepTrades = input.bool(false, "Keep Old Trade Zones",         group=grpVis)
+colBull    = input.color(#26a69a, "Bullish Color",             group=grpVis)
+colBear    = input.color(#ef5350, "Bearish Color",             group=grpVis)
+showDash   = input.bool(true, "Show Stats Table",              group=grpVis)
+dashPos    = input.string("Bottom Left", "Stats Table Position", options=["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group=grpVis)
+txtSizeIn  = input.string("Tiny", "Text Size", options=["Tiny", "Small", "Normal"], group=grpVis)
+
+// --- Scanner ---
+grpScan   = "Scanner"
+showScan  = input.bool(true, "Show Scanner Table",     group=grpScan)
+scanTf    = input.timeframe("", "Scanner Timeframe (empty = chart)", group=grpScan)
+scanPos   = input.string("Top Right", "Scanner Position", options=["Top Right", "Top Left", "Bottom Right", "Bottom Left"], group=grpScan)
+alertScan = input.bool(true, "Alert on Scanned Symbol Signals", group=grpScan)
+s1  = input.symbol("BINANCE:BTCUSDT",  "Symbol 1",  group=grpScan)
+s2  = input.symbol("BINANCE:ETHUSDT",  "Symbol 2",  group=grpScan)
+s3  = input.symbol("BINANCE:SOLUSDT",  "Symbol 3",  group=grpScan)
+s4  = input.symbol("BINANCE:BNBUSDT",  "Symbol 4",  group=grpScan)
+s5  = input.symbol("BINANCE:XRPUSDT",  "Symbol 5",  group=grpScan)
+s6  = input.symbol("BINANCE:DOGEUSDT", "Symbol 6",  group=grpScan)
+s7  = input.symbol("BINANCE:ADAUSDT",  "Symbol 7",  group=grpScan)
+s8  = input.symbol("BINANCE:AVAXUSDT", "Symbol 8",  group=grpScan)
+s9  = input.symbol("BINANCE:LINKUSDT", "Symbol 9",  group=grpScan)
+s10 = input.symbol("BINANCE:LTCUSDT",  "Symbol 10", group=grpScan)
+
+// ============================================================================
+// Types
+// ============================================================================
+
+// A confirmed swing high or low.
+type Piv
+    int   x        // bar index of the swing
+    float y        // price of the swing
+    bool  hi       // true = swing high
+    int   tr       // trend state at the swing: 1 up, -1 down, 0 none
+    float swing    // size of the move into the swing over `poleLen` bars (pennant pole)
+
+// A completed pattern waiting for its breakout.
+type Setup
+    int    pid      // pattern id 1..10
+    int    dir      // 1 = buy, -1 = sell
+    int    x0       // breakout line anchor
+    float  y0
+    float  slope    // breakout line slope per bar (0 = horizontal)
+    float  stop     // invalidation / stop loss level
+    float  height   // measured-move distance
+    int    born     // bar index of the pattern's last swing
+    bool   atKey    // pattern extreme sits on an older swing level
+    string pts      // pattern swings, "x,y;x,y;..."
+
+// Everything the engine reports for one bar. Only fundamental fields so it can pass
+// through request.security().
+type Out
+    // breakout signal on this bar
+    int    sig      = 0
+    int    pid      = 0
+    int    conf     = 0
+    float  entry
+    float  stop
+    float  target
+    int    x0
+    float  y0
+    float  slope
+    string pts      = ""
+    bool   opened   = false
+    // newest pattern that completed on this bar and now waits for a breakout
+    int    fPid     = 0
+    int    fDir     = 0
+    int    fX0
+    float  fY0
+    float  fSlope
+    string fPts     = ""
+    // most recent pattern still waiting for a breakout
+    int    wPid     = 0
+    int    wDir     = 0
+    // position state
+    int    pos      = 0
+    int    posPid   = 0
+    float  posEntry
+    float  posStop
+    float  posTarget
+    // trade closed on this bar
+    int    exitPid  = 0
+    int    exitWhy  = 0     // 1 = take profit, 2 = stop loss, 3 = reversed
+    float  exitR
+    // running stats and last signal
+    int    trades   = 0
+    int    wins     = 0
+    float  netR     = 0.0
+    int    lastDir  = 0
+    int    lastPid  = 0
+    int    lastAgo
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+pName(int pid, int dir) =>
+    switch pid
+        1  => "Double Bottom"
+        2  => "Double Top"
+        3  => "Head & Shoulders"
+        4  => "Inverse H&S"
+        5  => "Ascending Triangle"
+        6  => "Descending Triangle"
+        7  => "Bullish Pennant"
+        8  => "Bearish Pennant"
+        9  => "Cup & Handle"
+        10 => dir == 1 ? "Falling Wedge" : dir == -1 ? "Rising Wedge" : "Wedge"
+        => ""
+
+// k-th swing from the end (0 = newest).
+pv(array<Piv> zz, int k) =>
+    zz.get(zz.size() - 1 - k)
+
+// Adds a swing to an alternating high/low zigzag. Two highs (or lows) in a row keep only
+// the more extreme one. Returns true when the zigzag changed.
+addPiv(array<Piv> zz, Piv p) =>
+    bool changed = false
+    int n = zz.size()
+    if n == 0
+        zz.push(p)
+        changed := true
+    else
+        Piv lastP = zz.get(n - 1)
+        if lastP.hi == p.hi
+            if p.hi ? p.y > lastP.y : p.y < lastP.y
+                zz.set(n - 1, p)
+                changed := true
+        else
+            zz.push(p)
+            changed := true
+            if zz.size() > 100
+                zz.shift()
+    changed
+
+xyStr(int x, float y) =>
+    str.tostring(x) + "," + str.tostring(y, "#.##########") + ";"
+
+ptStr(Piv p) =>
+    xyStr(p.x, p.y)
+
+ctxOk(int need, int tr) =>
+    not useContext or tr == need
+
+// Stop level for a pattern: beyond its last swing or beyond its extreme, plus a buffer.
+stopFor(int dir, float swingLvl, float extremeLvl, float atr) =>
+    (stopMode == "Last Swing" ? swingLvl : extremeLvl) - dir * stopBuf * atr
+
+// True if an older swing (before the pattern started) sits near `price`: a key S/R level.
+keyLvl(array<Piv> zz, int fromK, float price, float tol) =>
+    bool hit = false
+    int n = zz.size()
+    if n - 1 > fromK
+        for k = fromK + 1 to n - 1
+            if math.abs(pv(zz, k).y - price) <= tol
+                hit := true
+                break
+    hit
+
+// Last four swings split into the two highs and two lows (older first).
+quad(array<Piv> zz) =>
+    Piv p3 = pv(zz, 3)
+    Piv p2 = pv(zz, 2)
+    Piv p1 = pv(zz, 1)
+    Piv p0 = pv(zz, 0)
+    Piv h1 = p3.hi ? p3 : p2
+    Piv l1 = p3.hi ? p2 : p3
+    Piv h2 = p1.hi ? p1 : p0
+    Piv l2 = p1.hi ? p0 : p1
+    [h1, h2, l1, l2]
+
+// ============================================================================
+// Pattern detectors. Each looks at the newest swings and returns a Setup or na.
+// ============================================================================
+
+// 1 Double Bottom / 2 Double Top: two equal lows (highs) with a neckline swing between.
+detDouble(array<Piv> zz, float atr) =>
+    Setup s = na
+    if zz.size() >= 3
+        Piv a = pv(zz, 2)
+        Piv b = pv(zz, 1)
+        Piv c = pv(zz, 0)
+        int span = c.x - a.x
+        float tol = tolAtr * atr
+        if math.abs(a.y - c.y) <= tol and span >= 2 * pivLen and span <= maxBars
+            string pts = ptStr(a) + ptStr(b) + ptStr(c)
+            if not c.hi and en1
+                float sup = math.min(a.y, c.y)
+                float h = b.y - sup
+                if h >= minHAtr * atr and ctxOk(-1, a.tr)
+                    s := Setup.new(1, 1, b.x, b.y, 0.0, stopFor(1, c.y, sup, atr), h, c.x, keyLvl(zz, 2, sup, tol), pts)
+            else if c.hi and en2
+                float res = math.max(a.y, c.y)
+                float h = res - b.y
+                if h >= minHAtr * atr and ctxOk(1, a.tr)
+                    s := Setup.new(2, -1, b.x, b.y, 0.0, stopFor(-1, c.y, res, atr), h, c.x, keyLvl(zz, 2, res, tol), pts)
+    s
+
+// 3 Head & Shoulders / 4 Inverse: shoulder, trough, head, trough, shoulder.
+// The neckline runs through the two troughs and may slope.
+detHS(array<Piv> zz, float atr) =>
+    Setup s = na
+    if zz.size() >= 5
+        Piv ls = pv(zz, 4)
+        Piv t1 = pv(zz, 3)
+        Piv hd = pv(zz, 2)
+        Piv t2 = pv(zz, 1)
+        Piv rs = pv(zz, 0)
+        float sl  = (t2.y - t1.y) / (t2.x - t1.x)
+        float nkL = t1.y + sl * (ls.x - t1.x)
+        float nkH = t1.y + sl * (hd.x - t1.x)
+        float nkR = t1.y + sl * (rs.x - t1.x)
+        float lsd = hd.x - ls.x
+        float rsd = rs.x - hd.x
+        bool timeOk = rsd >= lsd / 3 and rsd <= lsd * 3 and rs.x - ls.x <= maxBars
+        string pts = ptStr(ls) + ptStr(t1) + ptStr(hd) + ptStr(t2) + ptStr(rs)
+        if timeOk and rs.hi and en3
+            float h = hd.y - nkH
+            bool okShape = hd.y > ls.y and hd.y > rs.y and hd.y - math.max(ls.y, rs.y) >= 0.2 * h and ls.y > nkL and rs.y > nkR and math.abs(ls.y - rs.y) <= 0.6 * h
+            if okShape and h >= minHAtr * atr and ctxOk(1, ls.tr)
+                s := Setup.new(3, -1, t1.x, t1.y, sl, stopFor(-1, rs.y, hd.y, atr), h, rs.x, keyLvl(zz, 4, hd.y, tolAtr * atr), pts)
+        else if timeOk and not rs.hi and en4
+            float h = nkH - hd.y
+            bool okShape = hd.y < ls.y and hd.y < rs.y and math.min(ls.y, rs.y) - hd.y >= 0.2 * h and ls.y < nkL and rs.y < nkR and math.abs(ls.y - rs.y) <= 0.6 * h
+            if okShape and h >= minHAtr * atr and ctxOk(-1, ls.tr)
+                s := Setup.new(4, 1, t1.x, t1.y, sl, stopFor(1, rs.y, hd.y, atr), h, rs.x, keyLvl(zz, 4, hd.y, tolAtr * atr), pts)
+    s
+
+// 5 Ascending / 6 Descending Triangle and 10 Falling / Rising Wedge, from the last two
+// swing highs and two swing lows.
+detTriWedge(array<Piv> zz, float atr) =>
+    Setup s = na
+    if zz.size() >= 4
+        [h1, h2, l1, l2] = quad(zz)
+        Piv pFirst = pv(zz, 3)
+        Piv pLast  = pv(zz, 0)
+        float sH = (h2.y - h1.y) / (h2.x - h1.x)
+        float sL = (l2.y - l1.y) / (l2.x - l1.x)
+        int   xa = pFirst.x
+        int   xb = pLast.x
+        float wStart = (h1.y + sH * (xa - h1.x)) - (l1.y + sL * (xa - l1.x))
+        float wEnd   = (h1.y + sH * (xb - h1.x)) - (l1.y + sL * (xb - l1.x))
+        float flat = tolAtr * atr
+        float dH = h2.y - h1.y
+        float dL = l2.y - l1.y
+        string pts = ptStr(pv(zz, 3)) + ptStr(pv(zz, 2)) + ptStr(pv(zz, 1)) + ptStr(pLast)
+        if xb - xa <= maxBars and wStart >= minHAtr * atr and wEnd > 0 and wEnd < wStart
+            if en5 and math.abs(dH) <= flat and dL > flat and ctxOk(1, pFirst.tr)
+                float lvl = math.max(h1.y, h2.y)
+                s := Setup.new(5, 1, h2.x, lvl, 0.0, stopFor(1, l2.y, l1.y, atr), lvl - l1.y, xb, keyLvl(zz, 3, l2.y, flat), pts)
+            else if en6 and math.abs(dL) <= flat and dH < -flat and ctxOk(-1, pFirst.tr)
+                float lvl = math.min(l1.y, l2.y)
+                s := Setup.new(6, -1, l2.x, lvl, 0.0, stopFor(-1, h2.y, h1.y, atr), h1.y - lvl, xb, keyLvl(zz, 3, h2.y, flat), pts)
+            else if en10 and dH < -flat and dL < -flat and sH < sL
+                // Falling wedge: both sides fall, the upper one faster. Buy the upper-line break.
+                s := Setup.new(10, 1, h1.x, h1.y, sH, stopFor(1, l2.y, math.min(l1.y, l2.y), atr), wStart, xb, keyLvl(zz, 3, l2.y, flat), pts)
+            else if en10 and dH > flat and dL > flat and sL > sH
+                // Rising wedge: both sides rise, the lower one faster. Sell the lower-line break.
+                s := Setup.new(10, -1, l1.x, l1.y, sL, stopFor(-1, h2.y, math.max(h1.y, h2.y), atr), wStart, xb, keyLvl(zz, 3, h2.y, flat), pts)
+    s
+
+// 7 Bullish / 8 Bearish Pennant: a strong pole followed by a small converging consolidation.
+detPennant(array<Piv> zz, float atr) =>
+    Setup s = na
+    if zz.size() >= 4
+        [h1, h2, l1, l2] = quad(zz)
+        Piv pFirst = pv(zz, 3)
+        Piv pLast  = pv(zz, 0)
+        float sH = (h2.y - h1.y) / (h2.x - h1.x)
+        float sL = (l2.y - l1.y) / (l2.x - l1.x)
+        bool conv = h2.y < h1.y and l2.y > l1.y
+        bool poleOk = pFirst.swing >= poleAtr * atr and h1.y - l1.y <= 0.5 * pFirst.swing
+        string pts = ptStr(pv(zz, 3)) + ptStr(pv(zz, 2)) + ptStr(pv(zz, 1)) + ptStr(pLast)
+        if conv and poleOk and pLast.x - pFirst.x <= pennMax
+            if en7 and pFirst.hi and ctxOk(1, pFirst.tr)
+                s := Setup.new(7, 1, h1.x, h1.y, sH, stopFor(1, l2.y, l1.y, atr), pFirst.swing, pLast.x, keyLvl(zz, 3, l2.y, tolAtr * atr), pts)
+            else if en8 and not pFirst.hi and ctxOk(-1, pFirst.tr)
+                s := Setup.new(8, -1, l1.x, l1.y, sL, stopFor(-1, h2.y, h1.y, atr), pFirst.swing, pLast.x, keyLvl(zz, 3, h2.y, tolAtr * atr), pts)
+    s
+
+// 9 Cup & Handle: two near-equal rims around a rounded bottom, then a shallow handle low
+// in the upper half of the cup.
+detCup(array<Piv> zz, float atr) =>
+    Setup s = na
+    int n = zz.size()
+    if en9 and n >= 4
+        Piv hl = pv(zz, 0)
+        Piv r2 = pv(zz, 1)
+        if not hl.hi
+            float tol   = cupTolAtr * atr
+            Piv   r1    = na
+            int   r1k   = 0
+            float maxHi = na
+            float botY  = na
+            int   botX  = na
+            // Walk back from the right rim to find a left rim with nothing higher in between.
+            for k = 2 to n - 1
+                Piv q = pv(zz, k)
+                if r2.x - q.x > cupMax
+                    break
+                if q.hi
+                    if math.abs(q.y - r2.y) <= tol and r2.x - q.x >= cupMin and (na(maxHi) or maxHi < math.min(q.y, r2.y))
+                        r1  := q
+                        r1k := k
+                        break
+                    if q.y > r2.y + tol
+                        break
+                    maxHi := na(maxHi) ? q.y : math.max(maxHi, q.y)
+                else if na(botY) or q.y < botY
+                    botY := q.y
+                    botX := q.x
+            if not na(r1) and not na(botY)
+                float depth = math.min(r1.y, r2.y) - botY
+                int   w     = r2.x - r1.x
+                float bPos  = float(botX - r1.x) / w
+                int   hLen  = hl.x - r2.x
+                bool  handleOk = hl.y > botY + 0.5 * depth and hl.y < r2.y and hLen <= w * 0.5
+                if depth >= 2 * minHAtr * atr and bPos >= 0.2 and bPos <= 0.8 and handleOk and ctxOk(1, r1.tr)
+                    // Rounded "U", not a "V": enough of the cup must trade near the bottom.
+                    int nearBot = 0
+                    for x = r1.x to r2.x
+                        if low[bar_index - x] <= botY + 0.3 * depth
+                            nearBot += 1
+                    if nearBot >= 0.15 * w
+                        float lvl = math.max(r1.y, r2.y)
+                        string pts = ptStr(r1) + xyStr(botX, botY) + ptStr(r2) + ptStr(hl)
+                        s := Setup.new(9, 1, r2.x, lvl, 0.0, stopFor(1, hl.y, botY, atr), depth, hl.x, keyLvl(zz, r1k, lvl, tol), pts)
+    s
+
+pushIf(array<Setup> fresh, Setup s) =>
+    if not na(s)
+        fresh.push(s)
+    fresh.size()
+
+scanMajor(array<Setup> fresh, array<Piv> zz, float atr) =>
+    pushIf(fresh, detDouble(zz, atr))
+    pushIf(fresh, detHS(zz, atr))
+    pushIf(fresh, detTriWedge(zz, atr))
+    pushIf(fresh, detCup(zz, atr))
+
+confScore(int dir, bool atKey, float trEma, float rsi, float hist, bool volSpike) =>
+    int c = 0
+    c += (dir == 1 ? close > trEma : close < trEma) ? 1 : 0
+    c += (dir == 1 ? rsi > 50 : rsi < 50) ? 1 : 0
+    c += (dir == 1 ? hist > 0 : hist < 0) ? 1 : 0
+    c += volSpike ? 1 : 0
+    c += atKey ? 1 : 0
+    c
+
+// ============================================================================
+// Engine: detection, breakout confirmation and position simulation.
+// Each call site (chart or request.security) keeps its own state.
+// ============================================================================
+engine() =>
+    float atr    = ta.atr(atrLen)
+    float ctxEma = ta.ema(close, ctxLen)
+    float trEma  = ta.ema(close, emaLen)
+    float rsi    = ta.rsi(close, 14)
+    [macdLine, sigLine, hist] = ta.macd(close, 12, 26, 9)
+    float volAvg = ta.sma(volume, volLen)
+    bool  volSpike = volume > volAvg * volMult
+    int   trState  = close > ctxEma and ctxEma > ctxEma[3] ? 1 : close < ctxEma and ctxEma < ctxEma[3] ? -1 : 0
+    float llPole = ta.lowest(low, poleLen)
+    float hhPole = ta.highest(high, poleLen)
+    float ph  = ta.pivothigh(high, pivLen, pivLen)
+    float pl  = ta.pivotlow(low, pivLen, pivLen)
+    float mph = ta.pivothigh(high, minorLen, minorLen)
+    float mpl = ta.pivotlow(low, minorLen, minorLen)
+
+    var array<Piv>   zz   = array.new<Piv>()
+    var array<Piv>   mzz  = array.new<Piv>()
+    var array<Setup> pend = array.new<Setup>(10)
+    var int   pos       = 0
+    var int   posPid    = 0
+    var float posEntry  = na
+    var float posStop   = na
+    var float posTarget = na
+    var float posRisk   = na
+    var int   trades    = 0
+    var int   wins      = 0
+    var float netR      = 0.0
+    var int   lastDir   = 0
+    var int   lastPid   = 0
+    var int   lastBar   = na
+
+    Out o = Out.new()
+    Setup none = na
+
+    // 1) Stop loss / take profit for a position opened on an earlier bar.
+    //    If both are touched in one bar the stop is assumed to fill first.
+    if pos != 0
+        float fill = na
+        if pos == 1
+            if low <= posStop
+                fill := math.min(open, posStop)
+                o.exitWhy := 2
+            else if high >= posTarget
+                fill := math.max(open, posTarget)
+                o.exitWhy := 1
+        else
+            if high >= posStop
+                fill := math.max(open, posStop)
+                o.exitWhy := 2
+            else if low <= posTarget
+                fill := math.min(open, posTarget)
+                o.exitWhy := 1
+        if not na(fill)
+            float r = pos * (fill - posEntry) / posRisk
+            o.exitPid := posPid
+            o.exitR   := r
+            trades    += 1
+            wins      += r > 0 ? 1 : 0
+            netR      += r
+            pos       := 0
+
+    // 2) Update the zigzags and look for patterns that just completed.
+    array<Setup> fresh = array.new<Setup>()
+    if not na(ph)
+        if addPiv(zz, Piv.new(bar_index - pivLen, ph, true, trState[pivLen], ph - llPole[pivLen]))
+            scanMajor(fresh, zz, atr)
+    if not na(pl)
+        if addPiv(zz, Piv.new(bar_index - pivLen, pl, false, trState[pivLen], hhPole[pivLen] - pl))
+            scanMajor(fresh, zz, atr)
+    if not na(mph)
+        if addPiv(mzz, Piv.new(bar_index - minorLen, mph, true, trState[minorLen], mph - llPole[minorLen]))
+            pushIf(fresh, detPennant(mzz, atr))
+    if not na(mpl)
+        if addPiv(mzz, Piv.new(bar_index - minorLen, mpl, false, trState[minorLen], hhPole[minorLen] - mpl))
+            pushIf(fresh, detPennant(mzz, atr))
+    for f in fresh
+        pend.set(f.pid - 1, f)
+
+    // 3) Breakout confirmation: a close beyond the level (plus buffer, optionally on volume).
+    //    Setups die on invalidation (close beyond the stop), expiry, or a breakout that is too extended.
+    Setup best     = na
+    int   bestConf = -1
+    float bestLvl  = na
+    for k = 0 to 9
+        Setup s = pend.get(k)
+        if not na(s)
+            float lvl  = s.y0 + s.slope * (bar_index - s.x0)
+            bool  brk  = s.dir == 1 ? close > lvl + breakBuf * atr : close < lvl - breakBuf * atr
+            bool  dead = (s.dir == 1 ? close < s.stop : close > s.stop) or bar_index - s.born > expiry + pivLen or (brk and math.abs(close - lvl) > maxChase * atr)
+            bool  volOk = confirmMode == "Close" or volSpike
+            if dead
+                pend.set(k, none)
+            else if brk and volOk
+                pend.set(k, none)
+                int conf = confScore(s.dir, s.atKey, trEma, rsi, hist, volSpike)
+                if conf >= minConf and conf > bestConf
+                    best     := s
+                    bestConf := conf
+                    bestLvl  := lvl
+
+    // 4) Signal and position entry with a pattern stop and a measured-move / R:R target.
+    if not na(best)
+        float risk   = (close - best.stop) * best.dir
+        float target = tgtMode == "Measured Move" ? bestLvl + best.dir * best.height : close + best.dir * rrMult * risk
+        if risk > 0 and (target - close) * best.dir >= minRR * risk
+            o.sig    := best.dir
+            o.pid    := best.pid
+            o.conf   := bestConf
+            o.entry  := close
+            o.stop   := best.stop
+            o.target := target
+            o.x0     := best.x0
+            o.y0     := best.y0
+            o.slope  := best.slope
+            o.pts    := best.pts
+            lastDir  := best.dir
+            lastPid  := best.pid
+            lastBar  := bar_index
+            if pos == -best.dir and allowRev
+                float r = pos * (close - posEntry) / posRisk
+                o.exitPid := posPid
+                o.exitWhy := 3
+                o.exitR   := r
+                trades    += 1
+                wins      += r > 0 ? 1 : 0
+                netR      += r
+                pos       := 0
+            if pos == 0
+                pos       := best.dir
+                posPid    := best.pid
+                posEntry  := close
+                posStop   := best.stop
+                posTarget := target
+                posRisk   := risk
+                o.opened  := true
+
+    // 5) Report the newest pattern still waiting for a breakout.
+    int fn = fresh.size()
+    if fn > 0
+        for i = fn - 1 to 0
+            Setup f   = fresh.get(i)
+            Setup cur = pend.get(f.pid - 1)
+            if not na(cur) and cur.born == f.born and cur.x0 == f.x0 and cur.dir == f.dir
+                o.fPid   := f.pid
+                o.fDir   := f.dir
+                o.fX0    := f.x0
+                o.fY0    := f.y0
+                o.fSlope := f.slope
+                o.fPts   := f.pts
+                break
+    int newestBorn = -1
+    for k = 0 to 9
+        Setup s = pend.get(k)
+        if not na(s) and s.born > newestBorn
+            newestBorn := s.born
+            o.wPid     := s.pid
+            o.wDir     := s.dir
+
+    o.pos       := pos
+    o.posPid    := pos != 0 ? posPid : 0
+    o.posEntry  := pos != 0 ? posEntry : na
+    o.posStop   := pos != 0 ? posStop : na
+    o.posTarget := pos != 0 ? posTarget : na
+    o.trades    := trades
+    o.wins      := wins
+    o.netR      := netR
+    o.lastDir   := lastDir
+    o.lastPid   := lastPid
+    o.lastAgo   := na(lastBar) ? na : bar_index - lastBar
+    o
+
+
+// ============================================================================
+// Chart symbol
+// ============================================================================
+Out me = engine()
+
+bool compact = layout == "Compact"
+
+posOf(string p) =>
+    switch p
+        "Top Left"     => position.top_left
+        "Bottom Right" => position.bottom_right
+        "Bottom Left"  => position.bottom_left
+        => position.top_right
+
+txtSize = switch txtSizeIn
+    "Tiny"   => size.tiny
+    "Normal" => size.normal
+    => size.small
+
+// Short pattern names for compact labels and tables.
+pAbbr(int pid, int dir) =>
+    switch pid
+        1  => "DBot"
+        2  => "DTop"
+        3  => "H&S"
+        4  => "iH&S"
+        5  => "AscTri"
+        6  => "DescTri"
+        7  => "BullPen"
+        8  => "BearPen"
+        9  => "Cup"
+        10 => dir == 1 ? "FWedge" : dir == -1 ? "RWedge" : "Wedge"
+        => ""
+
+parsePts(string s) =>
+    array<chart.point> cp = array.new<chart.point>()
+    if str.length(s) > 0
+        for p in str.split(s, ";")
+            if str.length(p) > 0
+                array<string> xy = str.split(p, ",")
+                cp.push(chart.point.from_index(int(str.tonumber(xy.get(0))), str.tonumber(xy.get(1))))
+    cp
+
+stars(float winPct) =>
+    int n = math.max(0, math.min(5, math.round(winPct / 20)))
+    str.repeat("★", n) + str.repeat("☆", 5 - n)
+
+fmtP(float v) =>
+    str.tostring(v, format.mintick)
+
+// Signed number such as "+1.5" / "-0.75" / "0".
+fmtS(float v, string f) =>
+    (v > 0 ? "+" : "") + str.tostring(v, f)
+
+plot(showEma ? ta.ema(close, emaLen) : na, "Trend EMA", color=color.new(color.gray, 30), linewidth=2)
+
+// Account equity, compounded at `riskPct` per 1R.
+var float equity = initCap
+var array<int>   pTrades = array.new<int>(11, 0)
+var array<int>   pWins   = array.new<int>(11, 0)
+var array<float> pNetR   = array.new<float>(11, 0.0)
+
+// Drawings are kept in arrays so old ones can be removed.
+var array<polyline> sigPl  = array.new<polyline>()
+var array<line>     sigLn  = array.new<line>()
+var array<label>    sigLb  = array.new<label>()
+var array<label>    exitLb = array.new<label>()
+var polyline formPl = na
+var line     formLn = na
+var label    formLb = na
+
+if me.exitPid != 0
+    pTrades.set(me.exitPid, pTrades.get(me.exitPid) + 1)
+    pWins.set(me.exitPid, pWins.get(me.exitPid) + (me.exitR > 0 ? 1 : 0))
+    pNetR.set(me.exitPid, pNetR.get(me.exitPid) + me.exitR)
+    equity += equity * riskPct / 100 * me.exitR
+    if showTrade
+        string why  = me.exitWhy == 1 ? "TP" : me.exitWhy == 2 ? "SL" : "REV"
+        string eTxt = why + " " + fmtS(me.exitR, "#.##") + "R"
+        color  eCol = me.exitR > 0 ? colBull : colBear
+        float  eY   = me.exitR > 0 ? high : low
+        if compact
+            exitLb.push(label.new(bar_index, eY, "", style=label.style_circle, color=eCol, size=size.tiny, tooltip=eTxt))
+        else
+            exitLb.push(label.new(bar_index, eY, eTxt, style=me.exitR > 0 ? label.style_label_down : label.style_label_up, color=color.new(color.gray, 20), textcolor=color.white, size=size.tiny, tooltip=eTxt))
+        while exitLb.size() > maxShown * 2
+            exitLb.shift().delete()
+
+// Forming pattern: only the newest one is shown, as a faint dashed outline.
+if showForm and me.fPid != 0
+    polyline.delete(formPl)
+    line.delete(formLn)
+    label.delete(formLb)
+    color c = color.new(me.fDir == 1 ? colBull : colBear, 40)
+    array<chart.point> cp = parsePts(me.fPts)
+    if cp.size() >= 2
+        formPl := polyline.new(cp, line_color=c, line_style=line.style_dashed, line_width=1)
+        chart.point lastPt = cp.last()
+        string fTxt = "Forming: " + pName(me.fPid, me.fDir)
+        formLb := label.new(lastPt.index, lastPt.price, compact ? "?" : fTxt, style=me.fDir == 1 ? label.style_label_up : label.style_label_down, color=color.new(c, 75), textcolor=c, size=size.tiny, tooltip=fTxt)
+    int xEnd = bar_index + 10
+    formLn := line.new(me.fX0, me.fY0, xEnd, me.fY0 + me.fSlope * (xEnd - me.fX0), color=c, style=line.style_dotted)
+
+// Confirmed breakouts. Compact labels are two short words; tap for the details.
+if showSig and me.sig != 0
+    // Clear the forming outline, unless a different pattern started forming on this same bar.
+    if me.fPid == 0
+        polyline.delete(formPl)
+        line.delete(formLn)
+        label.delete(formLb)
+    color c = me.sig == 1 ? colBull : colBear
+    array<chart.point> cp = parsePts(me.pts)
+    cp.push(chart.point.from_index(bar_index, close))
+    sigPl.push(polyline.new(cp, line_color=color.new(c, 20), line_width=2))
+    sigLn.push(line.new(me.x0, me.y0, bar_index, me.y0 + me.slope * (bar_index - me.x0), color=c, style=line.style_dashed, width=1))
+    float  qty  = equity * riskPct / 100 / math.abs(me.entry - me.stop)
+    string side = me.sig == 1 ? "BUY" : "SELL"
+    string full = pName(me.pid, me.sig) + "\n" + side + "  conf " + str.tostring(me.conf) + "/5"
+    full += me.opened ? "\nEntry " + fmtP(me.entry) + "\nSL " + fmtP(me.stop) + "  TP " + fmtP(me.target) + "\nSize " + str.tostring(qty, "#.####") : "\n(not taken: already in position)"
+    string shortTxt = side + "\n" + pAbbr(me.pid, me.sig)
+    sigLb.push(label.new(bar_index, me.sig == 1 ? low : high, compact ? shortTxt : full, style=me.sig == 1 ? label.style_label_up : label.style_label_down, color=me.opened ? c : color.new(c, 60), textcolor=color.white, size=txtSize, tooltip=full))
+    while sigPl.size() > maxShown
+        sigPl.shift().delete()
+    while sigLn.size() > maxShown
+        sigLn.shift().delete()
+    while sigLb.size() > maxShown
+        sigLb.shift().delete()
+
+// Entry / stop / target zones. By default only the latest trade is kept.
+var line     enL = na
+var line     slL = na
+var line     tpL = na
+var linefill slF = na
+var linefill tpF = na
+if showTrade
+    if me.opened
+        if not keepTrades
+            linefill.delete(slF)
+            linefill.delete(tpF)
+            line.delete(enL)
+            line.delete(slL)
+            line.delete(tpL)
+        enL := line.new(bar_index, me.posEntry,  bar_index, me.posEntry,  color=color.gray, width=1)
+        slL := line.new(bar_index, me.posStop,   bar_index, me.posStop,   color=colBear,    width=1)
+        tpL := line.new(bar_index, me.posTarget, bar_index, me.posTarget, color=colBull,    width=1)
+        slF := linefill.new(enL, slL, color.new(colBear, 88))
+        tpF := linefill.new(enL, tpL, color.new(colBull, 88))
+    else if me.pos != 0 and not na(enL)
+        enL.set_x2(bar_index)
+        slL.set_x2(bar_index)
+        tpL.set_x2(bar_index)
+
+alertcondition(me.sig == 1,  "Pattern BUY",      "Chart pattern BUY breakout on {{ticker}} at {{close}}")
+alertcondition(me.sig == -1, "Pattern SELL",     "Chart pattern SELL breakdown on {{ticker}} at {{close}}")
+alertcondition(me.fPid != 0, "Pattern Forming",  "Chart pattern forming on {{ticker}}")
+alertcondition(me.exitPid != 0, "Trade Closed",  "Chart pattern trade closed on {{ticker}} at {{close}}")
+
+if me.sig != 0
+    alert(syminfo.ticker + ": " + pName(me.pid, me.sig) + " " + (me.sig == 1 ? "BUY" : "SELL") + " at " + fmtP(me.entry) + " | SL " + fmtP(me.stop) + " | TP " + fmtP(me.target) + " | conf " + str.tostring(me.conf) + "/5", alert.freq_once_per_bar_close)
+
+// --- Stats table ---
+var table dash = table.new(posOf(dashPos), 5, 15, bgcolor=color.new(color.black, 35), border_color=color.new(color.gray, 70), border_width=1)
+
+dCell(int col, int row, string txt, color tc) =>
+    table.cell(dash, col, row, txt, text_color=tc, text_size=txtSize, text_halign=col == 0 ? text.align_left : text.align_right)
+
+if showDash and barstate.islast
+    float totWr = me.trades > 0 ? float(me.wins) / me.trades * 100 : na
+    color netCol = me.netR > 0 ? colBull : me.netR < 0 ? colBear : color.white
+    string posTxt = me.pos == 0 ? "Flat" : (me.pos == 1 ? "LONG " : "SHORT ") + (compact ? pAbbr(me.posPid, me.pos) : pName(me.posPid, me.pos))
+    color posCol = me.pos == 1 ? colBull : me.pos == -1 ? colBear : color.white
+    if compact
+        dash.clear(0, 0, 4, 14)
+        dCell(0, 0, "Trades", color.silver)
+        dCell(1, 0, str.tostring(me.trades) + (me.trades > 0 ? "  " + str.tostring(totWr, "#") + "%" : ""), color.white)
+        dCell(0, 1, "Net", color.silver)
+        dCell(1, 1, fmtS(me.netR, "#.#") + "R  " + fmtS((equity / initCap - 1) * 100, "#.#") + "%", netCol)
+        dCell(0, 2, "Pos", color.silver)
+        dCell(1, 2, posTxt, posCol)
+        if me.pos != 0
+            dCell(0, 3, "SL/TP", color.silver)
+            dCell(1, 3, fmtP(me.posStop) + " / " + fmtP(me.posTarget), color.white)
+        if me.wPid != 0
+            dCell(0, me.pos != 0 ? 4 : 3, "Watch", color.silver)
+            dCell(1, me.pos != 0 ? 4 : 3, pAbbr(me.wPid, me.wDir), me.wDir == 1 ? colBull : colBear)
+    else
+        table.cell(dash, 0, 0, "10 Chart Patterns - Live Stats", text_color=color.white, text_size=txtSize, bgcolor=color.new(color.blue, 40))
+        table.merge_cells(dash, 0, 0, 4, 0)
+        dCell(0, 1, "Pattern", color.silver)
+        dCell(1, 1, "Trades",  color.silver)
+        dCell(2, 1, "Win %",   color.silver)
+        dCell(3, 1, "Net R",   color.silver)
+        dCell(4, 1, "Rating",  color.silver)
+        for pid = 1 to 10
+            int   t  = pTrades.get(pid)
+            float wr = t > 0 ? float(pWins.get(pid)) / t * 100 : na
+            float nr = pNetR.get(pid)
+            color nameCol = pid == 10 ? color.aqua : pid == 1 or pid == 4 or pid == 5 or pid == 7 or pid == 9 ? colBull : colBear
+            dCell(0, pid + 1, str.tostring(pid) + ". " + pName(pid, 0), nameCol)
+            dCell(1, pid + 1, str.tostring(t), color.white)
+            dCell(2, pid + 1, t > 0 ? str.tostring(wr, "#.0") : "-", color.white)
+            dCell(3, pid + 1, fmtS(nr, "#.##"), nr > 0 ? colBull : nr < 0 ? colBear : color.white)
+            dCell(4, pid + 1, t > 0 ? stars(wr) : "-", color.yellow)
+        dCell(0, 12, "Total", color.white)
+        dCell(1, 12, str.tostring(me.trades), color.white)
+        dCell(2, 12, me.trades > 0 ? str.tostring(totWr, "#.0") : "-", color.white)
+        dCell(3, 12, fmtS(me.netR, "#.##"), netCol)
+        dCell(4, 12, me.trades > 0 ? stars(totWr) : "-", color.yellow)
+        dCell(0, 13, "Equity", color.silver)
+        table.cell(dash, 1, 13, str.tostring(equity, "#,###.##") + " (" + fmtS((equity / initCap - 1) * 100, "#.##") + "%)", text_color=equity >= initCap ? colBull : colBear, text_size=txtSize, text_halign=text.align_right)
+        table.merge_cells(dash, 1, 13, 4, 13)
+        string watchTxt = me.wPid != 0 ? "  | watching " + pName(me.wPid, me.wDir) : ""
+        string slTp = me.pos != 0 ? " | SL " + fmtP(me.posStop) + " TP " + fmtP(me.posTarget) : ""
+        dCell(0, 14, "Position", color.silver)
+        table.cell(dash, 1, 14, posTxt + slTp + watchTxt, text_color=posCol, text_size=txtSize, text_halign=text.align_right)
+        table.merge_cells(dash, 1, 14, 4, 14)
+
+// ============================================================================
+// Multi-symbol scanner
+// ============================================================================
+// On a higher scanner timeframe, read the last CLOSED bar (offset 1 + lookahead) so the scanner
+// never reports a signal from a bar that is still forming, and alert once per scanner bar.
+bool scanHtf = scanTf != "" and timeframe.in_seconds(scanTf) > timeframe.in_seconds()
+bool scanBarNew = timeframe.change(scanTf == "" ? timeframe.period : scanTf)
+
+engScan(bool prev) =>
+    Out e = engine()
+    prev ? e[1] : e
+
+scan(string sym) => request.security(sym, scanTf, engScan(scanHtf), lookahead=scanHtf ? barmerge.lookahead_on : barmerge.lookahead_off, ignore_invalid_symbol=true)
+
+Out r1  = scan(s1)
+Out r2  = scan(s2)
+Out r3  = scan(s3)
+Out r4  = scan(s4)
+Out r5  = scan(s5)
+Out r6  = scan(s6)
+Out r7  = scan(s7)
+Out r8  = scan(s8)
+Out r9  = scan(s9)
+Out r10 = scan(s10)
+
+shortSym(string sym) =>
+    array<string> parts = str.split(sym, ":")
+    string t = parts.size() > 0 ? parts.last() : sym
+    compact ? str.replace_all(t, "USDT", "") : t
+
+scanAlert(string sym, Out r) =>
+    if alertScan and (not scanHtf or scanBarNew) and not na(r) and r.sig != 0
+        alert(shortSym(sym) + ": " + pName(r.pid, r.sig) + " " + (r.sig == 1 ? "BUY" : "SELL") + " at " + str.tostring(r.entry) + " | SL " + str.tostring(r.stop) + " | TP " + str.tostring(r.target) + " | conf " + str.tostring(r.conf) + "/5", alert.freq_once_per_bar_close)
+
+scanAlert(s1, r1)
+scanAlert(s2, r2)
+scanAlert(s3, r3)
+scanAlert(s4, r4)
+scanAlert(s5, r5)
+scanAlert(s6, r6)
+scanAlert(s7, r7)
+scanAlert(s8, r8)
+scanAlert(s9, r9)
+scanAlert(s10, r10)
+
+var table scanT = table.new(posOf(scanPos), 7, 12, bgcolor=color.new(color.black, 35), border_color=color.new(color.gray, 70), border_width=1)
+
+sCell(int col, int row, string txt, color tc) =>
+    table.cell(scanT, col, row, txt, text_color=tc, text_size=txtSize, text_halign=col == 0 ? text.align_left : text.align_center)
+
+scanRow(int row, string sym, Out r) =>
+    sCell(0, row, shortSym(sym), color.white)
+    if na(r)
+        sCell(1, row, "n/a", color.gray)
+    else
+        color sc = r.lastDir == 1 ? colBull : r.lastDir == -1 ? colBear : color.gray
+        color pc = r.pos == 1 ? colBull : r.pos == -1 ? colBear : color.gray
+        bool fresh = not na(r.lastAgo) and r.lastAgo <= 3
+        string side = r.lastDir == 1 ? "BUY" : "SELL"
+        if compact
+            // Symbol | last signal with pattern and age | open position
+            sCell(1, row, r.lastDir == 0 ? "-" : (fresh ? "● " : "") + side + " " + pAbbr(r.lastPid, r.lastDir) + " " + str.tostring(r.lastAgo) + "b", sc)
+            sCell(2, row, r.pos == 1 ? "L" : r.pos == -1 ? "S" : "-", pc)
+        else
+            sCell(1, row, r.lastDir == 0 ? "-" : side + (fresh ? " NEW" : ""), sc)
+            sCell(2, row, r.lastDir == 0 ? "-" : pName(r.lastPid, r.lastDir) + " (" + str.tostring(r.lastAgo) + " bars)", sc)
+            sCell(3, row, r.wPid != 0 ? pName(r.wPid, r.wDir) : "-", r.wDir == 1 ? colBull : r.wDir == -1 ? colBear : color.gray)
+            sCell(4, row, r.pos == 1 ? "LONG" : r.pos == -1 ? "SHORT" : "Flat", pc)
+            sCell(5, row, r.trades > 0 ? str.tostring(float(r.wins) / r.trades * 100, "#") + "% / " + str.tostring(r.trades) : "-", color.white)
+            sCell(6, row, fmtS(r.netR, "#.#") + "R", r.netR > 0 ? colBull : r.netR < 0 ? colBear : color.white)
+
+if showScan and barstate.islast
+    if not compact
+        table.cell(scanT, 0, 0, "Pattern Scanner" + (scanTf == "" ? "" : " (" + scanTf + ")"), text_color=color.white, text_size=txtSize, bgcolor=color.new(color.purple, 40))
+        table.merge_cells(scanT, 0, 0, 6, 0)
+        sCell(0, 1, "Symbol",      color.silver)
+        sCell(1, 1, "Last Signal", color.silver)
+        sCell(2, 1, "Pattern",     color.silver)
+        sCell(3, 1, "Watching",    color.silver)
+        sCell(4, 1, "Position",    color.silver)
+        sCell(5, 1, "Win% / N",    color.silver)
+        sCell(6, 1, "Net",         color.silver)
+    int o = compact ? 0 : 2
+    scanRow(o + 0, s1,  r1)
+    scanRow(o + 1, s2,  r2)
+    scanRow(o + 2, s3,  r3)
+    scanRow(o + 3, s4,  r4)
+    scanRow(o + 4, s5,  r5)
+    scanRow(o + 5, s6,  r6)
+    scanRow(o + 6, s7,  r7)
+    scanRow(o + 7, s8,  r8)
+    scanRow(o + 8, s9,  r9)
+    scanRow(o + 9, s10, r10)
