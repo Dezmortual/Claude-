@@ -1,0 +1,211 @@
+<title>Manywright One Brief</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column of drafting "sheets", each clip a sheet with a title block and a copy button */
+:root{
+  --navy:#0f1b2d; --navy-2:#16243a; --navy-3:#1e2f4a; --line:#2a3b57;
+  --fg:#f4f6fa; --dim:#a9b4c6; --steel:#6b7a93;
+  --amber:#f5a524; --teal:#2dd4bf; --coral:#ff6b5e;
+  --sans:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background:var(--navy);
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:32px 32px;
+  color:var(--fg);font-family:var(--sans);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:32px 64px;
+}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+header{display:flex;flex-direction:column;gap:10px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber)}
+h1{font-size:clamp(28px,6vw,44px);line-height:1.1;margin:0;font-weight:800;text-wrap:balance}
+h1 span{font-weight:400}
+h2{font-size:20px;margin:0;font-weight:800;text-wrap:balance}
+p{margin:0;color:var(--dim);max-width:65ch}
+.steps{margin:0;padding-left:20px;color:var(--dim);display:flex;flex-direction:column;gap:4px}
+.steps b{color:var(--fg)}
+.sheet{background:var(--navy-2);border:1px solid var(--line);border-radius:6px;display:flex;flex-direction:column;min-width:0}
+.tb{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--line)}
+.tb-left{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tag{font-family:var(--mono);font-size:12px;color:var(--steel);letter-spacing:.06em}
+.body{padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.label{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--steel)}
+pre{margin:0;white-space:pre-wrap;word-wrap:break-word;font-family:var(--mono);font-size:13.5px;line-height:1.6;color:var(--fg);background:var(--navy);border:1px solid var(--line);border-radius:6px;padding:14px;max-height:260px;overflow:auto}
+.vo{border-left:3px solid var(--amber);padding:6px 12px;color:var(--fg);font-style:italic}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+button{font-family:var(--mono);font-size:13px;font-weight:500;cursor:pointer;border-radius:6px;padding:9px 14px;border:1px solid var(--amber);background:var(--amber);color:var(--navy);transition:background .15s}
+button.ghost{background:transparent;color:var(--amber)}
+button:hover{background:var(--amber);color:var(--navy);filter:brightness(1.08)}
+button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+button.done{background:var(--teal);border-color:var(--teal);color:var(--navy)}
+.note{font-size:14px;color:var(--dim);background:var(--navy-3);border:1px dashed var(--coral);border-radius:6px;padding:12px 14px}
+.note b{color:var(--coral)}
+.dir{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.dir div{background:var(--navy);border:1px solid var(--line);border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.dir span{font-size:14px;color:var(--dim)}
+footer{font-family:var(--mono);font-size:12px;color:var(--steel);text-align:center}
+@media (prefers-reduced-motion:reduce){button{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Sheet 01 · Omni ad · 35s · 9:16 · Blueprint style</div>
+    <h1>MANY<span>WRIGHT</span> — One Brief</h1>
+    <p>Seven clips, each one complete. Every prompt below already includes the style, the logo description and the owner description, so you can paste each one into Google Omni on its own.</p>
+    <ol class="steps">
+      <li>Tap <b>Copy prompt</b> on Clip 1, paste into Omni, generate. Repeat for Clips 2 to 7.</li>
+      <li>Stitch the seven clips in order in your editor.</li>
+      <li>Tap <b>Copy voiceover</b> at the bottom and paste it into ElevenLabs.</li>
+      <li>Lay the voiceover over the clips, then add music, sound effects and captions.</li>
+    </ol>
+    <div class="note"><b>Check before generating:</b> I couldn't see your real four-piece mark, so the prompts describe a stand-in (four plates forming an "M"). If yours looks different, edit that sentence in every clip that uses it: Clips 5 and 7. If Omni misspells "MANYWRIGHT", delete the wordmark sentence and overlay your logo file in the edit.</div>
+  </header>
+
+  <div class="row">
+    <button type="button" id="copy-all" class="ghost">Copy all 7 prompts</button>
+  </div>
+
+  <div id="clips" class="wrap" style="gap:20px"></div>
+
+  <section class="sheet">
+    <div class="tb">
+      <div class="tb-left"><span class="tag">Sheet 09 · ElevenLabs</span><h2>Full voiceover script</h2></div>
+      <button type="button" id="copy-vo">Copy voiceover</button>
+    </div>
+    <div class="body">
+      <pre id="vo-text"></pre>
+      <p>Voice: warm, confident, plain-spoken, such as "Brian" or "Daniel" (male) or "Charlotte" (female). Stability about 55, similarity about 80, style about 20. Pause slightly after "zero answers", leave about 300ms between "One brief." and "One accountable lead.", and slow down a little on the last line. About 85 words, lands near 35 seconds.</p>
+    </div>
+  </section>
+
+  <section class="sheet">
+    <div class="tb"><div class="tb-left"><span class="tag">Sheet 10 · Edit</span><h2>Direction for the edit</h2></div></div>
+    <div class="body">
+      <div class="dir">
+        <div><span class="label">Music</span><span>Sparse ticking ambient pulse for Clips 1–4, a rising swell into Clip 5, a clean resolve on the lock-in, warm and steady to the end.</span></div>
+        <div><span class="label">Sound effects</span><span>Pen strokes as lines draw, paper slides, a soft mechanical clack per plate (deeper on the final lock), a light chime on the teal ripple and checkmarks, a stamp snap on "FREE CHECK".</span></div>
+        <div><span class="label">Captions</span><span>Burn in during the edit. Archivo bold white in a navy pill with a thin amber border. Highlight "one firm", "yours to keep" and "free" in amber.</span></div>
+        <div><span class="label">End card</span><span>Request your free check: manywright.com. Found on Google check, a one-page review emailed within 3 business days.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Every claim comes from manywright.com. No ranking promises, no testimonials.</footer>
+</div>
+
+<script>
+const STYLE = "9:16 vertical video. Blueprint technical-drawing animation style: deep navy (#0F1B2D) drafting paper with a faint square grid and fine paper grain, precise off-white and pale-blue linework, small monospace dimension labels and coordinate ticks in the margins, soft even studio light. Signal colors: amber (#F5A524), teal (#2DD4BF), coral (#FF6B5E). Lines draw themselves stroke by stroke; parts slide on guide-rails and lock into place with a slight overshoot. Minimal on-screen text.";
+
+const OWNER = "A friendly local small-business owner drawn as clean white technical-illustration linework on navy: mid-30s, short hair, rolled-up shirt sleeves, a work apron, simple expressive face, outlined in crisp off-white strokes with light pale-blue hatching for shading, consistent proportions.";
+
+const MARK = "The Manywright mark: four flat, precision-cut geometric plates (two amber #F5A524 uprights and two off-white diagonals) that lock together into one bold geometric capital M, with thin white construction lines and small dimension ticks around it. Beneath it, the wordmark 'MANYWRIGHT' in clean bold uppercase sans-serif, 'MANY' heavier and 'WRIGHT' lighter, off-white on deep navy. Soft contact shadow under the plates.";
+
+const CLIPS = [
+  {t:"00:00–00:05", n:"Pulled Three Ways",
+   c:`Visual Composition: ${OWNER} The owner stands center frame. Around them, three separate small drafted panels float at odd angles: a phone with a broken webpage, a map pin with a grey question mark, and a ledger book with papers spilling out. Each panel is outlined in coral. Cold, tense, slightly cluttered mood.
+
+The Motion: In quick succession, three thin coral dashed lines draw themselves from each panel to the owner's arms and tug them in different directions. The panels jitter and drift apart, and the owner's face shifts to stressed. Slow camera push-in.
+
+Visual Assets: the owner in linework, three coral-outlined panels (phone, map pin, ledger), coral dashed tug-lines, margin coordinate ticks.`,
+   vo:"Your website guy, your Google listing, your books… three people, zero answers."},
+  {t:"00:05–00:10", n:"The Title Block",
+   c:`Visual Composition: An engineering title-block label sits in the lower third of the sheet, with thin off-white borders and small monospace labels in its corners. Calm, focused, a reset in mood.
+
+The Motion: A new navy sheet slides up over the frame like a drafting page being pulled on. A single amber line draws a rectangle, then the bold uppercase word "WHY?" drafts itself inside it. Dimension arrows snap out on both sides. Gentle camera pull-back.
+
+Visual Assets: sliding drafting sheet, title-block label, the word "WHY?" in bold caps, amber outline, dimension arrows.`,
+   vo:"Here's why small businesses stay stuck."},
+  {t:"00:10–00:15", n:"The Exploded Diagram",
+   c:`Visual Composition: ${OWNER} The owner is small at the bottom center. Above them is an exploded-view technical diagram: four disconnected parts (a webpage, a map pin, a ledger, a speech bubble) float far apart, each inside its own coral dashed outline, with no lines connecting them. Cool, fragmented mood.
+
+The Motion: The four parts drift further apart along their own guide-rails. Small coral dimension lines between them stretch longer and longer, and the gaps between the parts glow faintly coral. Slow upward camera tilt.
+
+Visual Assets: exploded-view parts, coral dashed outlines, stretching dimension lines, glowing coral gaps.`,
+   vo:"Every job goes to a different freelancer, and nobody owns the whole picture."},
+  {t:"00:15–00:20", n:"Things Slip Through",
+   c:`Visual Composition: Close on the exploded diagram of four floating parts (webpage, map pin, ledger, speech bubble) with glowing coral gaps between them. ${OWNER} The owner stands beneath the gaps holding a clipboard. Tense, cool mood with coral accents.
+
+The Motion: Small drafted items (an envelope, a calendar page, an invoice) slip through the coral gaps and tumble down. The owner scrambles to catch them, juggling them awkwardly. Camera holds steady with a slight handheld drift.
+
+Visual Assets: falling envelope, calendar page and invoice in white linework, coral gaps, the owner with a clipboard.`,
+   vo:"So things slip between them, and you end up managing everyone."},
+  {t:"00:20–00:25", n:"The Assembly",
+   c:`Visual Composition: The navy grid begins to warm as amber light washes up from the bottom of the frame. In the center, four drafted parts hover around an empty outline of the logo. ${MARK}
+
+The Motion: One hero action: the four parts slide in on amber guide-lines and become the four plates of the Manywright mark, locking together one after another into the bold M with a slight overshoot and settle. A teal pulse ripples out across the grid and every coral line fades away. Slow camera push-in.
+
+Visual Assets: the Manywright mark and wordmark, amber guide-lines, teal ripple, coral lines dissolving.`,
+   vo:"Manywright brings every specialist into one firm. One brief. One accountable lead."},
+  {t:"00:25–00:30", n:"Written Down, Yours to Keep",
+   c:`Visual Composition: Warm navy sheet with a soft amber glow and teal accents. ${OWNER} The owner stands relaxed and smiling, holding a single drafted proposal sheet. Calm, confident, bright mood.
+
+The Motion: On the proposal sheet, neat rows of white lines draw themselves and teal checkmarks tick on beside each row, one after another. The sheet then rolls up into a drafting tube, and the owner tucks it under one arm with a satisfied nod. Gentle camera orbit.
+
+Visual Assets: proposal sheet, rows drawing on, teal checkmarks, drafting tube, smiling owner.`,
+   vo:"Every limit is written into your proposal before work starts, and everything's yours to keep."},
+  {t:"00:30–00:35", n:"Hero and Call to Action",
+   c:`Visual Composition: Clean navy grid with a warm amber glow, bright and premium. ${MARK} The mark and wordmark sit upper-center. Below, a small drafted map pin with a teal checkmark sits inside a title-block label.
+
+The Motion: The mark gives one soft settle-bounce while thin amber construction lines trace around it and fade. The map pin draws itself and its teal check ticks on. A final title-block stamp reading "FREE CHECK" drafts in at the bottom with a crisp snap. Slow camera push-in.
+
+Visual Assets: the Manywright mark and wordmark, map pin with teal check, "FREE CHECK" title-block stamp, fading construction lines.`,
+   vo:"Ask for your free Found on Google check. Manywright. Every specialist, one firm."}
+];
+
+const prompt = c => `${STYLE}\n\n${c.c}`;
+
+function flash(btn, label){
+  const old = btn.dataset.label || btn.textContent;
+  btn.dataset.label = old;
+  btn.textContent = label; btn.classList.add("done");
+  setTimeout(()=>{btn.textContent = old; btn.classList.remove("done");}, 1600);
+}
+function selectPre(pre){
+  const r = document.createRange(); r.selectNodeContents(pre);
+  const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+}
+function copy(text, btn, pre){
+  const ok = () => flash(btn, "Copied");
+  const fail = () => { if (pre) selectPre(pre); flash(btn, pre ? "Selected, press Ctrl/⌘+C" : "Copy failed"); };
+  try { navigator.clipboard.writeText(text).then(ok, fail); } catch(e){ fail(); }
+}
+
+const host = document.getElementById("clips");
+CLIPS.forEach((c,i)=>{
+  const s = document.createElement("section");
+  s.className = "sheet";
+  s.innerHTML = `
+    <div class="tb">
+      <div class="tb-left"><span class="tag">Clip ${i+1} of 7 · ${c.t}</span><h2></h2></div>
+      <button type="button" id="copy-${i+1}">Copy prompt</button>
+    </div>
+    <div class="body">
+      <span class="label">Paste into Omni</span>
+      <pre></pre>
+      <span class="label">Narration for this clip (not for Omni)</span>
+      <div class="vo"></div>
+    </div>`;
+  s.querySelector("h2").textContent = c.n;
+  const pre = s.querySelector("pre");
+  pre.textContent = prompt(c);
+  s.querySelector(".vo").textContent = c.vo;
+  s.querySelector("button").addEventListener("click", e => copy(prompt(c), e.currentTarget, pre));
+  host.appendChild(s);
+});
+
+document.getElementById("copy-all").addEventListener("click", e => {
+  const all = CLIPS.map((c,i)=>`=== CLIP ${i+1} (${c.t}): ${c.n} ===\n${prompt(c)}`).join("\n\n\n");
+  copy(all, e.currentTarget, null);
+});
+
+const VO = CLIPS.map(c=>c.vo).join(" ");
+const voPre = document.getElementById("vo-text");
+voPre.textContent = VO;
+document.getElementById("copy-vo").addEventListener("click", e => copy(VO, e.currentTarget, voPre));
+</script>
